@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# estado local do harness do Claude Code (não é fonte do projeto)
+/.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -11,6 +11,14 @@ export const ptBr = {
     description:
       "Plataforma para pequenas e médias empresas estruturarem captação e dividirem capital via tokenização.",
   },
+  hero: {
+    badge: "Plataforma para empresas",
+    title: "Estruture a captação e a tokenização do capital da sua empresa",
+    subtitle:
+      "A Niara PMEs ajuda pequenas e médias empresas a organizar rodadas de captação e dividir participações via tokenização.",
+    ctaPrimary: "Iniciar captação",
+    ctaSecondary: "Saiba mais",
+  },
   nav: {
     mainAriaLabel: "Navegação principal",
     mobileAriaLabel: "Navegação móvel",
