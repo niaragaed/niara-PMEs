@@ -147,7 +147,7 @@ src/
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
   models/              astronaut.glb (opcional, ver seção acima)
-  niara-pme-logo.png   logo (placeholder até a arte final)
+  niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)
 ```
 
 ---
@@ -162,9 +162,10 @@ public/
   decorativas com `aria-hidden`.
 - **Responsivo** sempre: testar desktop, tablet e mobile (menu hambúrguer +
   acordeões).
-- **Logo:** componente `<Logo />` (`next/image` apontando para
-  `public/niara-pme-logo.png`). Arte final é preta sobre PNG transparente —
-  ainda não disponível; placeholder é substituível sem mudar o componente.
+- **Logo:** componente `<Logo />` (`next/image`, caminho na constante
+  `LOGO_SRC` em `src/components/ui/Logo.tsx`). Placeholder atual é um SVG
+  (`public/niara-pme-logo.svg`); a arte final será um PNG preto sobre fundo
+  transparente — quando chegar, basta trocar o valor de `LOGO_SRC`.
 
 ---
 
