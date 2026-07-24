@@ -94,7 +94,7 @@ Tema **claro** (diferente do `niara-site`, que é escuro):
 **Sombras:** `shadow-soft` / `shadow-soft-lg` — suaves, para cards e
 elementos elevados sobre fundo claro.
 
-Referência visual viva: `/styleguide` (a partir da Parte 5).
+Referência visual viva: `/styleguide`.
 
 Estética: clara, limpa, moderna, arejada. Adaptamos **estrutura** de
 referências externas (ex.: MetaMask home), nunca a estética escura nem o
@@ -183,15 +183,21 @@ public/
 
 ---
 
+## Estado atual
+
+Homepage completa: header + navegação, hero com astronauta 3D, narrativa
+por scroll, footer e `/styleguide`. Todas as rotas do nav têm stub sem
+404. Testado com `tsc`, `eslint`, `build` e verificação visual via
+Playwright (desktop, mobile, teclado) a cada parte.
+
 ## Pendências conhecidas
 
-- Header, navegação e stubs de rota (Parte 2)
-- Hero com astronauta 3D (Parte 3)
-- Narrativa por scroll + footer (Parte 4)
-- Styleguide + ajustes de responsividade/acessibilidade (Parte 5)
-- Logo final (PNG/SVG preto transparente) — substituir
-  `public/niara-pme-logo.png`
+- Logo final (PNG preto sobre fundo transparente) — substituir o valor de
+  `LOGO_SRC` em `src/components/ui/Logo.tsx` (hoje aponta para o
+  placeholder `public/niara-pme-logo.svg`)
 - Modelo 3D final do astronauta (`public/models/astronaut.glb`) — opcional,
-  há placeholder procedural
+  há placeholder procedural em `ProceduralAstronaut.tsx`
 - Formulário de contato real, autenticação, backend — fora de escopo por
   ora
+- Conteúdo real das páginas-stub (`/negociar/*`, `/ativos`, `/perfil`,
+  `/sobre/*`) — hoje só exibem aviso de "em construção"

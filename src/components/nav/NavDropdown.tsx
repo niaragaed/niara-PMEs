@@ -89,7 +89,7 @@ export function NavDropdown({ item }: { item: NavItem }) {
               closeNow();
             }
           }}
-          className="absolute left-1/2 top-full z-40 mt-3 w-[460px] -translate-x-1/2 animate-dropdown rounded-lg border border-border bg-surface p-2 shadow-soft-lg"
+          className="absolute left-1/2 top-full z-40 mt-3 w-[min(460px,90vw)] -translate-x-1/2 animate-dropdown rounded-lg border border-border bg-surface p-2 shadow-soft-lg"
         >
           <ul className="grid grid-cols-2 gap-1">
             {item.children.map((child) => {
@@ -100,7 +100,7 @@ export function NavDropdown({ item }: { item: NavItem }) {
                     href={child.href}
                     role="menuitem"
                     onClick={closeNow}
-                    className="group flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-surface-alt focus-visible:bg-surface-alt focus-visible:outline-none"
+                    className="group flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-surface-alt focus-visible:bg-surface-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-military focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-alt text-ink-muted transition-colors group-hover:text-military">
                       <Icon className="h-4 w-4" aria-hidden="true" />

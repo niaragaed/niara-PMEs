@@ -1,5 +1,6 @@
 export const ptBr = {
   common: {
+    pularParaConteudo: "Pular para o conteúdo",
     emBreve: "Em breve",
     emConstrucao: "Em construção",
     demonstracao: "Demonstração",
@@ -10,6 +11,24 @@ export const ptBr = {
     title: "Niara PMEs",
     description:
       "Plataforma para pequenas e médias empresas estruturarem captação e dividirem capital via tokenização.",
+  },
+  styleguide: {
+    title: "Design system",
+    subtitle: "Referência viva dos tokens definidos em @theme (src/app/globals.css).",
+    coresBase: "Cores base",
+    verdeMilitar: "Verde militar (primária)",
+    salmao: "Salmão (acento / CTA)",
+    tipografia: "Tipografia",
+    raiosSombras: "Raios e sombras",
+    botoes: "Botões",
+    cards: "Cards",
+    tipografiaAmostra:
+      "Space Grotesk é usada em títulos (h1–h6); Inter é usada no corpo do texto, como este parágrafo.",
+    botaoPrimario: "Botão primário",
+    botaoSecundario: "Botão secundário",
+    botaoDesabilitado: "Botão desabilitado",
+    cardTitulo: "Card padrão",
+    cardTexto: "Superfície bg-surface sobre bg-surface-alt, borda sutil e sombra suave.",
   },
   hero: {
     badge: "Plataforma para empresas",
