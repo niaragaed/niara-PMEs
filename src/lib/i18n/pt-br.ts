@@ -19,6 +19,96 @@ export const ptBr = {
     ctaPrimary: "Iniciar captação",
     ctaSecondary: "Saiba mais",
   },
+  sections: {
+    whatIs: {
+      title: "Uma nova forma de estruturar o capital da sua empresa",
+      subtitle:
+        "A Niara PMEs organiza o processo de captação e o registro de participações societárias via tokenização, para pequenas e médias empresas.",
+    },
+    howItWorks: {
+      title: "Como funciona",
+      subtitle: "Um processo estruturado em quatro etapas.",
+      steps: [
+        {
+          title: "Cadastro da empresa",
+          description:
+            "A empresa cria um perfil institucional na plataforma e envia as informações necessárias para estruturar a oferta.",
+        },
+        {
+          title: "Estruturação da oferta",
+          description:
+            "Definimos junto com a empresa os termos da captação: valor buscado, participação oferecida e condições.",
+        },
+        {
+          title: "Tokenização e registro",
+          description:
+            "As participações são representadas em tokens, com registro disponível como referência auditável.",
+        },
+        {
+          title: "Vitrine para investidores",
+          description:
+            "A oferta passa a constar na vitrine da plataforma, visível para investidores cadastrados.",
+        },
+      ],
+    },
+    audiences: {
+      title: "Para empresas e para investidores",
+      companies: {
+        title: "Para empresas",
+        items: [
+          "Estruture rodadas de captação com clareza sobre participação e condições.",
+          "Reduza custos e burocracia em relação a canais tradicionais de captação.",
+          "Tenha um registro auditável das participações emitidas.",
+        ],
+      },
+      investors: {
+        title: "Para investidores",
+        items: [
+          "Acesse uma vitrine de empresas que estruturaram ofertas na plataforma.",
+          "Veja as condições de cada oferta antes de decidir participar.",
+          "Acompanhe suas participações em um único lugar.",
+        ],
+      },
+    },
+    differentiators: {
+      title: "Diferenciais",
+      items: [
+        {
+          title: "Custo menor",
+          description: "Processo mais enxuto que os canais tradicionais de captação.",
+        },
+        {
+          title: "Registro on-chain",
+          description:
+            "Cap table registrado como referência probatória adicional — não substitui os livros societários exigidos pela Lei 6.404 nem o registro em cartório.",
+        },
+        {
+          title: "Transparência",
+          description: "Condições da oferta visíveis para todas as partes envolvidas.",
+        },
+      ],
+    },
+    trustNotice: {
+      text: "A Niara PMEs está em fase de desenvolvimento e demonstração. Nenhuma oferta real de investimento está disponível nesta fase. Ofertas futuras dependerão de autorização regulatória da CVM (Comissão de Valores Mobiliários).",
+    },
+    finalCta: {
+      title: "Quer estruturar a captação da sua empresa?",
+      subtitle:
+        "Fale com o nosso time para entender como a tokenização pode se encaixar no seu processo de captação.",
+      cta: "Contate-nos",
+    },
+  },
+  footer: {
+    brandDescription:
+      "Plataforma para pequenas e médias empresas estruturarem captação e dividirem capital via tokenização.",
+    columnNegociar: "Negociar",
+    columnPlataforma: "Plataforma",
+    columnSobre: "Sobre",
+    footerAriaLabel: "Navegação do rodapé",
+    disclaimer:
+      "Conteúdo institucional e de demonstração. Nenhuma oferta real de investimento está disponível nesta fase. Este site não constitui oferta pública de valores mobiliários.",
+    copyright: "© 2026 Niara PMEs. Conteúdo de demonstração.",
+  },
   nav: {
     mainAriaLabel: "Navegação principal",
     mobileAriaLabel: "Navegação móvel",
