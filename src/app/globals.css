@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  /* Base / neutros */
+  --color-bg: #faf8f3;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1eee6;
+  --color-border: #e4dfd3;
+  --color-ink: #1b1e17;
+  --color-ink-muted: #5a5f52;
+
+  /* Verde militar (primária) */
+  --color-military: #4b5320;
+  --color-military-600: #5c6528;
+  --color-military-100: #e9ecdd;
+
+  /* Salmão (acento / CTA) */
+  --color-salmon: #f2907a;
+  --color-salmon-600: #e67c63;
+  --color-salmon-100: #fbe3dc;
+
+  /* Raio */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Sombras suaves */
+  --shadow-soft: 0 2px 8px rgba(27, 30, 23, 0.06), 0 8px 24px rgba(27, 30, 23, 0.06);
+  --shadow-soft-lg: 0 4px 16px rgba(27, 30, 23, 0.08), 0 16px 40px rgba(27, 30, 23, 0.1);
+
+  /* Animação */
+  --animate-dropdown: dropdown-in 150ms ease-out forwards;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* `inline` porque estas variáveis referenciam custom properties definidas em
+   runtime pelas classes do next/font em <html>, não valores literais — ver
+   docs do Tailwind v4 sobre @theme inline. */
+@theme inline {
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-military) 25%, transparent);
+  color: var(--color-ink);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
