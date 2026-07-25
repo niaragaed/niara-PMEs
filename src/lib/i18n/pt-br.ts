@@ -234,6 +234,69 @@ export const ptBr = {
       },
     },
   },
+  ativos: {
+    meta: {
+      title: "Ativos",
+      description: "Sua carteira de participações tokenizadas — catálogo e posições, em demonstração.",
+    },
+    title: "Ativos",
+    subtitle: "Sua carteira de participações tokenizadas.",
+    demoBanner: {
+      label: "Demonstração",
+      text: "carteira e dados simulados. Não reflete posições ou valores reais.",
+    },
+    tabs: {
+      carteira: "Minha carteira",
+      disponiveis: "Ativos disponíveis",
+    },
+    kpis: {
+      patrimonioTotal: "Patrimônio total",
+      valorInvestido: "Valor investido",
+      lucroPrejuizo: "Lucro/Prejuízo total",
+      retornoPeriodo: "Retorno no período",
+      retornoNota: "Últimos 12 meses",
+    },
+    categorias: {
+      pmes: "Token PMEs",
+      agro: "Token Agro",
+      imobiliario: "Token Imobiliário",
+      auto: "Token Auto",
+      divida: "Títulos de dívida",
+    },
+    regioes: {
+      sudeste: "Sudeste",
+      sul: "Sul",
+      nordeste: "Nordeste",
+      "centro-oeste": "Centro-Oeste",
+    },
+    evolucao: {
+      title: "Evolução do portfólio",
+      seriesInvestido: "Valor investido",
+      seriesGanho: "Ganho de capital",
+      description:
+        "Descrição do gráfico: valor investido e ganho de capital acumulado, mês a mês, nos últimos 12 meses — os mesmos dados aparecem na tabela de posições abaixo.",
+    },
+    alocacao: {
+      title: "Alocação",
+      viewClasse: "Por classe",
+      viewAtivo: "Por ativo",
+      viewSetor: "Por setor/região",
+    },
+    tabela: {
+      title: "Posições",
+      colAtivo: "Ativo",
+      colCategoria: "Categoria",
+      colCotas: "Cotas",
+      colPrecoMedio: "Preço médio",
+      colValorAtual: "Valor atual",
+      colVariacao: "Variação",
+    },
+    catalogo: {
+      title: "Ativos disponíveis",
+      subtitle: "Catálogo de demonstração — participações ilustrativas, sem oferta real disponível.",
+      investir: "Investir",
+    },
+  },
   stubs: {
     ativosTokens: {
       title: "Ativos e tokens",
@@ -264,11 +327,6 @@ export const ptBr = {
       title: "Títulos de dívida",
       description:
         "Instrumentos de dívida estruturados via tokenização. Conteúdo em construção — fase de demonstração.",
-    },
-    ativos: {
-      title: "Ativos",
-      description:
-        "Catálogo de ativos disponíveis na plataforma. Conteúdo em construção — fase de demonstração.",
     },
     perfil: {
       title: "Perfil",
