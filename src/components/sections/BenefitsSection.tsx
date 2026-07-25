@@ -16,9 +16,9 @@ export function BenefitsSection() {
           <p className="mt-3 text-lg text-ink-peach">{ptBr.sections.benefits.subtitle}</p>
         </Reveal>
 
-        <RevealGroup className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <RevealGroup className="mt-12 grid grid-cols-1 items-stretch gap-6 sm:grid-cols-3">
           {ptBr.sections.benefits.items.map((item, index) => (
-            <RevealItem key={item.title}>
+            <RevealItem key={item.title} className="h-full">
               <SectionCard chip={index + 1} title={item.title} description={item.description} />
             </RevealItem>
           ))}
