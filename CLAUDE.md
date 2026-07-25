@@ -205,6 +205,41 @@ parallax por scroll (GSAP `ScrollTrigger`, respeitando
 paleta) que já existiam ali. Não reintroduzir um elemento central 3D/2D
 persistente sem alinhar antes com o usuário.
 
+### Anel do planeta: salmão reforçado + rotação lenta
+
+O traço da elipse (anel) usa `--color-salmon` em opacidade alta (`0.9`),
+separada da opacidade do círculo (corpo do planeta, `0.3`) — antes os dois
+dividiam uma única opacidade de container (`0.2`), o que apagava o salmão
+sobre o `bg-military`. Mesma lógica no glow salmão (`layer2Ref`): opacidade
+e área um pouco maiores (`bg-salmon/35`, `h-80 w-80`) para o brilho ficar
+mais presente sem sujar o fundo. Nenhum token novo foi criado — resolvido
+só com opacidade/uso sobre os tokens já oficiais.
+
+O anel gira devagar e continuamente (`hero-orbit-ring-spin`,
+`globals.css`, 56s linear infinite) em torno do centro do próprio traço —
+a `<g>` que envolve a `<ellipse>` recebe `transform-box: fill-box;
+transform-origin: center;` para o eixo de rotação ficar no centro do
+planeta, não no canto do SVG. A inclinação estática original (-18°) foi
+incorporada à animação (`from { rotate(-18deg) }` → `to { rotate(342deg)
+}`, isto é, uma volta completa de -18° a -18°+360°) em vez de ficar num
+atributo `transform` solto na `<ellipse>` — CSS `transform` substitui por
+completo (não combina com) o atributo `transform` do SVG no mesmo
+elemento, então os dois não podiam coexistir. Por essa mesma escolha de
+ângulo final (342° ≡ -18° em módulo 360), a regra global de
+`prefers-reduced-motion: reduce` já existente em `globals.css` (que reduz
+toda animação a uma única iteração de ~0.01ms) trava o anel exatamente na
+inclinação estática original, sem precisar de uma media query própria só
+para este elemento — desde que a animação tenha `forwards` no fill-mode
+(`animation: hero-orbit-ring-spin 56s linear infinite forwards`): sem
+isso, ao fim da única iteração o navegador descarta o "to" e o transform
+volta a `none` (anel "destorcido", perde a inclinação por completo) em
+vez de ficar parado nos 342°. Verificado via Playwright: `getComputedStyle`
+do `<g>` muda de ângulo a cada poucos segundos em modo normal e permanece
+travado com o mesmo transform sob `reducedMotion: 'reduce'`. O parallax de
+scroll (GSAP `ScrollTrigger`, no `<div>`
+externo que envolve o SVG) continua funcionando junto, sem conflito — atua
+sobre um elemento HTML diferente do `<g>` que a animação CSS controla.
+
 ---
 
 ## Scroll suave (Lenis) + GSAP ScrollTrigger

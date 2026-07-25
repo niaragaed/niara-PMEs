@@ -62,6 +62,33 @@
   }
 }
 
+/* Rotação lenta do anel do planeta no hero. "to" fecha em 342deg (= -18deg
+   + 360, a inclinação estática original do traço) em vez de 360deg puro:
+   assim, quando a regra global de prefers-reduced-motion abaixo reduz a
+   animação a uma única iteração quase instantânea, o estado final
+   (rotate(342deg)) é visualmente idêntico à inclinação estática original
+   (342deg ≡ -18deg em módulo 360) — sem precisar de uma media query própria
+   para pausar/travar o traço num ângulo diferente. Precisa de
+   `forwards`: sem fill-mode, ao terminar a única iteração o navegador
+   descarta o valor do "to" e o transform volta a `none` (perde a
+   inclinação por completo) em vez de ficar parado em 342deg. */
+@keyframes hero-orbit-ring-spin {
+  from {
+    transform: rotate(-18deg);
+  }
+  to {
+    transform: rotate(342deg);
+  }
+}
+
+@layer utilities {
+  .hero-orbit-ring {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: hero-orbit-ring-spin 56s linear infinite forwards;
+  }
+}
+
 /* `inline` porque estas variáveis referenciam custom properties definidas em
    runtime pelas classes do next/font em <html>, não valores literais — ver
    docs do Tailwind v4 sobre @theme inline. */
