@@ -99,6 +99,19 @@ Os nomes dos tokens (`military`, `salmon` etc.) foram mantidos por
 compatibilidade de código mesmo após a mudança de paleta militar→sálvia —
 só os valores hex e a semântica visual mudaram.
 
+### 🔴 `h1`–`h6` e `@layer base`
+
+A cor/fonte padrão dos headings é definida em `globals.css` **dentro de
+`@layer base`** — não mover para fora dela. Regras CSS fora de qualquer
+`@layer` vencem incondicionalmente qualquer coisa dentro de uma layer
+(inclusive as utilities do Tailwind, que vivem em `@layer utilities`),
+não importa a especificidade. Sem `@layer base` aqui, uma classe como
+`text-bg` num `<h2>` (ex.: título sobre a faixa CTA de fundo verde
+sólido) simplesmente não tem efeito nenhum — foi um bug real encontrado
+e corrigido na Parte 3. Qualquer outro CSS solto adicionado a
+`globals.css` que deva conviver com as utilities do Tailwind precisa do
+mesmo tratamento.
+
 **Tipografia:** Space Grotesk (`--font-display`, títulos) · Inter
 (`--font-sans`, corpo)
 
@@ -263,13 +276,17 @@ public/
 
 ## Estado atual
 
-Homepage: header + navegação, hero com astronauta 2D guiado por scroll e
-camadas de parallax decorativas (paleta E — sálvia + pêssego), scroll
-suave via Lenis sincronizado ao GSAP ScrollTrigger, seção "Como funciona"
-como sequência pinned (um card por vez), narrativa por scroll, footer e
-`/styleguide`. Todas as rotas do nav têm stub sem 404. Testado com `tsc`,
-`eslint`, `build` e verificação visual via Playwright (desktop, mobile,
-teclado, reduced-motion) a cada parte.
+Homepage (`src/app/page.tsx`), nesta ordem: Hero (astronauta 2D + camadas
+de parallax) → Benefícios da tokenização (pêssego) → Como funciona
+(sequência pinned) → Quando posso usar a Tokenização? (sálvia) → Conheça
+os Tokens (pêssego, cards linkam para as rotas-stub de cada token) → Para
+empresas × investidores (sálvia) → Aviso de demonstração/CVM → Faixa CTA
+final (verde sólido) → Footer. Créditos (Parte 4) ainda não existe.
+
+Scroll suave via Lenis sincronizado ao GSAP ScrollTrigger. Header +
+navegação, `/styleguide`. Todas as rotas do nav têm stub sem 404. Testado
+com `tsc`, `eslint`, `build` e verificação visual via Playwright (desktop,
+mobile, teclado, reduced-motion) a cada parte.
 
 ## Pendências conhecidas
 

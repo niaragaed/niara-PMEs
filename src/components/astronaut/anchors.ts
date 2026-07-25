@@ -19,13 +19,18 @@ export type AstronautAnchor = {
 export const ASTRONAUT_ANCHORS: AstronautAnchor[] = [
   // Hero: protagonista, centralizado, encostado na base da tela.
   { id: "hero", left: "50%", top: "88%", xPercent: -50, yPercent: -50, scale: 1, opacity: 1 },
-  // Como funciona: canto direito.
-  { id: "how-it-works", left: "97%", top: "38%", xPercent: -100, yPercent: -50, scale: 0.5, opacity: 1 },
+  // Benefícios: canto direito.
+  { id: "benefits", left: "97%", top: "38%", xPercent: -100, yPercent: -50, scale: 0.5, opacity: 1 },
+  // "Como funciona" é uma sequência pinned (Parte 2) — sem âncora própria de
+  // propósito: a transição para a próxima âncora atravessa esse trecho.
+  // Quando posso usar a tokenização: canto esquerdo.
+  { id: "when-to-use", left: "3%", top: "38%", xPercent: 0, yPercent: -50, scale: 0.5, opacity: 1 },
+  // Conheça os tokens: canto direito.
+  { id: "tokens", left: "97%", top: "38%", xPercent: -100, yPercent: -50, scale: 0.5, opacity: 1 },
   // Para empresas x investidores: canto esquerdo.
   { id: "audiences", left: "3%", top: "38%", xPercent: 0, yPercent: -50, scale: 0.5, opacity: 1 },
-  // Diferenciais: canto direito de novo.
-  { id: "differentiators", left: "97%", top: "38%", xPercent: -100, yPercent: -50, scale: 0.5, opacity: 1 },
-  // CTA final: desaparece por completo.
+  // CTA final: desaparece por completo. TODO Parte 4: mover o fade-out para
+  // a seção "credits" quando ela existir.
   { id: "final-cta", left: "50%", top: "50%", xPercent: -50, yPercent: -50, scale: 0.35, opacity: 0 },
 ];
 

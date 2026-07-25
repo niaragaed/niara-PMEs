@@ -44,10 +44,27 @@ export const ptBr = {
     ctaSecondary: "Saiba mais",
   },
   sections: {
-    whatIs: {
-      title: "Uma nova forma de estruturar o capital da sua empresa",
+    benefits: {
+      title: "Benefícios da tokenização às pequenas e médias empresas",
       subtitle:
-        "A Niara PMEs organiza o processo de captação e o registro de participações societárias via tokenização, para pequenas e médias empresas.",
+        "Transforme parte da sua empresa ou de seu patrimônio em cotas digitais. Capte recursos direto com investidores, transfira cotas, de maneira mais barata, 100% online e segura.",
+      items: [
+        {
+          title: "Vantagem Tributária",
+          description:
+            "Acelere a distribuição e negociação de Tokens societários e forneça opções de planejamento sucessório através de soluções inteligentes.",
+        },
+        {
+          title: "Crédito mais Barato e Justo",
+          description:
+            "Fuja das taxas abusivas e da burocracia dos bancos tradicionais através de negociações Peer-to-Peer gerenciadas pela plataforma.",
+        },
+        {
+          title: "Gestão no Piloto Automático",
+          description:
+            "Esqueça as planilhas confusas. Nosso sistema organiza automaticamente quem são seus investidores e distribui os lucros, assembleias ou juros.",
+        },
+      ],
     },
     howItWorks: {
       title: "Como funciona",
@@ -94,21 +111,50 @@ export const ptBr = {
         ],
       },
     },
-    differentiators: {
-      title: "Diferenciais",
+    whenToUse: {
+      title: "Quando posso usar a Tokenização?",
       items: [
         {
-          title: "Custo menor",
-          description: "Processo mais enxuto que os canais tradicionais de captação.",
+          title: "Abertura de novas Filiais",
+          description: "Financie a expansão da sua loja dividindo os lucros futuros com seus clientes.",
         },
         {
-          title: "Registro on-chain",
+          title: "Antecipação do Caixa",
+          description: "Tem dinheiro para receber só daqui a 90 dias? Transforme essas notas em dinheiro hoje.",
+        },
+        {
+          title: "Lançamento de um novo produto",
           description:
-            "Cap table registrado como referência probatória adicional — não substitui os livros societários exigidos pela Lei 6.404 nem o registro em cartório.",
+            "Levante capital para tirar sua ideia do papel sem se endividar no cartão de crédito da empresa.",
         },
         {
-          title: "Transparência",
-          description: "Condições da oferta visíveis para todas as partes envolvidas.",
+          title: "Quer criar um token?",
+          description: "Estudamos estruturas moldadas à sua ideia, caso faça sentido a criação de um token.",
+        },
+      ],
+    },
+    tokens: {
+      title: "Conheça os Tokens",
+      items: [
+        {
+          title: "Token PMEs",
+          description: "Token de participação para pequenas e médias empresas.",
+          href: "/negociar/token-pmes",
+        },
+        {
+          title: "Token Auto",
+          description: "Token voltado ao setor automotivo.",
+          href: "/negociar/token-auto",
+        },
+        {
+          title: "Token Agro",
+          description: "Token voltado a operações e ativos do agronegócio.",
+          href: "/negociar/token-agro",
+        },
+        {
+          title: "Token Imobiliário",
+          description: "Token lastreado em ativos imobiliários.",
+          href: "/negociar/token-imobiliario",
         },
       ],
     },

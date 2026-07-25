@@ -65,20 +65,27 @@
   color: var(--color-ink);
 }
 
-body {
-  background-color: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-}
+/* Em `@layer base`: sem isso, estas regras (fora de qualquer layer) vencem
+   incondicionalmente as utilities do Tailwind v4 (que vivem em `@layer
+   utilities`), não importa a especificidade — ex.: `text-bg` num <h2> não
+   teria efeito nenhum para sobrescrever a cor padrão em seções de fundo
+   escuro (faixa CTA). */
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--color-ink);
-  font-family: var(--font-display);
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-ink);
+    font-family: var(--font-display);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
