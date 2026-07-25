@@ -75,6 +75,23 @@
   --color-chart-auto: #7fa9a3;
   --color-chart-divida: #b49fc0;
 
+  /* Chip + ícone por categoria de token (telas /negociar) — usados sobre
+     card BRANCO (bg-surface), não sobre bg-military: cada par chip/ícone é
+     um tint claro + um tom escuro saturado da mesma família, mesmo padrão
+     de contraste já usado em chip-sage/ink-peach. Token PMEs reaproveita
+     salmon-100/ink-peach (já existentes) em vez de duplicar; Token Agro
+     reaproveita military-100 (chip) com um verde mais escuro próprio para
+     o ícone, já que ink/military não foi calibrado para ícone pequeno.
+     Não usar em texto solto sobre bg-military — são específicos de chip
+     sobre superfície clara. */
+  --color-cat-agro-icon: #3b5a22;
+  --color-cat-imobiliario-chip: #faeeda;
+  --color-cat-imobiliario-icon: #854f0b;
+  --color-cat-auto-chip: #e1f5ee;
+  --color-cat-auto-icon: #0f6e56;
+  --color-cat-divida-chip: #eeedfe;
+  --color-cat-divida-icon: #3c3489;
+
   /* Raio */
   --radius-sm: 8px;
   --radius-md: 12px;
