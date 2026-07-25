@@ -32,7 +32,7 @@ export function Hero() {
             disabled
             aria-disabled="true"
             title={ptBr.common.emBreve}
-            className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/50 px-6 py-3 text-sm font-medium text-ink/60"
+            className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/90 px-6 py-3 text-sm font-medium text-on-salmon"
           >
             {ptBr.hero.ctaPrimary}
             <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
