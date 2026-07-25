@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AllocationDonut } from "./AllocationDonut";
+import { AssetCatalog } from "./AssetCatalog";
 import { PortfolioEvolutionChart } from "./PortfolioEvolutionChart";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { PositionsTable } from "./PositionsTable";
@@ -79,9 +80,9 @@ export function AtivosPage() {
             id="ativos-panel-disponiveis"
             role="tabpanel"
             aria-labelledby="ativos-tab-disponiveis"
-            className="mt-8 rounded-lg border border-panel-border bg-panel p-6 text-sm text-on-military-muted"
+            className="mt-8"
           >
-            {ptBr.common.emConstrucao}
+            <AssetCatalog />
           </div>
         )}
       </div>
