@@ -2,7 +2,6 @@ export const ptBr = {
   common: {
     pularParaConteudo: "Pular para o conteúdo",
     emBreve: "Em breve",
-    emConstrucao: "Em construção",
     demonstracao: "Demonstração",
     avisoDemonstracao:
       "Conteúdo institucional e de demonstração. Nenhuma oferta real de investimento está disponível nesta fase.",
@@ -677,36 +676,169 @@ export const ptBr = {
       title: "Fale direto com a gente",
     },
   },
-  stubs: {
-    ativosTokens: {
+  negociar: {
+    demoBanner: {
+      label: "Demonstração",
+      text: "nenhuma oferta real disponível. Categorias e exemplos são ilustrativos.",
+    },
+    hub: {
+      meta: {
+        title: "Ativos e tokens",
+        description: "Os tipos de ativo que podem ser tokenizados na plataforma, em demonstração.",
+      },
       title: "Ativos e tokens",
-      description:
-        "Visão geral dos tipos de ativo tokenizados na plataforma. Conteúdo em construção — fase de demonstração.",
+      subtitle:
+        "Os tipos de ativo que podem ser tokenizados na plataforma. Escolha uma categoria para entender como funciona.",
+      verCategoria: "Ver categoria →",
     },
-    tokenPmes: {
-      title: "Token PMEs",
-      description:
-        "Token de participação para pequenas e médias empresas. Conteúdo em construção — fase de demonstração.",
+    vitrine: {
+      title: "Vitrine (demonstração)",
+      tagExemplo: "Exemplo fictício · valores simulados",
+      verDetalhes: "Ver detalhes",
     },
-    tokenAgro: {
-      title: "Token agro",
-      description:
-        "Token voltado a operações e ativos do agronegócio. Conteúdo em construção — fase de demonstração.",
+    categorias: {
+      pmes: {
+        descricaoCurta: "Participação societária ou recebíveis de pequenas e médias empresas.",
+        lastro: "Participação societária ou recebível de PME",
+        casosDeUso: [
+          "Abertura de novas filiais ou unidades",
+          "Antecipação de caixa de recebíveis",
+          "Capital de giro para lançar um novo produto",
+        ],
+      },
+      agro: {
+        descricaoCurta: "Operações e ativos do agronegócio, como safras e maquinário.",
+        lastro: "Operação agrícola, maquinário ou recebível do agronegócio",
+        casosDeUso: [
+          "Custeio de safra e capital de giro",
+          "Aquisição ou renovação de maquinário",
+          "Antecipação de recebíveis da produção",
+        ],
+      },
+      imobiliario: {
+        descricaoCurta: "Cotas e recebíveis lastreados em empreendimentos imobiliários.",
+        lastro: "Cotas de SPE ou recebível imobiliário",
+        casosDeUso: [
+          "Financiamento de obra em andamento",
+          "Aquisição de novo imóvel ou terreno",
+          "Antecipação de recebíveis de locação ou venda",
+        ],
+      },
+      auto: {
+        descricaoCurta: "Frotas, veículos e serviços do setor automotivo.",
+        lastro: "Frota de veículos ou operação do setor automotivo",
+        casosDeUso: [
+          "Renovação ou ampliação de frota",
+          "Expansão de rede de oficinas ou serviços",
+          "Capital de giro para peças e estoque",
+        ],
+      },
+      divida: {
+        descricaoCurta: "Instrumentos de dívida estruturados, como antecipação de recebíveis.",
+        lastro: "Recebível ou dívida estruturada da empresa",
+        casosDeUso: [
+          "Antecipação de recebíveis de venda",
+          "Capital de giro de curto prazo",
+          "Financiamento de estoque sazonal",
+        ],
+      },
     },
-    tokenImobiliario: {
-      title: "Token imobiliário",
-      description:
-        "Token lastreado em ativos imobiliários. Conteúdo em construção — fase de demonstração.",
+    categoriaTemplate: {
+      voltar: "‹ Ativos e tokens",
+      fichaTitle: "Ficha do ativo",
+      lastro: "Lastro",
+      publico: "Público",
+      publicoValor: "Investidores cadastrados na plataforma",
+      enquadramento: "Enquadramento",
+      enquadramentoValor: "A validar (CVM)",
+      estagio: "Estágio",
+      estagioValor: "Protótipo",
+      casosDeUsoTitle: "Casos de uso",
+      vitrineTitle: "Exemplos (demonstração)",
+      notaRodape:
+        "Exemplos fictícios com valores simulados. Não constitui oferta pública de valores mobiliários. Ofertas dependem das autorizações aplicáveis da CVM.",
     },
-    tokenAuto: {
-      title: "Token auto",
-      description:
-        "Token voltado ao setor automotivo. Conteúdo em construção — fase de demonstração.",
+    oferta: {
+      demoBanner: "Conteúdo de demonstração — sem oferta real.",
+      voltarCategoria: "‹ Voltar para a categoria",
+      dadosPublicos: {
+        title: "Dados públicos da empresa",
+        razaoSocial: "Razão social",
+        cnpj: "CNPJ (fictício)",
+        setor: "Setor",
+        localizacao: "Localização",
+        resumo: "Resumo do negócio",
+      },
+      financeiro: {
+        title: "Financeiro / caixa (demonstração)",
+        receitaAnual: "Receita anual",
+        caixaDisponivel: "Caixa disponível",
+        endividamento: "Endividamento",
+        nota: "Indicadores simulados — dados fictícios.",
+        seriesReceita: "Receita",
+        seriesCaixa: "Caixa",
+        chartDescription:
+          "Descrição do gráfico: evolução simulada de receita e caixa nos últimos 6 meses. Dados fictícios, sem relação com o desempenho real da empresa.",
+      },
+      termos: {
+        title: "Termos da oferta",
+        tipoToken: "O que o token representa",
+        tipoTokenValores: {
+          participacao: "Participação societária / cotas",
+          recebivel: "Recebível",
+          divida: "Dívida",
+        },
+        metaCaptacao: "Meta de captação",
+        valorPorToken: "Valor por token/cota",
+        quantidadeTokens: "Quantidade de tokens/cotas",
+        prazo: "Prazo",
+        prazoMeses: (meses: number) => `${meses} meses`,
+        nota: "Qualquer estimativa de rendimento é ilustrativa e não constitui promessa de retorno.",
+      },
+      documentos: {
+        title: "Documentos",
+        emBreve: "Em breve",
+      },
+      riscos: {
+        title: "Riscos e avisos",
+        itens: [
+          "Investir em valores mobiliários envolve risco de perda, inclusive total, do capital investido.",
+          "Nenhuma rentabilidade é prometida ou garantida; qualquer estimativa é meramente ilustrativa.",
+          "Este ambiente é de demonstração: não há oferta pública real disponível e nenhuma ordem enviada aqui é real.",
+          "Ofertas futuras dependerão das autorizações regulatórias aplicáveis (Resolução CVM 88) e de plataforma autorizada/registrada pela CVM.",
+          "O registro on-chain, quando existir, é probatório de integridade e anterioridade — não substitui os livros societários da Lei 6.404 nem o registro em cartório.",
+        ],
+      },
+      negociarBotao: "Negociar (simulação)",
+      naoEncontrada: {
+        title: "Oferta não encontrada",
+        description: "Esta oferta de demonstração não existe ou foi removida.",
+        voltar: "‹ Ativos e tokens",
+      },
     },
-    titulosDivida: {
-      title: "Títulos de dívida",
-      description:
-        "Instrumentos de dívida estruturados via tokenização. Conteúdo em construção — fase de demonstração.",
+    boleta: {
+      title: "Boleta (simulação)",
+      fecharAria: "Fechar boleta",
+      demoBanner: "Demonstração — nenhuma ordem real é enviada. Não há negociação real de valores mobiliários.",
+      ladoGroupLabel: "Comprar ou vender",
+      comprar: "Comprar",
+      vender: "Vender",
+      quantidade: "Quantidade (tokens/cotas)",
+      preco: "Preço (R$)",
+      totalEstimado: "Total estimado",
+      taxa: "Taxa (estimada / a definir)",
+      saldoSimulado: "Saldo simulado",
+      revisarBotao: "Revisar (simulação)",
+      confirmarBotao: "Confirmar (simulação)",
+      voltarEditarBotao: "Voltar e editar",
+      resumoTitle: "Resumo da ordem (simulação)",
+      resultado: (lado: "buy" | "sell", quantidade: number, nome: string) =>
+        `Ordem simulada registrada — ${lado === "buy" ? "compra" : "venda"} de ${quantidade} ${nome} — nenhuma transação real ocorreu.`,
+      novaOrdemBotao: "Nova ordem (simulação)",
+      erros: {
+        quantidadeInvalida: "Informe uma quantidade válida, maior que zero.",
+        precoInvalido: "Informe um preço válido, maior que zero.",
+      },
     },
   },
 } as const;

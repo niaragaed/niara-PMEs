@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { StubPage } from "@/components/ui/StubPage";
+import { CategoryPage } from "@/components/negociar/CategoryPage";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-export const metadata: Metadata = { title: `${ptBr.stubs.tokenAuto.title} · Niara PMEs` };
+export const metadata: Metadata = {
+  title: `${ptBr.ativos.categorias.auto} · Niara PMEs`,
+  description: ptBr.negociar.categorias.auto.descricaoCurta,
+};
 
 export default function Page() {
-  return <StubPage {...ptBr.stubs.tokenAuto} />;
+  return <CategoryPage categoria="auto" />;
 }
