@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroParallaxLayers } from "./HeroParallaxLayers";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 // O astronauta agora é um elemento 2D persistente e fixo (AstronautGuide,
@@ -11,7 +12,9 @@ export function Hero() {
       id="hero"
       className="relative flex min-h-[86vh] flex-col items-center justify-center overflow-hidden px-6 py-16 text-center sm:min-h-[90vh]"
     >
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6">
+      <HeroParallaxLayers />
+
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
         <span className="rounded-full bg-military-100 px-4 py-1 text-sm font-medium text-military">
           {ptBr.hero.badge}
         </span>

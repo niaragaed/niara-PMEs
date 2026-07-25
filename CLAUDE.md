@@ -176,6 +176,38 @@ reproduzia com fidelidade a arte aprovada.
 
 ---
 
+## Scroll suave (Lenis) + GSAP ScrollTrigger
+
+`src/components/scroll/LenisProvider.tsx`, montado no layout raiz (envolve
+`Header` + conteúdo + `Footer`, global ao site).
+
+- Lenis roda em modo `root` (sem wrapper/content — hookeia o scroll nativo
+  do `window`), com `autoRaf: false`: quem dirige o tick é o
+  `gsap.ticker`, e `lenis.on('scroll', ScrollTrigger.update)` mantém o
+  ScrollTrigger sincronizado. Padrão recomendado pela própria GSAP para
+  integrar com Lenis.
+- Com `prefers-reduced-motion`, o Lenis **nem é montado** — o componente
+  renderiza `children` direto, sem o wrapper `<ReactLenis>`. Como o
+  `ReactLenis` em modo `root` não insere nenhum elemento DOM (só um
+  `Context.Provider`), os dois caminhos produzem exatamente o mesmo
+  markup — sem risco de mismatch de hidratação por causa disso.
+- Teclado (Page Up/Down, setas, Espaço) e âncoras (`#hash`) continuam
+  funcionando com o Lenis ativo — testado via Playwright.
+
+### 🔴 Pegadinha do pin dentro de `<main>` flex (`pinSpacing`)
+
+Qualquer `ScrollTrigger.create({ pin: true, ... })` numa seção cujo pai
+seja `display: flex` (o `<main className="flex flex-1 flex-col">` da
+home é) **precisa** de `pinSpacing: true` explícito. Por padrão, o GSAP
+detecta pai `display:flex` e desativa o `pinSpacing` automaticamente
+(assumindo que o flex já cuida do espaçamento) — sem isso, o
+pin-spacer não reserva o espaço extra de scroll e a seção "solta" cedo
+demais, revelando o conteúdo de baixo no meio da sequência. Ver
+`HowItWorksSection.tsx` para o padrão correto. Isso vale para qualquer
+seção pinned futura dentro do `<main>` da home.
+
+---
+
 ## Organização
 
 ```
@@ -183,9 +215,10 @@ src/
   app/                 rotas (App Router)
   components/
     astronaut/         AstronautGuide + anchors.ts (guia de scroll)
-    hero/              hero (headline, CTAs)
+    hero/              hero (headline, CTAs), HeroParallaxLayers
     nav/               header, dropdowns, menu mobile
-    sections/          narrativa por scroll (home)
+    scroll/            LenisProvider (smooth scroll + sync com ScrollTrigger)
+    sections/          narrativa por scroll (home), inclui pin de "Como funciona"
     ui/                compartilhados (Logo, botões etc.)
   lib/
     i18n/              dicionário de textos (pt-br.ts)
@@ -230,11 +263,13 @@ public/
 
 ## Estado atual
 
-Homepage: header + navegação, hero com astronauta 2D guiado por scroll
-(paleta E — sálvia + pêssego), narrativa por scroll, footer e
+Homepage: header + navegação, hero com astronauta 2D guiado por scroll e
+camadas de parallax decorativas (paleta E — sálvia + pêssego), scroll
+suave via Lenis sincronizado ao GSAP ScrollTrigger, seção "Como funciona"
+como sequência pinned (um card por vez), narrativa por scroll, footer e
 `/styleguide`. Todas as rotas do nav têm stub sem 404. Testado com `tsc`,
 `eslint`, `build` e verificação visual via Playwright (desktop, mobile,
-teclado) a cada parte.
+teclado, reduced-motion) a cada parte.
 
 ## Pendências conhecidas
 

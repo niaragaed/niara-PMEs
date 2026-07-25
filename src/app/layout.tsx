@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { Header } from "@/components/nav/Header";
 import { Footer } from "@/components/nav/Footer";
+import { LenisProvider } from "@/components/scroll/LenisProvider";
 import { ptBr } from "@/lib/i18n/pt-br";
 import "./globals.css";
 
@@ -38,11 +39,13 @@ export default function RootLayout({
         >
           {ptBr.common.pularParaConteudo}
         </a>
-        <Header />
-        <div id="main-content" className="flex flex-1 flex-col">
-          {children}
-        </div>
-        <Footer />
+        <LenisProvider>
+          <Header />
+          <div id="main-content" className="flex flex-1 flex-col">
+            {children}
+          </div>
+          <Footer />
+        </LenisProvider>
       </body>
     </html>
   );
