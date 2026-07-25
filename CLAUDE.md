@@ -397,16 +397,138 @@ foi corrigida (fundo do card mais escuro que a seção, não mais claro).
 
 ---
 
+## Tela `/perfil` (cadastro, empresas, perfil de investidor, carteira)
+
+Substituiu o stub antigo ("Perfil — em construção"). Inspirada na página
+Profile do `niara-site` (repositório irmão) — mesma estrutura de
+sidebar + seções e mesma lógica de questionário de perfil de investidor
+(porém traduzida e com conteúdo próprio) — mas adaptada ao tema
+verde-sálvia cheio (`bg-military`, igual à tela `/ativos`, não o dashboard
+escuro do `niara-site`) e com duas adições específicas de PME: documento
+CPF **ou** CNPJ e cadastro de empresa com escolha de finalidade
+(investidora / a ser tokenizada). Ver `PerfilPage.tsx` (orquestrador) e os
+componentes em `src/components/perfil/`.
+
+**Estrutura da página** (`PerfilPage.tsx`, `"use client"` por causa do
+estado do contexto de perfil de investidor):
+
+- Banner de demonstração fixo no topo (mesmo padrão do banner de `/ativos`)
+- Faixa de aviso de KYC (`bg-panel`): "Não verificado" + texto explicando
+  que a verificação de identidade será exigida quando o produto entrar no
+  ar e que nenhuma aprovação é simulada aqui
+- Badges de status (`ShieldAlert` "Não verificado" + `TrendingUp` "Perfil:
+  {categoria atual}")
+- Sidebar de navegação por âncora (`PerfilNav.tsx` — sticky no desktop,
+  abas horizontais roláveis no mobile, mesmo padrão do `ProfileNav` do
+  `niara-site`) + quatro seções empilhadas, nesta ordem: **Dados de
+  cadastro** → **Empresas** → **Perfil de investidor** → **Carteira**.
+
+**Tokens de cor**: a tela reaproveita os tokens já criados para `/ativos`
+(`panel`/`panel-border` para cards, `on-military`/`on-military-muted`
+para texto, `value-negative` para erro de validação, `salmon`/`on-salmon`
+para CTAs e estado ativo) — **nenhum token novo foi criado**. Campos de
+formulário usam `bg-military` (mais claro que o `panel` do card que os
+contém, para ficarem visualmente distintos) com borda `panel-border` e
+anel de foco `ring-salmon`; erro de validação usa borda e texto
+`value-negative` (já calibrado para AA contra `military`/`panel`, ver
+"Tokens do dashboard `/ativos`" acima).
+
+### 1. Dados de cadastro (`PersonalDataSection.tsx`)
+
+Alternância Pessoa física/jurídica (mesmo padrão visual das abas de
+`/ativos`) controla o campo de documento (`maskCPF`/`maskCNPJ`, ver
+`src/lib/masks.ts`) e os campos exclusivos de cada tipo (Nome completo +
+Data de nascimento para PF; Razão social + Nome fantasia para PJ).
+`AvatarUpload.tsx` é a mesma lógica do `niara-site` (object URL local via
+`URL.createObjectURL`, revogado no cleanup do `useEffect` e ao trocar de
+imagem) — **a imagem nunca é enviada**, só existe como blob no navegador.
+
+🔴 **LGPD**: CPF/CNPJ, data de nascimento, endereço, telefone e a foto de
+avatar vivem **só em estado React** (`useState`), nunca em
+`localStorage`/`sessionStorage`/cookies — mesma regra que os demais dados
+de perfil abaixo. "Salvar (simulação)" só move o rascunho (`draft`) para o
+estado "salvo" (`saved`) da própria sessão do componente; nada sai do
+navegador.
+
+### 2. Empresas (`CompaniesSection.tsx`)
+
+Botão "Cadastrar empresa" abre um formulário cuja primeira escolha é a
+**finalidade**: empresa investidora ou empresa a ser tokenizada
+(`radio`, não `select`, para deixar as duas opções visíveis lado a lado
+com a descrição de cada uma). Setor/categoria reaproveita o tipo
+`TokenCategory` e os rótulos de `ptBr.ativos.categorias` já usados em
+`/ativos` (mesmas 5 classes: PMEs, Agro, Imobiliário, Auto, Títulos de
+dívida) — evita duplicar taxonomia. Empresas cadastradas entram em
+"Minhas empresas" (estado em memória, `crypto.randomUUID()` como id),
+com badge de finalidade e ações Editar/Remover (simulação). Ao escolher
+"a ser tokenizada", aparece a nota de que a estruturação da oferta é um
+fluxo à parte e o botão "Estruturar oferta" fica desabilitado/rotulado
+"(Em breve)" — mesmo padrão de botão do CTA do Hero e do catálogo de
+`/ativos`. LGPD: CNPJ e demais dados da empresa também só em memória.
+
+### 3. Perfil de investidor (`InvestorProfileSection.tsx` + `InvestorProfileQuiz.tsx` + `InvestorProfileResultCard.tsx`)
+
+Explica que a seção equivale à API (Análise do Perfil do Investidor) da
+CVM e que, em produção, o questionário seria obrigatório antes do cadastro
+se completar — "aqui, por ser demonstração, o restante do site continua
+acessível" (nada bloqueia navegação). Um resultado padrão
+(`DEFAULT_INVESTOR_PROFILE` em `src/lib/investor-profile.ts`, categoria
+"Arrojado", avaliado em 19/07/2026) já vem preenchido — diferente do
+`niara-site`, onde o perfil nasce "pendente" até o usuário responder —
+porque aqui não há persistência entre sessões para reidratar um resultado
+real, então começar vazio deixaria a demonstração sempre no estado
+"pendente". "Refazer avaliação" abre o questionário (5 perguntas, pt-BR,
+conteúdo em `ptBr.perfil.investidor.quiz.questions`) e, ao concluir,
+recalcula a categoria (`categorizeScore`, mesma lógica de tercis do
+`niara-site`) e volta para o card de resultado. O resultado (categoria +
+escore + data) fica só no `PerfilContext` (React, em memória) — **nunca**
+em `localStorage`, diferente do `niara-site` (que persiste lá); decisão
+deliberada para manter a mesma garantia de "nada persiste além da sessão"
+que o resto da tela de perfil já promete.
+
+A escala Conservador–Moderado–Arrojado é uma barra de gradiente
+(`aria-hidden`, decorativa) com um indicador na posição do escore — a
+alternativa acessível são os três rótulos de texto acima da barra (não a
+barra em si), mesmo padrão de acessibilidade do donut de `/ativos` (SVG
+decorativo + lista/texto real ao lado). Blocos "O que este perfil
+significa"/"Reação a risco e volatilidade"/"Classes de ativos mais
+adequadas" e o disclaimer ("resultado ilustrativo, não constitui
+recomendação...") vêm de `ptBr.perfil.investidor.categoryDetails`.
+
+### 4. Carteira (`WalletSection.tsx`)
+
+Conexão de carteira **simulada** — nenhuma lib de wallet (wagmi/viem etc.)
+é usada, diferente do `ConnectWallet` real do `niara-site`. Estado inicial
+"Nenhuma carteira conectada nesta sessão"; cada clique em "Conectar
+carteira (simulação)" consome a próxima carteira de um pool fixo de duas
+(`DEMO_WALLET_POOL` em `src/lib/mock/perfil.ts`, endereços de exemplo em
+Ethereum Sepolia/testnet) — a primeira conectada vira "Principal"
+automaticamente. Ações "Definir como principal"/"Remover" (simulação); ao
+remover a carteira principal, a próxima da lista (se houver) é promovida
+automaticamente, para nunca deixar a lista num estado sem principal com
+outras carteiras presentes. Texto reforça testnet/simulação — nada de
+mainnet nem transação real.
+
+---
+
 ## Organização
 
 ```
 src/
   app/                 rotas (App Router)
     ativos/page.tsx    dashboard de portfólio (ver "Tela /ativos" abaixo)
+    perfil/page.tsx    tela de perfil (ver "Tela /perfil" abaixo)
   components/
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
                        (recharts), PositionsTable, AssetCatalog
+    perfil/            PerfilPage (sidebar + badges + banners),
+                       PerfilContext (perfil de investidor, em memória),
+                       PersonalDataSection + AvatarUpload,
+                       CompaniesSection, InvestorProfileSection +
+                       InvestorProfileQuiz + InvestorProfileResultCard,
+                       WalletSection, FormField (TextField/SelectField/
+                       ReadField compartilhados)
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
@@ -417,9 +539,17 @@ src/
     ativos/derive.ts   funções puras de derivação (totais, alocação por
                        classe/ativo/setor) a partir do mock de /ativos
     format.ts          formatBRL/formatSignedBRL/formatPercent (Intl pt-BR)
+    investor-profile.ts lógica pura de score/categorização do perfil de
+                       investidor (conteúdo do questionário vem do
+                       dicionário i18n, ver abaixo)
+    masks.ts           máscaras e validações de formato (CPF/CNPJ/CEP/
+                       telefone/data) da tela /perfil — validação só de
+                       formato/comprimento, sem dígito verificador
     i18n/              dicionário de textos (pt-br.ts)
     mock/ativos.ts     dados fictícios tipados da tela /ativos (posições,
                        evolução mensal, catálogo) — nunca dado real
+    mock/perfil.ts     pool de carteiras demo (endereços testnet) da tela
+                       /perfil — nunca dado real
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
   niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)
@@ -507,9 +637,10 @@ creditar.
   juridicamente. Não alterar nem expandir esses textos sem instrução.
 - Formulário de contato real, autenticação, backend — fora de escopo por
   ora
-- Conteúdo real das páginas-stub (`/negociar/*`, `/perfil`, `/sobre/*`) —
-  hoje só exibem aviso de "em construção". `/ativos` deixou de ser stub
-  (ver "Tela /ativos" abaixo) — não reverter para `StubPage`.
+- Conteúdo real das páginas-stub (`/negociar/*`, `/sobre/*`) — hoje só
+  exibem aviso de "em construção". `/ativos` e `/perfil` deixaram de ser
+  stub (ver "Tela /ativos" e "Tela /perfil" abaixo) — não reverter nenhuma
+  das duas para `StubPage`.
 - **Bug conhecido (pré-existente, não corrigido nesta rodada):**
   `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
   framer-motion, que lê `window.matchMedia` de forma síncrona já no
