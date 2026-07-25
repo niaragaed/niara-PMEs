@@ -25,12 +25,12 @@ export function SectionCard({ chip, title, description, href }: SectionCardProps
     return (
       <Link
         href={href}
-        className="flex flex-col rounded-lg bg-surface p-6 shadow-soft transition-shadow hover:shadow-soft-lg"
+        className="flex h-full flex-col rounded-lg bg-surface p-6 shadow-soft transition-shadow hover:shadow-soft-lg"
       >
         {content}
       </Link>
     );
   }
 
-  return <div className="flex flex-col rounded-lg bg-surface p-6 shadow-soft">{content}</div>;
+  return <div className="flex h-full flex-col rounded-lg bg-surface p-6 shadow-soft">{content}</div>;
 }

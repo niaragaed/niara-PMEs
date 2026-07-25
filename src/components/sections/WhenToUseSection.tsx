@@ -14,9 +14,9 @@ export function WhenToUseSection() {
           </h2>
         </Reveal>
 
-        <RevealGroup className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <RevealGroup className="mt-12 grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {ptBr.sections.whenToUse.items.map((item, index) => (
-            <RevealItem key={item.title}>
+            <RevealItem key={item.title} className="h-full">
               <SectionCard chip={index + 1} title={item.title} description={item.description} />
             </RevealItem>
           ))}
