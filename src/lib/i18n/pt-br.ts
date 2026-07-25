@@ -297,6 +297,242 @@ export const ptBr = {
       investir: "Investir",
     },
   },
+  perfil: {
+    meta: {
+      title: "Perfil",
+      description: "Área de perfil — dados de cadastro, empresas, perfil de investidor e carteira, em demonstração.",
+    },
+    title: "Perfil",
+    subtitle: "Seus dados de cadastro, empresas, perfil de investidor e carteira.",
+    demoBanner: {
+      label: "Demonstração",
+      text: "dados de perfil simulados. Nada aqui é enviado a um servidor ou persistido além desta sessão do navegador.",
+    },
+    kyc: {
+      naoVerificado: "Não verificado",
+      aviso:
+        "A verificação de identidade (KYC) será exigida quando o produto entrar no ar. Nenhuma aprovação é simulada aqui.",
+    },
+    badges: {
+      perfilPrefix: "Perfil",
+    },
+    nav: {
+      ariaLabel: "Seções do perfil",
+      dadosCadastro: "Dados de cadastro",
+      empresas: "Empresas",
+      perfilInvestidor: "Perfil de investidor",
+      carteira: "Carteira",
+    },
+    dadosCadastro: {
+      title: "Dados de cadastro",
+      tipoPessoa: {
+        legend: "Tipo de cadastro",
+        pessoaFisica: "Pessoa física",
+        pessoaJuridica: "Pessoa jurídica",
+      },
+      avatar: {
+        changeLabel: "Alterar",
+        removeLabel: "Remover",
+        selectLabel: "Selecionar imagem de avatar",
+        photoAlt: "Foto de perfil",
+        hint: "JPG ou PNG, até 2MB. A imagem não é enviada — permanece apenas no seu navegador.",
+        invalidType: "Selecione um arquivo de imagem (JPG ou PNG).",
+        tooLarge: "A imagem deve ter até 2MB.",
+      },
+      secaoPessoal: "Dados pessoais",
+      secaoEndereco: "Endereço",
+      campos: {
+        pais: "País",
+        brasil: "Brasil",
+        nomeCompleto: "Nome completo",
+        razaoSocial: "Razão social",
+        nomeFantasia: "Nome fantasia",
+        documentoCpf: "CPF",
+        documentoCnpj: "CNPJ",
+        dataNascimento: "Data de nascimento",
+        email: "Email",
+        telefone: "Telefone",
+        cep: "CEP",
+        logradouro: "Rua",
+        numero: "Número",
+        complemento: "Complemento",
+        bairro: "Bairro",
+        cidade: "Cidade",
+        estado: "Estado",
+        selecionarEstado: "Selecione",
+      },
+      salvar: "Salvar (simulação)",
+      cancelar: "Cancelar",
+      editar: "Editar",
+      salvarNota: "Ao salvar, os dados permanecem apenas nesta sessão do navegador — é uma simulação, nada é enviado a um servidor.",
+      salvoConfirmacao: "Dados salvos nesta sessão (simulação).",
+      naoInformado: "Não informado",
+      erros: {
+        obrigatorio: "Campo obrigatório.",
+        documentoInvalido: "Documento inválido.",
+        dataInvalida: "Data inválida.",
+        emailInvalido: "Email inválido.",
+        telefoneInvalido: "Telefone inválido.",
+        cepInvalido: "CEP inválido.",
+      },
+    },
+    empresas: {
+      title: "Empresas",
+      subtitle: "Cadastre empresas investidoras ou empresas que pretendem captar via tokenização.",
+      cadastrarBotao: "Cadastrar empresa",
+      formTitle: "Cadastrar empresa",
+      finalidade: {
+        legend: "Finalidade",
+        investidora: {
+          label: "Empresa investidora",
+          descricao: "A empresa vai investir na plataforma.",
+        },
+        tokenizada: {
+          label: "Empresa a ser tokenizada",
+          descricao: "A empresa quer captar recursos ou estruturar uma oferta via tokenização.",
+        },
+      },
+      campos: {
+        razaoSocial: "Razão social",
+        nomeFantasia: "Nome fantasia",
+        cnpj: "CNPJ",
+        setor: "Setor / categoria",
+        email: "Email de contato",
+        telefone: "Telefone de contato",
+        selecionarSetor: "Selecione",
+      },
+      cadastrarSimulacao: "Cadastrar (simulação)",
+      cancelar: "Cancelar",
+      notaTokenizada:
+        "A estruturação da oferta de tokenização é um fluxo à parte, ainda não disponível. Nenhuma aprovação ou estruturação real é feita aqui.",
+      estruturarOfertaBotao: "Estruturar oferta",
+      lista: {
+        title: "Minhas empresas",
+        vazio: "Nenhuma empresa cadastrada nesta sessão.",
+        editar: "Editar",
+        remover: "Remover",
+      },
+      erros: {
+        obrigatorio: "Campo obrigatório.",
+        cnpjInvalido: "CNPJ inválido.",
+        emailInvalido: "Email inválido.",
+        telefoneInvalido: "Telefone inválido.",
+      },
+    },
+    investidor: {
+      title: "Perfil de investidor",
+      subtitle:
+        "Equivalente à API (Análise de Perfil do Investidor) exigida pela CVM. Em produção, o questionário seria obrigatório antes de operar, e o cadastro só se completaria após respondê-lo — aqui, por ser demonstração, o restante do site continua acessível.",
+      avaliadoEm: (data: string) => `Avaliado em ${data}`,
+      categorias: {
+        conservador: "Conservador",
+        moderado: "Moderado",
+        arrojado: "Arrojado",
+      },
+      quiz: {
+        questionCounter: (atual: number, total: number) => `Pergunta ${atual} de ${total}`,
+        voltar: "Voltar",
+        proximo: "Próxima",
+        verResultado: "Ver resultado",
+        questions: [
+          {
+            id: "objetivo",
+            prompt: "Qual é o principal objetivo do seu investimento?",
+            options: [
+              { label: "Preservar o patrimônio que já tenho", weight: 1 },
+              { label: "Complementar renda com previsibilidade", weight: 2 },
+              { label: "Crescimento equilibrado no médio prazo", weight: 3 },
+              { label: "Maximizar retorno, aceitando oscilações", weight: 4 },
+            ],
+          },
+          {
+            id: "horizonte",
+            prompt: "Por quanto tempo pretende manter esse investimento?",
+            options: [
+              { label: "Menos de 1 ano", weight: 1 },
+              { label: "De 1 a 3 anos", weight: 2 },
+              { label: "De 3 a 5 anos", weight: 3 },
+              { label: "Mais de 5 anos", weight: 4 },
+            ],
+          },
+          {
+            id: "experiencia",
+            prompt: "Qual sua experiência com ações e ativos tokenizados?",
+            options: [
+              { label: "Nunca investi em ações ou ativos tokenizados", weight: 1 },
+              { label: "Já investi em ações, mas não em tokenizados", weight: 2 },
+              { label: "Já investi em ações e tokenizados ocasionalmente", weight: 3 },
+              { label: "Invisto ativamente há anos", weight: 4 },
+            ],
+          },
+          {
+            id: "reacao-queda",
+            prompt: "Se sua carteira caísse 20% em um mês, o que faria?",
+            options: [
+              { label: "Venderia tudo para evitar mais perdas", weight: 1 },
+              { label: "Venderia parte para reduzir o risco", weight: 2 },
+              { label: "Manteria a posição e esperaria recuperação", weight: 3 },
+              { label: "Aproveitaria para comprar mais", weight: 4 },
+            ],
+          },
+          {
+            id: "tolerancia-risco",
+            prompt: "Como descreveria sua tolerância a risco?",
+            options: [
+              { label: "Nenhuma — não aceito perder o valor investido", weight: 1 },
+              { label: "Baixa — aceito pequenas oscilações", weight: 2 },
+              { label: "Moderada — aceito perdas temporárias por mais retorno", weight: 3 },
+              { label: "Alta — busco retorno mesmo com risco de perdas relevantes", weight: 4 },
+            ],
+          },
+        ],
+      },
+      resultado: {
+        oQueSignifica: "O que este perfil significa",
+        reacaoRisco: "Reação a risco e volatilidade",
+        classesAtivos: "Classes de ativos mais adequadas",
+        disclaimer:
+          "Resultado ilustrativo. Não constitui recomendação de investimento nem substitui a análise de perfil exigida pela regulação.",
+        refazer: "Refazer avaliação",
+      },
+      categoryDetails: {
+        conservador: {
+          summary: "Prioriza a preservação do capital e a previsibilidade, com baixa tolerância a perdas.",
+          riskReaction:
+            "Tende a reagir a quedas fortes reduzindo rapidamente a exposição, mesmo que isso signifique realizar prejuízo.",
+          assetClasses:
+            "Mais adequado a títulos de dívida tokenizados e ativos de baixa volatilidade.",
+        },
+        moderado: {
+          summary:
+            "Busca equilíbrio entre crescimento e segurança, aceitando oscilações moderadas em troca de retornos melhores que a renda fixa.",
+          riskReaction:
+            "Costuma tolerar quedas temporárias sem entrar em pânico, mas reavalia a estratégia se a volatilidade persistir.",
+          assetClasses:
+            "Mais adequado a uma combinação diversificada de tokens de participação e títulos de dívida, com exposição menor a ativos mais voláteis.",
+        },
+        arrojado: {
+          summary: "Prioriza maximizar o retorno no longo prazo e aceita alta volatilidade como parte do processo.",
+          riskReaction:
+            "Tende a manter ou até aumentar posições durante quedas, confiando em uma recuperação dentro do horizonte de investimento.",
+          assetClasses:
+            "Mais adequado a maior exposição a tokens de participação societária e operações de maior risco/retorno, com posições mais concentradas.",
+        },
+      },
+    },
+    carteira: {
+      title: "Carteira",
+      subtitle: "Conexão de carteira simulada — nenhuma transação on-chain acontece aqui.",
+      nota: "Conexão de carteira simulada — nenhuma transação on-chain acontece aqui.",
+      testnetNota: "Endereços de demonstração em testnet (Ethereum Sepolia). Nenhum valor real está em jogo.",
+      vazio: "Nenhuma carteira conectada nesta sessão.",
+      conectarBotao: "Conectar carteira (simulação)",
+      conectarOutraBotao: "Conectar outra carteira (simulação)",
+      principal: "Principal",
+      definirPrincipal: "Definir como principal",
+      remover: "Remover",
+    },
+  },
   stubs: {
     ativosTokens: {
       title: "Ativos e tokens",
@@ -327,11 +563,6 @@ export const ptBr = {
       title: "Títulos de dívida",
       description:
         "Instrumentos de dívida estruturados via tokenização. Conteúdo em construção — fase de demonstração.",
-    },
-    perfil: {
-      title: "Perfil",
-      description:
-        "Área de perfil do usuário. Conteúdo em construção — fase de demonstração.",
     },
     documentos: {
       title: "Documentos e FAQs",
