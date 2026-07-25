@@ -511,18 +511,20 @@ mainnet nem transação real.
 
 ---
 
-## Tela `/sobre/documentos` (Documentação)
+## Telas `/sobre/documentos` (Documentação) e `/sobre/contato` (Contate-nos)
 
-Substituiu o stub antigo ("Documentos e FAQs"). Inspirada na página
-`docs` do `niara-site` (repositório irmão) — mesma estrutura (sidebar com
-navegação por seções/âncoras + conteúdo, acordeão de FAQ) — mas em pt-BR,
-no tema verde-sálvia cheio (`bg-military`, igual a `/ativos` e `/perfil`)
-e com conteúdo próprio de PME (captação via tokenização sob a Resolução
-CVM 88, não a exchange). **Nenhum token novo foi criado** — reaproveita
-`panel`/`panel-border`, `on-military`/`on-military-muted` e `salmon`, já
-existentes desde `/ativos`.
+Substituíram os stubs antigos ("Documentos e FAQs" / "Contate-nos").
+Inspiradas nas páginas `docs` e `contact` do `niara-site` (repositório
+irmão) — mesma estrutura (sidebar com navegação por seções/âncoras +
+conteúdo, acordeão de FAQ, formulário de contato via `mailto`) — mas em
+pt-BR, no tema verde-sálvia cheio (`bg-military`, igual a `/ativos` e
+`/perfil`) e com conteúdo próprio de PME (captação via tokenização sob a
+Resolução CVM 88, não a exchange). **Nenhum token novo foi criado** —
+reaproveitam `panel`/`panel-border`, `on-military`/`on-military-muted`,
+`salmon`/`on-salmon` e `value-negative`, já existentes desde `/ativos`.
 
-`DocumentacaoPage.tsx`, componentes em `src/components/documentacao/`
+### `/sobre/documentos` (`DocumentacaoPage.tsx`, componentes em
+`src/components/documentacao/`)
 
 Tarja "Estágio atual" no topo (`bg-panel`, rótulo em `salmon`) — texto diz
 que os contratos estão em protótipo/testnet, sem mainnet nem auditoria
@@ -549,6 +551,28 @@ exibição nesta fase, mas ainda não validados juridicamente:
   deliberadamente **sem percentuais** ("em definição") — não preencher
   números de taxa sem validação jurídica/de produto.
 
+### `/sobre/contato` (`ContatoPage.tsx` + `ContatoForm.tsx`, em
+`src/components/contato/`)
+
+Formulário (Nome, Email, Assunto — select com 6 opções, Mensagem) ao lado
+de um painel "Fale direto com a gente" com o e-mail em link `mailto`.
+Reaproveita `TextField`/`SelectField` de `src/components/perfil/FormField.tsx`
+(rotulado "compartilhado" desde a tela `/perfil`) mais um novo
+`TextareaField` adicionado ao mesmo arquivo. `SelectField` ganhou
+`placeholder` opcional — antes era obrigatório e sempre renderizava uma
+`<option>` em branco (fazia sentido em `CompaniesSection`, onde o campo
+começa vazio); aqui o campo Assunto já nasce com um valor selecionado, e
+uma opção em branco extra seria só ruído.
+
+Envio **honesto via `mailto`, sem backend** (mesmo padrão do
+`ContactForm` do `niara-site`): ao validar (nome, email com formato
+válido via `isValidEmail` de `src/lib/masks.ts`, mensagem não vazia), o
+clique em "Abrir email" monta `mailto:niaragaed@gmail.com` com
+assunto/corpo pré-preenchidos via `window.location.href` — nunca simula
+sucesso nem faz `POST`. LGPD: os campos do formulário vivem só em
+`useState` do componente; nada é persistido em `localStorage`/
+`sessionStorage` nem enviado a servidor.
+
 ---
 
 ## Organização
@@ -558,8 +582,9 @@ src/
   app/                 rotas (App Router)
     ativos/page.tsx    dashboard de portfólio (ver "Tela /ativos" abaixo)
     perfil/page.tsx    tela de perfil (ver "Tela /perfil" abaixo)
-    sobre/documentos/  documentação + FAQ (ver "Tela /sobre/documentos"
-                       abaixo)
+    sobre/documentos/  documentação + FAQ (ver "Telas /sobre/documentos e
+                       /sobre/contato" abaixo)
+    sobre/contato/     formulário de contato via mailto (idem acima)
   components/
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
@@ -570,9 +595,11 @@ src/
                        CompaniesSection, InvestorProfileSection +
                        InvestorProfileQuiz + InvestorProfileResultCard,
                        WalletSection, FormField (TextField/SelectField/
-                       ReadField compartilhados)
+                       TextareaField/ReadField compartilhados)
     documentacao/      DocumentacaoPage (sidebar por seções + banner de
                        estágio atual), DocumentacaoNav, FaqAccordion
+    contato/           ContatoPage (formulário + painel de contato
+                       direto), ContatoForm (envio via mailto)
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
@@ -679,13 +706,13 @@ creditar.
   Peer-to-Peer) e "Quando posso usar a Tokenização?" (Antecipação do
   Caixa) — textos aprovados para exibição, mas ainda não validados
   juridicamente. Não alterar nem expandir esses textos sem instrução.
-- Formulário de contato real, autenticação, backend — fora de escopo por
-  ora
-- Conteúdo real das páginas-stub (`/negociar/*`, `/sobre/contato`) — hoje
-  só exibem aviso de "em construção". `/ativos`, `/perfil` e
-  `/sobre/documentos` deixaram de ser stub (ver "Tela /ativos", "Tela
-  /perfil" e "Tela /sobre/documentos" acima) — não reverter nenhuma delas
-  para `StubPage`.
+- Envio real de formulário de contato (hoje via `mailto`, sem backend),
+  autenticação, backend — fora de escopo por ora
+- Conteúdo real das páginas-stub (`/negociar/*`) — hoje só exibem aviso de
+  "em construção". `/ativos`, `/perfil` e as duas rotas de `/sobre/*`
+  (`documentos`, `contato`) deixaram de ser stub (ver "Tela /ativos",
+  "Tela /perfil" e "Telas /sobre/documentos e /sobre/contato" acima) —
+  não reverter nenhuma delas para `StubPage`.
 - **Bug conhecido (pré-existente, não corrigido nesta rodada):**
   `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
   framer-motion, que lê `window.matchMedia` de forma síncrona já no

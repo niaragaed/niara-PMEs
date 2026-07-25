@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { StubPage } from "@/components/ui/StubPage";
+import { ContatoPage } from "@/components/contato/ContatoPage";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-export const metadata: Metadata = { title: `${ptBr.stubs.contato.title} · Niara PMEs` };
+export const metadata: Metadata = {
+  title: `${ptBr.contato.meta.title} · Niara PMEs`,
+  description: ptBr.contato.meta.description,
+};
 
 export default function Page() {
-  return <StubPage {...ptBr.stubs.contato} />;
+  return <ContatoPage />;
 }

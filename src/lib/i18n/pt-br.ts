@@ -643,6 +643,40 @@ export const ptBr = {
       ],
     },
   },
+  contato: {
+    meta: {
+      title: "Contate-nos",
+      description: "Parcerias, tokenização, imprensa ou suporte — escolha um assunto e conte pra gente.",
+    },
+    title: "Contate-nos",
+    subtitle: "Parcerias, tokenização, imprensa ou suporte — escolha um assunto e conte pra gente.",
+    form: {
+      nome: "Nome",
+      email: "Email",
+      assunto: "Assunto",
+      assuntoOpcoes: {
+        empresa: "Empresa que quer tokenizar",
+        investidor: "Investidor",
+        parcerias: "Parcerias",
+        imprensa: "Imprensa",
+        suporte: "Suporte",
+        outro: "Outro",
+      },
+      mensagem: "Mensagem",
+      nota: (email: string) =>
+        `Ainda não há envio automático — ao enviar, seu cliente de email padrão abre com a mensagem pré-preenchida para ${email}.`,
+      enviarBotao: "Abrir email",
+      erros: {
+        nome: "Informe seu nome.",
+        email: "Informe um email válido.",
+        mensagem: "Escreva uma mensagem.",
+      },
+      assuntoPrefix: (assunto: string) => `Contato via site — ${assunto}`,
+    },
+    direto: {
+      title: "Fale direto com a gente",
+    },
+  },
   stubs: {
     ativosTokens: {
       title: "Ativos e tokens",
@@ -673,11 +707,6 @@ export const ptBr = {
       title: "Títulos de dívida",
       description:
         "Instrumentos de dívida estruturados via tokenização. Conteúdo em construção — fase de demonstração.",
-    },
-    contato: {
-      title: "Contate-nos",
-      description:
-        "Formulário de contato em construção. Fase de demonstração — ainda sem envio real.",
     },
   },
 } as const;
