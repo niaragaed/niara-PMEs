@@ -20,6 +20,7 @@ export function HubPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.negociar.hub.title}</h1>
         <p className="mt-1 max-w-2xl text-on-military-muted">{ptBr.negociar.hub.subtitle}</p>
 
+        <h2 className="sr-only">{ptBr.negociar.hub.categoriasHeading}</h2>
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((categoria) => (
             <CategoryCard key={categoria} categoria={categoria} />

@@ -689,6 +689,7 @@ export const ptBr = {
       title: "Ativos e tokens",
       subtitle:
         "Os tipos de ativo que podem ser tokenizados na plataforma. Escolha uma categoria para entender como funciona.",
+      categoriasHeading: "Categorias",
       verCategoria: "Ver categoria →",
     },
     vitrine: {
