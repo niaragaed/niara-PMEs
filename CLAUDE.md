@@ -86,11 +86,15 @@ Tema **claro** (diferente do `niara-site`, que é escuro). Paleta oficial:
 alternância de fundo de seção) · `border` #E7E2D9 · `ink` #23271F (texto
 principal) · `ink-muted` #5C6152 (texto secundário)
 
-**Verde-sálvia (primária):** `military` #3E4835 · `military-600` #4E5A42
-(hover) · `military-100` #E6EBDD — **fundo de seção "sálvia"**
+**Verde-sálvia (primária):** `military` **#3E4835 / rgb(62,72,53)** — valor
+oficial, medido da faixa CTA "Quer estruturar a captação" e fonte única de
+verdade para qualquer verde do site · `military-600` #4E5A42 (hover) ·
+`military-100` #E6EBDD — **fundo de seção "sálvia"**
 
-**Pêssego (acento / CTA):** `salmon` #F0A487 · `salmon-600` #E08E6F (hover)
-· `salmon-100` #FBE9DF — **fundo de seção "pêssego"**
+**Pêssego (acento / CTA):** `salmon` **#F0A487 / rgb(240,164,135)** — valor
+oficial, medido do botão "Contate-nos" e fonte única de verdade para
+qualquer salmão do site · `salmon-600` #E08E6F (hover) · `salmon-100`
+#FBE9DF — **fundo de seção "pêssego"**
 
 **Acentos de seção:** `ink-peach` #8A5A47 (subtítulo terroso sobre fundo
 pêssego — nunca `ink-muted`/cinza ali) · `chip-sage` #DCE3CF (selo/label
