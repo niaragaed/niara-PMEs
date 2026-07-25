@@ -1,60 +1,48 @@
-"use client";
-
-import { Suspense } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-// WebGL não roda em SSR — carregado só no cliente e envolto em Suspense.
-const Astronaut = dynamic(() => import("./Astronaut"), { ssr: false });
-
-function HeroCanvasFallback() {
-  return <div className="h-full w-full animate-pulse rounded-full bg-surface-alt" aria-hidden="true" />;
-}
-
+// O astronauta agora é um elemento 2D persistente e fixo (AstronautGuide,
+// renderizado uma vez em page.tsx), guiado pelo scroll — não mais um canvas
+// embutido aqui. Esta seção só reserva o espaço vertical/visual para ele
+// "pousar" centralizado na base da tela durante o hero.
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-16 md:grid-cols-2 md:py-24">
-        <div className="flex flex-col items-start gap-6 text-left">
-          <span className="rounded-full bg-military-100 px-4 py-1 text-sm font-medium text-military">
-            {ptBr.hero.badge}
-          </span>
+    <section
+      id="hero"
+      className="relative flex min-h-[86vh] flex-col items-center justify-center overflow-hidden px-6 py-16 text-center sm:min-h-[90vh]"
+    >
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6">
+        <span className="rounded-full bg-military-100 px-4 py-1 text-sm font-medium text-military">
+          {ptBr.hero.badge}
+        </span>
 
-          <h1 className="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
-            {ptBr.hero.title}
-          </h1>
+        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
+          {ptBr.hero.title}
+        </h1>
 
-          <p className="max-w-lg text-lg text-ink-muted">{ptBr.hero.subtitle}</p>
+        <p className="max-w-lg text-lg text-ink-muted">{ptBr.hero.subtitle}</p>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              title={ptBr.common.emBreve}
-              className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/50 px-6 py-3 text-sm font-medium text-ink/60"
-            >
-              {ptBr.hero.ctaPrimary}
-              <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
-            </button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title={ptBr.common.emBreve}
+            className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/50 px-6 py-3 text-sm font-medium text-ink/60"
+          >
+            {ptBr.hero.ctaPrimary}
+            <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
+          </button>
 
-            <Link
-              href="/sobre/documentos"
-              className="inline-flex items-center justify-center rounded-full border border-military px-6 py-3 text-sm font-medium text-military transition-colors hover:bg-military-100"
-            >
-              {ptBr.hero.ctaSecondary}
-            </Link>
-          </div>
-
-          <p className="max-w-md text-sm text-ink-muted">{ptBr.common.avisoDemonstracao}</p>
+          <Link
+            href="/sobre/documentos"
+            className="inline-flex items-center justify-center rounded-full border border-military px-6 py-3 text-sm font-medium text-military transition-colors hover:bg-military-100"
+          >
+            {ptBr.hero.ctaSecondary}
+          </Link>
         </div>
 
-        <div className="h-[320px] w-full sm:h-[420px]">
-          <Suspense fallback={<HeroCanvasFallback />}>
-            <Astronaut />
-          </Suspense>
-        </div>
+        <p className="max-w-md text-sm text-ink-muted">{ptBr.common.avisoDemonstracao}</p>
       </div>
     </section>
   );

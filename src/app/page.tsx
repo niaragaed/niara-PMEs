@@ -1,3 +1,4 @@
+import { AstronautGuide } from "@/components/astronaut/AstronautGuide";
 import { Hero } from "@/components/hero/Hero";
 import { WhatIsSection } from "@/components/sections/WhatIsSection";
 import { HowItWorksSection } from "@/components/sections/HowItWorksSection";
@@ -9,6 +10,7 @@ import { FinalCtaSection } from "@/components/sections/FinalCtaSection";
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
+      <AstronautGuide />
       <Hero />
       <WhatIsSection />
       <HowItWorksSection />

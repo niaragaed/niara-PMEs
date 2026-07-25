@@ -4,7 +4,7 @@ import { ptBr } from "@/lib/i18n/pt-br";
 
 export function HowItWorksSection() {
   return (
-    <section className="bg-surface-alt px-6 py-20">
+    <section id="how-it-works" className="bg-surface-alt px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">

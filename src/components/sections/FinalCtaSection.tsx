@@ -4,7 +4,7 @@ import { ptBr } from "@/lib/i18n/pt-br";
 
 export function FinalCtaSection() {
   return (
-    <section className="px-6 py-20">
+    <section id="final-cta" className="px-6 py-20">
       <Reveal className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
         <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
           {ptBr.sections.finalCta.title}
