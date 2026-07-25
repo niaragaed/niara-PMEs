@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { PortfolioSummary } from "./PortfolioSummary";
+import { PositionsTable } from "./PositionsTable";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type Tab = "carteira" | "disponiveis";
@@ -57,9 +59,10 @@ export function AtivosPage() {
             id="ativos-panel-carteira"
             role="tabpanel"
             aria-labelledby="ativos-tab-carteira"
-            className="mt-8 rounded-lg border border-panel-border bg-panel p-6 text-sm text-on-military-muted"
+            className="mt-8 flex flex-col gap-6"
           >
-            {ptBr.common.emConstrucao}
+            <PortfolioSummary />
+            <PositionsTable />
           </div>
         ) : (
           <div
