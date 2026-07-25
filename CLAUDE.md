@@ -103,9 +103,10 @@ salmon cheio, ver regra de contraste abaixo) · `chip-sage` #DCE3CF
 
 ### 🔴 Fundos cheios de seção + regra de contraste
 
-Desde a Parte 6, as seções de conteúdo (exceto Hero e "Como funciona")
-alternam fundo **cheio** — `bg-military` (#3E4835, escuro) ou `bg-salmon`
-(#F0A487, claro) — em vez dos tints `-100` usados antes. Os tints
+Desde a Parte 6, as seções de conteúdo (exceto "Como funciona") alternam
+fundo **cheio** — `bg-military` (#3E4835, escuro) ou `bg-salmon` (#F0A487,
+claro) — em vez dos tints `-100` usados antes. O Hero passou a usar
+`bg-military` cheio também (antes ficava sobre `bg` neutro). Os tints
 (`military-100`/`salmon-100`) continuam existindo como tokens (usados em
 chips, glows do hero, hover de botão outline etc.), só deixaram de ser o
 fundo de seção inteira.
@@ -292,9 +293,10 @@ public/
 
 ## Estado atual
 
-Homepage (`src/app/page.tsx`), nesta ordem: Hero (texto centrado + motivo
-decorativo do planeta anelado/glow, sem astronauta — ver "Astronauta
-(removido)") → Benefícios da tokenização (**salmon cheio**, texto escuro)
+Homepage (`src/app/page.tsx`), nesta ordem: Hero (**military cheio**, texto
+claro — texto centrado + motivo decorativo do planeta anelado/glow, sem
+astronauta — ver "Astronauta (removido)") → Benefícios da tokenização
+(**salmon cheio**, texto escuro)
 → Como funciona (sequência pinned, fundo neutro `bg-surface-alt`,
 inalterado) → Quando posso usar a Tokenização? (**military cheio**, texto
 claro) → Conheça os Tokens (**salmon cheio**, cards linkam para as
