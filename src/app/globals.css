@@ -92,6 +92,14 @@
   --color-cat-divida-chip: #eeedfe;
   --color-cat-divida-icon: #3c3489;
 
+  /* Texto de erro/negativo sobre card BRANCO (bg-surface) nas telas
+     /negociar (boleta) — diferente de --color-value-negative, que foi
+     calibrado para contraste contra bg-military/panel (fundo ESCURO) e
+     falha AA se usado como texto solto sobre branco (mesma classe de
+     pegadinha já documentada para --color-panel: cada superfície precisa
+     do seu próprio tom calibrado). ~6.5:1 contra #FFFFFF. */
+  --color-on-surface-negative: #b3261e;
+
   /* Raio */
   --radius-sm: 8px;
   --radius-md: 12px;
