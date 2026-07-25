@@ -65,7 +65,7 @@ export function SelectField({
   value: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   error?: string;
-  placeholder: string;
+  placeholder?: string;
   children: ReactNode;
 }) {
   const errorId = `${id}-error`;
@@ -82,9 +82,48 @@ export function SelectField({
         aria-describedby={error ? errorId : undefined}
         className={`${fieldBaseClass} ${error ? "border-value-negative" : "border-panel-border"}`}
       >
-        <option value="">{placeholder}</option>
+        {placeholder !== undefined && <option value="">{placeholder}</option>}
         {children}
       </select>
+      {error && (
+        <p id={errorId} role="alert" className="mt-1 text-xs text-value-negative">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function TextareaField({
+  id,
+  label,
+  value,
+  onChange,
+  error,
+  rows = 5,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+  error?: string;
+  rows?: number;
+}) {
+  const errorId = `${id}-error`;
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-xs text-on-military-muted">
+        {label}
+      </label>
+      <textarea
+        id={id}
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        className={`${fieldBaseClass} resize-y ${error ? "border-value-negative" : "border-panel-border"}`}
+      />
       {error && (
         <p id={errorId} role="alert" className="mt-1 text-xs text-value-negative">
           {error}
