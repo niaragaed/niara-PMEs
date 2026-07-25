@@ -575,6 +575,118 @@ sucesso nem faz `POST`. LGPD: os campos do formulário vivem só em
 
 ---
 
+## Telas `/negociar` (hub, categorias, detalhe da oferta e boleta simulada)
+
+Substituíram os 6 stubs antigos das rotas `/negociar/*`
+(`ativos-e-tokens` e as 5 categorias) e adicionaram uma rota nova. Tema
+verde-sálvia cheio (`bg-military`, igual a `/ativos` e `/perfil`), mas
+com uma diferença deliberada: aqui os cards de conteúdo são **brancos**
+(`bg-surface`, texto `ink`/`ink-muted`), não os cards escuros (`panel`)
+usados em `/ativos`/`/perfil` — decisão do design aprovado para esta
+seção, replicada em todas as 4 telas abaixo. `StubPage.tsx` foi removido
+por ficar sem nenhum uso depois da troca.
+
+🔴 **A negociação é 100% simulação de produto.** Nenhuma ordem é
+enviada a um servidor, nenhuma correspondência de ordens (order book)
+real existe, e o enquadramento regulatório (Resolução CVM 88/135,
+autorização da CVM para a plataforma) depende de revisão jurídica
+antes de qualquer uso real — mesma ressalva já registrada para
+`/sobre/documentos`. Ao contrário do terminal `/trade` do `niara-site`
+(repositório irmão), que é uma bolsa com book de ofertas em tempo real,
+a boleta aqui não tem book: cada ordem simulada apenas confirma
+instantaneamente, o que é a forma correta de simular a compra/venda de
+uma participação/cota ilíquida de PME, diferente de um ativo líquido
+com profundidade de mercado.
+
+**Ícone + cor por categoria** (`src/lib/categories.ts`, `CATEGORY_META`):
+Token PMEs → `Building2` (reaproveita `salmon-100`/`ink-peach`, já
+existentes) · Token Agro → `Wheat` (reaproveita `military-100`, ícone em
+`--color-cat-agro-icon`) · Token Imobiliário → `Home` · Token Auto →
+`Car` · Títulos de dívida → `Landmark` — os últimos três com tokens
+próprios (`--color-cat-{imobiliario,auto,divida}-{chip,icon}` em
+`globals.css`). Todos pensados para uso sobre card **branco**, não sobre
+`bg-military` — diferente dos tokens `--color-chart-*` de `/ativos`, que
+são para o donut/gráfico sobre fundo escuro. `CategoryChip` (ícone
+decorativo, `aria-hidden`) e `CategoryBadge` (ícone + nome da categoria,
+texto real e visível) ficam em
+`src/components/negociar/CategoryChip.tsx`.
+
+**Dados**: `src/lib/mock/ofertas.ts` — as 5 categorias (nome/descrição/
+ficha/casos de uso ficam em `ptBr.negociar.categorias`, ver
+i18n abaixo) e 10 ofertas fictícias tipadas (`Oferta`), 2 por categoria.
+Os nomes reaproveitam os mesmos exemplos já usados no catálogo de
+`/ativos` (`src/lib/mock/ativos.ts`, ex.: "Token PME Padaria Bela
+Vista") para consistência narrativa entre as duas telas — mesma
+demonstração fictícia, vista de dois ângulos diferentes. Nenhum campo
+de rendimento/retorno projetado existe no tipo `Oferta`: a regra "nada
+de promessa de retorno" foi respeitada removendo o campo, não
+escondendo-o na UI. `DOCUMENTOS_PADRAO` é uma lista genérica de
+material de divulgação (mesmos placeholders "Em breve" para todas as
+ofertas, já que nenhum documento real existe nesta fase).
+
+**Hub** (`/negociar/ativos-e-tokens`, `HubPage.tsx`): banner de
+demonstração, grade de 5 `CategoryCard` (chip colorido + nome + 1 linha
++ "Ver categoria →", linkando para a rota da categoria) e uma "Vitrine
+(demonstração)" com 3 `ShowcaseCard` (`VITRINE_HUB_SLUGS` em
+`ofertas.ts`, uma oferta de 3 categorias diferentes) linkando para o
+detalhe.
+
+**Template de categoria** (`CategoryPage.tsx`, reaproveitado pelas 5
+rotas via prop `categoria`): link de volta ao hub, cabeçalho com
+`CategoryChip` grande + nome + descrição, ficha em `<dl>` (Lastro
+por categoria + Público/Enquadramento/Estágio compartilhados — os 3
+últimos são idênticos entre categorias, por isso vivem em
+`ptBr.negociar.categoriaTemplate` e não duplicados por categoria), 3
+casos de uso e vitrine filtrada por categoria (`getOfertasByCategoria`).
+
+**Detalhe da oferta** (`/negociar/oferta/[slug]`, rota dinâmica nova —
+`params` assíncrono, Next.js 16; `notFound()` + `not-found.tsx` próprio
+se o slug não existir em `OFERTAS`). `OfertaDetailPage.tsx`: dados
+públicos da empresa, financeiro/caixa (KPIs + `FinanceiroChart.tsx`,
+`recharts` `LineChart` de receita/caixa simulados dos últimos 6 meses,
+com descrição textual como alternativa ao SVG `aria-hidden` — mesmo
+padrão de `/ativos`), termos da oferta (tipo de token, meta de
+captação, valor por cota, quantidade, prazo — nota reforçando que
+qualquer estimativa é ilustrativa), documentos placeholder desabilitados
+e riscos estilo CVM 88. CTA "Negociar (simulação)" no cabeçalho abre a
+boleta e some enquanto ela está aberta (evita duplicidade); reaparece ao
+fechar.
+
+**Boleta simulada** (`OrderTicket.tsx`): painel lateral sticky no
+desktop (`lg:static`, dentro do grid de 12 colunas da página) e drawer
+inferior com backdrop no mobile (mesmo componente — só classes
+Tailwind responsivas mudam `fixed inset-x-0 bottom-0` para
+`lg:static`; o backdrop (`bg-ink/50`) só existe abaixo de `lg`). Fecha
+por clique no X, clique no backdrop ou tecla Esc (o botão fechar
+recebe foco ao abrir). Fluxo: Comprar/Vender → quantidade + preço
+(pré-preenchido com `oferta.precoSimulado`, editável) → total/taxa
+calculados → "Revisar (simulação)" → resumo → "Confirmar (simulação)"
+→ mensagem de resultado rotulada como simulada, com um saldo simulado
+em `useState` (não persistido) que é debitado/creditado — tudo
+reseta ao fechar e reabrir a boleta (o componente desmonta). Nenhum
+`fetch`/`POST` em lugar nenhum. Cor do toggle Comprar/Vender reaproveita
+`military`/`salmon` (não `value-positive`/`value-negative`, que são
+calibrados para contraste contra fundo **escuro** `bg-military`/`panel`
+e falhariam AA se usados como texto direto sobre um card **branco**
+como os desta seção — mesma classe de pegadinha já documentada para
+`--color-panel`). Erro de validação usa o token novo
+`--color-on-surface-negative` (vermelho escuro, ~6.5:1 contra branco),
+criado especificamente para texto de erro sobre `bg-surface` nesta
+seção — não confundir com `--color-value-negative`.
+
+**i18n**: todo o texto de interface das 4 telas fica em
+`ptBr.negociar` (`hub`, `categorias`, `categoriaTemplate`, `oferta`,
+`boleta`) em `src/lib/i18n/pt-br.ts`; texto descritivo das ofertas
+fictícias (nome da empresa, resumo do negócio etc.) fica direto no mock
+(`ofertas.ts`), seguindo o mesmo padrão de `mock/ativos.ts`.
+
+Verificado com dev server + Playwright (desktop 1280px e mobile 390px):
+hub, template de categoria, detalhe da oferta e o fluxo completo da
+boleta (abrir → revisar → confirmar → nova ordem), incluindo o drawer
+mobile com backdrop — sem erros de console.
+
+---
+
 ## Organização
 
 ```
@@ -585,6 +697,9 @@ src/
     sobre/documentos/  documentação + FAQ (ver "Telas /sobre/documentos e
                        /sobre/contato" abaixo)
     sobre/contato/     formulário de contato via mailto (idem acima)
+    negociar/          hub + 5 categorias + detalhe de oferta (ver "Telas
+                       /negociar" abaixo); oferta/[slug]/ é rota dinâmica
+                       com not-found.tsx próprio
   components/
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
@@ -600,6 +715,11 @@ src/
                        estágio atual), DocumentacaoNav, FaqAccordion
     contato/           ContatoPage (formulário + painel de contato
                        direto), ContatoForm (envio via mailto)
+    negociar/          HubPage, CategoryPage (template das 5 categorias),
+                       CategoryChip (CategoryChip + CategoryBadge),
+                       CategoryCard, ShowcaseCard, OfertaDetailPage,
+                       FinanceiroChart (recharts), OrderTicket (boleta
+                       simulada) — ver "Telas /negociar" abaixo
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
@@ -609,6 +729,8 @@ src/
   lib/
     ativos/derive.ts   funções puras de derivação (totais, alocação por
                        classe/ativo/setor) a partir do mock de /ativos
+    categories.ts      CATEGORY_META: ícone + tokens de cor + href por
+                       categoria de token, usado nas telas /negociar
     format.ts          formatBRL/formatSignedBRL/formatPercent (Intl pt-BR)
     investor-profile.ts lógica pura de score/categorização do perfil de
                        investidor (conteúdo do questionário vem do
@@ -621,6 +743,9 @@ src/
                        evolução mensal, catálogo) — nunca dado real
     mock/perfil.ts     pool de carteiras demo (endereços testnet) da tela
                        /perfil — nunca dado real
+    mock/ofertas.ts    categorias + 10 ofertas fictícias tipadas das telas
+                       /negociar (dados públicos, financeiro, termos) —
+                       nunca dado real
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
   niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)
@@ -668,7 +793,8 @@ astronauta — ver "Astronauta (removido)") → Benefícios da tokenização
 → Como funciona (sequência pinned, fundo neutro `bg-surface-alt`,
 inalterado) → Quando posso usar a Tokenização? (**military cheio**, texto
 claro) → Conheça os Tokens (**salmon cheio**, cards linkam para as
-rotas-stub de cada token) → Para empresas × investidores (**salmon
+rotas de categoria de `/negociar`, ver "Telas /negociar" acima) → Para
+empresas × investidores (**salmon
 cheio** — não verde: ficaria verde→[aviso neutro]→verde colado na faixa
 CTA verde logo depois; salmon aqui mantém a alternância de ritmo) →
 Aviso de demonstração/CVM (`bg-surface-alt`, neutro) → Faixa CTA final
@@ -682,9 +808,10 @@ de um grid `items-stretch` — garante largura e altura idênticas entre os
 cards de uma mesma linha, independente do tamanho do texto de cada um.
 
 Scroll suave via Lenis sincronizado ao GSAP ScrollTrigger. Header +
-navegação, `/styleguide`. Todas as rotas do nav têm stub sem 404. Testado
-com `tsc`, `eslint`, `build` e verificação visual via Playwright (desktop,
-mobile, teclado, reduced-motion) a cada parte.
+navegação, `/styleguide`. Todas as rotas do nav respondem sem 404 — nenhuma
+é mais `StubPage` (ver "Pendências conhecidas" abaixo). Testado com `tsc`,
+`eslint`, `build` e verificação visual via Playwright (desktop, mobile,
+teclado, reduced-motion) a cada parte.
 
 As 5 partes do redesign (paleta E, astronauta 2D, Lenis + pin, seções de
 conteúdo aprovado, créditos) estão completas. O astronauta foi removido
@@ -708,11 +835,17 @@ creditar.
   juridicamente. Não alterar nem expandir esses textos sem instrução.
 - Envio real de formulário de contato (hoje via `mailto`, sem backend),
   autenticação, backend — fora de escopo por ora
-- Conteúdo real das páginas-stub (`/negociar/*`) — hoje só exibem aviso de
-  "em construção". `/ativos`, `/perfil` e as duas rotas de `/sobre/*`
-  (`documentos`, `contato`) deixaram de ser stub (ver "Tela /ativos",
-  "Tela /perfil" e "Telas /sobre/documentos e /sobre/contato" acima) —
-  não reverter nenhuma delas para `StubPage`.
+- Nenhuma rota do site continua como `StubPage` — `/ativos`, `/perfil`,
+  as duas rotas de `/sobre/*` e as 6 rotas de `/negociar/*` (hub + 5
+  categorias + detalhe da oferta) já têm conteúdo real de demonstração
+  (ver as respectivas seções acima). `StubPage.tsx` foi removido do
+  projeto por ficar sem uso — não recriá-lo para novas rotas sem
+  alinhar antes com o usuário.
+- Revisão jurídica pendente do enquadramento regulatório citado nas
+  telas `/negociar` (Resolução CVM 88, riscos estilo CVM) e da boleta
+  simulada em si — nenhuma ordem real é enviada hoje, mas o texto de
+  enquadramento segue a mesma ressalva já registrada para
+  `/sobre/documentos` (ver "Telas /negociar" acima).
 - **Bug conhecido (pré-existente, não corrigido nesta rodada):**
   `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
   framer-motion, que lê `window.matchMedia` de forma síncrona já no
