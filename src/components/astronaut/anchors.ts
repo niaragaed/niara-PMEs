@@ -29,9 +29,11 @@ export const ASTRONAUT_ANCHORS: AstronautAnchor[] = [
   { id: "tokens", left: "97%", top: "38%", xPercent: -100, yPercent: -50, scale: 0.5, opacity: 1 },
   // Para empresas x investidores: canto esquerdo.
   { id: "audiences", left: "3%", top: "38%", xPercent: 0, yPercent: -50, scale: 0.5, opacity: 1 },
-  // CTA final: desaparece por completo. TODO Parte 4: mover o fade-out para
-  // a seção "credits" quando ela existir.
-  { id: "final-cta", left: "50%", top: "50%", xPercent: -50, yPercent: -50, scale: 0.35, opacity: 0 },
+  // Faixa CTA final (fundo verde sólido) — sem âncora própria: a transição
+  // para os créditos atravessa esse trecho, então o astronauta não chega a
+  // "parar" sobre o fundo escuro.
+  // Créditos: desaparece por completo, aqui sim.
+  { id: "credits", left: "50%", top: "50%", xPercent: -50, yPercent: -50, scale: 0.35, opacity: 0 },
 ];
 
 // Modo simplificado para telas pequenas: só aparece no hero, pequeno, num

@@ -7,6 +7,7 @@ import { TokensSection } from "@/components/sections/TokensSection";
 import { AudiencesSection } from "@/components/sections/AudiencesSection";
 import { TrustNoticeSection } from "@/components/sections/TrustNoticeSection";
 import { FinalCtaSection } from "@/components/sections/FinalCtaSection";
+import { CreditsSection } from "@/components/sections/CreditsSection";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
       <AudiencesSection />
       <TrustNoticeSection />
       <FinalCtaSection />
+      <CreditsSection />
     </main>
   );
 }

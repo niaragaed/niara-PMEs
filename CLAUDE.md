@@ -172,8 +172,7 @@ reproduzia com fidelidade a arte aprovada.
   **Atualizar esse array conforme seções mudam** — não é preciso tocar na
   lógica do componente.
 - **Desktop** (`≥1280px`, ver `ASTRONAUT_DESKTOP_MEDIA_QUERY`): percorre
-  todas as âncoras, alternando lados, e desaparece na última (`final-cta`
-  hoje; passa a ser `credits` a partir da Parte 4).
+  todas as âncoras, alternando lados, e desaparece na última (`credits`).
 - **Mobile/tablet** (`<1280px`): modo simplificado — só aparece no hero
   (`ASTRONAUT_MOBILE_HERO_ANCHOR`, escala reduzida) e some ao rolar para
   além dele. Abaixo de 1280px o container `max-w-6xl` da home não deixa
@@ -281,12 +280,17 @@ de parallax) → Benefícios da tokenização (pêssego) → Como funciona
 (sequência pinned) → Quando posso usar a Tokenização? (sálvia) → Conheça
 os Tokens (pêssego, cards linkam para as rotas-stub de cada token) → Para
 empresas × investidores (sálvia) → Aviso de demonstração/CVM → Faixa CTA
-final (verde sólido) → Footer. Créditos (Parte 4) ainda não existe.
+final (verde sólido) → Créditos (placeholder sóbrio — "Equipe Niara" +
+áreas genéricas, sem nomes reais; é onde o astronauta completa o
+fade-out, `credits` é a última âncora em `anchors.ts`) → Footer.
 
 Scroll suave via Lenis sincronizado ao GSAP ScrollTrigger. Header +
 navegação, `/styleguide`. Todas as rotas do nav têm stub sem 404. Testado
 com `tsc`, `eslint`, `build` e verificação visual via Playwright (desktop,
 mobile, teclado, reduced-motion) a cada parte.
+
+As 5 partes do redesign (paleta E, astronauta 2D, Lenis + pin, seções de
+conteúdo aprovado, créditos) estão completas.
 
 ## Pendências conhecidas
 

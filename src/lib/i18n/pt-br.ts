@@ -167,6 +167,12 @@ export const ptBr = {
         "Fale com o nosso time para entender como a tokenização pode se encaixar no seu processo de captação.",
       cta: "Contate-nos",
     },
+    credits: {
+      title: "Créditos",
+      subtitle: "Niara PMEs é um projeto da Equipe Niara.",
+      roles: ["Produto", "Engenharia", "Design", "Conteúdo institucional"],
+      note: "Nomes de squads e colaboradores serão adicionados conforme o projeto avança.",
+    },
   },
   footer: {
     brandDescription:
