@@ -2,7 +2,6 @@ import { Reveal } from "@/components/motion/Reveal";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 // Tela final antes do footer — sóbria, sem inventar nomes/parcerias reais.
-// É também onde o astronauta completa o fade-out (ver anchors.ts).
 export function CreditsSection() {
   return (
     <section id="credits" className="px-6 py-24 text-center">
