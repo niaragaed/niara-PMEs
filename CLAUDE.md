@@ -65,6 +65,9 @@ versões anteriores.
   e `lenis` (smooth scroll, integrado ao ScrollTrigger)
 - Micro-reveals (fade/slide/stagger simples): `framer-motion`
 - Ícones: `lucide-react`
+- Gráficos (dashboard `/ativos`): `recharts` (`BarChart` empilhado da
+  evolução do portfólio, `PieChart`/donut da alocação) — ver "Tela /ativos"
+  abaixo
 - Estado: React (`useState`, Context). Sem libs de estado externas.
 
 Removido: `three` / `@react-three/fiber` / `@react-three/drei` (não eram
@@ -137,6 +140,58 @@ removida, mantendo só a sombra.
 Os nomes dos tokens (`military`, `salmon` etc.) foram mantidos por
 compatibilidade de código mesmo após a mudança de paleta militar→sálvia —
 só os valores hex e a semântica visual mudaram.
+
+### Tokens do dashboard `/ativos`
+
+Além dos tokens de seção acima, a tela `/ativos` (ver "Tela /ativos"
+abaixo) introduziu tokens próprios em `@theme`, todos pensados para uso
+**sobre `bg-military` cheio**:
+
+- `on-military-muted` #C3CBB3 — texto secundário de densidade de dados
+  (rótulos de KPI, legendas, notas), mais suave que `on-military` puro.
+  Diferente de `on-military/80` (usado no subtítulo do Hero/CTA): este é
+  um tom próprio, pensado para telas densas de dados, não para
+  marketing — não reaproveitar `on-military/80` aqui nem vice-versa.
+- `panel` / `panel-border` — fundo e borda dos cards do dashboard (KPI,
+  gráfico, tabela, catálogo). `panel` é `color-mix(military 90%, black)`
+  — **mais escuro** que a seção, não mais claro. Border é um overlay
+  claro sutil (`on-military` em baixa opacidade).
+  🔴 **Isso foi um bug real, não uma escolha estética arbitrária**: a
+  primeira versão usava um overlay *claro* (`color-mix(on-military 6%,
+  transparent)`), que eleva a luminância do fundo do card — e por isso
+  **reduz** o contraste de qualquer texto claro dentro dele. Com esse
+  fundo mais claro, `value-negative` caía para ~3,98:1 contra o painel
+  (abaixo do mínimo AA de 4,5:1 para texto pequeno, ex.: a coluna
+  "Variação" da tabela de posições) mesmo depois de já ter sido escolhido
+  para passar em 4,5:1 contra o `bg-military` puro. Escurecer o fundo do
+  card resolve na direção certa: aumenta a margem de contraste de todos
+  os tokens de texto claro usados dentro dele, em vez de reduzi-la. Ao
+  criar qualquer novo tom de texto claro para uso dentro de um card sobre
+  fundo escuro, **sempre verificar contraste contra o fundo real do card
+  (`panel`), não só contra o fundo da seção** — os dois não são a mesma
+  cor e o card pode ser a superfície mais exigente das duas.
+- `value-positive` #9BD1A0 / `value-negative` #EDA492 — ganho/perda (KPI,
+  variação % da tabela). `value-negative` foi ajustado de um coral mais
+  escuro (#E67C63, ~3,4:1 contra `bg-military`) para #EDA492 (~4,73:1
+  contra `bg-military`, ~5,25:1 contra `panel`) pelo mesmo motivo acima.
+  É inevitavelmente próximo do tom de `salmon` — vermelhos/corais só
+  atingem AA contra este verde ficando claros o bastante para se
+  aproximarem do pêssego; o projeto já reaproveita `salmon` em papéis
+  diferentes em outros lugares (chip de categoria "Token PMEs" *é*
+  literalmente `salmon`), então essa proximidade é consistente com o
+  padrão existente, não uma inconsistência nova.
+- `chart-pmes` #F0A487 (= `salmon`) · `chart-agro` #B7C29E ·
+  `chart-imobiliario` #E4C07A · `chart-auto` #7FA9A3 · `chart-divida`
+  #B49FC0 — paleta categórica fixa dos gráficos (5 classes de token),
+  usada tanto no donut quanto no indicador de categoria da tabela e do
+  catálogo. Passados ao Recharts como `fill="var(--color-chart-*)"`
+  (atributo lido pelo SVG em tempo de render, funciona normalmente com
+  `var()`) — não hardcodar os hex nos componentes.
+
+Sempre que precisar verificar contraste AA (4.5:1) ao adicionar um tom
+novo, usar a fórmula de luminância relativa do WCAG 2.x contra o hex
+exato do fundo **onde o texto realmente vai ficar** (seção vs. card vs.
+tooltip flutuante — cada um pode ter um fundo efetivo diferente).
 
 ### 🔴 `h1`–`h6` e `@layer base`
 
@@ -274,12 +329,84 @@ seção pinned futura dentro do `<main>` da home.
 
 ---
 
+## Tela `/ativos` (dashboard de portfólio)
+
+Substituiu o stub antigo ("Ativos — em construção"). Dashboard de
+portfólio tokenizado no estilo do dashboard "Assets" do `niara-site`
+(repositório irmão, exchange), mas adaptado: fundo **verde-sálvia cheio**
+(`bg-military`, não o dashboard escuro/preto do `niara-site`), idioma
+pt-BR, moeda **R$ (BRL)** em vez de USDT. Ver `AtivosPage.tsx`
+(orquestrador) e os componentes em `src/components/ativos/`.
+
+**Estrutura da página** (`AtivosPage.tsx`, `"use client"` por causa do
+estado da aba):
+
+- Banner de demonstração fixo no topo (`bg-panel`, obrigatório pela regra
+  "nada simulado pode parecer real" — texto: "Demonstração — carteira e
+  dados simulados. Não reflete posições ou valores reais.")
+- Duas abas (`role="tablist"`/`role="tab"`/`role="tabpanel"`, sem roving
+  tabindex — foco via Tab nativo do `<button>`, ativação via
+  click/Enter/Espaço, suficiente para o nível de acessibilidade já usado
+  no resto do projeto): **"Minha carteira"** (padrão) e **"Ativos
+  disponíveis"**.
+- Aba "Minha carteira": `PortfolioSummary` (4 KPIs) → grid com
+  `PortfolioEvolutionChart` (7 colunas) + `AllocationDonut` (5 colunas) →
+  `PositionsTable`.
+- Aba "Ativos disponíveis": `AssetCatalog` — grade de cards de catálogo
+  demo, cada um com botão "Investir (Em breve)" **desabilitado**
+  (`disabled aria-disabled="true"`, mesmo padrão do CTA do Hero).
+
+**Dados**: tudo em `src/lib/mock/ativos.ts` (tipado: `Position`,
+`MonthlyEvolution`, `CatalogAsset`) — 5 posições (uma por categoria de
+token: PMEs, Agro, Imobiliário, Auto, Títulos de dívida), 12 meses de
+evolução, 6 itens de catálogo. Nenhum valor é real; números escolhidos só
+para serem internamente coerentes (KPIs somam a partir das posições,
+último mês da evolução bate com os totais). Derivações (totais do
+portfólio, agrupamento de alocação) ficam em `src/lib/ativos/derive.ts`
+como funções puras — os componentes não guardam valor derivado em
+estado, recalculam a partir do mock a cada render (mesmo padrão do
+dashboard do `niara-site`).
+
+**Alocação (donut)**: três visões alternáveis (`AllocationView`: `classe`
+| `ativo` | `setor`) — "Por classe" agrupa por categoria de token (cor
+fixa por categoria, `CATEGORY_COLOR_VAR` em `derive.ts`), "Por ativo"
+mostra uma fatia por posição (cor = cor da categoria da posição), "Por
+setor/região" agrupa por região (`Region`: sudeste/sul/nordeste/
+centro-oeste, cor fixa por região). O SVG do gráfico é `aria-hidden`; a
+alternativa acessível é a própria lista de legenda ao lado (texto real,
+não decorativo) com label + % + valor em R$ — mesmo padrão de
+acessibilidade do donut do `niara-site`.
+
+**Gráfico de evolução (barras empilhadas)**: `recharts` `BarChart`,
+`stackId` único para as duas séries ("Valor investido" + "Ganho de
+capital"). Cores via `fill="var(--color-chart-*)"` / `var(--color-value-
+positive)` — atributo SVG lido em runtime, `var()` funciona normalmente
+aqui (diferente de um valor estático de build). Abaixo do gráfico, uma
+descrição textual (`ptBr.ativos.evolucao.description`) serve de
+alternativa de acessibilidade ao SVG `aria-hidden`, apontando que os
+mesmos dados aparecem na tabela de posições.
+
+**Tooltips do Recharts**: tipo próprio (`ChartTooltipProps`/
+`DonutTooltipProps`) em vez dos genéricos do Recharts (`TooltipProps<...>`)
+— evita conflitos de variância entre o tipo esperado pela prop `content`
+e o componente customizado (mesmo padrão do `niara-site`).
+
+Ver "Tokens do dashboard `/ativos`" (seção de Design system acima) para
+os tokens de cor específicos desta tela e a pegadinha de contraste que já
+foi corrigida (fundo do card mais escuro que a seção, não mais claro).
+
+---
+
 ## Organização
 
 ```
 src/
   app/                 rotas (App Router)
+    ativos/page.tsx    dashboard de portfólio (ver "Tela /ativos" abaixo)
   components/
+    ativos/            AtivosPage (abas + banner demo), PortfolioSummary
+                       (KPIs), PortfolioEvolutionChart e AllocationDonut
+                       (recharts), PositionsTable, AssetCatalog
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
@@ -287,7 +414,12 @@ src/
     sections/          narrativa por scroll (home), inclui pin de "Como funciona"
     ui/                compartilhados (Logo, botões etc.)
   lib/
+    ativos/derive.ts   funções puras de derivação (totais, alocação por
+                       classe/ativo/setor) a partir do mock de /ativos
+    format.ts          formatBRL/formatSignedBRL/formatPercent (Intl pt-BR)
     i18n/              dicionário de textos (pt-br.ts)
+    mock/ativos.ts     dados fictícios tipados da tela /ativos (posições,
+                       evolução mensal, catálogo) — nunca dado real
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
   niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)
@@ -375,8 +507,9 @@ creditar.
   juridicamente. Não alterar nem expandir esses textos sem instrução.
 - Formulário de contato real, autenticação, backend — fora de escopo por
   ora
-- Conteúdo real das páginas-stub (`/negociar/*`, `/ativos`, `/perfil`,
-  `/sobre/*`) — hoje só exibem aviso de "em construção"
+- Conteúdo real das páginas-stub (`/negociar/*`, `/perfil`, `/sobre/*`) —
+  hoje só exibem aviso de "em construção". `/ativos` deixou de ser stub
+  (ver "Tela /ativos" abaixo) — não reverter para `StubPage`.
 - **Bug conhecido (pré-existente, não corrigido nesta rodada):**
   `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
   framer-motion, que lê `window.matchMedia` de forma síncrona já no
