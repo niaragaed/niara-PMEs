@@ -533,6 +533,116 @@ export const ptBr = {
       remover: "Remover",
     },
   },
+  documentacao: {
+    meta: {
+      title: "Documentação",
+      description:
+        "O que é a Niara PMEs, como funciona a tokenização e em que estágio o projeto está hoje.",
+    },
+    title: "Documentação",
+    subtitle:
+      "O que é a Niara PMEs, como funciona a tokenização e em que estágio o projeto está hoje.",
+    nav: {
+      ariaLabel: "Navegação da documentação",
+      oQueE: "O que é a Niara PMEs",
+      comoFunciona: "Como funciona a tokenização",
+      enquadramento: "Enquadramento regulatório",
+      modeloReceita: "Modelo de receita",
+      tecnologia: "Tecnologia",
+      faq: "FAQ",
+    },
+    estagioAtual: {
+      label: "Estágio atual",
+      texto:
+        "protótipo em ambiente de testnet. Não há contratos em produção em mainnet nem auditoria de segurança publicada até o momento. Todo o conteúdo do site é demonstração — nenhuma oferta real está disponível.",
+    },
+    oQueE: {
+      title: "O que é a Niara PMEs",
+      texto:
+        "A Niara PMEs é uma plataforma que ajuda pequenas e médias empresas a captar investimento e organizar a divisão do seu capital de forma mais acessível, por meio da tokenização. O objetivo é reduzir custo e burocracia na estruturação de rodadas de captação e no registro de participações. Conteúdo em fase de demonstração.",
+    },
+    comoFunciona: {
+      title: "Como funciona a tokenização",
+      passos: [
+        {
+          titulo: "Cadastro da empresa",
+          texto: "A empresa cria seu perfil e informa os dados da oferta.",
+        },
+        {
+          titulo: "Estruturação da oferta",
+          texto:
+            "Definição de valores, condições e do que será tokenizado (participação/cotas, recebíveis ou dívida), dentro do enquadramento aplicável.",
+        },
+        {
+          titulo: "Emissão dos tokens",
+          texto:
+            "Geração on-chain dos tokens que representam a participação/direito, com registro. Nenhum token é emitido sem lastro/atestado correspondente.",
+        },
+        {
+          titulo: "Captação e registro",
+          texto:
+            "Investidores participam e o registro de participações (cap table) fica disponível de forma transparente.",
+        },
+      ],
+    },
+    enquadramento: {
+      title: "Enquadramento regulatório",
+      paragrafos: [
+        "A captação pública de investimento por plataformas eletrônicas no Brasil é regulada pela Resolução CVM 88 (crowdfunding de investimento), e a distribuição deve ocorrer por plataforma autorizada/registrada pela CVM. Nesta fase, a Niara PMEs é um ambiente institucional e de demonstração: não realiza oferta pública de valores mobiliários nem promete retorno. Ativos tokenizados que caracterizem valores mobiliários dependem das autorizações regulatórias aplicáveis.",
+        "O registro de participações em blockchain funciona como registro probatório de integridade e anterioridade — não substitui os livros societários da Lei 6.404 nem o registro em cartório.",
+      ],
+    },
+    modeloReceita: {
+      title: "Modelo de receita",
+      texto:
+        "O modelo de receita previsto envolve taxas de estruturação/listagem cobradas da empresa que tokeniza e taxas sobre transações. Os percentuais estão em definição e serão informados de forma transparente.",
+    },
+    tecnologia: {
+      title: "Tecnologia",
+      texto:
+        "Os contratos da Niara são escritos em Solidity e compatíveis com EVM, permitindo deploy em redes compatíveis. Um invariante central garante que nenhum token seja emitido sem lastro atestado (o total emitido nunca excede o total atestado).",
+    },
+    faq: {
+      title: "FAQ",
+      items: [
+        {
+          pergunta: "O que é um ativo tokenizado?",
+          resposta:
+            "Representação digital, on-chain, de uma participação ou direito, que pode ser registrada e transferida de forma mais simples.",
+        },
+        {
+          pergunta: "Como uma empresa tokeniza seu capital na Niara PMEs?",
+          resposta:
+            "Pelo fluxo de cadastro → estruturação da oferta → emissão → captação/registro descrito acima (em demonstração nesta fase).",
+        },
+        {
+          pergunta: "Preciso de carteira para participar?",
+          resposta:
+            "Nesta fase de demonstração, não há operação real; futuramente uma carteira poderá ser usada para custódia dos tokens.",
+        },
+        {
+          pergunta: "Quais são as taxas?",
+          resposta:
+            "O modelo de taxas está em definição e será informado de forma transparente (sem valores fixos por enquanto).",
+        },
+        {
+          pergunta: "Isso é uma oferta de valores mobiliários? É regulado?",
+          resposta:
+            "Não. Nesta fase é conteúdo institucional/demonstração; ofertas dependem das autorizações da CVM (Resolução CVM 88 e regras aplicáveis).",
+        },
+        {
+          pergunta: "Em que estágio está o projeto?",
+          resposta:
+            "Em desenvolvimento: o site mostra a estrutura do produto de forma totalmente simulada; os contratos estão em protótipo, em ambiente de testnet.",
+        },
+        {
+          pergunta: "Meus dados estão seguros?",
+          resposta:
+            "Nesta fase os dados de formulário não são enviados a um servidor nem persistidos; seguem as diretrizes da LGPD.",
+        },
+      ],
+    },
+  },
   stubs: {
     ativosTokens: {
       title: "Ativos e tokens",
@@ -563,11 +673,6 @@ export const ptBr = {
       title: "Títulos de dívida",
       description:
         "Instrumentos de dívida estruturados via tokenização. Conteúdo em construção — fase de demonstração.",
-    },
-    documentos: {
-      title: "Documentos e FAQs",
-      description:
-        "Materiais institucionais e perguntas frequentes. Conteúdo em construção — fase de demonstração.",
     },
     contato: {
       title: "Contate-nos",

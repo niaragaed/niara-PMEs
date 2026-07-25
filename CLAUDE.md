@@ -511,6 +511,46 @@ mainnet nem transação real.
 
 ---
 
+## Tela `/sobre/documentos` (Documentação)
+
+Substituiu o stub antigo ("Documentos e FAQs"). Inspirada na página
+`docs` do `niara-site` (repositório irmão) — mesma estrutura (sidebar com
+navegação por seções/âncoras + conteúdo, acordeão de FAQ) — mas em pt-BR,
+no tema verde-sálvia cheio (`bg-military`, igual a `/ativos` e `/perfil`)
+e com conteúdo próprio de PME (captação via tokenização sob a Resolução
+CVM 88, não a exchange). **Nenhum token novo foi criado** — reaproveita
+`panel`/`panel-border`, `on-military`/`on-military-muted` e `salmon`, já
+existentes desde `/ativos`.
+
+`DocumentacaoPage.tsx`, componentes em `src/components/documentacao/`
+
+Tarja "Estágio atual" no topo (`bg-panel`, rótulo em `salmon`) — texto diz
+que os contratos estão em protótipo/testnet, sem mainnet nem auditoria
+publicada, e que todo o conteúdo do site é demonstração. Abaixo, cabeçalho
+centrado (título + subtítulo) e, em seguida, `DocumentacaoNav.tsx`
+(sidebar sticky no desktop / abas horizontais roláveis no mobile, mesmo
+padrão de `PerfilNav.tsx`) ao lado do conteúdo, com seções por âncora
+(`scroll-mt-24`, mesma convenção de `/perfil`): O que é a Niara PMEs →
+Como funciona a tokenização (lista numerada 01–04) → Enquadramento
+regulatório → Modelo de receita → Tecnologia → FAQ (`FaqAccordion.tsx`,
+adaptado do `FaqAccordion` do `niara-site` — teclado + `aria-expanded`/
+`aria-controls`, mesmo padrão de acessibilidade).
+
+🔴 **Revisão jurídica pendente antes do go-live** — textos aprovados para
+exibição nesta fase, mas ainda não validados juridicamente:
+- Seção "Enquadramento regulatório" (`ptBr.documentacao.enquadramento`):
+  menção à Resolução CVM 88 e à necessidade de plataforma
+  autorizada/registrada pela CVM para oferta pública.
+- Afirmação de que o registro on-chain é "probatório de integridade e
+  anterioridade" e não substitui os livros societários da Lei 6.404 nem o
+  registro em cartório (mesma regra já vale para `/perfil`, ver "Regra
+  principal" no topo deste arquivo).
+- Seção "Modelo de receita" (`ptBr.documentacao.modeloReceita`):
+  deliberadamente **sem percentuais** ("em definição") — não preencher
+  números de taxa sem validação jurídica/de produto.
+
+---
+
 ## Organização
 
 ```
@@ -518,6 +558,8 @@ src/
   app/                 rotas (App Router)
     ativos/page.tsx    dashboard de portfólio (ver "Tela /ativos" abaixo)
     perfil/page.tsx    tela de perfil (ver "Tela /perfil" abaixo)
+    sobre/documentos/  documentação + FAQ (ver "Tela /sobre/documentos"
+                       abaixo)
   components/
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
@@ -529,6 +571,8 @@ src/
                        InvestorProfileQuiz + InvestorProfileResultCard,
                        WalletSection, FormField (TextField/SelectField/
                        ReadField compartilhados)
+    documentacao/      DocumentacaoPage (sidebar por seções + banner de
+                       estágio atual), DocumentacaoNav, FaqAccordion
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
@@ -637,10 +681,11 @@ creditar.
   juridicamente. Não alterar nem expandir esses textos sem instrução.
 - Formulário de contato real, autenticação, backend — fora de escopo por
   ora
-- Conteúdo real das páginas-stub (`/negociar/*`, `/sobre/*`) — hoje só
-  exibem aviso de "em construção". `/ativos` e `/perfil` deixaram de ser
-  stub (ver "Tela /ativos" e "Tela /perfil" abaixo) — não reverter nenhuma
-  das duas para `StubPage`.
+- Conteúdo real das páginas-stub (`/negociar/*`, `/sobre/contato`) — hoje
+  só exibem aviso de "em construção". `/ativos`, `/perfil` e
+  `/sobre/documentos` deixaram de ser stub (ver "Tela /ativos", "Tela
+  /perfil" e "Tela /sobre/documentos" acima) — não reverter nenhuma delas
+  para `StubPage`.
 - **Bug conhecido (pré-existente, não corrigido nesta rodada):**
   `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
   framer-motion, que lê `window.matchMedia` de forma síncrona já no
