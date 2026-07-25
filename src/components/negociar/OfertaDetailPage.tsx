@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { CategoryBadge } from "./CategoryChip";
 import { FinanceiroChart } from "./FinanceiroChart";
+import { FundamentalIndicators } from "./FundamentalIndicators";
 import { OrderTicket } from "./OrderTicket";
 import { CATEGORY_META } from "@/lib/categories";
 import { formatBRL } from "@/lib/format";
@@ -100,6 +101,8 @@ export function OfertaDetailPage({ oferta }: { oferta: Oferta }) {
                 <FinanceiroChart serie={oferta.financeiro.serieMensal} />
               </div>
             </section>
+
+            <FundamentalIndicators indicadores={oferta.indicadores} />
 
             <section className="rounded-lg bg-surface p-6 shadow-soft">
               <h2 className="text-lg font-semibold text-ink">{t.termos.title}</h2>

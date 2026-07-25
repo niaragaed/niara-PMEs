@@ -14,6 +14,55 @@ export type FinanceiroMensal = {
   caixa: number;
 };
 
+// Indicadores fundamentalistas (demonstração — ver `INDICADORES_DEMONSTRACAO`
+// abaixo). Estrutura em grupos, espelhando `ptBr.negociar.oferta.indicadores.
+// grupos` — cada chave de item aqui precisa ter a chave correspondente em
+// `itens` no dicionário i18n (nome + explicação do popover "?" vivem lá).
+export type IndicadoresFundamentalistas = {
+  valuation: {
+    pl: number;
+    pvp: number;
+    psr: number;
+    evEbitda: number;
+    evEbit: number;
+    pEbitda: number;
+    pEbit: number;
+    pAtivo: number;
+    pAtivoCircLiq: number;
+    pCapGiro: number;
+    lpa: number;
+    vpa: number;
+  };
+  eficiencia: {
+    margemBruta: number;
+    margemEbitda: number;
+    margemEbit: number;
+    margemLiquida: number;
+    giroAtivos: number;
+  };
+  rentabilidade: {
+    roe: number;
+    roa: number;
+    roic: number;
+  };
+  dividendos: {
+    dividendYield: number;
+    payout: number;
+  };
+  endividamento: {
+    liquidezCorrente: number;
+    dividaLiquidaEbitda: number;
+    dividaLiquidaEbit: number;
+    dividaLiquidaPatrimonio: number;
+    dividaBrutaPatrimonio: number;
+    patrimonioAtivos: number;
+    passivosAtivos: number;
+  };
+  crescimento: {
+    cagrReceitas5a: number;
+  };
+};
+
 export type Oferta = {
   slug: string;
   nome: string;
@@ -32,6 +81,7 @@ export type Oferta = {
     endividamento: number;
     serieMensal: FinanceiroMensal[];
   };
+  indicadores: IndicadoresFundamentalistas;
   termos: {
     tipoToken: TipoToken;
     metaCaptacao: number;
@@ -40,6 +90,55 @@ export type Oferta = {
     prazoMeses: number;
   };
   precoSimulado: number;
+};
+
+// Mesmo conjunto de indicadores fictícios para todas as ofertas nesta fase
+// (não há análise fundamentalista real de nenhuma empresa) — o campo
+// `indicadores` fica por oferta no tipo acima para permitir personalizar
+// valores por oferta no futuro sem mudar a modelagem.
+const INDICADORES_DEMONSTRACAO: IndicadoresFundamentalistas = {
+  valuation: {
+    pl: 15.87,
+    pvp: 0.68,
+    psr: 2.5,
+    evEbitda: 10.35,
+    evEbit: 22.28,
+    pEbitda: 6.26,
+    pEbit: 13.48,
+    pAtivo: 0.25,
+    pAtivoCircLiq: -0.31,
+    pCapGiro: 5.43,
+    lpa: 0.78,
+    vpa: 17.99,
+  },
+  eficiencia: {
+    margemBruta: 46.94,
+    margemEbitda: 39.93,
+    margemEbit: 18.55,
+    margemLiquida: 15.76,
+    giroAtivos: 0.1,
+  },
+  rentabilidade: {
+    roe: 4.32,
+    roa: -3.0,
+    roic: 1.83,
+  },
+  dividendos: {
+    dividendYield: 5.64,
+    payout: 41.63,
+  },
+  endividamento: {
+    liquidezCorrente: 1.36,
+    dividaLiquidaEbitda: 4.09,
+    dividaLiquidaEbit: 8.79,
+    dividaLiquidaPatrimonio: 0.45,
+    dividaBrutaPatrimonio: 0.84,
+    patrimonioAtivos: 0.37,
+    passivosAtivos: 0.59,
+  },
+  crescimento: {
+    cagrReceitas5a: -2.45,
+  },
 };
 
 // Construtor determinístico (sem aleatoriedade) da série mensal de
@@ -76,6 +175,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 320_000,
       serieMensal: buildSerieMensal(180_000, 28_000, 0.03),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "participacao",
       metaCaptacao: 500_000,
@@ -104,6 +204,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 60_000,
       serieMensal: buildSerieMensal(85_000, 14_000, 0.025),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "participacao",
       metaCaptacao: 350_000,
@@ -131,6 +232,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 1_500_000,
       serieMensal: buildSerieMensal(480_000, 60_000, 0.02),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "recebivel",
       metaCaptacao: 800_000,
@@ -158,6 +260,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 140_000,
       serieMensal: buildSerieMensal(70_000, 11_000, 0.02),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "participacao",
       metaCaptacao: 250_000,
@@ -185,6 +288,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 2_100_000,
       serieMensal: buildSerieMensal(300_000, 40_000, 0.04),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "recebivel",
       metaCaptacao: 1_200_000,
@@ -212,6 +316,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 900_000,
       serieMensal: buildSerieMensal(130_000, 18_000, 0.015),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "recebivel",
       metaCaptacao: 600_000,
@@ -239,6 +344,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 1_100_000,
       serieMensal: buildSerieMensal(230_000, 24_000, 0.02),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "participacao",
       metaCaptacao: 900_000,
@@ -266,6 +372,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 90_000,
       serieMensal: buildSerieMensal(58_000, 9_000, 0.035),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "participacao",
       metaCaptacao: 400_000,
@@ -293,6 +400,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 700_000,
       serieMensal: buildSerieMensal(340_000, 16_000, 0.01),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "divida",
       metaCaptacao: 300_000,
@@ -320,6 +428,7 @@ export const OFERTAS: Oferta[] = [
       endividamento: 950_000,
       serieMensal: buildSerieMensal(450_000, 21_000, 0.012),
     },
+    indicadores: INDICADORES_DEMONSTRACAO,
     termos: {
       tipoToken: "divida",
       metaCaptacao: 450_000,
@@ -347,7 +456,10 @@ export const VITRINE_HUB_SLUGS = ["pme-padaria-bela-vista", "agro-cerrado-norte"
 // iguais para todas as ofertas (nenhum documento real existe nesta fase).
 export const DOCUMENTOS_PADRAO = [
   "Memorando de informações",
+  "Balanço financeiro",
   "Demonstrações financeiras",
+  "Release de resultados",
+  "Apresentação dos resultados",
   "Contrato social / estatuto",
   "Termo de adesão à oferta",
 ];
