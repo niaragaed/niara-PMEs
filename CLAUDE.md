@@ -622,7 +622,18 @@ de rendimento/retorno projetado existe no tipo `Oferta`: a regra "nada
 de promessa de retorno" foi respeitada removendo o campo, não
 escondendo-o na UI. `DOCUMENTOS_PADRAO` é uma lista genérica de
 material de divulgação (mesmos placeholders "Em breve" para todas as
-ofertas, já que nenhum documento real existe nesta fase).
+ofertas, já que nenhum documento real existe nesta fase) — 7 itens,
+nesta ordem: Memorando de informações, Balanço financeiro,
+Demonstrações financeiras, Release de resultados, Apresentação dos
+resultados, Contrato social / estatuto, Termo de adesão à oferta.
+Cada `Oferta` também tem `indicadores: IndicadoresFundamentalistas`
+(indicadores fundamentalistas fictícios em 6 grupos — valuation,
+eficiência, rentabilidade, dividendos, endividamento, crescimento; ver
+"Indicadores fundamentalistas" logo abaixo). Todas as 10 ofertas usam o
+mesmo objeto `INDICADORES_DEMONSTRACAO` (não há análise fundamentalista
+real de nenhuma empresa) — o campo fica por oferta no tipo para
+permitir personalizar valores por oferta no futuro sem mudar a
+modelagem.
 
 **Hub** (`/negociar/ativos-e-tokens`, `HubPage.tsx`): banner de
 demonstração, grade de 5 `CategoryCard` (chip colorido + nome + 1 linha
@@ -645,12 +656,58 @@ se o slug não existir em `OFERTAS`). `OfertaDetailPage.tsx`: dados
 públicos da empresa, financeiro/caixa (KPIs + `FinanceiroChart.tsx`,
 `recharts` `LineChart` de receita/caixa simulados dos últimos 6 meses,
 com descrição textual como alternativa ao SVG `aria-hidden` — mesmo
-padrão de `/ativos`), termos da oferta (tipo de token, meta de
+padrão de `/ativos`), **indicadores fundamentalistas** (ver seção
+própria abaixo), termos da oferta (tipo de token, meta de
 captação, valor por cota, quantidade, prazo — nota reforçando que
 qualquer estimativa é ilustrativa), documentos placeholder desabilitados
-e riscos estilo CVM 88. CTA "Negociar (simulação)" no cabeçalho abre a
-boleta e some enquanto ela está aberta (evita duplicidade); reaparece ao
-fechar.
+(7 itens, ver "Dados" acima) e riscos estilo CVM 88. CTA "Negociar
+(simulação)" no cabeçalho abre a boleta e some enquanto ela está aberta
+(evita duplicidade); reaparece ao fechar.
+
+**Indicadores fundamentalistas** (`FundamentalIndicators.tsx`,
+renderizado logo após "Financeiro / caixa"): painel branco inspirado no
+layout do Investidor10 — título + aviso "Indicadores simulados de
+demonstração — não refletem valores reais nem análise de nenhuma
+empresa" (obrigatório pela regra "nada simulado pode parecer real"),
+depois 6 grupos (Valuation, Eficiência, Rentabilidade, Dividendos,
+Endividamento, Crescimento), cada um com rótulo + barra de acento à
+esquerda (`bg-salmon`, decorativa) e uma grade de cards de indicador
+(`grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))`, empilha
+sozinha no mobile). Cada card tem nome do indicador + botão "?"
+(`HelpCircle` do lucide-react) + valor fictício formatado (`numero`:
+2 casas decimais pt-BR; `percentual`: idem + `%`). Nomes, unidade e
+texto de explicação de cada indicador vivem em
+`ptBr.negociar.oferta.indicadores.grupos` (i18n); os valores numéricos
+em si (fictícios) vivem em `INDICADORES_DEMONSTRACAO`
+(`src/lib/mock/ofertas.ts`).
+
+O botão "?" (`IndicatorHelp.tsx`) abre um popover acessível
+(`<button aria-expanded aria-controls>` + `role="tooltip"`) com a
+explicação do indicador — fecha com Esc, clique fora ou novo clique no
+próprio botão; o estado de "qual está aberto" fica em
+`FundamentalIndicators` (um único `openKey`), garantindo só um popover
+aberto por vez entre todos os grupos/cards. Funciona por toque
+(`pointerdown`, não só `mousedown`) e por teclado (foco visível via
+`focus-visible:outline-salmon`, ativa com Enter/Espaço nativos do
+`<button>`). Entrada usa a mesma utility `animate-dropdown` já usada
+nos dropdowns do header — reaproveitada em vez de criar uma nova
+animação, e já respeita `prefers-reduced-motion` pela regra global
+existente em `globals.css` (reduz qualquer `animation-duration` a
+~0.01ms), sem precisar de tratamento próprio.
+
+🔴 **Posicionamento do popover é ancorado à direita do botão
+(`right-0`), não centralizado** — decisão deliberada, não estética: um
+popover centralizado (`left-1/2 -translate-x-1/2`) sobre um card perto
+da borda direita da grade pode ultrapassar a viewport no mobile e criar
+scroll horizontal na página inteira (elementos que se estendem além da
+borda direita aumentam `scrollWidth`; a mesma classe de bug já não
+existe para a esquerda, onde o excesso é só clipado sem gerar scroll).
+Ancorando pela direita, o popover só se estende para a esquerda a
+partir do botão — no pior caso (card na primeira coluna) fica com
+menos espaço à esquerda, nunca cria overflow à direita. Verificado com
+Playwright: `document.documentElement.scrollWidth ===
+document.documentElement.clientWidth` em 390px de largura com o
+popover do último indicador (canto da grade) aberto.
 
 **Boleta simulada** (`OrderTicket.tsx`): painel lateral sticky no
 desktop (`lg:static`, dentro do grid de 12 colunas da página) e drawer
@@ -675,15 +732,21 @@ criado especificamente para texto de erro sobre `bg-surface` nesta
 seção — não confundir com `--color-value-negative`.
 
 **i18n**: todo o texto de interface das 4 telas fica em
-`ptBr.negociar` (`hub`, `categorias`, `categoriaTemplate`, `oferta`,
-`boleta`) em `src/lib/i18n/pt-br.ts`; texto descritivo das ofertas
-fictícias (nome da empresa, resumo do negócio etc.) fica direto no mock
-(`ofertas.ts`), seguindo o mesmo padrão de `mock/ativos.ts`.
+`ptBr.negociar` (`hub`, `categorias`, `categoriaTemplate`, `oferta`
+— incluindo `oferta.indicadores.grupos` (nomes, unidade e explicações
+dos indicadores fundamentalistas), `boleta`) em `src/lib/i18n/pt-br.ts`;
+texto descritivo das ofertas fictícias (nome da empresa, resumo do
+negócio etc.) e os valores numéricos dos indicadores fundamentalistas
+ficam direto no mock (`ofertas.ts`), seguindo o mesmo padrão de
+`mock/ativos.ts`.
 
 Verificado com dev server + Playwright (desktop 1280px e mobile 390px):
-hub, template de categoria, detalhe da oferta e o fluxo completo da
-boleta (abrir → revisar → confirmar → nova ordem), incluindo o drawer
-mobile com backdrop — sem erros de console.
+hub, template de categoria, detalhe da oferta (documentos ampliados +
+indicadores fundamentalistas — popover do "?" abrindo/fechando por
+clique, Esc, clique fora e teclado, um por vez, sem scroll horizontal
+no mobile) e o fluxo completo da boleta (abrir → revisar → confirmar →
+nova ordem), incluindo o drawer mobile com backdrop — sem erros de
+console.
 
 ---
 
@@ -718,8 +781,10 @@ src/
     negociar/          HubPage, CategoryPage (template das 5 categorias),
                        CategoryChip (CategoryChip + CategoryBadge),
                        CategoryCard, ShowcaseCard, OfertaDetailPage,
-                       FinanceiroChart (recharts), OrderTicket (boleta
-                       simulada) — ver "Telas /negociar" abaixo
+                       FinanceiroChart (recharts), FundamentalIndicators
+                       + IndicatorHelp (indicadores fundamentalistas +
+                       popover "?"), OrderTicket (boleta simulada) —
+                       ver "Telas /negociar" abaixo
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
@@ -744,8 +809,9 @@ src/
     mock/perfil.ts     pool de carteiras demo (endereços testnet) da tela
                        /perfil — nunca dado real
     mock/ofertas.ts    categorias + 10 ofertas fictícias tipadas das telas
-                       /negociar (dados públicos, financeiro, termos) —
-                       nunca dado real
+                       /negociar (dados públicos, financeiro, indicadores
+                       fundamentalistas, termos, documentos) — nunca
+                       dado real
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
   niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)

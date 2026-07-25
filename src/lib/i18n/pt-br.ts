@@ -781,6 +781,197 @@ export const ptBr = {
         chartDescription:
           "Descrição do gráfico: evolução simulada de receita e caixa nos últimos 6 meses. Dados fictícios, sem relação com o desempenho real da empresa.",
       },
+      indicadores: {
+        title: "Indicadores fundamentalistas",
+        nota: "Indicadores simulados de demonstração — não refletem valores reais nem análise de nenhuma empresa.",
+        ajudaAria: (nome: string) => `O que é ${nome}?`,
+        grupos: {
+          valuation: {
+            label: "Valuation",
+            itens: {
+              pl: {
+                nome: "P/L",
+                unidade: "numero",
+                explicacao:
+                  'Preço da ação dividido pelo lucro por ação; indica quantos anos de lucro seriam necessários para "pagar" o preço.',
+              },
+              pvp: {
+                nome: "P/VP",
+                unidade: "numero",
+                explicacao: "Preço dividido pelo valor patrimonial por ação; quanto o mercado paga sobre o patrimônio contábil.",
+              },
+              psr: {
+                nome: "P/Receita (PSR)",
+                unidade: "numero",
+                explicacao: "Valor de mercado dividido pela receita líquida.",
+              },
+              evEbitda: {
+                nome: "EV/Ebitda",
+                unidade: "numero",
+                explicacao:
+                  "Valor da firma (EV) dividido pelo Ebitda; múltiplo operacional independente da estrutura de capital.",
+              },
+              evEbit: {
+                nome: "EV/Ebit",
+                unidade: "numero",
+                explicacao: "Valor da firma dividido pelo Ebit (lucro operacional).",
+              },
+              pEbitda: {
+                nome: "P/Ebitda",
+                unidade: "numero",
+                explicacao: "Valor de mercado dividido pelo Ebitda.",
+              },
+              pEbit: {
+                nome: "P/Ebit",
+                unidade: "numero",
+                explicacao: "Valor de mercado dividido pelo Ebit.",
+              },
+              pAtivo: {
+                nome: "P/Ativo",
+                unidade: "numero",
+                explicacao: "Valor de mercado dividido pelo ativo total.",
+              },
+              pAtivoCircLiq: {
+                nome: "P/Ativo Circ. Liq.",
+                unidade: "numero",
+                explicacao: "Preço dividido pelo ativo circulante líquido (circulante menos passivos).",
+              },
+              pCapGiro: {
+                nome: "P/Cap. Giro",
+                unidade: "numero",
+                explicacao: "Preço dividido pelo capital de giro (ativo circulante menos passivo circulante).",
+              },
+              lpa: {
+                nome: "LPA",
+                unidade: "numero",
+                explicacao: "Lucro por ação: lucro líquido dividido pelo número de ações.",
+              },
+              vpa: {
+                nome: "VPA",
+                unidade: "numero",
+                explicacao: "Valor patrimonial por ação: patrimônio líquido dividido pelo número de ações.",
+              },
+            },
+          },
+          eficiencia: {
+            label: "Eficiência",
+            itens: {
+              margemBruta: {
+                nome: "Margem Bruta",
+                unidade: "percentual",
+                explicacao: "Lucro bruto dividido pela receita líquida.",
+              },
+              margemEbitda: {
+                nome: "Margem Ebitda",
+                unidade: "percentual",
+                explicacao: "Ebitda dividido pela receita líquida.",
+              },
+              margemEbit: {
+                nome: "Margem Ebit",
+                unidade: "percentual",
+                explicacao: "Ebit (lucro operacional) dividido pela receita líquida.",
+              },
+              margemLiquida: {
+                nome: "Margem Líquida",
+                unidade: "percentual",
+                explicacao: "Lucro líquido dividido pela receita líquida.",
+              },
+              giroAtivos: {
+                nome: "Giro Ativos",
+                unidade: "numero",
+                explicacao: "Receita dividida pelo ativo total; quanto o ativo gera de receita.",
+              },
+            },
+          },
+          rentabilidade: {
+            label: "Rentabilidade",
+            itens: {
+              roe: {
+                nome: "ROE",
+                unidade: "percentual",
+                explicacao: "Retorno sobre o patrimônio líquido: lucro líquido dividido pelo patrimônio líquido.",
+              },
+              roa: {
+                nome: "ROA",
+                unidade: "percentual",
+                explicacao: "Retorno sobre os ativos: lucro líquido dividido pelo ativo total.",
+              },
+              roic: {
+                nome: "ROIC",
+                unidade: "percentual",
+                explicacao:
+                  "Retorno sobre o capital investido: resultado operacional após impostos dividido pelo capital investido.",
+              },
+            },
+          },
+          dividendos: {
+            label: "Dividendos",
+            itens: {
+              dividendYield: {
+                nome: "Dividend Yield",
+                unidade: "percentual",
+                explicacao: "Dividendos por ação nos últimos 12 meses dividido pelo preço da ação.",
+              },
+              payout: {
+                nome: "Payout",
+                unidade: "percentual",
+                explicacao: "Percentual do lucro distribuído como dividendos.",
+              },
+            },
+          },
+          endividamento: {
+            label: "Endividamento",
+            itens: {
+              liquidezCorrente: {
+                nome: "Liquidez Corrente",
+                unidade: "numero",
+                explicacao:
+                  "Ativo circulante dividido pelo passivo circulante; capacidade de honrar obrigações de curto prazo.",
+              },
+              dividaLiquidaEbitda: {
+                nome: "Dívida Líquida/Ebitda",
+                unidade: "numero",
+                explicacao: "Dívida líquida dividida pelo Ebitda; quantos anos de Ebitda para quitar a dívida.",
+              },
+              dividaLiquidaEbit: {
+                nome: "Dívida Líquida/Ebit",
+                unidade: "numero",
+                explicacao: "Dívida líquida dividida pelo Ebit.",
+              },
+              dividaLiquidaPatrimonio: {
+                nome: "Dívida Líquida/Patrimônio",
+                unidade: "numero",
+                explicacao: "Dívida líquida dividida pelo patrimônio líquido.",
+              },
+              dividaBrutaPatrimonio: {
+                nome: "Dívida Bruta/Patrimônio",
+                unidade: "numero",
+                explicacao: "Dívida bruta dividida pelo patrimônio líquido.",
+              },
+              patrimonioAtivos: {
+                nome: "Patrimônio/Ativos",
+                unidade: "numero",
+                explicacao: "Patrimônio líquido dividido pelo ativo total.",
+              },
+              passivosAtivos: {
+                nome: "Passivos/Ativos",
+                unidade: "numero",
+                explicacao: "Passivo total dividido pelo ativo total.",
+              },
+            },
+          },
+          crescimento: {
+            label: "Crescimento",
+            itens: {
+              cagrReceitas5a: {
+                nome: "CAGR Receitas 5 anos",
+                unidade: "percentual",
+                explicacao: "Taxa de crescimento anual composta da receita nos últimos 5 anos.",
+              },
+            },
+          },
+        },
+      },
       termos: {
         title: "Termos da oferta",
         tipoToken: "O que o token representa",
