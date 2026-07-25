@@ -37,6 +37,44 @@
   --color-on-salmon: #23271f;
   --color-on-salmon-muted: #5a3325;
 
+  /* Painel do dashboard de Ativos (Parte 1): texto secundário sobre
+     bg-military mais suave que on-military/80 — pensado para densidade de
+     dados (rótulos de KPI, legendas), não para títulos/subtítulos de
+     seção de marketing. */
+  --color-on-military-muted: #c3cbb3;
+
+  /* Cards/painéis do dashboard sobre bg-military cheio: fundo um pouco
+     MAIS ESCURO que a seção (mistura com preto em baixa proporção), não
+     mais claro — testado contra a fórmula de luminância relativa do
+     WCAG: um overlay claro (tom de --color-on-military) eleva a
+     luminância do fundo do card e por isso *reduz* o contraste dos textos
+     claros que ficam dentro dele (ex.: --color-value-negative caía para
+     ~3,98:1, abaixo do mínimo AA de 4,5:1); escurecer o fundo do card, ao
+     contrário, aumenta a margem de contraste de todos os tokens de texto
+     claro usados dentro dele. A borda continua clara/sutil (tom de
+     --color-on-military em baixa opacidade), como pedido — só o
+     preenchimento do card mudou de direção. */
+  --color-panel: color-mix(in srgb, var(--color-military) 90%, black);
+  --color-panel-border: color-mix(in srgb, var(--color-on-military) 14%, transparent);
+
+  /* Valores positivos/negativos (KPIs, variação %, ganho/perda). Tom de
+     --color-value-negative ajustado para #eda492 (mais claro que o
+     #e67c63 inicialmente cogitado): contra bg-military (#3e4835) o tom
+     mais escuro só atinge ~3.4:1, abaixo do mínimo AA (4.5:1) para o
+     texto pequeno da coluna "Variação" da tabela de posições — #eda492
+     atinge ~4.73:1. Verificado com a fórmula de luminância relativa do
+     WCAG 2.x.  */
+  --color-value-positive: #9bd1a0;
+  --color-value-negative: #eda492;
+
+  /* Paleta categórica dos gráficos do dashboard de Ativos — 5 classes de
+     token, harmônica sobre bg-military. */
+  --color-chart-pmes: #f0a487;
+  --color-chart-agro: #b7c29e;
+  --color-chart-imobiliario: #e4c07a;
+  --color-chart-auto: #7fa9a3;
+  --color-chart-divida: #b49fc0;
+
   /* Raio */
   --radius-sm: 8px;
   --radius-md: 12px;
