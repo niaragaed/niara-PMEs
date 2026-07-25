@@ -61,14 +61,15 @@ versões anteriores.
 - Tailwind v4 é **CSS-first**: não há `tailwind.config.js`; tokens ficam em
   `@theme` dentro de `src/app/globals.css`
 - `next/font/google` (não CDN) para as fontes
-- Animação de scroll: `gsap` + `ScrollTrigger` (astronauta viajante, seções
-  pinned) e `lenis` (smooth scroll, integrado ao ScrollTrigger)
+- Animação de scroll: `gsap` + `ScrollTrigger` (seções pinned, parallax leve)
+  e `lenis` (smooth scroll, integrado ao ScrollTrigger)
 - Micro-reveals (fade/slide/stagger simples): `framer-motion`
 - Ícones: `lucide-react`
 - Estado: React (`useState`, Context). Sem libs de estado externas.
 
-Removido: `three` / `@react-three/fiber` / `@react-three/drei` — o
-astronauta do hero deixou de ser 3D (ver seção própria abaixo).
+Removido: `three` / `@react-three/fiber` / `@react-three/drei` (não eram
+mais usados por nada no projeto) e, depois, o próprio astronauta 2D — ver
+"Astronauta (removido)" abaixo.
 
 ---
 
@@ -146,45 +147,22 @@ Comentários de código ficam em português (convenção do projeto).
 
 ---
 
-## Astronauta (guia de scroll)
+## Astronauta (removido)
 
-Deixou de ser um canvas 3D (r3f/three) — é um `<img>` 2D persistente e
-fixo (`src/components/astronaut/AstronautGuide.tsx`), renderizado uma
-única vez em `src/app/page.tsx` (não dentro de cada seção). Motivo da
-troca: o tracking 3D antigo tinha bug de inversão do eixo vertical e não
-reproduzia com fidelidade a arte aprovada.
+O astronauta (guia de scroll 2D que seguia o cursor e viajava pelas
+âncoras de cada seção) foi **removido por completo** — não ficou bom
+visualmente. Saíram: `src/components/astronaut/` (`AstronautGuide.tsx` +
+`anchors.ts`), o `<AstronautGuide />` em `src/app/page.tsx`,
+`public/astronaut.png` e o gancho de fade-out na seção Créditos.
 
-- Asset: `public/astronaut.png` (recorte com fundo transparente — a arte
-  flutua sobre seções sálvia, pêssego e branca). Caminho na constante
-  `ASTRONAUT_SRC` em `AstronautGuide.tsx`.
-- Container `position: fixed`, `pointer-events: none`, `z-30` (acima do
-  conteúdo, abaixo do header que é `z-40`), `aria-hidden="true"` (é
-  puramente decorativo).
-- **Tilt de cursor**: `rotateX`/`rotateY`/translate via springs do
-  `framer-motion` (`useSpring`), nunca movimento seco. Eixo vertical:
-  cursor acima do centro → `rotateX` positivo → topo da imagem inclina
-  para trás → lê como "olhando para cima" (era o bug do 3D antigo).
-- **Viagem por scroll**: âncoras de pose (posição/escala/opacidade) por
-  seção, configuradas em `src/components/astronaut/anchors.ts`
-  (`ASTRONAUT_ANCHORS` — array ordenado, cada item referencia o `id` de
-  uma seção da home). `AstronautGuide` cria, via GSAP `ScrollTrigger`
-  (`scrub`), uma transição entre cada par de âncoras consecutivas.
-  **Atualizar esse array conforme seções mudam** — não é preciso tocar na
-  lógica do componente.
-- **Desktop** (`≥1280px`, ver `ASTRONAUT_DESKTOP_MEDIA_QUERY`): percorre
-  todas as âncoras, alternando lados, e desaparece na última (`credits`).
-- **Mobile/tablet** (`<1280px`): modo simplificado — só aparece no hero
-  (`ASTRONAUT_MOBILE_HERO_ANCHOR`, escala reduzida) e some ao rolar para
-  além dele. Abaixo de 1280px o container `max-w-6xl` da home não deixa
-  gutter lateral suficiente para o percurso completo sem cobrir cards.
-- `gsap.matchMedia()` troca entre os dois modos automaticamente ao
-  redimensionar, com cleanup próprio.
-- Respeita `prefers-reduced-motion`: sem tilt de cursor e sem viagem —
-  fica estático na pose do hero.
-- **Upgrade futuro (não implementado)**: se um modelo `.glb` low-poly
-  equivalente for fornecido, dá para trocar o `<Image>` por uma cena r3f
-  com look-at 3D real, reaproveitando o mesmo array de âncoras (âncoras
-  virariam posições de câmera/alvo em vez de CSS).
+No lugar dele, o hero foi rebalanceado para ficar centrado no texto
+(headline + subtítulo + CTAs), com um elemento decorativo sutil atrás do
+conteúdo — o motivo do planeta anelado do `<Logo />` (círculo + elipse
+inclinada) desenhado em SVG dentro de `HeroParallaxLayers.tsx`, com leve
+parallax por scroll (GSAP `ScrollTrigger`, respeitando
+`prefers-reduced-motion`) — junto dos glows suaves (`blur` + cores da
+paleta) que já existiam ali. Não reintroduzir um elemento central 3D/2D
+persistente sem alinhar antes com o usuário.
 
 ---
 
@@ -226,8 +204,8 @@ seção pinned futura dentro do `<main>` da home.
 src/
   app/                 rotas (App Router)
   components/
-    astronaut/         AstronautGuide + anchors.ts (guia de scroll)
-    hero/              hero (headline, CTAs), HeroParallaxLayers
+    hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
+                       motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile
     scroll/            LenisProvider (smooth scroll + sync com ScrollTrigger)
     sections/          narrativa por scroll (home), inclui pin de "Como funciona"
@@ -236,7 +214,6 @@ src/
     i18n/              dicionário de textos (pt-br.ts)
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
-  astronaut.png        arte do astronauta (fundo transparente)
   niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)
 ```
 
@@ -275,14 +252,14 @@ public/
 
 ## Estado atual
 
-Homepage (`src/app/page.tsx`), nesta ordem: Hero (astronauta 2D + camadas
-de parallax) → Benefícios da tokenização (pêssego) → Como funciona
+Homepage (`src/app/page.tsx`), nesta ordem: Hero (texto centrado + motivo
+decorativo do planeta anelado/glow, sem astronauta — ver "Astronauta
+(removido)") → Benefícios da tokenização (pêssego) → Como funciona
 (sequência pinned) → Quando posso usar a Tokenização? (sálvia) → Conheça
 os Tokens (pêssego, cards linkam para as rotas-stub de cada token) → Para
 empresas × investidores (sálvia) → Aviso de demonstração/CVM → Faixa CTA
 final (verde sólido) → Créditos (placeholder sóbrio — "Equipe Niara" +
-áreas genéricas, sem nomes reais; é onde o astronauta completa o
-fade-out, `credits` é a última âncora em `anchors.ts`) → Footer.
+áreas genéricas, sem nomes reais) → Footer.
 
 Scroll suave via Lenis sincronizado ao GSAP ScrollTrigger. Header +
 navegação, `/styleguide`. Todas as rotas do nav têm stub sem 404. Testado
@@ -290,7 +267,8 @@ com `tsc`, `eslint`, `build` e verificação visual via Playwright (desktop,
 mobile, teclado, reduced-motion) a cada parte.
 
 As 5 partes do redesign (paleta E, astronauta 2D, Lenis + pin, seções de
-conteúdo aprovado, créditos) estão completas.
+conteúdo aprovado, créditos) estão completas. O astronauta foi removido
+depois (ver seção própria) e o hero rebalanceado.
 
 ## Pendências conhecidas
 
@@ -305,8 +283,6 @@ conteúdo aprovado, créditos) estão completas.
   Peer-to-Peer) e "Quando posso usar a Tokenização?" (Antecipação do
   Caixa) — textos aprovados para exibição, mas ainda não validados
   juridicamente. Não alterar nem expandir esses textos sem instrução.
-- Modelo `.glb` low-poly do astronauta (opcional) — upgrade futuro para
-  3D real, ver seção "Astronauta (guia de scroll)"
 - Formulário de contato real, autenticação, backend — fora de escopo por
   ora
 - Conteúdo real das páginas-stub (`/negociar/*`, `/ativos`, `/perfil`,

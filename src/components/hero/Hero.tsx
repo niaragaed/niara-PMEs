@@ -2,24 +2,23 @@ import Link from "next/link";
 import { HeroParallaxLayers } from "./HeroParallaxLayers";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-// O astronauta agora é um elemento 2D persistente e fixo (AstronautGuide,
-// renderizado uma vez em page.tsx), guiado pelo scroll — não mais um canvas
-// embutido aqui. Esta seção só reserva o espaço vertical/visual para ele
-// "pousar" centralizado na base da tela durante o hero.
+// Hero centrado no texto, sem elemento central 3D: o astronauta foi
+// removido (ver CLAUDE.md). No lugar, HeroParallaxLayers desenha um motivo
+// decorativo sutil (planeta anelado da logo + glow suave) atrás do texto.
 export function Hero() {
   return (
     <section
       id="hero"
-      className="relative flex min-h-[86vh] flex-col items-center justify-center overflow-hidden px-6 py-16 text-center sm:min-h-[90vh]"
+      className="relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden px-6 py-20 text-center sm:min-h-[85vh]"
     >
       <HeroParallaxLayers />
 
-      <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-7">
         <span className="rounded-full bg-military-100 px-4 py-1 text-sm font-medium text-military">
           {ptBr.hero.badge}
         </span>
 
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
+        <h1 className="text-5xl font-semibold leading-tight tracking-tight text-ink sm:text-6xl">
           {ptBr.hero.title}
         </h1>
 

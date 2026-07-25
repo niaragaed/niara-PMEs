@@ -1,4 +1,3 @@
-import { AstronautGuide } from "@/components/astronaut/AstronautGuide";
 import { Hero } from "@/components/hero/Hero";
 import { BenefitsSection } from "@/components/sections/BenefitsSection";
 import { HowItWorksSection } from "@/components/sections/HowItWorksSection";
@@ -12,7 +11,6 @@ import { CreditsSection } from "@/components/sections/CreditsSection";
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
-      <AstronautGuide />
       <Hero />
       <BenefitsSection />
       <HowItWorksSection />
