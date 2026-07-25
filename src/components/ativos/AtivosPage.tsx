@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AllocationDonut } from "./AllocationDonut";
+import { PortfolioEvolutionChart } from "./PortfolioEvolutionChart";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { PositionsTable } from "./PositionsTable";
 import { ptBr } from "@/lib/i18n/pt-br";
@@ -62,6 +64,14 @@ export function AtivosPage() {
             className="mt-8 flex flex-col gap-6"
           >
             <PortfolioSummary />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+              <div className="lg:col-span-7">
+                <PortfolioEvolutionChart />
+              </div>
+              <div className="lg:col-span-5">
+                <AllocationDonut />
+              </div>
+            </div>
             <PositionsTable />
           </div>
         ) : (
