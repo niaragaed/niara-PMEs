@@ -96,9 +96,42 @@ oficial, medido do botão "Contate-nos" e fonte única de verdade para
 qualquer salmão do site · `salmon-600` #E08E6F (hover) · `salmon-100`
 #FBE9DF — **fundo de seção "pêssego"**
 
-**Acentos de seção:** `ink-peach` #8A5A47 (subtítulo terroso sobre fundo
-pêssego — nunca `ink-muted`/cinza ali) · `chip-sage` #DCE3CF (selo/label
-atrás do título de card)
+**Acentos de seção:** `ink-peach` #8A5A47 (subtítulo terroso sobre o
+**tint** `salmon-100` — nunca `ink-muted`/cinza ali; não usar sobre o
+salmon cheio, ver regra de contraste abaixo) · `chip-sage` #DCE3CF
+(selo/label atrás do título de card)
+
+### 🔴 Fundos cheios de seção + regra de contraste
+
+Desde a Parte 6, as seções de conteúdo (exceto Hero e "Como funciona")
+alternam fundo **cheio** — `bg-military` (#3E4835, escuro) ou `bg-salmon`
+(#F0A487, claro) — em vez dos tints `-100` usados antes. Os tints
+(`military-100`/`salmon-100`) continuam existindo como tokens (usados em
+chips, glows do hero, hover de botão outline etc.), só deixaram de ser o
+fundo de seção inteira.
+
+Texto que fica **direto sobre o fundo da seção** (título/subtítulo, fora
+de qualquer card branco) precisa dos tokens semânticos abaixo — checados
+para AA (4.5:1) contra os hex exatos acima, não improvisar outro tom:
+
+- Sobre `bg-military` (escuro): `text-on-military` (#FAF8F5, claro —
+  mesmo tom de `--color-bg`, já usado assim na faixa CTA final) para o
+  título; para subtítulo, se houver, reaproveitar o padrão da CTA
+  (`text-on-military/80`) em vez de criar um novo tom.
+- Sobre `bg-salmon` (claro): `text-on-salmon` (#23271F, escuro — mesmo
+  tom de `--color-ink`) para o título; `text-on-salmon-muted` (#5A3325)
+  para subtítulo. **Não** usar `ink-peach` aqui — foi calibrado para o
+  tint `salmon-100`, bem mais claro, e não atinge 4.5:1 sobre o salmon
+  cheio.
+
+Cards continuam brancos (`bg-surface`) dentro de qualquer fundo cheio, com
+texto interno (`text-ink`/`text-ink-muted`) inalterado — a regra de
+contraste acima só vale para texto solto direto sobre a cor da seção.
+Cards sem borda (`SectionCard`) não precisam de ajuste sobre fundo escuro
+(nunca tiveram borda); cards com borda (`border-border`, ex.:
+`AudiencesSection`) só devem manter a borda quando o fundo por trás for
+claro (salmon) — sobre `bg-military` ela some visualmente e deve ser
+removida, mantendo só a sombra.
 
 Os nomes dos tokens (`military`, `salmon` etc.) foram mantidos por
 compatibilidade de código mesmo após a mudança de paleta militar→sálvia —
@@ -125,10 +158,12 @@ mesmo tratamento.
 **Sombras:** `shadow-soft` / `shadow-soft-lg` — suaves, para cards e
 elementos elevados sobre fundo claro.
 
-Padrão de alternância de fundo nas seções da home: sálvia
-(`bg-military-100`) e pêssego (`bg-salmon-100`) se alternam entre seções de
-conteúdo. Cards continuam brancos (`bg-surface`) sobre qualquer um dos
-dois, com o chip (`bg-chip-sage`) atrás do título/ícone do card.
+Padrão de alternância de fundo nas seções da home: sálvia (`bg-military`)
+e pêssego (`bg-salmon`), **cheios** (ver "Fundos cheios de seção" acima —
+os tints `-100` não são mais usados como fundo de seção inteira), se
+alternam entre seções de conteúdo. Cards continuam brancos (`bg-surface`)
+sobre qualquer um dos dois, com o chip (`bg-chip-sage`) atrás do
+título/ícone do card.
 
 Referência visual viva: `/styleguide`.
 
@@ -259,11 +294,17 @@ public/
 
 Homepage (`src/app/page.tsx`), nesta ordem: Hero (texto centrado + motivo
 decorativo do planeta anelado/glow, sem astronauta — ver "Astronauta
-(removido)") → Benefícios da tokenização (pêssego) → Como funciona
-(sequência pinned) → Quando posso usar a Tokenização? (sálvia) → Conheça
-os Tokens (pêssego, cards linkam para as rotas-stub de cada token) → Para
-empresas × investidores (sálvia) → Aviso de demonstração/CVM → Faixa CTA
-final (verde sólido) → Footer.
+(removido)") → Benefícios da tokenização (**salmon cheio**, texto escuro)
+→ Como funciona (sequência pinned, fundo neutro `bg-surface-alt`,
+inalterado) → Quando posso usar a Tokenização? (**military cheio**, texto
+claro) → Conheça os Tokens (**salmon cheio**, cards linkam para as
+rotas-stub de cada token) → Para empresas × investidores (**salmon
+cheio** — não verde: ficaria verde→[aviso neutro]→verde colado na faixa
+CTA verde logo depois; salmon aqui mantém a alternância de ritmo) →
+Aviso de demonstração/CVM (`bg-surface-alt`, neutro) → Faixa CTA final
+(military cheio, texto claro — já era assim antes da Parte 6) → Footer.
+Ver "Fundos cheios de seção + regra de contraste" acima para os tokens de
+texto (`on-military`/`on-salmon`/`on-salmon-muted`) usados em cada uma.
 
 Nas seções "Benefícios da tokenização" (3 cards) e "Quando posso usar a
 Tokenização?" (4 cards), os cards usam `SectionCard` com `h-full` dentro

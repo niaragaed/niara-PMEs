@@ -11,14 +11,14 @@ const ICONS: Record<string, LucideIcon> = {
   "Token Imobiliário": Home,
 };
 
-// 3.3 — Conheça os Tokens. Fundo pêssego; cada card linka para a rota-stub
-// do token correspondente.
+// 3.3 — Conheça os Tokens. Fundo pêssego CHEIO, título em on-salmon; cada
+// card linka para a rota-stub do token correspondente.
 export function TokensSection() {
   return (
-    <section id="tokens" className="bg-salmon-100 px-6 py-20">
+    <section id="tokens" className="bg-salmon px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-on-salmon sm:text-4xl">
             {ptBr.sections.tokens.title}
           </h2>
         </Reveal>

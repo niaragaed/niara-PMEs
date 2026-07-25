@@ -27,6 +27,16 @@
   /* Selo/label de card (chip atrás do título do card) */
   --color-chip-sage: #dce3cf;
 
+  /* Texto sobre fundo CHEIO de seção (military/salmon sólidos, não os tints
+     -100) — contraste AA (4.5:1) verificado contra os hex exatos acima.
+     on-military é o mesmo tom de --color-bg (creme) já usado como texto
+     claro na faixa CTA final; on-salmon é o mesmo tom de --color-ink.
+     on-salmon-muted existe porque --color-ink-peach (pensado para o tint
+     salmon-100, bem mais claro) não atinge 4.5:1 sobre o salmon cheio. */
+  --color-on-military: #faf8f5;
+  --color-on-salmon: #23271f;
+  --color-on-salmon-muted: #5a3325;
+
   /* Raio */
   --radius-sm: 8px;
   --radius-md: 12px;
