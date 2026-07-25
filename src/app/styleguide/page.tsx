@@ -6,24 +6,29 @@ export const metadata: Metadata = { title: `${ptBr.styleguide.title} · Niara PM
 type Swatch = { label: string; hex: string; className: string };
 
 const baseSwatches: Swatch[] = [
-  { label: "bg", hex: "#FAF8F3", className: "bg-bg" },
+  { label: "bg", hex: "#FAF8F5", className: "bg-bg" },
   { label: "surface", hex: "#FFFFFF", className: "bg-surface" },
   { label: "surface-alt", hex: "#F1EEE6", className: "bg-surface-alt" },
-  { label: "border", hex: "#E4DFD3", className: "bg-border" },
-  { label: "ink", hex: "#1B1E17", className: "bg-ink" },
-  { label: "ink-muted", hex: "#5A5F52", className: "bg-ink-muted" },
+  { label: "border", hex: "#E7E2D9", className: "bg-border" },
+  { label: "ink", hex: "#23271F", className: "bg-ink" },
+  { label: "ink-muted", hex: "#5C6152", className: "bg-ink-muted" },
 ];
 
 const militarySwatches: Swatch[] = [
-  { label: "military", hex: "#4B5320", className: "bg-military" },
-  { label: "military-600", hex: "#5C6528", className: "bg-military-600" },
-  { label: "military-100", hex: "#E9ECDD", className: "bg-military-100" },
+  { label: "military", hex: "#3E4835", className: "bg-military" },
+  { label: "military-600", hex: "#4E5A42", className: "bg-military-600" },
+  { label: "military-100", hex: "#E6EBDD", className: "bg-military-100" },
 ];
 
 const salmonSwatches: Swatch[] = [
-  { label: "salmon", hex: "#F2907A", className: "bg-salmon" },
-  { label: "salmon-600", hex: "#E67C63", className: "bg-salmon-600" },
-  { label: "salmon-100", hex: "#FBE3DC", className: "bg-salmon-100" },
+  { label: "salmon", hex: "#F0A487", className: "bg-salmon" },
+  { label: "salmon-600", hex: "#E08E6F", className: "bg-salmon-600" },
+  { label: "salmon-100", hex: "#FBE9DF", className: "bg-salmon-100" },
+];
+
+const accentSwatches: Swatch[] = [
+  { label: "ink-peach", hex: "#8A5A47", className: "bg-ink-peach" },
+  { label: "chip-sage", hex: "#DCE3CF", className: "bg-chip-sage" },
 ];
 
 function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
@@ -69,6 +74,22 @@ export default function StyleguidePage() {
 
       <Section title={ptBr.styleguide.salmao}>
         <SwatchGrid swatches={salmonSwatches} />
+      </Section>
+
+      <Section title={ptBr.styleguide.acentos}>
+        <SwatchGrid swatches={accentSwatches} />
+      </Section>
+
+      <Section title={ptBr.styleguide.fundosAlternados}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-lg bg-military-100 p-6">
+            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.fundoSalvia}</p>
+          </div>
+          <div className="rounded-lg bg-salmon-100 p-6">
+            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.fundoPessego}</p>
+            <p className="mt-2 text-sm text-ink-peach">{ptBr.styleguide.fundoPessegoSubtitulo}</p>
+          </div>
+        </div>
       </Section>
 
       <Section title={ptBr.styleguide.tipografia}>

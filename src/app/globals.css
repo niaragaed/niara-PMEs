@@ -2,22 +2,30 @@
 
 @theme {
   /* Base / neutros */
-  --color-bg: #faf8f3;
+  --color-bg: #faf8f5;
   --color-surface: #ffffff;
+  /* Tint neutro de chrome (ícones de dropdown, footer) — não usar para
+     alternância de fundo de seção: isso é papel de military-100/salmon-100. */
   --color-surface-alt: #f1eee6;
-  --color-border: #e4dfd3;
-  --color-ink: #1b1e17;
-  --color-ink-muted: #5a5f52;
+  --color-border: #e7e2d9;
+  --color-ink: #23271f;
+  --color-ink-muted: #5c6152;
 
-  /* Verde militar (primária) */
-  --color-military: #4b5320;
-  --color-military-600: #5c6528;
-  --color-military-100: #e9ecdd;
+  /* Verde-sálvia (primária) */
+  --color-military: #3e4835;
+  --color-military-600: #4e5a42;
+  --color-military-100: #e6ebdd;
 
-  /* Salmão (acento / CTA) */
-  --color-salmon: #f2907a;
-  --color-salmon-600: #e67c63;
-  --color-salmon-100: #fbe3dc;
+  /* Pêssego (acento / CTA) */
+  --color-salmon: #f0a487;
+  --color-salmon-600: #e08e6f;
+  --color-salmon-100: #fbe9df;
+
+  /* Texto sobre fundo pêssego (títulos de seção) — subton terroso, não cinza */
+  --color-ink-peach: #8a5a47;
+
+  /* Selo/label de card (chip atrás do título do card) */
+  --color-chip-sage: #dce3cf;
 
   /* Raio */
   --radius-sm: 8px;
