@@ -814,7 +814,8 @@ src/
                        dado real
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
-  niara-pme-logo.svg   logo (placeholder SVG até a arte final em PNG)
+  niara-pme-logo.png   logo oficial (globo + anel + "NIARA", PNG com fundo
+                       transparente, preto — só funciona sobre fundo claro)
 ```
 
 ---
@@ -830,9 +831,15 @@ public/
 - **Responsivo** sempre: testar desktop, tablet e mobile (menu hambúrguer +
   acordeões).
 - **Logo:** componente `<Logo />` (`next/image`, caminho na constante
-  `LOGO_SRC` em `src/components/ui/Logo.tsx`). Placeholder atual é um SVG
-  (`public/niara-pme-logo.svg`); a arte final será um PNG preto sobre fundo
-  transparente — quando chegar, basta trocar o valor de `LOGO_SRC`.
+  `LOGO_SRC` em `src/components/ui/Logo.tsx`), apontando para a arte oficial
+  `public/niara-pme-logo.png` (globo + anel + "NIARA", preto sobre fundo
+  transparente — só a arte, sem "PMEs" embutido). O descritor "PMEs" é
+  renderizado como texto real ao lado da imagem (`· PMEs`, `font-display`,
+  `text-ink-muted`), não parte do arquivo, porque a arte não o inclui e ele
+  segue necessário para diferenciar do produto da exchange (`niara-site`).
+  Preta, funciona apenas sobre fundo **claro** (Header, Footer) — se for
+  usada sobre fundo escuro (`bg-military`, seções cheias) no futuro, precisa
+  de uma versão clara própria; não reutilizar a mesma arte lá.
 
 ---
 
@@ -888,12 +895,11 @@ creditar.
 
 ## Pendências conhecidas
 
-- Logo final (PNG preto sobre fundo transparente) — substituir o valor de
-  `LOGO_SRC` em `src/components/ui/Logo.tsx` (hoje aponta para o
-  placeholder `public/niara-pme-logo.svg`). Há um arquivo
-  `public/logo em fundo claro.png` no repositório que parece ser a arte
-  real do logo (globo + anel + "NIARA") — ainda não integrado a nenhum
-  componente; confirmar com o usuário antes de usar.
+- Logo final (`public/niara-pme-logo.png`, globo + anel + "NIARA", preto
+  sobre fundo transparente) já integrada no Header e Footer via `<Logo />`.
+  Funciona só sobre fundo **claro** — ainda falta uma versão clara da arte
+  para uso sobre fundo escuro (`bg-military`/seções cheias), caso a logo
+  precise aparecer ali no futuro.
 - Revisão jurídica pendente do texto das seções "Benefícios da
   tokenização" (Vantagem Tributária, Crédito mais Barato e Justo/
   Peer-to-Peer) e "Quando posso usar a Tokenização?" (Antecipação do
