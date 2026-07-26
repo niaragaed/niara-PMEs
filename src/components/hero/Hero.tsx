@@ -27,16 +27,12 @@ export function Hero() {
         <p className="max-w-lg text-lg text-on-military/80">{ptBr.hero.subtitle}</p>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={ptBr.common.emBreve}
-            className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/90 px-6 py-3 text-sm font-medium text-on-salmon"
+          <Link
+            href="/entrar?intent=captacao"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-salmon px-6 py-3 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
           >
             {ptBr.hero.ctaPrimary}
-            <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
-          </button>
+          </Link>
 
           <Link
             href="/sobre/documentos"

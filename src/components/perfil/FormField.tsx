@@ -13,6 +13,7 @@ export function TextField({
   autoComplete,
   inputMode,
   placeholder,
+  disabled,
 }: {
   id: string;
   label: string;
@@ -23,6 +24,7 @@ export function TextField({
   autoComplete?: string;
   inputMode?: "text" | "numeric" | "tel" | "email";
   placeholder?: string;
+  disabled?: boolean;
 }): ReactNode {
   const errorId = `${id}-error`;
   return (
@@ -38,9 +40,10 @@ export function TextField({
         autoComplete={autoComplete}
         inputMode={inputMode}
         placeholder={placeholder}
+        disabled={disabled}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className={`${fieldBaseClass} ${error ? "border-value-negative" : "border-panel-border"}`}
+        className={`${fieldBaseClass} ${error ? "border-value-negative" : "border-panel-border"} disabled:cursor-not-allowed disabled:opacity-60`}
       />
       {error && (
         <p id={errorId} role="alert" className="mt-1 text-xs text-value-negative">
