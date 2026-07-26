@@ -874,54 +874,46 @@ assumir que ficou escuro demais ou de menos.
 
 **Coluna direita — formulário** (dentro do próprio `EntrarPage.tsx`):
 tema verde-sálvia cheio (`bg-military`, mesmo padrão de `/ativos`,
-`/perfil`, `/negociar` — não o painel claro estilo Ondo, para poder
-reaproveitar `ConnectWallet` e os tokens `on-military`/`panel-border`
-sem criar uma variante clara nova desses componentes).
+`/perfil`, `/negociar` — não o painel claro estilo Ondo, para manter o
+mesmo tema visual das demais telas internas mesmo sem reaproveitar
+componente nenhum de web3 aqui).
 
-- **MetaMask (real)**: `<ConnectWallet connectLabel={...}
-  connectButtonClassName="w-full justify-center py-3" />` — mesmo
-  componente de conexão real da Carteira de `/perfil` (ver "Tela
-  `/perfil`", seção "4. Carteira"), sem duplicar lógica de conexão.
-  `ConnectWallet` ganhou dois props **opcionais** or aqui (retro-
-  compatíveis, `/perfil` continua chamando `<ConnectWallet />` sem
-  props e com o texto/estilo de sempre): `connectLabel` (sobrescreve
-  o texto do botão só no estado "não conectado" — aqui "Entrar com
-  MetaMask" em vez de "Conectar carteira") e
-  `connectButtonClassName` (classes extras nesse mesmo botão, aqui
-  usado para ficar largura total). Os demais estados do componente
-  (não detectada/rede errada/conectada) são os mesmos de `/perfil`,
-  sem alteração.
-- Divisor "ou" → campo Email (`disabled`, novo prop opcional em
-  `TextField`, ver `src/components/perfil/FormField.tsx` — retro-
-  compatível, default `undefined`) + botão "Continuar" e botão
-  "Continuar com Google" (ícone inline próprio, `GoogleIcon` dentro de
-  `EntrarPage.tsx` — lucide-react não tem logos de marca), ambos
-  desabilitados e rotulados "(Em breve)", mesmo padrão visual do CTA
-  do Hero. Não dependem de backend/provedor de auth que ainda não
-  existe — não fingem enviar nem criar conta.
+🔴 **Sem login por carteira nesta tela** — esta tela **não** oferece
+conexão MetaMask; o formulário mostra direto campo Email (`disabled`,
+prop opcional em `TextField`, ver `src/components/perfil/FormField.tsx`
+— retro-compatível, default `undefined`) + botão "Continuar" e botão
+"Continuar com Google" (ícone inline próprio, `GoogleIcon` dentro de
+`EntrarPage.tsx` — lucide-react não tem logos de marca), ambos
+desabilitados e rotulados "(Em breve)", mesmo padrão visual do CTA do
+Hero. Não dependem de backend/provedor de auth que ainda não existe —
+não fingem enviar nem criar conta. Uma versão anterior desta tela tinha
+um botão "Entrar com MetaMask" (reaproveitando `<ConnectWallet />`) acima
+de um divisor "ou"; ambos foram removidos por decisão de produto — a
+única conexão de carteira real do site continua sendo a seção Carteira
+de `/perfil` (ver "Tela `/perfil`", seção "4. Carteira"), **intacta e
+sem relação com esta tela**. `ConnectWallet` manteve os props opcionais
+`connectLabel`/`connectButtonClassName` (hoje sem nenhum caller — só
+`/perfil` usa o componente, sem passá-los) para não mexer no componente
+compartilhado por causa de uma tela que parou de usá-lo.
 - Nota de termos (`ptBr.entrar.termosNota`) menciona Termos de Uso e
   Política de Privacidade como "documentos em breve" — texto puro,
   **sem** links `href="#"` mortos, já que essas páginas ainda não
   existem.
 
-**Honestidade e LGPD**: a conexão MetaMask aqui é a mesma conexão real
-já documentada em "Tela `/perfil`" — só leitura de endereço/rede, sem
-transação, sem conta em servidor (identificador pseudônimo padrão
-web3, não CPF/CNPJ). O campo de email é decorativo (`disabled`, não
-envia nem persiste nada). Quando `intent=captacao`, o subtítulo já
-deixa explícito que a estruturação da oferta em si continua
-demonstração e depende das autorizações da CVM.
+**Honestidade e LGPD**: o campo de email é decorativo (`disabled`, não
+envia nem persiste nada); o botão Google idem. Quando `intent=captacao`,
+o subtítulo (`ptBr.entrar.subtituloCaptacao`) já deixa explícito que a
+estruturação da oferta em si continua demonstração e depende das
+autorizações da CVM — sem mencionar carteira, já que esta tela não a
+oferece mais.
 
 **i18n**: `ptBr.entrar` em `src/lib/i18n/pt-br.ts`.
 
-Verificado com dev server + Playwright (desktop 1280px e mobile
-390px): link do header e da hero navegando para `/entrar` (com e sem
-`intent=captacao`), split funcionando em ambas resoluções, botão
-MetaMask no estado "não detectada" (ambiente do headless Chromium sem
-extensão instalada — o fallback correto aparece, com link de
-instalação), campos email/Google desabilitados, X e Esc voltando para
-a home, clique na capa do vídeo abrindo `youtu.be/m7lSSzq6xg4` em nova
-aba — sem erros de console.
+Verificado com dev server + Playwright (desktop 1280px): link do header
+e da hero navegando para `/entrar` (com e sem `intent=captacao`), split
+funcionando, sem botão de carteira nem divisor "ou", campos email/Google
+desabilitados, X e Esc voltando para a home, clique na capa do vídeo
+abrindo `youtu.be/m7lSSzq6xg4` em nova aba — sem erros de console.
 
 ---
 

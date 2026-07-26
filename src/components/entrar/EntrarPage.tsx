@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { VideoCover } from "@/components/entrar/VideoCover";
 import { ptBr } from "@/lib/i18n/pt-br";
 
@@ -68,18 +67,7 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
             {isCaptacaoIntent ? t.subtituloCaptacao : t.subtitulo}
           </p>
 
-          <div className="mt-8">
-            <ConnectWallet connectLabel={t.metamask.conectarBotao} connectButtonClassName="w-full justify-center py-3" />
-            <p className="mt-2 text-xs text-on-military-muted">{t.metamask.dica}</p>
-          </div>
-
-          <div className="my-6 flex items-center gap-3" aria-hidden="true">
-            <span className="h-px flex-1 bg-panel-border" />
-            <span className="text-xs uppercase tracking-wide text-on-military-muted">{t.ou}</span>
-            <span className="h-px flex-1 bg-panel-border" />
-          </div>
-
-          <div className="flex flex-col gap-3">
+          <div className="mt-8 flex flex-col gap-3">
             <div>
               <label htmlFor="entrar-email" className="mb-1 block text-xs text-on-military-muted">
                 {t.email.label}
