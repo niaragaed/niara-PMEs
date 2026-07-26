@@ -813,6 +813,118 @@ console.
 
 ---
 
+## Tela `/entrar` (login/registro)
+
+Substituiu os botões desabilitados "Entrar" (header) e "Iniciar
+captação" (hero), que ficam **habilitados** a partir desta parte.
+Header "Entrar" → `/entrar`; hero "Iniciar captação" →
+`/entrar?intent=captacao` — mesma tela, o parâmetro só troca
+título/subtítulo para dar ênfase a "criar conta para estruturar
+captação" (`EntrarPage.tsx` recebe `isCaptacaoIntent`, calculado a
+partir de `searchParams` assíncrono, Next 16, em `src/app/entrar/
+page.tsx`). Estrutura inspirada na tela de login da Ondo (split:
+mídia à esquerda, formulário unificado "entrar ou criar conta" à
+direita), adaptada: a esquerda é a capa de um vídeo do YouTube (não
+foto) que ensina a criar conta na MetaMask.
+
+**Overlay de tela cheia, não rota "normal"**: como Header/Footer são
+montados no layout raiz (`src/app/layout.tsx`) e envolvem todas as
+rotas incondicionalmente, uma nested layout não consegue removê-los
+— só adicionar UI. `EntrarPage.tsx` (`"use client"`) resolve isso
+sendo um `<div role="dialog" aria-modal="true">` **`fixed inset-0
+z-50`**, que cobre visualmente Header (`z-40`) e Footer por completo
+sem precisar desmontá-los do DOM. Enquanto montado, trava o scroll do
+`<body>` (`document.body.style.overflow = "hidden"` num `useEffect`,
+restaurado no cleanup) — sem isso a página por trás do overlay
+continuaria rolável. Fecha por clique no X (`<Link href="/">`,
+canto superior direito, `z-20` para ficar acima da capa de vídeo) ou
+tecla Esc (`router.push("/")` num listener de `keydown`, mesmo padrão
+de fechamento por teclado já usado no drawer da boleta de
+`/negociar`).
+
+**Coluna esquerda — capa do vídeo** (`VideoCover.tsx`): thumbnail do
+YouTube (`https://img.youtube.com/vi/m7lSSzq6xg4/maxresdefault.jpg`,
+com fallback automático via `onError` da própria `<img>` para
+`hqdefault.jpg`, que o YouTube sempre gera mesmo quando a maxres não
+existe) como `<img>` comum (não `next/image` — simplicidade, evita
+mexer em `images.remotePatterns` do `next.config.ts` só por uma
+thumbnail externa; `eslint-disable-next-line @next/next/no-img-
+element`, mesmo padrão já usado em `AvatarUpload.tsx`). Toda a área é
+um único `<a target="_blank" rel="noopener noreferrer">` para
+`https://youtu.be/m7lSSzq6xg4`, com `aria-label` descritivo — não só
+o botão de play.
+
+🔴 **Overlay do gradiente foi calibrado por legibilidade, não só
+estética**: a primeira versão usava `from-military` (100% opaco) `via-
+military/75` `to-military/40`, pensada só para "escurecer para
+legibilidade do texto" — mas como o texto/legenda fica centralizado
+verticalmente (`items-center justify-center`) e a paleta do vídeo em
+si já é um verde-petróleo escuro próximo do `military`, o resultado
+media era a capa parecer **quase sólida**, sem se reconhecer como
+thumbnail de vídeo (verificado via screenshot Playwright com o overlay
+temporariamente removido via `display:none` para comparação lado a
+lado). Corrigido para `from-military/85 via-military/40 to-
+military/10` (bem mais claro) **mais** um fundo próprio
+(`bg-military/70 backdrop-blur-sm`, rounded) só atrás do parágrafo de
+legenda — a legibilidade do texto vem desse pill dedicado, não de
+escurecer a imagem inteira; o botão de play já é legível sozinho
+(fundo salmão sólido). Ao alterar este overlay no futuro, sempre
+comparar contra a imagem crua (overlay `display:none`) antes de
+assumir que ficou escuro demais ou de menos.
+
+**Coluna direita — formulário** (dentro do próprio `EntrarPage.tsx`):
+tema verde-sálvia cheio (`bg-military`, mesmo padrão de `/ativos`,
+`/perfil`, `/negociar` — não o painel claro estilo Ondo, para poder
+reaproveitar `ConnectWallet` e os tokens `on-military`/`panel-border`
+sem criar uma variante clara nova desses componentes).
+
+- **MetaMask (real)**: `<ConnectWallet connectLabel={...}
+  connectButtonClassName="w-full justify-center py-3" />` — mesmo
+  componente de conexão real da Carteira de `/perfil` (ver "Tela
+  `/perfil`", seção "4. Carteira"), sem duplicar lógica de conexão.
+  `ConnectWallet` ganhou dois props **opcionais** or aqui (retro-
+  compatíveis, `/perfil` continua chamando `<ConnectWallet />` sem
+  props e com o texto/estilo de sempre): `connectLabel` (sobrescreve
+  o texto do botão só no estado "não conectado" — aqui "Entrar com
+  MetaMask" em vez de "Conectar carteira") e
+  `connectButtonClassName` (classes extras nesse mesmo botão, aqui
+  usado para ficar largura total). Os demais estados do componente
+  (não detectada/rede errada/conectada) são os mesmos de `/perfil`,
+  sem alteração.
+- Divisor "ou" → campo Email (`disabled`, novo prop opcional em
+  `TextField`, ver `src/components/perfil/FormField.tsx` — retro-
+  compatível, default `undefined`) + botão "Continuar" e botão
+  "Continuar com Google" (ícone inline próprio, `GoogleIcon` dentro de
+  `EntrarPage.tsx` — lucide-react não tem logos de marca), ambos
+  desabilitados e rotulados "(Em breve)", mesmo padrão visual do CTA
+  do Hero. Não dependem de backend/provedor de auth que ainda não
+  existe — não fingem enviar nem criar conta.
+- Nota de termos (`ptBr.entrar.termosNota`) menciona Termos de Uso e
+  Política de Privacidade como "documentos em breve" — texto puro,
+  **sem** links `href="#"` mortos, já que essas páginas ainda não
+  existem.
+
+**Honestidade e LGPD**: a conexão MetaMask aqui é a mesma conexão real
+já documentada em "Tela `/perfil`" — só leitura de endereço/rede, sem
+transação, sem conta em servidor (identificador pseudônimo padrão
+web3, não CPF/CNPJ). O campo de email é decorativo (`disabled`, não
+envia nem persiste nada). Quando `intent=captacao`, o subtítulo já
+deixa explícito que a estruturação da oferta em si continua
+demonstração e depende das autorizações da CVM.
+
+**i18n**: `ptBr.entrar` em `src/lib/i18n/pt-br.ts`.
+
+Verificado com dev server + Playwright (desktop 1280px e mobile
+390px): link do header e da hero navegando para `/entrar` (com e sem
+`intent=captacao`), split funcionando em ambas resoluções, botão
+MetaMask no estado "não detectada" (ambiente do headless Chromium sem
+extensão instalada — o fallback correto aparece, com link de
+instalação), campos email/Google desabilitados, X e Esc voltando para
+a home, clique na capa do vídeo abrindo `youtu.be/m7lSSzq6xg4` em nova
+aba — sem erros de console.
+
+---
+
 ## Organização
 
 ```
@@ -830,6 +942,9 @@ src/
     negociar/          hub + 5 categorias + detalhe de oferta (ver "Telas
                        /negociar" abaixo); oferta/[slug]/ é rota dinâmica
                        com not-found.tsx próprio
+    entrar/page.tsx    login/registro (overlay tela cheia, ver "Tela
+                       /entrar" abaixo); searchParams assíncrono (Next 16)
+                       para o parâmetro ?intent=captacao
   components/
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
@@ -857,6 +972,9 @@ src/
                        + IndicatorHelp (indicadores fundamentalistas +
                        popover "?"), OrderTicket (boleta simulada) —
                        ver "Telas /negociar" abaixo
+    entrar/            EntrarPage (overlay tela cheia, split + form),
+                       VideoCover (capa do vídeo do YouTube) — ver
+                       "Tela /entrar" acima
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
                        motivo do planeta anelado, decorativos)
     nav/               header, dropdowns, menu mobile

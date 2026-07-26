@@ -36,7 +36,10 @@ function isUserRejection(error: unknown) {
   return false;
 }
 
-export function ConnectWallet() {
+export function ConnectWallet({
+  connectLabel,
+  connectButtonClassName,
+}: { connectLabel?: string; connectButtonClassName?: string } = {}) {
   const t = ptBr.perfil.carteira;
   const hasProvider = useSyncExternalStore(
     subscribeToProvider,
@@ -158,14 +161,14 @@ export function ConnectWallet() {
         type="button"
         onClick={() => injectedConnector && connect({ connector: injectedConnector })}
         disabled={isPending || !injectedConnector}
-        className="flex items-center gap-2 rounded-md bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`flex items-center gap-2 rounded-md bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60 ${connectButtonClassName ?? ""}`}
       >
         {isPending ? (
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         ) : (
           <Wallet className="h-4 w-4" aria-hidden="true" />
         )}
-        <span>{isPending ? t.conectando : t.conectarBotao}</span>
+        <span>{isPending ? t.conectando : (connectLabel ?? t.conectarBotao)}</span>
       </button>
       {rejected && <span className="text-xs text-on-military-muted">{t.conexaoRejeitada}</span>}
     </div>

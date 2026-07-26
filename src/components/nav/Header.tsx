@@ -57,16 +57,12 @@ export function Header() {
           </ul>
         </nav>
 
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          title={ptBr.common.emBreve}
-          className="hidden cursor-not-allowed items-center gap-2 rounded-full bg-salmon/50 px-4 py-2 text-sm font-medium text-ink/60 md:inline-flex"
+        <Link
+          href="/entrar"
+          className="hidden items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 md:inline-flex"
         >
           {ptBr.nav.entrar}
-          <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
-        </button>
+        </Link>
 
         <button
           type="button"
@@ -141,15 +137,13 @@ export function Header() {
               );
             })}
             <li>
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                className="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-salmon/50 px-4 py-2 text-sm font-medium text-ink/60"
+              <Link
+                href="/entrar"
+                onClick={closeMobileMenu}
+                className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
               >
                 {ptBr.nav.entrar}
-                <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
-              </button>
+              </Link>
             </li>
           </ul>
         </nav>
