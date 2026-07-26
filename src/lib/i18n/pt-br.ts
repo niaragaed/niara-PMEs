@@ -1065,16 +1065,11 @@ export const ptBr = {
       "Entre para acessar a plataforma. Se ainda não tiver conta, ela será criada.",
     tituloCaptacao: "Crie sua conta para estruturar sua captação",
     subtituloCaptacao:
-      "Conecte sua carteira para começar. A estruturação da oferta em si continua em demonstração e depende das autorizações da CVM — o onboarding de captação chega em breve.",
+      "Crie sua conta para começar. A estruturação da oferta em si continua em demonstração e depende das autorizações da CVM — o onboarding de captação chega em breve.",
     video: {
       ariaLabel: "Assistir no YouTube: como criar sua conta na MetaMask (abre em nova aba)",
       texto: "Antes de criar sua conta na plataforma, veja o vídeo e crie sua conta na MetaMask.",
     },
-    metamask: {
-      conectarBotao: "Entrar com MetaMask",
-      dica: "Novo por aqui? Veja o vídeo ao lado para criar sua carteira.",
-    },
-    ou: "ou",
     email: {
       label: "Email",
       placeholder: "seu@email.com",
