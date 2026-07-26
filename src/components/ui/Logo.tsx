@@ -1,15 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// Placeholder até a arte final (PNG preto sobre fundo transparente) ser
-// adicionada em public/. Quando o arquivo definitivo chegar, basta trocar
-// este caminho — nenhum outro componente referencia o logo diretamente.
-const LOGO_SRC = "/niara-pme-logo.svg";
+// Arte final (globo + anel + "NIARA", preto sobre fundo transparente).
+// Dimensões intrínsecas reais (996x606) — a altura exibida é limitada via
+// className, a largura acompanha automaticamente mantendo a proporção.
+const LOGO_SRC = "/niara-pme-logo.png";
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center" aria-label="Niara PMEs — página inicial">
-      <Image src={LOGO_SRC} alt="Niara PMEs" width={168} height={28} priority className="h-6 w-auto sm:h-7" />
+    <Link href="/" className="flex items-center gap-2" aria-label="Niara PMEs — página inicial">
+      <Image src={LOGO_SRC} alt="Niara" width={996} height={606} priority className="h-7 w-auto sm:h-9" />
+      {/* A arte só traz "NIARA" — o descritor "PMEs" continua como texto
+          separado para diferenciar do produto da exchange (niara-site). */}
+      <span className="font-display text-sm font-medium text-ink-muted sm:text-base">· PMEs</span>
     </Link>
   );
 }
