@@ -13,8 +13,11 @@ receita" do grupo Niara; a exchange global — repositório irmão `niara-site`
 — é a "visão" de longo prazo).
 
 **Estágio atual: site institucional + protótipo de interface. Não há
-backend, autenticação, carteira nem blockchain conectada.** Tudo é
-demonstração.
+backend nem autenticação.** A única conexão real com blockchain é a
+carteira (MetaMask, rede Sepolia/testnet, somente leitura de endereço/rede/
+saldo) na seção Carteira de `/perfil` — ver "Tela `/perfil`" abaixo. Todo o
+resto (ofertas, boleta, dashboard de portfólio etc.) continua demonstração,
+sem nenhuma transação real.
 
 ---
 
@@ -69,6 +72,11 @@ versões anteriores.
   evolução do portfólio, `PieChart`/donut da alocação) — ver "Tela /ativos"
   abaixo
 - Estado: React (`useState`, Context). Sem libs de estado externas.
+- Carteira real (seção Carteira de `/perfil`, testnet Sepolia): `wagmi` v3 +
+  `viem` v2 + `@tanstack/react-query` v5 — mesma stack e estrutura do
+  `ConnectWallet`/`ConnectionPanel` do `niara-site` (repositório irmão,
+  originalmente da rota `/pilot` dele), reaproveitada aqui. Ver "Tela
+  `/perfil`" abaixo, seção "4. Carteira".
 
 Removido: `three` / `@react-three/fiber` / `@react-three/drei` (não eram
 mais usados por nada no projeto) e, depois, o próprio astronauta 2D — ver
@@ -497,17 +505,72 @@ recomendação...") vêm de `ptBr.perfil.investidor.categoryDetails`.
 
 ### 4. Carteira (`WalletSection.tsx`)
 
-Conexão de carteira **simulada** — nenhuma lib de wallet (wagmi/viem etc.)
-é usada, diferente do `ConnectWallet` real do `niara-site`. Estado inicial
-"Nenhuma carteira conectada nesta sessão"; cada clique em "Conectar
-carteira (simulação)" consome a próxima carteira de um pool fixo de duas
-(`DEMO_WALLET_POOL` em `src/lib/mock/perfil.ts`, endereços de exemplo em
-Ethereum Sepolia/testnet) — a primeira conectada vira "Principal"
-automaticamente. Ações "Definir como principal"/"Remover" (simulação); ao
-remover a carteira principal, a próxima da lista (se houver) é promovida
-automaticamente, para nunca deixar a lista num estado sem principal com
-outras carteiras presentes. Texto reforça testnet/simulação — nada de
-mainnet nem transação real.
+🔴 **Conexão real** (única parte não-simulada do site) — lê endereço, rede
+e saldo de teste de uma carteira MetaMask de verdade via EIP-1193
+(`window.ethereum`); nenhuma transação é enviada, nenhuma chave privada é
+tocada pelo app (fica inteiramente a cargo do MetaMask) e nada é enviado a
+servidor (não há backend — tudo roda client-side). Reaproveita a mesma
+stack e estrutura do `ConnectWallet`/`ConnectionPanel` do `niara-site`
+(repositório irmão, `src/components/web3/` lá, originalmente construídos
+para a rota de piloto `/pilot` dele) — mesmos hooks (`useConnection`,
+`useConnect`, `useDisconnect`, `useSwitchChain`, `useBalance`), mesmo
+connector (`injected()`) e mesma rede única (`sepolia` de `wagmi/chains`),
+só adaptados ao pt-BR e ao tema verde-sálvia (`panel`/`on-military`/
+`salmon` em vez dos tokens de tema escuro do `niara-site`).
+
+**Estrutura** (`src/lib/web3/config.ts` + `src/app/providers.tsx` +
+`src/components/web3/ConnectWallet.tsx` + `ConnectionPanel.tsx`, todos
+copiados/adaptados do `niara-site`):
+
+- `config.ts`: `createConfig` do wagmi com `chains: [sepolia]`,
+  `connectors: [injected()]`, `storage: createStorage({ storage:
+  cookieStorage })` e `ssr: true` — permite hidratar o estado de conexão
+  no servidor via cookie (evita flash "desconectado" no primeiro render).
+  `transports` usa `http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL)` — sem
+  essa env var (não commitada, `.env*` já no `.gitignore`), cai no RPC
+  público padrão da própria definição de `sepolia` em `wagmi/chains`; não
+  há segredo hardcoded em lugar nenhum.
+- `providers.tsx` (`"use client"`): `WagmiProvider` + `QueryClientProvider`
+  (`@tanstack/react-query`, exigido internamente pelo wagmi para cache dos
+  hooks de leitura). Montado no layout raiz (`src/app/layout.tsx`, que por
+  isso passou a ser `async` — usa `cookieToInitialState(config, (await
+  headers()).get("cookie"))`, padrão Next 16/wagmi para SSR), então a
+  conexão fica disponível em qualquer rota, não só em `/perfil`.
+- `ConnectWallet.tsx`: detecção de provider injetado via
+  `useSyncExternalStore` (sem evento para assinar — só leitura
+  pós-hidratação, servidor assume presente para não penalizar o caminho
+  feliz com flash negativo); três estados — não detectada (link para
+  `metamask.io/download`), rede errada (qualquer `chainId !== sepolia.id`,
+  inclusive mainnet — botão "Trocar para Sepolia" via `useSwitchChain`,
+  que também adiciona a rede automaticamente se a carteira não a conhecer
+  ainda, via `wallet_addEthereumChain` interno do wagmi) e conectada
+  (endereço truncado + botão de copiar endereço completo, feedback
+  "Copiado" por 2s + botão desconectar). Eventos `accountsChanged`/
+  `chainChanged`/desconexão são tratados automaticamente pelo próprio
+  wagmi internamente (não há listener manual no código) — a UI
+  simplesmente re-renderiza porque os hooks são reativos ao estado do
+  connector.
+- `ConnectionPanel.tsx`: painel com status/endereço/rede/saldo em ETH de
+  teste (`useBalance`, só habilitado quando conectado **e** em Sepolia).
+  Diferente do `niara-site` (que também lê saldo de tokens ERC-20 reais
+  via `useReadContracts`, ex. mUSDT), aqui não há leitura de token — a
+  Niara PMEs não tem nenhum contrato ERC-20 real implantado, então
+  fabricar endereços de contrato para ler seria inventar dado que pareceria
+  real (violaria a regra "nada simulado pode parecer real" do topo deste
+  arquivo). Só o saldo nativo (ETH de Sepolia) é lido.
+- "Desconectar" só limpa a sessão de conexão do site (`useDisconnect` do
+  wagmi) — a carteira em si continua conectada no MetaMask; texto da UI
+  deixa isso explícito, já que MetaMask historicamente não expõe uma forma
+  programática de revogar a permissão do site (isso se faz nas
+  configurações de conexões do próprio MetaMask, fora do controle do app).
+
+Textos em `ptBr.perfil.carteira` (`src/lib/i18n/pt-br.ts`) deixam claro que
+a conexão é real mas o resto da plataforma não: "Conexão real com sua
+carteira — apenas leitura de endereço e rede. Nenhuma transação é
+realizada." + nota reforçando que compra/venda/qualquer operação com valor
+mobiliário não passa por aqui. O pool de carteiras fictícias que existia
+antes (`DEMO_WALLET_POOL`, `src/lib/mock/perfil.ts`) foi removido por
+completo — não faz mais sentido com conexão real.
 
 ---
 
@@ -755,6 +818,10 @@ console.
 ```
 src/
   app/                 rotas (App Router)
+    layout.tsx         layout raiz, async (Next 16) — monta <Providers>
+                       (wagmi/react-query) com initialState via cookie
+    providers.tsx      Providers (WagmiProvider + QueryClientProvider) —
+                       ver "Tela /perfil", seção "4. Carteira"
     ativos/page.tsx    dashboard de portfólio (ver "Tela /ativos" abaixo)
     perfil/page.tsx    tela de perfil (ver "Tela /perfil" abaixo)
     sobre/documentos/  documentação + FAQ (ver "Telas /sobre/documentos e
@@ -772,8 +839,13 @@ src/
                        PersonalDataSection + AvatarUpload,
                        CompaniesSection, InvestorProfileSection +
                        InvestorProfileQuiz + InvestorProfileResultCard,
-                       WalletSection, FormField (TextField/SelectField/
-                       TextareaField/ReadField compartilhados)
+                       WalletSection (usa components/web3, ver abaixo),
+                       FormField (TextField/SelectField/TextareaField/
+                       ReadField compartilhados)
+    web3/              ConnectWallet + ConnectionPanel — conexão real de
+                       carteira (MetaMask/Sepolia) usada por WalletSection,
+                       adaptados do niara-site (ver "Tela /perfil", seção
+                       "4. Carteira")
     documentacao/      DocumentacaoPage (sidebar por seções + banner de
                        estágio atual), DocumentacaoNav, FaqAccordion
     contato/           ContatoPage (formulário + painel de contato
@@ -803,11 +875,11 @@ src/
     masks.ts           máscaras e validações de formato (CPF/CNPJ/CEP/
                        telefone/data) da tela /perfil — validação só de
                        formato/comprimento, sem dígito verificador
+    web3/config.ts     config wagmi (chain Sepolia, connector injected) da
+                       conexão real de carteira — ver "Tela /perfil"
     i18n/              dicionário de textos (pt-br.ts)
     mock/ativos.ts     dados fictícios tipados da tela /ativos (posições,
                        evolução mensal, catálogo) — nunca dado real
-    mock/perfil.ts     pool de carteiras demo (endereços testnet) da tela
-                       /perfil — nunca dado real
     mock/ofertas.ts    categorias + 10 ofertas fictícias tipadas das telas
                        /negociar (dados públicos, financeiro, indicadores
                        fundamentalistas, termos, documentos) — nunca
@@ -907,6 +979,13 @@ creditar.
   juridicamente. Não alterar nem expandir esses textos sem instrução.
 - Envio real de formulário de contato (hoje via `mailto`, sem backend),
   autenticação, backend — fora de escopo por ora
+- Conexão de carteira (`/perfil`, ver "4. Carteira" acima) é real, mas só
+  leitura (endereço/rede/saldo nativo em Sepolia) — sem assinatura de
+  transação, sem leitura de token ERC-20 (a Niara PMEs não tem contrato
+  próprio implantado, diferente do `niara-site`, que lê mUSDT/outros
+  tokens de teste reais). `NEXT_PUBLIC_SEPOLIA_RPC_URL` é opcional (cai no
+  RPC público padrão do `wagmi/chains` se ausente) — não commitar em
+  `.env*` se for definida localmente.
 - Nenhuma rota do site continua como `StubPage` — `/ativos`, `/perfil`,
   as duas rotas de `/sobre/*` e as 6 rotas de `/negociar/*` (hub + 5
   categorias + detalhe da oferta) já têm conteúdo real de demonstração

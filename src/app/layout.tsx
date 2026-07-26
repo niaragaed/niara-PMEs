@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Space_Grotesk, Inter } from "next/font/google";
+import { cookieToInitialState } from "wagmi";
 import { Header } from "@/components/nav/Header";
 import { Footer } from "@/components/nav/Footer";
 import { LenisProvider } from "@/components/scroll/LenisProvider";
 import { ptBr } from "@/lib/i18n/pt-br";
+import { config } from "@/lib/web3/config";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -22,11 +26,14 @@ export const metadata: Metadata = {
     "Niara PMEs — plataforma para pequenas e médias empresas estruturarem captação e dividirem capital via tokenização. Estágio institucional / demonstração.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Next 16: headers() é assíncrono — precisa de await.
+  const initialState = cookieToInitialState(config, (await headers()).get("cookie"));
+
   return (
     <html
       lang="pt-BR"
@@ -39,13 +46,15 @@ export default function RootLayout({
         >
           {ptBr.common.pularParaConteudo}
         </a>
-        <LenisProvider>
-          <Header />
-          <div id="main-content" className="flex flex-1 flex-col">
-            {children}
-          </div>
-          <Footer />
-        </LenisProvider>
+        <Providers initialState={initialState}>
+          <LenisProvider>
+            <Header />
+            <div id="main-content" className="flex flex-1 flex-col">
+              {children}
+            </div>
+            <Footer />
+          </LenisProvider>
+        </Providers>
       </body>
     </html>
   );
