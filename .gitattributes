@@ -1,0 +1,4 @@
+# supabase/migrations é definitivo e testado (invariantes + concorrência
+# via FOR UPDATE) — trava fim de linha em LF para nenhum checkout/ferramenta
+# reescrever o arquivo por engano (autocrlf, editores etc.).
+supabase/migrations/*.sql text eol=lf
