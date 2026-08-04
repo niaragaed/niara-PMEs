@@ -1062,10 +1062,10 @@ export const ptBr = {
     fecharAriaLabel: "Fechar e voltar para a home",
     titulo: "Entrar ou criar conta",
     subtitulo:
-      "Entre para acessar a plataforma. Se ainda não tiver conta, ela será criada.",
+      "Entre com sua conta ou crie uma nova para acessar a plataforma.",
     tituloCaptacao: "Crie sua conta para estruturar sua captação",
     subtituloCaptacao:
-      "Crie sua conta para começar. A estruturação da oferta em si continua em demonstração e depende das autorizações da CVM — o onboarding de captação chega em breve.",
+      "Crie sua conta para começar (ou entre, se já tiver uma). A estruturação da oferta em si continua em demonstração e depende das autorizações da CVM — o onboarding de captação chega em breve.",
     video: {
       ariaLabel: "Assistir no YouTube: como criar sua conta na MetaMask (abre em nova aba)",
       texto: "Antes de criar sua conta na plataforma, veja o vídeo e crie sua conta na MetaMask.",
@@ -1073,11 +1073,40 @@ export const ptBr = {
     email: {
       label: "Email",
       placeholder: "seu@email.com",
-      continuarBotao: "Continuar",
+    },
+    senha: {
+      label: "Senha",
+      placeholder: "••••••••",
+    },
+    entrarBotao: "Entrar",
+    criarContaBotao: "Criar conta",
+    entrarPendente: "Entrando…",
+    criarContaPendente: "Criando conta…",
+    ou: "ou",
+    erros: {
+      emailInvalido: "Informe um email válido.",
+      senhaCurta: "A senha precisa ter pelo menos 6 caracteres.",
+      credenciaisInvalidas: "Email ou senha incorretos.",
+      emailJaCadastrado: "Já existe uma conta com este email. Tente entrar.",
+      senhaFraca: "Senha muito fraca — use pelo menos 6 caracteres.",
+      generico: "Não foi possível concluir. Tente novamente em instantes.",
     },
     google: {
       continuarBotao: "Continuar com Google",
     },
     termosNota: "Ao continuar, você concorda com os Termos de Uso e a Política de Privacidade (documentos em breve).",
+  },
+  conta: {
+    meta: {
+      title: "Conta",
+      description: "Área de conta — dados de sessão e vínculo com o cadastro de investidor.",
+    },
+    titulo: "Conta",
+    emailLabel: "Email",
+    investidorLabel: "Investidor",
+    investidorCadastrado: "cadastrado",
+    investidorNaoCadastrado: "não cadastrado ainda (demonstração)",
+    sairBotao: "Sair",
+    sairPendente: "Saindo…",
   },
 } as const;
