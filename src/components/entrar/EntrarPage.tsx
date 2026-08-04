@@ -1,11 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { VideoCover } from "@/components/entrar/VideoCover";
+import { TextField } from "@/components/perfil/FormField";
 import { ptBr } from "@/lib/i18n/pt-br";
+import { isValidEmail } from "@/lib/masks";
+import { createClient } from "@/lib/supabase/client";
+import type { AuthError } from "@supabase/supabase-js";
+
+type FormErrors = { email?: string; senha?: string };
+
+function mapAuthError(error: AuthError, t: typeof ptBr.entrar.erros): string {
+  switch (error.code) {
+    case "invalid_credentials":
+      return t.credenciaisInvalidas;
+    case "user_already_exists":
+      return t.emailJaCadastrado;
+    case "weak_password":
+      return t.senhaFraca;
+    default:
+      return t.generico;
+  }
+}
 
 // Ícone da Google — não existe em lucide-react (ícones genéricos, sem
 // logos de marca); inline e aria-hidden porque o botão que o usa está
@@ -24,6 +43,52 @@ function GoogleIcon() {
 export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) {
   const t = ptBr.entrar;
   const router = useRouter();
+  const [supabase] = useState(() => createClient());
+
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [pending, setPending] = useState<"entrar" | "criarConta" | null>(null);
+
+  function validate(): boolean {
+    const nextErrors: FormErrors = {};
+    if (!isValidEmail(email)) nextErrors.email = t.erros.emailInvalido;
+    if (senha.length < 6) nextErrors.senha = t.erros.senhaCurta;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  async function handleEntrar(event: FormEvent) {
+    event.preventDefault();
+    setFormError(null);
+    if (!validate()) return;
+
+    setPending("entrar");
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) {
+      setFormError(mapAuthError(error, t.erros));
+      setPending(null);
+      return;
+    }
+    router.refresh();
+    router.push("/conta");
+  }
+
+  async function handleCriarConta() {
+    setFormError(null);
+    if (!validate()) return;
+
+    setPending("criarConta");
+    const { error } = await supabase.auth.signUp({ email, password: senha });
+    if (error) {
+      setFormError(mapAuthError(error, t.erros));
+      setPending(null);
+      return;
+    }
+    router.refresh();
+    router.push("/conta");
+  }
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -67,30 +132,57 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
             {isCaptacaoIntent ? t.subtituloCaptacao : t.subtitulo}
           </p>
 
-          <div className="mt-8 flex flex-col gap-3">
-            <div>
-              <label htmlFor="entrar-email" className="mb-1 block text-xs text-on-military-muted">
-                {t.email.label}
-              </label>
-              <input
-                id="entrar-email"
-                type="email"
-                disabled
-                placeholder={t.email.placeholder}
-                className="w-full rounded-md border border-panel-border bg-military px-3 py-2 text-sm text-on-military placeholder:text-on-military-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </div>
+          <form onSubmit={handleEntrar} noValidate className="mt-8 flex flex-col gap-3">
+            <TextField
+              id="entrar-email"
+              label={t.email.label}
+              type="email"
+              value={email}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+              error={errors.email}
+              placeholder={t.email.placeholder}
+              autoComplete="email"
+            />
+
+            <TextField
+              id="entrar-senha"
+              label={t.senha.label}
+              type="password"
+              value={senha}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setSenha(event.target.value)}
+              error={errors.senha}
+              placeholder={t.senha.placeholder}
+              autoComplete="current-password"
+            />
+
+            {formError && (
+              <p role="alert" className="text-xs text-value-negative">
+                {formError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={pending !== null}
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-salmon px-4 py-2.5 text-sm font-medium text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pending === "entrar" ? t.entrarPendente : t.entrarBotao}
+            </button>
 
             <button
               type="button"
-              disabled
-              aria-disabled="true"
-              title={ptBr.common.emBreve}
-              className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-md bg-salmon/50 px-4 py-2.5 text-sm font-medium text-on-salmon/70"
+              onClick={handleCriarConta}
+              disabled={pending !== null}
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-panel-border bg-military px-4 py-2.5 text-sm font-medium text-on-military hover:bg-military-600/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {t.email.continuarBotao}
-              <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
+              {pending === "criarConta" ? t.criarContaPendente : t.criarContaBotao}
             </button>
+
+            <div className="flex items-center gap-3 py-1 text-xs text-on-military-muted">
+              <span className="h-px flex-1 bg-panel-border" aria-hidden="true" />
+              {t.ou}
+              <span className="h-px flex-1 bg-panel-border" aria-hidden="true" />
+            </div>
 
             <button
               type="button"
@@ -103,7 +195,7 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
               {t.google.continuarBotao}
               <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
             </button>
-          </div>
+          </form>
 
           <p className="mt-6 text-[11px] text-on-military-muted">{t.termosNota}</p>
         </div>
