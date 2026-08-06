@@ -1,13 +1,19 @@
 import { ptBr } from "@/lib/i18n/pt-br";
 
-const SECTIONS = [
-  { id: "dados-cadastro", label: ptBr.perfil.nav.dadosCadastro },
-  { id: "empresas", label: ptBr.perfil.nav.empresas },
+const BASE_SECTIONS = [{ id: "dados-cadastro", label: ptBr.perfil.nav.dadosCadastro }];
+const MINHAS_OFERTAS_SECTION = { id: "minhas-ofertas", label: ptBr.perfil.nav.minhasOfertas };
+const REST_SECTIONS = [
   { id: "perfil-investidor", label: ptBr.perfil.nav.perfilInvestidor },
   { id: "carteira", label: ptBr.perfil.nav.carteira },
 ];
 
-export function PerfilNav() {
+export function PerfilNav({ showMinhasOfertas }: { showMinhasOfertas: boolean }) {
+  const SECTIONS = [
+    ...BASE_SECTIONS,
+    ...(showMinhasOfertas ? [MINHAS_OFERTAS_SECTION] : []),
+    ...REST_SECTIONS,
+  ];
+
   return (
     <>
       {/* Desktop: sidebar sticky */}

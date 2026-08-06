@@ -72,7 +72,7 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
       return;
     }
     router.refresh();
-    router.push("/conta");
+    router.push("/perfil");
   }
 
   async function handleCriarConta() {
@@ -87,7 +87,7 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
       return;
     }
     router.refresh();
-    router.push("/conta");
+    router.push("/perfil");
   }
 
   useEffect(() => {

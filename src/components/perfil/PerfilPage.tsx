@@ -4,12 +4,20 @@ import { ShieldAlert, TrendingUp } from "lucide-react";
 import { PerfilProvider, usePerfil } from "./PerfilContext";
 import { PerfilNav } from "./PerfilNav";
 import { PersonalDataSection } from "./PersonalDataSection";
-import { CompaniesSection } from "./CompaniesSection";
+import { MyOffersSection } from "./MyOffersSection";
 import { InvestorProfileSection } from "./InvestorProfileSection";
 import { WalletSection } from "./WalletSection";
+import { SignOutButton } from "@/components/conta/SignOutButton";
 import { ptBr } from "@/lib/i18n/pt-br";
+import type { LoadedProfile, OfferingSummary } from "@/app/perfil/actions";
 
-export function PerfilPage() {
+type PerfilPageProps = {
+  profile: LoadedProfile;
+  offerings: OfferingSummary[];
+  aviso?: "apenas-empresa" | "apenas-investidor";
+};
+
+export function PerfilPage({ profile, offerings, aviso }: PerfilPageProps) {
   return (
     <PerfilProvider>
       <main className="flex flex-1 flex-col bg-military">
@@ -29,18 +37,34 @@ export function PerfilPage() {
         </div>
 
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.perfil.title}</h1>
-          <p className="mt-1 text-on-military-muted">{ptBr.perfil.subtitle}</p>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.perfil.title}</h1>
+              <p className="mt-1 text-on-military-muted">{ptBr.perfil.subtitle}</p>
+            </div>
+            <SignOutButton />
+          </div>
+
+          {aviso === "apenas-empresa" && (
+            <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
+              {ptBr.conta.avisoApenasEmpresa}
+            </p>
+          )}
+          {aviso === "apenas-investidor" && (
+            <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
+              {ptBr.conta.avisoApenasInvestidor}
+            </p>
+          )}
 
           <ProfileBadges />
 
           <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-            <PerfilNav />
+            <PerfilNav showMinhasOfertas={profile.role === "issuer"} />
             <div className="flex min-w-0 flex-1 flex-col gap-10">
-              <PersonalDataSection />
-              <CompaniesSection />
+              <PersonalDataSection profile={profile} />
+              {profile.role === "issuer" && <MyOffersSection offerings={offerings} />}
               <InvestorProfileSection />
-              <WalletSection />
+              <WalletSection walletAddress={profile.walletAddress} />
             </div>
           </div>
         </div>

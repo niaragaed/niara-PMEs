@@ -14,6 +14,7 @@ export function TextField({
   inputMode,
   placeholder,
   disabled,
+  prefix,
 }: {
   id: string;
   label: string;
@@ -25,8 +26,44 @@ export function TextField({
   inputMode?: "text" | "numeric" | "tel" | "email" | "decimal";
   placeholder?: string;
   disabled?: boolean;
+  /** Segmento fixo e não editável exibido dentro do campo, antes do valor (ex.: "+55"). */
+  prefix?: string;
 }): ReactNode {
   const errorId = `${id}-error`;
+
+  if (prefix) {
+    return (
+      <div>
+        <label htmlFor={id} className="mb-1 block text-xs text-on-military-muted">
+          {label}
+        </label>
+        <div
+          className={`flex items-center rounded-md border bg-military focus-within:ring-2 focus-within:ring-salmon ${error ? "border-value-negative" : "border-panel-border"} ${disabled ? "opacity-60" : ""}`}
+        >
+          <span className="select-none pl-3 text-sm text-on-military-muted">{prefix}</span>
+          <input
+            id={id}
+            type={type}
+            value={value}
+            onChange={onChange}
+            autoComplete={autoComplete}
+            inputMode={inputMode}
+            placeholder={placeholder}
+            disabled={disabled}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errorId : undefined}
+            className="w-full bg-transparent px-1.5 py-2 text-sm text-on-military placeholder:text-on-military-muted/70 focus:outline-none disabled:cursor-not-allowed"
+          />
+        </div>
+        {error && (
+          <p id={errorId} role="alert" className="mt-1 text-xs text-value-negative">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-xs text-on-military-muted">
