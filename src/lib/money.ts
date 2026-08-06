@@ -18,3 +18,15 @@ export function reaisToCents(value: string): bigint | null {
     return null;
   }
 }
+
+// Inverso exato de reaisToCents — BigInt inteiro, nunca divisão em float
+// (evita erro de arredondamento, ex.: 500000000n -> "5.000.000,00", nunca
+// "4999999,99").
+export function centsToReais(cents: bigint): string {
+  const negative = cents < BigInt(0);
+  const absCents = negative ? -cents : cents;
+  const integerPart = (absCents / BigInt(100)).toString();
+  const centsPart = (absCents % BigInt(100)).toString().padStart(2, "0");
+  const withThousands = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${negative ? "-" : ""}${withThousands},${centsPart}`;
+}
