@@ -22,7 +22,7 @@ export function TextField({
   error?: string;
   type?: string;
   autoComplete?: string;
-  inputMode?: "text" | "numeric" | "tel" | "email";
+  inputMode?: "text" | "numeric" | "tel" | "email" | "decimal";
   placeholder?: string;
   disabled?: boolean;
 }): ReactNode {

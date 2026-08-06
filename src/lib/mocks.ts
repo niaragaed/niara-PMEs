@@ -38,7 +38,7 @@ export const mockPaymentGateway: PaymentGateway = {
 
 export const mockKycProvider: KycProvider = {
   async submit(): Promise<KycSubmissionResult> {
-    return { ref: mockRef("KYC"), status: "pending" };
+    return { ref: mockRef("KYC"), status: "approved" };
   },
 
   async status(ref: string): Promise<KycSubmissionResult> {
