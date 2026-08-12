@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
-import { confirmInvestment, reserveInvestment, type ConfirmInvestmentState, type ReserveInvestmentState } from "@/app/investir/actions";
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import { confirmInvestment, type ConfirmInvestmentState } from "@/app/investir/actions";
 import { submitKyc } from "@/app/investir/kyc-actions";
-import { TextField } from "@/components/perfil/FormField";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
-import { MONEY_FORMAT } from "@/lib/money";
 
 export type OfertaAtivaRow = {
   id: string;
@@ -46,11 +45,6 @@ export function InvestirPage({
   kycStatus: KycStatus;
 }) {
   const t = ptBr.investir;
-  const [ofertaAbertaId, setOfertaAbertaId] = useState<string | null>(null);
-  const [valorReais, setValorReais] = useState("");
-  const [erroValor, setErroValor] = useState<string | undefined>(undefined);
-  const [resultado, setResultado] = useState<ReserveInvestmentState | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   const [kycStatus, setKycStatus] = useState<KycStatus>(kycStatusInicial);
   const [reservaResultados, setReservaResultados] = useState<Record<string, ConfirmInvestmentState>>({});
@@ -83,43 +77,6 @@ export function InvestirPage({
     });
   }
 
-  function abrirFormulario(offeringId: string) {
-    setOfertaAbertaId(offeringId);
-    setValorReais("");
-    setErroValor(undefined);
-    setResultado(null);
-  }
-
-  function fecharFormulario() {
-    setOfertaAbertaId(null);
-  }
-
-  function handleValorChange(event: ChangeEvent<HTMLInputElement>) {
-    setValorReais(event.target.value);
-  }
-
-  function handleSubmit(event: FormEvent, offeringId: string) {
-    event.preventDefault();
-
-    if (!MONEY_FORMAT.test(valorReais.trim())) {
-      setErroValor(t.form.erroValorInvalido);
-      return;
-    }
-    setErroValor(undefined);
-    setResultado(null);
-
-    startTransition(async () => {
-      const result = await reserveInvestment({ offeringId, valorReais: valorReais.trim() });
-      setResultado(result);
-      if (result.status === "error" && result.fieldErrors?.valorReais) {
-        setErroValor(result.fieldErrors.valorReais);
-      }
-      if (result.status === "success") {
-        setValorReais("");
-      }
-    });
-  }
-
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
@@ -138,90 +95,43 @@ export function InvestirPage({
           ) : (
             <ul className="flex flex-col gap-3">
               {ofertas.map((oferta) => (
-                <li key={oferta.id} className="rounded-lg border border-panel-border bg-panel p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-on-military">{oferta.issuerLegalName}</p>
-                    <span className="rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
-                      {t.card.statusAtiva}
-                    </span>
-                  </div>
-
-                  <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-                    <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.metaMinima}</dt>
-                      <dd className="mt-0.5 text-sm text-on-military">{formatBRL(oferta.targetMinCents / 100)}</dd>
+                <li key={oferta.id}>
+                  <Link
+                    href={`/investir/${oferta.id}`}
+                    className="block rounded-lg border border-panel-border bg-panel p-5 transition-colors hover:border-salmon"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-on-military">{oferta.issuerLegalName}</p>
+                      <span className="rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
+                        {t.card.statusAtiva}
+                      </span>
                     </div>
-                    <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.teto}</dt>
-                      <dd className="mt-0.5 text-sm text-on-military">{formatBRL(oferta.hardCapCents / 100)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.jaReservado}</dt>
-                      <dd className="mt-0.5 text-sm text-on-military">
-                        {formatBRL(oferta.arrecadadoCents / 100)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.janela}</dt>
-                      <dd className="mt-0.5 text-sm text-on-military">
-                        {formatDate(oferta.opensAt)} – {formatDate(oferta.closesAt)}
-                      </dd>
-                    </div>
-                  </dl>
 
-                  {ofertaAbertaId === oferta.id ? (
-                    <form
-                      onSubmit={(event) => handleSubmit(event, oferta.id)}
-                      noValidate
-                      className="mt-4 flex flex-col gap-4 border-t border-panel-border pt-4"
-                    >
-                      <TextField
-                        id={`valor-${oferta.id}`}
-                        label={t.form.campoValor}
-                        value={valorReais}
-                        onChange={handleValorChange}
-                        error={erroValor}
-                        inputMode="decimal"
-                        placeholder="1.000,00"
-                      />
-
-                      {resultado?.status === "error" && (
-                        <p role="alert" className="text-sm text-value-negative">
-                          {resultado.message}
-                        </p>
-                      )}
-                      {resultado?.status === "success" && (
-                        <p role="status" className="text-sm text-value-positive">
-                          {t.form.sucesso}
-                        </p>
-                      )}
-
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="submit"
-                          disabled={isPending}
-                          className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isPending ? t.form.confirmandoBotao : t.form.confirmarBotao}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={fecharFormulario}
-                          className="rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon"
-                        >
-                          {t.form.cancelarBotao}
-                        </button>
+                    <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-xs text-on-military-muted">{t.card.metaMinima}</dt>
+                        <dd className="mt-0.5 text-sm text-on-military">{formatBRL(oferta.targetMinCents / 100)}</dd>
                       </div>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => abrirFormulario(oferta.id)}
-                      className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600"
-                    >
-                      {t.card.reservarBotao}
-                    </button>
-                  )}
+                      <div>
+                        <dt className="text-xs text-on-military-muted">{t.card.teto}</dt>
+                        <dd className="mt-0.5 text-sm text-on-military">{formatBRL(oferta.hardCapCents / 100)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-on-military-muted">{t.card.jaReservado}</dt>
+                        <dd className="mt-0.5 text-sm text-on-military">
+                          {formatBRL(oferta.arrecadadoCents / 100)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-on-military-muted">{t.card.janela}</dt>
+                        <dd className="mt-0.5 text-sm text-on-military">
+                          {formatDate(oferta.opensAt)} – {formatDate(oferta.closesAt)}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <span className="mt-4 inline-block text-sm font-semibold text-salmon">{t.card.verOferta}</span>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -14,7 +14,14 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { resolveAccount, type AccountRole } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
-import { isValidCNPJ, isValidCPF, onlyDigits } from "@/lib/masks";
+import {
+  isValidCEP,
+  isValidCNPJ,
+  isValidCPF,
+  isValidDataNascimento,
+  isValidTelefone,
+  onlyDigits,
+} from "@/lib/masks";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
 
 export type CreateAccountState = {
@@ -25,16 +32,48 @@ export type CreateAccountState = {
 
 const roleSchema = z.enum(["investor", "issuer"]);
 
+// DD/MM/AAAA (formato do formulário) -> AAAA-MM-DD (formato da coluna date
+// do Postgres) — mesma conversão de src/app/perfil/actions.ts, espelhada
+// aqui porque a action de /perfil não é reaproveitada diretamente.
+function brDateToIso(value: string): string {
+  const [day, month, year] = value.split("/");
+  return `${year}-${month}-${day}`;
+}
+
+// Espelha addressSchema de src/app/perfil/actions.ts — duplicado
+// deliberadamente por ora (ver CLAUDE.md/discussão de escopo) em vez de
+// extrair um módulo compartilhado, para não mexer no arquivo de /perfil.
+const addressSchema = {
+  phone: z.string().refine((value) => isValidTelefone(value), "Telefone inválido.").transform(onlyDigits),
+  cep: z.string().refine((value) => isValidCEP(value), "CEP inválido.").transform(onlyDigits),
+  logradouro: z.string().trim().min(1, "Informe a rua."),
+  numero: z.string().trim().min(1, "Informe o número."),
+  complemento: z.string().trim(),
+  bairro: z.string().trim().min(1, "Informe o bairro."),
+  cidade: z.string().trim().min(1, "Informe a cidade."),
+  estado: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{2}$/, "Selecione o estado.")
+    .transform((value) => value.toUpperCase()),
+};
+
 const investorDataSchema = z.object({
   fullName: z.string().trim().min(1, "Informe o nome completo."),
   taxId: z
     .string()
     .refine((value) => isValidCPF(value), "CPF inválido — informe os 11 dígitos.")
     .transform(onlyDigits),
+  birthDate: z
+    .string()
+    .refine((value) => isValidDataNascimento(value), "Data de nascimento inválida.")
+    .transform(brDateToIso),
+  ...addressSchema,
 });
 
 const issuerDataSchema = z.object({
   legalName: z.string().trim().min(1, "Informe a razão social."),
+  tradeName: z.string().trim(),
   taxId: z
     .string()
     .refine((value) => isValidCNPJ(value), "CNPJ inválido — informe os 14 dígitos.")
@@ -44,6 +83,7 @@ const issuerDataSchema = z.object({
     .trim()
     .min(1, "Informe a receita bruta anual.")
     .regex(MONEY_FORMAT, "Use o formato 5.000.000,00 (só números, ponto de milhar e vírgula decimal)."),
+  ...addressSchema,
 });
 
 function firstFieldErrors(error: z.ZodError): Partial<Record<string, string>> {
@@ -111,6 +151,15 @@ export async function createAccount(roleInput: unknown, dataInput: unknown): Pro
       user_id: user.id,
       full_name: parsed.data.fullName,
       tax_id: parsed.data.taxId,
+      birth_date: parsed.data.birthDate,
+      phone: parsed.data.phone,
+      addr_cep: parsed.data.cep,
+      addr_street: parsed.data.logradouro,
+      addr_number: parsed.data.numero,
+      addr_complement: parsed.data.complemento || null,
+      addr_neighborhood: parsed.data.bairro,
+      addr_city: parsed.data.cidade,
+      addr_state: parsed.data.estado,
     });
 
     if (error) {
@@ -143,8 +192,17 @@ export async function createAccount(roleInput: unknown, dataInput: unknown): Pro
     const { error } = await admin.from("issuers").insert({
       user_id: user.id,
       legal_name: parsed.data.legalName,
+      trade_name: parsed.data.tradeName || null,
       tax_id: parsed.data.taxId,
       annual_revenue_cents: annualRevenueCents.toString(),
+      phone: parsed.data.phone,
+      addr_cep: parsed.data.cep,
+      addr_street: parsed.data.logradouro,
+      addr_number: parsed.data.numero,
+      addr_complement: parsed.data.complemento || null,
+      addr_neighborhood: parsed.data.bairro,
+      addr_city: parsed.data.cidade,
+      addr_state: parsed.data.estado,
     });
 
     if (error) {
@@ -155,5 +213,9 @@ export async function createAccount(roleInput: unknown, dataInput: unknown): Pro
     }
   }
 
-  redirect("/conta");
+  // ?onboarding=1 sinaliza pra /perfil abrir o teste de perfil de
+  // investidor automaticamente — só neste caminho de sucesso (as outras
+  // ocorrências de redirect("/conta") acima são corrida/duplicidade de
+  // cadastro já existente, não uma conta nova).
+  redirect("/conta?onboarding=1");
 }

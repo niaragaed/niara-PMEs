@@ -30,6 +30,17 @@ export function maskDocumento(value: string, tipo: TipoPessoa): string {
   return tipo === "pf" ? maskCPF(value) : maskCNPJ(value);
 }
 
+// Máscara de EXIBIÇÃO PÚBLICA do CNPJ (página pública da oferta) — oculta
+// filial + dígitos verificadores de verdade (não só os 2 últimos), só a raiz
+// (8 primeiros dígitos, identifica a empresa) fica visível. Espera 14
+// dígitos (chamar só quando issuers.publish_cnpj = true e tax_id já foi lido
+// do banco); fora disso retorna "" para nunca vazar um valor parcial.
+export function maskCnpjPublic(value: string): string {
+  const digits = onlyDigits(value);
+  if (digits.length !== 14) return "";
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/****-**`;
+}
+
 export function maskCEP(value: string): string {
   const digits = onlyDigits(value).slice(0, 8);
   return digits.replace(/(\d{5})(\d{1,3})$/, "$1-$2");

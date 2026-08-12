@@ -4,6 +4,7 @@ import { InvestirPage, type MinhaReservaRow, type OfertaAtivaRow } from "@/compo
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CAP_OCCUPYING_STATUSES } from "@/lib/investments";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -11,13 +12,6 @@ export const metadata: Metadata = {
   description: ptBr.investir.meta.description,
   robots: { index: false, follow: false },
 };
-
-// Conjunto de status que "ocupa" o hard_cap de uma oferta — mesmo conjunto
-// que o trigger enforce_offering_hard_cap usa (0001_core.sql). Usado só para
-// exibir "já reservado" na vitrine; NUNCA para decidir aceitar/barrar um
-// aporte — quem barra é o banco (FOR UPDATE), esta soma é puramente
-// informativa e pode estar um instante desatualizada por concorrência.
-const CAP_OCCUPYING_STATUSES = ["reserved", "paid", "settled"];
 
 type OfferingQueryRow = {
   id: string;

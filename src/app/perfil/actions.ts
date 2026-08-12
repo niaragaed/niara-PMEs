@@ -18,6 +18,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
 import { isValidCEP, isValidCNPJ, isValidCPF, isValidDataNascimento, isValidTelefone, onlyDigits } from "@/lib/masks";
 import { MONEY_FORMAT, centsToReais, reaisToCents } from "@/lib/money";
+import {
+  getIssuerLogoVersion,
+  ISSUER_LOGO_BUCKET,
+  ISSUER_LOGO_EXT_BY_TYPE,
+  ISSUER_LOGO_MAX_BYTES,
+  isIssuerLogoMimeType,
+  issuerLogoUrl,
+} from "@/lib/storage/issuer-logo";
 
 type SharedFields = {
   email: string;
@@ -44,6 +52,10 @@ export type LoadedProfile =
       legalName: string;
       tradeName: string;
       annualRevenueReais: string; // "5.000.000,00", "" se ainda não preenchido
+      sector: string; // dado PÚBLICO — aparece na página da oferta (0008)
+      businessSummary: string; // idem
+      publishCnpj: boolean; // opt-in — CNPJ (mascarado) na página pública da oferta (0009)
+      logoUrl: string | null; // dado PÚBLICO — aparece na página da oferta (0010)
     });
 
 export type UpdateProfileState =
@@ -113,7 +125,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
   const { data, error } = await admin
     .from("issuers")
     .select(
-      "legal_name, trade_name, tax_id, annual_revenue_cents, phone, wallet_address, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
+      "legal_name, trade_name, tax_id, annual_revenue_cents, sector, business_summary, publish_cnpj, phone, wallet_address, logo_path, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
     )
     .eq("id", accountId)
     .single();
@@ -123,6 +135,10 @@ export async function loadProfile(): Promise<LoadedProfile> {
     redirect("/entrar");
   }
 
+  const logoUrl = data.logo_path
+    ? issuerLogoUrl(data.logo_path, await getIssuerLogoVersion(admin, data.logo_path))
+    : null;
+
   return {
     role: "issuer",
     email,
@@ -131,6 +147,10 @@ export async function loadProfile(): Promise<LoadedProfile> {
     taxId: data.tax_id ?? "",
     annualRevenueReais:
       data.annual_revenue_cents === null ? "" : centsToReais(BigInt(data.annual_revenue_cents)),
+    sector: data.sector ?? "",
+    businessSummary: data.business_summary ?? "",
+    publishCnpj: data.publish_cnpj ?? false,
+    logoUrl,
     phone: data.phone ?? "",
     walletAddress: data.wallet_address,
     cep: data.addr_cep ?? "",
@@ -211,6 +231,9 @@ const issuerUpdateSchema = z.object({
     .trim()
     .min(1, "Informe a receita bruta anual.")
     .regex(MONEY_FORMAT, "Use o formato 5.000.000,00 (só números, ponto de milhar e vírgula decimal)."),
+  sector: z.string().trim(),
+  businessSummary: z.string().trim(),
+  publishCnpj: z.boolean(),
   ...addressSchema,
 });
 
@@ -312,6 +335,9 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
         trade_name: parsed.data.tradeName || null,
         tax_id: parsed.data.taxId,
         annual_revenue_cents: annualRevenueCents.toString(),
+        sector: parsed.data.sector || null,
+        business_summary: parsed.data.businessSummary || null,
+        publish_cnpj: parsed.data.publishCnpj,
         phone: parsed.data.phone,
         addr_cep: parsed.data.cep,
         addr_street: parsed.data.logradouro,
@@ -412,6 +438,111 @@ export async function unlinkWallet(): Promise<UpdateProfileState> {
       status: "error",
       message: "Não foi possível desvincular a carteira. Tente novamente em instantes.",
     };
+  }
+
+  revalidatePath("/perfil");
+  return { status: "success" };
+}
+
+// Logo da empresa (0010 + escopo 4c) — diferente de tudo mais que resta
+// simulado em /perfil, isto sobe um arquivo de verdade para o bucket público
+// 'issuer-logos' e grava o caminho em issuers.logo_path. Só role='issuer'
+// pode chamar; accountId sempre de resolveAccount() (sessão no servidor),
+// nunca de um id vindo do cliente — cada empresa só escreve na própria
+// pasta (`${accountId}/logo.<ext>`). Tipo/tamanho são validados AQUI, não só
+// no input do navegador (LogoUpload.tsx) — essa validação é só cortesia de UX.
+export type UploadLogoState = { status: "success"; logoUrl: string } | { status: "error"; message: string };
+
+export async function uploadIssuerLogo(formData: FormData): Promise<UploadLogoState> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/entrar");
+  }
+
+  const { role, accountId } = await resolveAccount();
+  if (role !== "issuer" || !accountId) {
+    return { status: "error", message: "Apenas empresas podem enviar logo." };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return { status: "error", message: "Selecione um arquivo de imagem." };
+  }
+  if (!isIssuerLogoMimeType(file.type)) {
+    return { status: "error", message: "Formato inválido — envie um arquivo JPG, PNG ou WebP." };
+  }
+  if (file.size > ISSUER_LOGO_MAX_BYTES) {
+    return { status: "error", message: "A imagem deve ter até 2MB." };
+  }
+
+  const admin = createAdminClient();
+  const path = `${accountId}/logo.${ISSUER_LOGO_EXT_BY_TYPE[file.type]}`;
+
+  const { data: current } = await admin.from("issuers").select("logo_path").eq("id", accountId).single();
+  const previousPath = current?.logo_path ?? null;
+
+  const { error: uploadError } = await admin.storage.from(ISSUER_LOGO_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+  });
+  if (uploadError) {
+    console.error("uploadIssuerLogo: falha no upload", uploadError);
+    return { status: "error", message: "Não foi possível enviar a logo. Tente novamente em instantes." };
+  }
+
+  const { error: dbError } = await admin.from("issuers").update({ logo_path: path }).eq("id", accountId);
+  if (dbError) {
+    console.error("uploadIssuerLogo: falha ao gravar logo_path", dbError);
+    return { status: "error", message: "Não foi possível salvar a logo. Tente novamente em instantes." };
+  }
+
+  // A extensão pode mudar entre uploads (ex.: png -> jpg): o upsert só
+  // sobrescreve quando o caminho é idêntico, então um caminho anterior
+  // diferente vira arquivo órfão no bucket se não for limpo aqui.
+  if (previousPath && previousPath !== path) {
+    const { error: removeOldError } = await admin.storage.from(ISSUER_LOGO_BUCKET).remove([previousPath]);
+    if (removeOldError) {
+      console.error("uploadIssuerLogo: falha ao remover logo anterior", removeOldError);
+    }
+  }
+
+  const version = await getIssuerLogoVersion(admin, path);
+  revalidatePath("/perfil");
+  return { status: "success", logoUrl: issuerLogoUrl(path, version)! };
+}
+
+export async function removeIssuerLogo(): Promise<UpdateProfileState> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/entrar");
+  }
+
+  const { role, accountId } = await resolveAccount();
+  if (role !== "issuer" || !accountId) {
+    return { status: "error", message: "Apenas empresas podem remover a logo." };
+  }
+
+  const admin = createAdminClient();
+  const { data: current } = await admin.from("issuers").select("logo_path").eq("id", accountId).single();
+  const path = current?.logo_path ?? null;
+
+  if (path) {
+    const { error: removeError } = await admin.storage.from(ISSUER_LOGO_BUCKET).remove([path]);
+    if (removeError) {
+      console.error("removeIssuerLogo: falha ao remover arquivo do bucket", removeError);
+    }
+  }
+
+  const { error } = await admin.from("issuers").update({ logo_path: null }).eq("id", accountId);
+  if (error) {
+    console.error("removeIssuerLogo: erro inesperado do banco", error);
+    return { status: "error", message: "Não foi possível remover a logo. Tente novamente em instantes." };
   }
 
   revalidatePath("/perfil");
