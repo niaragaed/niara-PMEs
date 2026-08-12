@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ aviso?: "apenas-empresa" | "apenas-investidor" }>;
+  searchParams: Promise<{ aviso?: "apenas-empresa" | "apenas-investidor"; onboarding?: string }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const { aviso } = await searchParams;
+  const { aviso, onboarding } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -36,5 +36,7 @@ export default async function Page({ searchParams }: PageProps) {
   const profile = await loadProfile();
   const offerings = role === "issuer" ? await loadMyOfferingsSummary() : [];
 
-  return <PerfilPage profile={profile} offerings={offerings} aviso={aviso} />;
+  return (
+    <PerfilPage profile={profile} offerings={offerings} aviso={aviso} abrirTesteInvestidor={onboarding === "1"} />
+  );
 }

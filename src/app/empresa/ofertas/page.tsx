@@ -30,7 +30,9 @@ export default async function Page() {
   const admin = createAdminClient();
   const { data } = await admin
     .from("offerings")
-    .select("id, status, target_min_cents, base_cap_cents, hard_cap_cents, opens_at, closes_at, created_at")
+    .select(
+      "id, status, target_min_cents, base_cap_cents, hard_cap_cents, share_price_cents, category, opens_at, closes_at, created_at",
+    )
     .eq("issuer_id", accountId)
     .order("created_at", { ascending: false });
 

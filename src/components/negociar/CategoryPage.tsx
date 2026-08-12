@@ -1,17 +1,38 @@
 import Link from "next/link";
 import { CategoryChip } from "./CategoryChip";
 import { ShowcaseCard } from "./ShowcaseCard";
+import { RealOfferCard } from "./RealOfferCard";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { getOfertasByCategoria } from "@/lib/mock/ofertas";
+import { resolveAccount } from "@/lib/auth/resolveInvestor";
+import { loadActiveOfferingsByCategory } from "@/lib/investments";
 
 // Template reutilizado pelas 5 rotas de categoria (/negociar/token-pmes,
 // token-agro, token-imobiliario, token-auto, titulos-de-divida) — muda só
 // o ícone/acento/conteúdo, via `categoria`.
-export function CategoryPage({ categoria }: { categoria: TokenCategory }) {
+//
+// REGRA DE OURO: visitante anônimo (sem sessão) vê exatamente a tela de
+// sempre — só os exemplos fictícios, nenhuma query ao banco. As ofertas
+// REAIS desta categoria só são buscadas quando resolveAccount() confirma
+// role === "investor"; sem isso, ofertasReais fica [] e a seção nem
+// renderiza. Este componente segue sendo público (nenhum redirect) —
+// diferente de /investir, que exige login para a rota inteira.
+//
+// Um issuer logado NÃO entra no ramo acima (role !== "investor"), mas vê a
+// PRÓPRIA oferta ativa nesta categoria (ofertasProprias), filtrada no banco
+// por issuer_id = accountId (loadActiveOfferingsByCategory) — nunca ofertas
+// de outras empresas. As duas listas (ofertasReais/ofertasProprias) nunca
+// têm conteúdo ao mesmo tempo, já que role é ou "investor" ou "issuer".
+export async function CategoryPage({ categoria }: { categoria: TokenCategory }) {
   const t = ptBr.negociar.categorias[categoria];
   const tt = ptBr.negociar.categoriaTemplate;
   const ofertas = getOfertasByCategoria(categoria);
+
+  const { role, accountId } = await resolveAccount();
+  const ofertasReais = role === "investor" ? await loadActiveOfferingsByCategory(categoria) : [];
+  const ofertasProprias =
+    role === "issuer" && accountId ? await loadActiveOfferingsByCategory(categoria, accountId) : [];
 
   return (
     <main className="flex flex-1 flex-col bg-military">
@@ -70,6 +91,30 @@ export function CategoryPage({ categoria }: { categoria: TokenCategory }) {
             ))}
           </ul>
         </div>
+
+        {ofertasReais.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold text-on-military">{tt.ofertasReaisTitle}</h2>
+            <p className="mt-1 text-xs text-on-military-muted">{tt.ofertasReaisNota}</p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ofertasReais.map((oferta) => (
+                <RealOfferCard key={oferta.id} oferta={oferta} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {ofertasProprias.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold text-on-military">{tt.suaOfertaTitle}</h2>
+            <p className="mt-1 text-xs text-on-military-muted">{tt.suaOfertaNota}</p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ofertasProprias.map((oferta) => (
+                <RealOfferCard key={oferta.id} oferta={oferta} isOwner />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-10">
           <h2 className="text-xl font-semibold text-on-military">{tt.vitrineTitle}</h2>

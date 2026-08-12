@@ -14,8 +14,12 @@ import { z } from "zod";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { payments } from "@/lib/adapters";
+import { CAP_OCCUPYING_STATUSES } from "@/lib/investments";
+import { maskCnpjPublic } from "@/lib/masks";
+import type { TokenCategory } from "@/lib/mock/ativos";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
+import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
 
 export type ReserveInvestmentState =
   | { status: "success" }
@@ -52,8 +56,24 @@ function translateInvestmentDbError(error: PostgrestError): ReserveInvestmentSta
   return { status: "error", message: "Não foi possível concluir a reserva. Tente novamente em instantes." };
 }
 
+// Join usado só pela checagem de defesa em profundidade de reserveInvestment
+// abaixo — resolve o user_id do issuer dono da oferta, para comparar contra
+// o userId do investidor logado (accountId não serve aqui: com
+// role==='investor', accountId é sempre investors.id, nunca igual a
+// issuers.id, mesmo quando o mesmo user_id acabasse linkado às duas
+// contas).
+type OfferingIssuerLinkRow = {
+  issuers: { user_id: string } | { user_id: string }[] | null;
+};
+
+function firstIssuerUserId(issuers: OfferingIssuerLinkRow["issuers"]): string | null {
+  if (!issuers) return null;
+  const issuerRow = Array.isArray(issuers) ? issuers[0] : issuers;
+  return issuerRow?.user_id ?? null;
+}
+
 export async function reserveInvestment(dataInput: unknown): Promise<ReserveInvestmentState> {
-  const { role, accountId } = await resolveAccount();
+  const { role, accountId, userId } = await resolveAccount();
   if (role !== "investor" || !accountId) {
     return { status: "error", message: "Apenas investidores cadastrados podem reservar aportes." };
   }
@@ -80,6 +100,29 @@ export async function reserveInvestment(dataInput: unknown): Promise<ReserveInve
   }
 
   const admin = createAdminClient();
+
+  // Defesa em profundidade: o gate de role==='investor' acima já deveria
+  // bastar (uma conta é investidor OU empresa, nunca as duas — ver
+  // resolveInvestor.ts), mas aqui reforçamos de forma explícita, via
+  // user_id, que o investidor logado não é o dono da empresa emissora desta
+  // oferta. Nunca confia em accountId para essa comparação (tipos de conta
+  // diferentes).
+  const { data: offeringLink, error: offeringLinkError } = await admin
+    .from("offerings")
+    .select("issuers(user_id)")
+    .eq("id", parsed.data.offeringId)
+    .maybeSingle();
+
+  if (offeringLinkError) {
+    console.error("investir: erro ao verificar dono da oferta", offeringLinkError);
+    return { status: "error", message: "Não foi possível concluir a reserva. Tente novamente em instantes." };
+  }
+
+  const issuerUserId = offeringLink ? firstIssuerUserId((offeringLink as OfferingIssuerLinkRow).issuers) : null;
+  if (issuerUserId !== null && issuerUserId === userId) {
+    return { status: "error", message: "Você não pode investir na sua própria oferta." };
+  }
+
   const { error } = await admin.from("investments").insert({
     offering_id: parsed.data.offeringId,
     investor_id: accountId,
@@ -174,4 +217,140 @@ export async function confirmInvestment(investmentIdInput: unknown): Promise<Con
     return { status: "success", message: "Pagamento (simulado) já confirmado." };
   }
   return { status: "success", message: "Pagamento (simulado) confirmado." };
+}
+
+// Leitura pública da página de detalhe da oferta (3b-4c) — REGRA DE OURO:
+// qualquer investidor logado pode ver a oferta de qualquer empresa, então o
+// SELECT é uma LISTA BRANCA explícita, nunca select('*') do issuer. phone,
+// endereço completo, wallet_address e receita bruta NUNCA são buscados aqui
+// — não é só uma questão de não exibir no JSX, o campo nem sai do banco, o
+// que também garante que nunca aparecem no HTML servido (view-source).
+export type PublicOfferingIssuer = {
+  legalName: string;
+  tradeName: string | null;
+  sector: string | null;
+  businessSummary: string | null;
+  city: string | null;
+  state: string | null;
+  /** null se a empresa não optou por publicar (issuers.publish_cnpj = false) — nesse caso tax_id nem chega a ser lido do banco. */
+  cnpjMasked: string | null;
+  logoUrl: string | null;
+};
+
+export type PublicOffering = {
+  id: string;
+  targetMinCents: number;
+  baseCapCents: number;
+  hardCapCents: number;
+  sharePriceCents: number | null;
+  category: TokenCategory | null;
+  opensAt: string;
+  closesAt: string;
+  arrecadadoCents: number;
+  issuer: PublicOfferingIssuer;
+};
+
+type PublicOfferingIssuerRow = {
+  legal_name: string;
+  trade_name: string | null;
+  sector: string | null;
+  business_summary: string | null;
+  addr_city: string | null;
+  addr_state: string | null;
+  publish_cnpj: boolean;
+  logo_path: string | null;
+};
+
+type PublicOfferingRow = {
+  id: string;
+  issuer_id: string;
+  target_min_cents: number;
+  base_cap_cents: number;
+  hard_cap_cents: number;
+  share_price_cents: number | null;
+  category: string | null;
+  opens_at: string;
+  closes_at: string;
+  issuers: PublicOfferingIssuerRow | PublicOfferingIssuerRow[] | null;
+};
+
+function firstIssuer(issuers: PublicOfferingRow["issuers"]): PublicOfferingIssuerRow | null {
+  if (!issuers) return null;
+  return Array.isArray(issuers) ? (issuers[0] ?? null) : issuers;
+}
+
+export async function loadPublicOffering(offeringIdInput: unknown): Promise<PublicOffering | null> {
+  const parsedId = z.string().uuid().safeParse(offeringIdInput);
+  if (!parsedId.success) return null;
+  const offeringId = parsedId.data;
+
+  const admin = createAdminClient();
+
+  // Passo 1: lista branca, SEM tax_id — publish_cnpj vem junto só para
+  // decidir se o passo 2 (que lê tax_id) roda ou não.
+  const { data, error } = await admin
+    .from("offerings")
+    .select(
+      "id, issuer_id, target_min_cents, base_cap_cents, hard_cap_cents, share_price_cents, category, opens_at, closes_at, issuers(legal_name, trade_name, sector, business_summary, addr_city, addr_state, publish_cnpj, logo_path)",
+    )
+    .eq("id", offeringId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const offering = data as unknown as PublicOfferingRow;
+  const issuerRow = firstIssuer(offering.issuers);
+  if (!issuerRow) return null;
+
+  // Passo 2: só busca tax_id se a empresa optou por publicar — para quem
+  // não optou, o CNPJ não é lido do banco, não só "não exibido" no JSX.
+  let cnpjMasked: string | null = null;
+  if (issuerRow.publish_cnpj) {
+    const { data: taxIdRow } = await admin
+      .from("issuers")
+      .select("tax_id")
+      .eq("id", offering.issuer_id)
+      .maybeSingle();
+    if (taxIdRow?.tax_id) {
+      cnpjMasked = maskCnpjPublic(taxIdRow.tax_id);
+    }
+  }
+
+  const { data: investmentsData } = await admin
+    .from("investments")
+    .select("amount_cents")
+    .eq("offering_id", offeringId)
+    .in("status", CAP_OCCUPYING_STATUSES);
+
+  const arrecadadoCents = (investmentsData ?? []).reduce(
+    (total, investment) => total + Number(investment.amount_cents),
+    0,
+  );
+
+  const logoUrl = issuerRow.logo_path
+    ? issuerLogoUrl(issuerRow.logo_path, await getIssuerLogoVersion(admin, issuerRow.logo_path))
+    : null;
+
+  return {
+    id: offering.id,
+    targetMinCents: Number(offering.target_min_cents),
+    baseCapCents: Number(offering.base_cap_cents),
+    hardCapCents: Number(offering.hard_cap_cents),
+    sharePriceCents: offering.share_price_cents === null ? null : Number(offering.share_price_cents),
+    category: offering.category as TokenCategory | null,
+    opensAt: offering.opens_at,
+    closesAt: offering.closes_at,
+    arrecadadoCents,
+    issuer: {
+      legalName: issuerRow.legal_name,
+      tradeName: issuerRow.trade_name,
+      sector: issuerRow.sector,
+      businessSummary: issuerRow.business_summary,
+      city: issuerRow.addr_city,
+      state: issuerRow.addr_state,
+      cnpjMasked,
+      logoUrl,
+    },
+  };
 }

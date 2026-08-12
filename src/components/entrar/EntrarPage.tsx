@@ -13,14 +13,12 @@ import type { AuthError } from "@supabase/supabase-js";
 
 type FormErrors = { email?: string; senha?: string };
 
+// Só cobre os erros que signInWithPassword pode retornar — criação de conta
+// (signUp) não acontece mais nesta tela, ver CadastroPage.tsx.
 function mapAuthError(error: AuthError, t: typeof ptBr.entrar.erros): string {
   switch (error.code) {
     case "invalid_credentials":
       return t.credenciaisInvalidas;
-    case "user_already_exists":
-      return t.emailJaCadastrado;
-    case "weak_password":
-      return t.senhaFraca;
     default:
       return t.generico;
   }
@@ -40,6 +38,9 @@ function GoogleIcon() {
   );
 }
 
+// Tela só de LOGIN (signInWithPassword) — criar conta é um fluxo à parte,
+// ver "Criar conta" abaixo, que apenas navega para /cadastro (a tela
+// dedicada de criação de conta + cadastro completo).
 export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) {
   const t = ptBr.entrar;
   const router = useRouter();
@@ -49,7 +50,7 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
   const [senha, setSenha] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [pending, setPending] = useState<"entrar" | "criarConta" | null>(null);
+  const [pending, setPending] = useState(false);
 
   function validate(): boolean {
     const nextErrors: FormErrors = {};
@@ -64,29 +65,17 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
     setFormError(null);
     if (!validate()) return;
 
-    setPending("entrar");
+    setPending(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
     if (error) {
       setFormError(mapAuthError(error, t.erros));
-      setPending(null);
+      setPending(false);
       return;
     }
     router.refresh();
-    router.push("/perfil");
-  }
-
-  async function handleCriarConta() {
-    setFormError(null);
-    if (!validate()) return;
-
-    setPending("criarConta");
-    const { error } = await supabase.auth.signUp({ email, password: senha });
-    if (error) {
-      setFormError(mapAuthError(error, t.erros));
-      setPending(null);
-      return;
-    }
-    router.refresh();
+    // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver
+    // dados de investidor/empresa — cobre o caso de quem criou a conta mas
+    // não terminou o cadastro.
     router.push("/perfil");
   }
 
@@ -163,20 +152,18 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
 
             <button
               type="submit"
-              disabled={pending !== null}
+              disabled={pending}
               className="flex w-full items-center justify-center gap-2 rounded-md bg-salmon px-4 py-2.5 text-sm font-medium text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {pending === "entrar" ? t.entrarPendente : t.entrarBotao}
+              {pending ? t.entrarPendente : t.entrarBotao}
             </button>
 
-            <button
-              type="button"
-              onClick={handleCriarConta}
-              disabled={pending !== null}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-panel-border bg-military px-4 py-2.5 text-sm font-medium text-on-military hover:bg-military-600/40 disabled:cursor-not-allowed disabled:opacity-60"
+            <Link
+              href="/cadastro"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-panel-border bg-military px-4 py-2.5 text-sm font-medium text-on-military hover:bg-military-600/40"
             >
-              {pending === "criarConta" ? t.criarContaPendente : t.criarContaBotao}
-            </button>
+              {t.criarContaBotao}
+            </Link>
 
             <div className="flex items-center gap-3 py-1 text-xs text-on-military-muted">
               <span className="h-px flex-1 bg-panel-border" aria-hidden="true" />

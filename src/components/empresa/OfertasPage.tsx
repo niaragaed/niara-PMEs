@@ -7,10 +7,11 @@ import {
   createOffering,
   type OfferingActionState,
 } from "@/app/empresa/ofertas/actions";
-import { TextField } from "@/components/perfil/FormField";
+import { SelectField, TextField } from "@/components/perfil/FormField";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
-import { MONEY_FORMAT } from "@/lib/money";
+import type { TokenCategory } from "@/lib/mock/ativos";
+import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
 
 export type OfferingRow = {
   id: string;
@@ -18,6 +19,8 @@ export type OfferingRow = {
   target_min_cents: number;
   base_cap_cents: number;
   hard_cap_cents: number;
+  share_price_cents: number | null;
+  category: TokenCategory | null;
   opens_at: string;
   closes_at: string;
   created_at: string;
@@ -27,11 +30,15 @@ export type OfferingRow = {
   tokenRefs: string[];
 };
 
+const OFFERING_CATEGORIES: TokenCategory[] = ["pmes", "agro", "imobiliario", "auto", "divida"];
+
 type FormState = {
   baseCapReais: string;
   targetMinReais: string;
   additionalLotPct: string;
   windowDays: string;
+  sharePriceReais: string;
+  categoria: string;
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -41,7 +48,27 @@ const EMPTY_FORM: FormState = {
   targetMinReais: "",
   additionalLotPct: "0",
   windowDays: "",
+  sharePriceReais: "",
+  categoria: "",
 };
+
+const quotasFormatter = new Intl.NumberFormat("pt-BR");
+
+// Preview ao vivo do número de cotas — null enquanto qualquer um dos dois
+// valores estiver vazio/inválido/zero (nunca divide por zero). O aviso de
+// não-divisibilidade só aparece quando os dois valores estiverem preenchidos
+// e válidos; o CHECK do banco (offerings_share_price_cents_check) continua
+// sendo o backstop real, isto aqui é só UX.
+function computeQuotasPreview(
+  baseCapReais: string,
+  sharePriceReais: string,
+): { quotas: bigint; exact: boolean } | null {
+  if (!baseCapReais.trim() || !sharePriceReais.trim()) return null;
+  const baseCapCents = reaisToCents(baseCapReais);
+  const sharePriceCents = reaisToCents(sharePriceReais);
+  if (baseCapCents === null || sharePriceCents === null || sharePriceCents <= BigInt(0)) return null;
+  return { quotas: baseCapCents / sharePriceCents, exact: baseCapCents % sharePriceCents === BigInt(0) };
+}
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -62,6 +89,15 @@ function validate(data: FormState): FormErrors {
   const dias = Number(data.windowDays);
   if (!Number.isInteger(dias) || dias < 1 || dias > 180) errors.windowDays = t.prazoInvalido;
 
+  if (!MONEY_FORMAT.test(data.sharePriceReais.trim())) {
+    errors.sharePriceReais = t.valorPorCotaInvalido;
+  } else {
+    const preview = computeQuotasPreview(data.baseCapReais, data.sharePriceReais);
+    if (preview && !preview.exact) errors.sharePriceReais = t.valorPorCotaNaoDivide;
+  }
+
+  if (!OFFERING_CATEGORIES.includes(data.categoria as TokenCategory)) errors.categoria = t.categoriaInvalida;
+
   return errors;
 }
 
@@ -76,8 +112,10 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
   const [closeError, setCloseError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const quotasPreview = computeQuotasPreview(draft.baseCapReais, draft.sharePriceReais);
+
   function handleFieldChange(field: keyof FormState) {
-    return (event: ChangeEvent<HTMLInputElement>) => {
+    return (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const raw = event.target.value;
       setDraft((current) => ({ ...current, [field]: raw }));
     };
@@ -96,6 +134,8 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
         targetMinReais: draft.targetMinReais,
         additionalLotPct: draft.additionalLotPct,
         windowDays: draft.windowDays,
+        sharePriceReais: draft.sharePriceReais,
+        categoria: draft.categoria,
       });
       if (result.status === "error") {
         setCreateState(result);
@@ -182,6 +222,28 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                       <dt className="text-xs text-on-military-muted">{t.card.janela}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
                         {formatDate(offering.opens_at)} – {formatDate(offering.closes_at)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-on-military-muted">{t.card.valorPorCota}</dt>
+                      <dd className="mt-0.5 text-sm text-on-military">
+                        {offering.share_price_cents === null
+                          ? t.card.naoInformado
+                          : formatBRL(offering.share_price_cents / 100)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-on-military-muted">{t.card.numeroCotas}</dt>
+                      <dd className="mt-0.5 text-sm text-on-military">
+                        {offering.share_price_cents === null
+                          ? t.card.naoInformado
+                          : quotasFormatter.format(offering.base_cap_cents / offering.share_price_cents)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-on-military-muted">{t.card.categoria}</dt>
+                      <dd className="mt-0.5 text-sm text-on-military">
+                        {offering.category === null ? t.card.naoInformado : ptBr.ativos.categorias[offering.category]}
                       </dd>
                     </div>
                   </dl>
@@ -295,7 +357,40 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                 inputMode="numeric"
                 placeholder="180"
               />
+              <TextField
+                id="oferta-valor-cota"
+                label={t.campos.valorPorCota}
+                value={draft.sharePriceReais}
+                onChange={handleFieldChange("sharePriceReais")}
+                error={errors.sharePriceReais}
+                inputMode="decimal"
+                placeholder="100,00"
+              />
+              <SelectField
+                id="oferta-categoria"
+                label={t.campos.categoria}
+                value={draft.categoria}
+                onChange={handleFieldChange("categoria")}
+                error={errors.categoria}
+                placeholder={t.campos.categoriaPlaceholder}
+              >
+                {OFFERING_CATEGORIES.map((categoria) => (
+                  <option key={categoria} value={categoria}>
+                    {ptBr.ativos.categorias[categoria]}
+                  </option>
+                ))}
+              </SelectField>
             </div>
+
+            <p className="text-xs text-on-military-muted">{t.categoriaAviso}</p>
+
+            {quotasPreview && (
+              <p className="text-xs text-on-military-muted">
+                {quotasPreview.exact
+                  ? t.cotasPreview(quotasFormatter.format(quotasPreview.quotas))
+                  : t.erros.valorPorCotaNaoDivide}
+              </p>
+            )}
 
             {createState?.status === "error" && (
               <p role="alert" className="text-sm text-value-negative">

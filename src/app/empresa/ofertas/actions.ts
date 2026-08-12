@@ -22,6 +22,11 @@ export type OfferingActionState =
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// Mesmo conjunto de categorias do CHECK de offerings.category (0009) e do
+// tipo TokenCategory (src/lib/mock/ativos.ts) — todas selecionáveis nesta
+// demonstração; o CHECK do banco continua sendo o backstop real.
+const OFFERING_CATEGORIES = ["pmes", "agro", "imobiliario", "auto", "divida"] as const;
+
 const createOfferingSchema = z.object({
   baseCapReais: z
     .string()
@@ -35,6 +40,12 @@ const createOfferingSchema = z.object({
     .regex(MONEY_FORMAT, "Use o formato 5.000.000,00."),
   additionalLotPct: z.coerce.number().int().min(0).max(25),
   windowDays: z.coerce.number().int().min(1).max(180),
+  sharePriceReais: z
+    .string()
+    .trim()
+    .min(1, "Informe o valor por cota.")
+    .regex(MONEY_FORMAT, "Use o formato 5.000.000,00."),
+  categoria: z.enum(OFFERING_CATEGORIES, { message: "Selecione uma categoria." }),
 });
 
 // hard_cap = base + floor(base * pct / 100), tudo em BigInt/centavos
@@ -78,6 +89,13 @@ function translateOfferingDbError(error: PostgrestError): OfferingActionState {
     if (error.message.includes("min_le_hardcap")) {
       return { status: "error", message: "A meta mínima não pode passar do teto da oferta." };
     }
+    if (error.message.includes("offerings_share_price_cents_check")) {
+      return {
+        status: "error",
+        message: "O valor da oferta precisa ser múltiplo do valor por cota.",
+        fieldErrors: { sharePriceReais: "O valor da oferta precisa ser múltiplo deste valor." },
+      };
+    }
   }
   console.error("ofertas: erro inesperado do banco", error);
   return { status: "error", message: "Não foi possível concluir a operação. Tente novamente em instantes." };
@@ -100,13 +118,15 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
 
   const baseCapCents = reaisToCents(parsed.data.baseCapReais);
   const targetMinCents = reaisToCents(parsed.data.targetMinReais);
-  if (baseCapCents === null || targetMinCents === null) {
+  const sharePriceCents = reaisToCents(parsed.data.sharePriceReais);
+  if (baseCapCents === null || targetMinCents === null || sharePriceCents === null) {
     return {
       status: "error",
       message: "Corrija os campos destacados.",
       fieldErrors: {
         ...(baseCapCents === null ? { baseCapReais: "Use o formato 5.000.000,00." } : {}),
         ...(targetMinCents === null ? { targetMinReais: "Use o formato 5.000.000,00." } : {}),
+        ...(sharePriceCents === null ? { sharePriceReais: "Use o formato 5.000.000,00." } : {}),
       },
     };
   }
@@ -123,6 +143,8 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
     target_min_cents: targetMinCents.toString(),
     base_cap_cents: baseCapCents.toString(),
     hard_cap_cents: hardCapCents.toString(),
+    share_price_cents: sharePriceCents.toString(),
+    category: parsed.data.categoria,
     opens_at: opensAt.toISOString(),
     closes_at: closesAt.toISOString(),
     is_demo: process.env.NIARA_ENV === "demo",

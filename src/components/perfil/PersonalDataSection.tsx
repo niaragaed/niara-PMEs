@@ -4,7 +4,8 @@ import { useState, useTransition, type ChangeEvent, type FormEvent } from "react
 import { Pencil } from "lucide-react";
 import { updateProfile, type LoadedProfile } from "@/app/perfil/actions";
 import { AvatarUpload } from "./AvatarUpload";
-import { ReadField, SelectField, TextField } from "./FormField";
+import { LogoUpload } from "./LogoUpload";
+import { ReadField, SelectField, TextareaField, TextField } from "./FormField";
 import { ptBr } from "@/lib/i18n/pt-br";
 import {
   isValidCEP,
@@ -30,6 +31,9 @@ type FormData = {
   documento: string;
   dataNascimento: string;
   annualRevenueReais: string;
+  setor: string;
+  resumoNegocio: string;
+  publishCnpj: boolean;
   telefone: string;
   cep: string;
   logradouro: string;
@@ -78,6 +82,9 @@ function toFormData(profile: LoadedProfile, tipoPessoa: TipoPessoa): FormData {
       nomeFantasia: "",
       dataNascimento: profile.birthDate,
       annualRevenueReais: "",
+      setor: "",
+      resumoNegocio: "",
+      publishCnpj: false,
     };
   }
 
@@ -88,6 +95,9 @@ function toFormData(profile: LoadedProfile, tipoPessoa: TipoPessoa): FormData {
     nomeFantasia: profile.tradeName,
     dataNascimento: "",
     annualRevenueReais: profile.annualRevenueReais,
+    setor: profile.sector,
+    resumoNegocio: profile.businessSummary,
+    publishCnpj: profile.publishCnpj,
   };
 }
 
@@ -185,6 +195,9 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               tradeName: draft.nomeFantasia,
               taxId: draft.documento,
               annualRevenueReais: draft.annualRevenueReais,
+              sector: draft.setor,
+              businessSummary: draft.resumoNegocio,
+              publishCnpj: draft.publishCnpj,
               phone: draft.telefone,
               cep: draft.cep,
               logradouro: draft.logradouro,
@@ -219,6 +232,12 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
         <AvatarUpload />
       </div>
 
+      {profile.role === "issuer" && (
+        <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
+          <LogoUpload initialLogoUrl={profile.logoUrl} />
+        </div>
+      )}
+
       {mode === "view" ? (
         <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
           {justSaved && (
@@ -251,6 +270,23 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
             <ReadField label={t.campos.email} value={profile.email} />
             <ReadField label={t.campos.telefone} value={displayTelefone(draft.telefone)} mono />
           </div>
+
+          {tipoPessoa === "pj" && (
+            <div className="mt-6 border-t border-panel-border pt-5">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
+                {t.secaoPublica}
+              </h3>
+              <p className="mt-1 text-[11px] text-on-military-muted">{t.secaoPublicaNota}</p>
+              <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                <ReadField label={t.campos.setor} value={display(draft.setor)} />
+                <ReadField label={t.campos.resumoNegocio} value={display(draft.resumoNegocio)} />
+                <ReadField
+                  label={t.publishCnpj.statusLabel}
+                  value={draft.publishCnpj ? t.publishCnpj.exibindo : t.publishCnpj.naoExibindo}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 border-t border-panel-border pt-5">
             <h3 className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
@@ -365,6 +401,43 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               />
             </div>
           </fieldset>
+
+          {tipoPessoa === "pj" && (
+            <fieldset className="flex flex-col gap-4">
+              <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
+                {t.secaoPublica}
+              </legend>
+              <p className="-mt-2 text-[11px] text-on-military-muted">{t.secaoPublicaNota}</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <TextField
+                  id="pd-setor"
+                  label={t.campos.setor}
+                  value={draft.setor}
+                  onChange={handleFieldChange("setor")}
+                />
+              </div>
+              <TextareaField
+                id="pd-resumo-negocio"
+                label={t.campos.resumoNegocio}
+                value={draft.resumoNegocio}
+                onChange={(event) => setDraft((current) => ({ ...current, resumoNegocio: event.target.value }))}
+                rows={4}
+              />
+              <label htmlFor="pd-publish-cnpj" className="flex items-start gap-2.5 text-sm text-on-military">
+                <input
+                  id="pd-publish-cnpj"
+                  type="checkbox"
+                  checked={draft.publishCnpj}
+                  onChange={(event) => setDraft((current) => ({ ...current, publishCnpj: event.target.checked }))}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-panel-border accent-salmon"
+                />
+                <span>
+                  {t.publishCnpj.label}
+                  <span className="mt-1 block text-xs text-on-military-muted">{t.publishCnpj.hint}</span>
+                </span>
+              </label>
+            </fieldset>
+          )}
 
           <fieldset className="flex flex-col gap-4">
             <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">

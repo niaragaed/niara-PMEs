@@ -15,9 +15,10 @@ type PerfilPageProps = {
   profile: LoadedProfile;
   offerings: OfferingSummary[];
   aviso?: "apenas-empresa" | "apenas-investidor";
+  abrirTesteInvestidor?: boolean;
 };
 
-export function PerfilPage({ profile, offerings, aviso }: PerfilPageProps) {
+export function PerfilPage({ profile, offerings, aviso, abrirTesteInvestidor }: PerfilPageProps) {
   return (
     <PerfilProvider>
       <main className="flex flex-1 flex-col bg-military">
@@ -63,7 +64,7 @@ export function PerfilPage({ profile, offerings, aviso }: PerfilPageProps) {
             <div className="flex min-w-0 flex-1 flex-col gap-10">
               <PersonalDataSection profile={profile} />
               {profile.role === "issuer" && <MyOffersSection offerings={offerings} />}
-              <InvestorProfileSection />
+              <InvestorProfileSection abrirAutomaticamente={abrirTesteInvestidor} />
               <WalletSection walletAddress={profile.walletAddress} />
             </div>
           </div>
