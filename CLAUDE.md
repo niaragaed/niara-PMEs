@@ -12,12 +12,25 @@ captação de investimento e dividir capital via tokenização (o "produto de
 receita" do grupo Niara; a exchange global — repositório irmão `niara-site`
 — é a "visão" de longo prazo).
 
-**Estágio atual: site institucional + protótipo de interface. Não há
-backend nem autenticação.** A única conexão real com blockchain é a
-carteira (MetaMask, rede Sepolia/testnet, somente leitura de endereço/rede/
-saldo) na seção Carteira de `/perfil` — ver "Tela `/perfil`" abaixo. Todo o
-resto (ofertas, boleta, dashboard de portfólio etc.) continua demonstração,
-sem nenhuma transação real.
+**Estágio atual: site institucional com backend real (Supabase) para o
+ciclo de captação, mais protótipo de interface para o resto.** Desde a
+fundação do backend (ver "Backend (Supabase)" abaixo), cadastro de conta
+(`/cadastro`), login (`/entrar`), dados de perfil, cadastro/publicação de
+oferta pelo emissor (`/empresa/ofertas`) e reserva/pagamento de aporte
+pelo investidor (`/investir`) **gravam de verdade** num Postgres, com as
+invariantes da Res. CVM 88 impostas no próprio banco (teto anual do
+investidor, hard cap da oferta, gate de KYC, fechamento all-or-nothing) —
+não é mais só UI. Ainda assim, nada disso é uma operação regulatória real:
+a Niara PMEs não é uma plataforma autorizada pela CVM, o pagamento
+(escrow) e a emissão de token são **mocks explícitos** (todo ref grava
+prefixado `MOCK-`), e o "KYC (demonstração)" é um botão que sempre aprova
+— ver "Backend (Supabase)" para o mapa completo do que é real vs.
+simulado. A carteira MetaMask (rede Sepolia/testnet) na seção Carteira de
+`/perfil` continua sendo a única conexão real com blockchain — ver "Tela
+`/perfil`" abaixo — e agora também pode ser **vinculada** (persistida) à
+conta no banco. O restante das telas de exploração (`/ativos`, boleta
+simulada de `/negociar`, indicadores fundamentalistas etc.) segue 100%
+demonstração/mock, sem nenhuma transação real.
 
 ---
 
@@ -51,8 +64,15 @@ versões anteriores.
 ## 🔴 Dados sensíveis (LGPD)
 
 - **Nunca** persistir CPF, documento, data de nascimento ou endereço em
-  `localStorage`. Esses dados vivem só em estado React, quando/se houver
-  formulário.
+  `localStorage`/`sessionStorage`/cookies (client-side) — vale para
+  qualquer estado de UI puramente local. Isso não significa que esses
+  dados nunca são persistidos: desde o backend Supabase (ver "Backend
+  (Supabase)" abaixo), CPF/CNPJ, data de nascimento, telefone e endereço
+  do fluxo real de cadastro/perfil **são** gravados de verdade num
+  Postgres, só que sempre via Server Action no servidor, nunca por um
+  `fetch` direto do navegador nem por storage do browser. São dados
+  fictícios de demonstração por ora, mas já tratados como PII real de
+  verdade quanto a onde e como trafegam.
 - Nunca commitar `.env`, chaves de API ou segredos. O repositório é
   **público**.
 
@@ -77,6 +97,10 @@ versões anteriores.
   `ConnectWallet`/`ConnectionPanel` do `niara-site` (repositório irmão,
   originalmente da rota `/pilot` dele), reaproveitada aqui. Ver "Tela
   `/perfil`" abaixo, seção "4. Carteira".
+- Backend real: `@supabase/supabase-js` v2 + `@supabase/ssr` v0.12
+  (Postgres + Auth + Storage) e `zod` v4 para validação de formato nos
+  Server Actions — as regras de negócio de verdade ficam travadas no
+  banco. Ver "Backend (Supabase)" abaixo.
 
 Removido: `three` / `@react-three/fiber` / `@react-three/drei` (não eram
 mais usados por nada no projeto) e, depois, o próprio astronauta 2D — ver
@@ -250,6 +274,261 @@ Comentários de código ficam em português (convenção do projeto).
 
 ---
 
+## Backend (Supabase)
+
+Fundação adicionada em 6 commits (`chore: fundação backend` até
+`feat(oferta): ...`) — Postgres + Auth + Storage via Supabase, seguindo
+ports & adapters: UI e Server Actions nunca decidem sozinhos uma regra de
+negócio da Res. CVM 88, só chamam o banco e traduzem o erro que ele
+levantar. Nenhuma dessas partes faz da Niara PMEs uma plataforma
+autorizada pela CVM — disclaimer explícito em
+`supabase/migrations/0001_core.sql:3-8`.
+
+### Clients e variáveis de ambiente
+
+Três clients em `src/lib/supabase/`, cada um com um escopo de acesso
+diferente:
+- `client.ts` — browser (`createBrowserClient`), chave anônima, respeita RLS.
+- `server.ts` — Server Components/Actions (`createServerClient`), chave
+  anônima + cookies da requisição, respeita RLS.
+- `admin.ts` — 🔴 usa `SUPABASE_SERVICE_ROLE_KEY`, **ignora RLS por
+  completo**. Protegido por `import "server-only"` no topo — importar num
+  client component quebra o build. É o client usado por quase todo Server
+  Action de negócio (as tabelas de domínio têm RLS default-deny, ver
+  abaixo, então o controle de acesso é feito no código da action via
+  `resolveAccount()`, não numa policy).
+
+`src/proxy.ts` — em Next.js 16 `middleware.ts` virou `proxy.ts`. Só
+revalida a sessão a cada navegação via `supabase.auth.getUser()` (não
+`getSession()`: `getUser()` revalida contra o servidor Supabase,
+`getSession()` só lê o cookie sem garantia nenhuma). Nenhuma regra de
+negócio mora aqui.
+
+Variáveis de ambiente (`.env.example`, nunca commitar valores reais):
+`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (públicas,
+RLS protege), `SUPABASE_SERVICE_ROLE_KEY` (secreta, bypassa RLS),
+`DATABASE_URL` / `DIRECT_URL` (Postgres via pooler), `NIARA_ENV=demo`
+(marca `is_demo=true` nas linhas gravadas), `NIARA_PAYMENT_ADAPTER` /
+`NIARA_KYC_ADAPTER` / `NIARA_CHAIN_ADAPTER` (hoje só existe `"mock"` — ver
+"Ports & adapters" abaixo). `NEXT_PUBLIC_SEPOLIA_RPC_URL` (opcional, da
+conexão wagmi — ver "Tela `/perfil`") é anterior a este backend e
+independente dele.
+
+### Ports & adapters — pagamento, KYC e emissão on-chain são mocks
+
+`src/lib/ports.ts` define interfaces puras (`PaymentGateway`,
+`KycProvider`, `ChainRegistry`); `src/lib/adapters.ts` escolhe a
+implementação pela env var correspondente, **caindo em mock por padrão**
+se a var estiver ausente ou tiver valor desconhecido — nunca cai
+silenciosamente numa implementação real por engano. Hoje só existe
+implementação mock (`src/lib/mocks.ts`), com disclaimer explícito: nada
+ali move dinheiro real, verifica identidade de verdade ou emite token
+on-chain de verdade. Todo ref gerado começa com `"MOCK-"` (`mockRef()`,
+ex. `MOCK-ESCROW-<uuid>`, `MOCK-KYC-<uuid>`, `MOCK-TX-<uuid>`) — **nunca
+apresentar um ref `MOCK-*` na UI como se fosse uma operação real.**
+`mockKycProvider.submit` sempre retorna `status: "approved"` (ver "Gate de
+KYC" abaixo).
+
+### Schema e invariantes da Res. CVM 88 (`supabase/migrations/`)
+
+Dinheiro é sempre `bigint` em centavos, nunca float (`0001_core.sql:10`).
+Concorrência é tratada com `SELECT ... FOR UPDATE` na linha pai (oferta ou
+investidor) antes de somar, nunca em JS.
+
+- **`0001_core.sql`** — tabelas `issuers`, `offerings`, `investors`,
+  `investments`, `payment_events`, com **RLS default-deny em todas** (sem
+  nenhuma policy — acesso é 100% via client `admin` no servidor). Regras
+  travadas por trigger, todas levantando `SQLSTATE 23514` (o código que os
+  `translate*DbError()` do app casam):
+  - `issuer_is_sep`: faturamento do emissor ≤ R$40M (teto SEP).
+  - `cap_le_15m`: hard cap da oferta ≤ R$15M.
+  - `additional_lot`: lote adicional ≤ 25% do cap base.
+  - `window_le_180d`: janela de captação ≤ 180 dias.
+  - `enforce_investor_annual_limit` — **teto anual do investidor** (padrão
+    R$20 mil/ano; `NULL` = investidor qualificado, sem teto). 🔴 Soma só o
+    que passou pela Niara — a regra real da Res. 88 é entre-plataformas
+    (soma em todas as plataformas CVM ao mesmo tempo, proposta SDM
+    05/2025 ainda não em vigor); é uma aproximação deliberada, não
+    compliance completo — não tratar como se fosse.
+  - `enforce_offering_hard_cap` — bloqueia reserva que estouraria o hard
+    cap da oferta.
+  - `enforce_investment_transition` — só permite transições legais de
+    status (`reserved→{paid,cancelled}`, `paid→{settled,refunded}`) e é o
+    **gate de KYC**: `reserved→paid` exige
+    `investors.kyc_status = 'approved'`.
+- **`0002_settlement.sql`** — `settle_offering()` (fecha a janela: se
+  arrecadado ≥ meta mínima → `funded` + cancela reservas não pagas; senão
+  → `failed` + estorna pagas) e `mark_offering_settled()` (chamada pelo
+  app **depois** de emitir os tokens mock, marca `settled`) —
+  **fechamento all-or-nothing** em duas etapas de estado puro no banco;
+  efeitos externos (emissão do token) ficam por conta do app entre uma
+  chamada e outra.
+- **`0003`/`0004`** — ligam `investors.user_id`/`issuers.user_id` a
+  `auth.users`, `unique` + nullable + `on delete set null` (apagar o login
+  não apaga o histórico financeiro, só desvincula).
+- **`0005_confirm_investment.sql`** — RPC `confirm_investment()`,
+  transição atômica `reserved→paid`, idempotente duas vezes (por status
+  **e** por `idempotency_key` em `payment_events`). Se o gate de KYC do
+  0001 disparar no meio, a função inteira dá rollback — inclusive o
+  `payment_events` já inserido na mesma transação.
+- **`0006`/`0007`** — telefone/endereço/`wallet_address` em `investors` e
+  `issuers` (nullable), depois `unique` em `wallet_address` por tabela. 🔴
+  Gap documentado: a unicidade é *por tabela* — a mesma wallet num
+  investidor e num emissor ao mesmo tempo não é bloqueada; aceito por ora.
+- **`0008`/`0009`/`0010`** — `share_price_cents` (nº de cotas nunca é
+  coluna, sempre derivado de `base_cap_cents / share_price_cents`),
+  `sector`/`business_summary` públicos, `category`, `publish_cnpj`
+  (opt-in — CNPJ some do banco na leitura pública quando `false`, não só
+  da UI) e `logo_path` (arquivo mora no Storage, só o path é coluna).
+
+### Autenticação (`src/lib/auth/resolveInvestor.ts`)
+
+`resolveAccount()` é a fonte única de verdade de "quem está logado e
+como": lê o usuário via `getUser()`, depois checa (client `admin`, porque
+ainda não existe policy de self-read) se existe uma linha em
+`investors.user_id` ou `issuers.user_id`. Retorna `{ userId,
+role: 'investor'|'issuer'|null, accountId }` — **uma conta é investidor OU
+emissor, nunca as duas** (a checagem é sequencial, quem casar primeiro
+ganha). `accountId` é o id da linha de domínio (`investors.id`/
+`issuers.id`) — nunca comparar entre roles; só `userId` (o id do login) é
+comparável entre elas. Todo Server Action de negócio chama
+`resolveAccount()` e nunca aceita `investor_id`/`issuer_id` vindo do
+cliente.
+
+`/entrar` ficou **só login** (`signInWithPassword`); criação de conta
+migrou inteira para `/cadastro` (ver seção própria abaixo). Ao concluir o
+cadastro, o app redireciona para `/conta?onboarding=1` — flag que abre o
+quiz de perfil de investidor automaticamente na primeira visita a
+`/perfil` (ver "Tela `/perfil`", seção "3. Perfil de investidor"). `/conta`
+hoje é só um shim de redirect para `/perfil` (preserva `?aviso=`/
+`?onboarding=`), mantido para não quebrar links antigos.
+
+### Gate de KYC — o que "KYC (demonstração)" quer dizer aqui
+
+Não existe verificação de identidade real em lugar nenhum. `kyc_status`
+(`pending|approved|rejected`, default `pending`) só muda quando o
+investidor clica "Fazer KYC (demonstração)" em `/investir`
+(`submitKyc()`, `src/app/investir/kyc-actions.ts`) — isso chama o adapter
+mock, que **sempre** retorna `approved`, e a action grava exatamente o
+status que o adapter devolveu (não hardcoda `'approved'`, para trocar de
+adapter no futuro sem mudar esse código). Esse botão só aparece depois de
+uma tentativa de confirmar pagamento falhar com `kycRequired: true`.
+
+🔴 **Isso é diferente do banner "Não verificado" fixo em `/perfil`**
+(`PerfilPage.tsx`) — esse banner é estático, não lê `investors.kyc_status`
+em nenhum momento. É possível um investidor ter `kyc_status='approved'`
+de verdade no banco (por já ter confirmado um pagamento em `/investir`) e
+`/perfil` continuar mostrando "Não verificado" — inconsistência
+conhecida, não tratada nesta rodada; quem for mexer num dos dois lados
+precisa decidir se liga o banner ao dado real ou documenta a diferença de
+propósito entre eles.
+
+### Ciclo de captação — investidor (`/investir`) e emissor (`/empresa/ofertas`)
+
+Investidor: lista ofertas ativas (`loadActiveOfferingsByCategory`/
+`loadPublicOffering`, em `src/lib/investments.ts` e
+`src/app/investir/actions.ts`) → `reserveInvestment()` grava
+`investments` com `status='reserved'` (o banco decide teto/hard
+cap/janela; a action só traduz o erro) → `confirmInvestment()` chama o
+adapter de pagamento mock e a RPC `confirm_investment` (`reserved→paid`,
+gate de KYC) → o dono da oferta chama `closeOffering()` quando a janela
+fecha, que roda `settle_offering`, emite token mock por aporte pago
+(idempotente via `payment_events`) e por fim `mark_offering_settled`. Ver
+"Tela `/investir`" e "Tela `/empresa/ofertas`" abaixo para a UI de cada
+lado.
+
+🔴 **REGRA DE OURO das leituras**: `loadActiveOfferingsByCategory` e
+`loadPublicOffering` usam sempre uma lista branca explícita de colunas,
+**nunca `select('*')`** — CNPJ, telefone, endereço completo, faturamento e
+wallet nunca saem do banco nessas leituras (não é só "escondido no JSX";
+o campo nem é buscado, então nunca aparece no HTML renderizado no
+servidor / view-source). Aplicar o mesmo padrão em qualquer leitura nova
+que exponha dado de oferta/emissor.
+
+Emissor: `createOffering()` grava sempre em `status='draft'`;
+`activateOffering()` é a única transição `draft→active` — como
+`offerings` não tem trigger de transição (diferente de `investments`), a
+proteção contra duplo clique/corrida é um `UPDATE ... WHERE id=? AND
+issuer_id=? AND status='draft'` atômico no próprio Server Action, não o
+banco. `hardCapCents` é sempre calculado como `base + floor(base *
+lote% / 100)` — a faixa validada de lote (0–25%) é escolhida
+matematicamente para nunca poder violar o CHECK `additional_lot` do
+banco.
+
+🔴 **Acoplamento frágil, atenção ao mexer em qualquer migration**: todo
+`translate*DbError()` (em `cadastro/actions.ts`, `investir/actions.ts`,
+`empresa/ofertas/actions.ts`, `perfil/actions.ts`) casa `error.code`
+(`23514`/`23505`) **mais uma substring do texto do erro** (nome da
+constraint ou mensagem de `RAISE EXCEPTION`) — não um código estável.
+Renomear uma constraint CHECK ou editar uma mensagem de `RAISE EXCEPTION`
+numa migration quebra silenciosamente esse casamento (cai no fallback
+genérico "Não foi possível...", sem erro de compilação). Ao tocar numa
+migration, dar `grep` no nome da constraint dentro de `src/app/**/
+actions.ts` antes.
+
+### Carteira vinculada ao banco (além da conexão MetaMask real)
+
+`0006`/`0007` adicionam `wallet_address` (nullable, único por tabela) a
+`investors`/`issuers`. `saveWallet()`/`unlinkWallet()`
+(`src/app/perfil/actions.ts`) persistem o endereço atualmente conectado
+via wagmi — a conexão MetaMask em si continua real e client-side,
+inalterada (ver "Tela `/perfil`", seção "4. Carteira"); o que é novo é só
+a camada de persistência. `WalletSection.tsx` compara o endereço conectado
+no wagmi contra o `walletAddress` vindo do banco e mostra
+Vincular/Trocar/Desvincular conforme o caso. Erro de unicidade (`23505`)
+é traduzido para "Esta carteira já está vinculada a outra conta."
+
+### Seed de demonstração (`scripts/seed-demo.ts`)
+
+`npm run seed:demo` cria uma conta emissor + uma oferta ativa + uma conta
+investidor prontas para logar (credenciais impressas no terminal ao
+final), pensado para não precisar digitar cadastro ao vivo num pitch.
+Roda fora do Next via `tsx` (novo devDependency, resolve os path aliases
+`@/...` do `tsconfig.json` sozinho) porque os Server Actions reais
+assumem uma requisição HTTP autenticada (`resolveAccount()` via cookies),
+que não existe rodando um script solto — o script cria os usuários de
+auth direto pelo admin API do Supabase e grava as linhas de domínio via
+um client admin local ao script.
+
+🔴 **Não reaproveita `createAdminClient()` de `src/lib/supabase/admin.ts`**
+— tentativa inicial que quebrou na prática: `import "server-only"` lança
+incondicionalmente sob Node puro (`throw` direto em
+`node_modules/server-only/index.js`), não só quando bundlado para
+browser como o comentário do próprio módulo sugere — o no-op só existe
+via campo `"browser"` do `package.json` do pacote, que só bundlers
+(webpack/turbopack) honram, não a resolução de módulo padrão do Node
+usada por `tsx`. O script duplica as mesmas duas linhas de construção do
+client em vez de importar o módulo guardado.
+
+Idempotente **por conta** (lookup por `user_id` antes de criar — rodar de
+novo não duplica nem troca credenciais), **não por oferta** (cada
+execução cria uma oferta ativa nova, mesmo que a anterior já tenha sido
+fechada num ensaio — não existe hoje um jeito de "resetar" uma oferta que
+já mudou de estado sem mexer no histórico de aportes). Investidor demo
+nasce `kyc_status='pending'` (não pré-aprovado) e sem teto anual
+(`annual_limit_cents=null`) de propósito — deixa o gate de KYC disponível
+para ser demonstrado ao vivo, sem risco de um valor redondo de
+demonstração esbarrar no teto de varejo de R$20 mil/ano no meio do pitch.
+Exige `NIARA_ENV=demo` (recusa rodar sem isso) e marca `is_demo: true` em
+toda linha criada, mesmo padrão do resto do app.
+
+### Upload de logo do emissor (`src/lib/storage/issuer-logo.ts`)
+
+Real (Supabase Storage, bucket público `issuer-logos`,
+`${accountId}/logo.<ext>`) — diferente do `AvatarUpload.tsx` da seção
+"Dados de cadastro" (que continua 100% local/simulado, nunca enviado — ver
+"Tela `/perfil`"). Validação de MIME/tamanho (2MB) roda no servidor, não
+só no cliente. 🔴 Trocar a extensão entre uploads (png→jpg) deixa o
+arquivo antigo órfão no bucket a menos que seja removido explicitamente —
+o código já trata isso, mas é um detalhe fácil de reintroduzir como bug
+(bucket é um domínio de falha separado da linha no banco). A URL pública
+usa `?v=<versão>` para cache-busting, lida do `updated_at` do próprio
+objeto no Storage (não existe `updated_at` em `issuers`) — sem isso,
+sobrescrever o mesmo path manteria a imagem antiga em cache no
+navegador/CDN.
+
+---
+
 ## Astronauta (removido)
 
 O astronauta (guia de scroll 2D que seguia o cursor e viajava pelas
@@ -405,31 +684,44 @@ foi corrigida (fundo do card mais escuro que a seção, não mais claro).
 
 ---
 
-## Tela `/perfil` (cadastro, empresas, perfil de investidor, carteira)
+## Tela `/perfil` (dados de cadastro, minhas ofertas, perfil de investidor, carteira)
 
 Substituiu o stub antigo ("Perfil — em construção"). Inspirada na página
-Profile do `niara-site` (repositório irmão) — mesma estrutura de
-sidebar + seções e mesma lógica de questionário de perfil de investidor
-(porém traduzida e com conteúdo próprio) — mas adaptada ao tema
-verde-sálvia cheio (`bg-military`, igual à tela `/ativos`, não o dashboard
-escuro do `niara-site`) e com duas adições específicas de PME: documento
-CPF **ou** CNPJ e cadastro de empresa com escolha de finalidade
-(investidora / a ser tokenizada). Ver `PerfilPage.tsx` (orquestrador) e os
-componentes em `src/components/perfil/`.
+Profile do `niara-site` (repositório irmão) — mesma estrutura de sidebar +
+seções e mesma lógica de questionário de perfil de investidor (porém
+traduzida e com conteúdo próprio) — adaptada ao tema verde-sálvia cheio
+(`bg-military`, igual à tela `/ativos`, não o dashboard escuro do
+`niara-site`). Ver `PerfilPage.tsx` (orquestrador) e os componentes em
+`src/components/perfil/`.
+
+🔴 **Diferente da versão original desta tela**: os dados de cadastro e a
+seção de ofertas hoje leem/gravam no banco de verdade (ver "Backend
+(Supabase)" acima) — não são mais um formulário 100% em memória. Só o
+resultado do questionário de perfil de investidor (seção 3) e o avatar
+(dentro da seção 1) continuam simulados/locais, ver cada um abaixo. O
+conceito antigo de "conta única com CPF **ou** CNPJ, mais empresas
+cadastradas à parte com finalidade investidora/tokenizada" também não
+existe mais: desde o backend real, uma **conta** já nasce como investidor
+(PF) OU emissor (PJ) na hora do `/cadastro` — nunca as duas — e é
+`profile.role` (vindo de `resolveAccount()`) que decide o que a tela
+mostra, não mais um toggle manual dentro do perfil.
 
 **Estrutura da página** (`PerfilPage.tsx`, `"use client"` por causa do
 estado do contexto de perfil de investidor):
 
 - Banner de demonstração fixo no topo (mesmo padrão do banner de `/ativos`)
 - Faixa de aviso de KYC (`bg-panel`): "Não verificado" + texto explicando
-  que a verificação de identidade será exigida quando o produto entrar no
-  ar e que nenhuma aprovação é simulada aqui
-- Badges de status (`ShieldAlert` "Não verificado" + `TrendingUp` "Perfil:
-  {categoria atual}")
+  que a verificação de identidade completa será exigida quando o produto
+  entrar no ar. 🔴 Este banner é **estático** — não lê `investors.kyc_status`
+  do banco; ver "Backend (Supabase)" → "Gate de KYC" para a aprovação
+  real (via `/investir`) que ele não reflete.
+- Badges de status (`ShieldAlert` "Não verificado" — mesmo banner estático
+  acima — + `TrendingUp` "Perfil: {categoria atual}")
 - Sidebar de navegação por âncora (`PerfilNav.tsx` — sticky no desktop,
   abas horizontais roláveis no mobile, mesmo padrão do `ProfileNav` do
-  `niara-site`) + quatro seções empilhadas, nesta ordem: **Dados de
-  cadastro** → **Empresas** → **Perfil de investidor** → **Carteira**.
+  `niara-site`) + seções empilhadas, nesta ordem: **Dados de cadastro** →
+  **Minhas ofertas** (só para `role==='issuer'`) → **Perfil de
+  investidor** → **Carteira**.
 
 **Tokens de cor**: a tela reaproveita os tokens já criados para `/ativos`
 (`panel`/`panel-border` para cards, `on-military`/`on-military-muted`
@@ -443,36 +735,43 @@ anel de foco `ring-salmon`; erro de validação usa borda e texto
 
 ### 1. Dados de cadastro (`PersonalDataSection.tsx`)
 
-Alternância Pessoa física/jurídica (mesmo padrão visual das abas de
-`/ativos`) controla o campo de documento (`maskCPF`/`maskCNPJ`, ver
-`src/lib/masks.ts`) e os campos exclusivos de cada tipo (Nome completo +
-Data de nascimento para PF; Razão social + Nome fantasia para PJ).
-`AvatarUpload.tsx` é a mesma lógica do `niara-site` (object URL local via
-`URL.createObjectURL`, revogado no cleanup do `useEffect` e ao trocar de
-imagem) — **a imagem nunca é enviada**, só existe como blob no navegador.
+O tipo de pessoa (`TipoPessoa`, `"pf"`/`"pj"`) não é mais um toggle
+manual — vem fixo de `profile.role` (investor→pf, issuer→pj) e decide os
+campos exclusivos (Nome completo + Data de nascimento para PF; Razão
+social + Nome fantasia + Faturamento anual + Setor + Resumo do negócio +
+opt-in "Publicar CNPJ" para PJ) e a máscara de documento
+(`maskDocumento`/`isValidDocumento`, `src/lib/masks.ts`). Campos
+compartilhados (documento, telefone com prefixo fixo "+55" só na exibição,
+endereço via CEP) completam o formulário. `updateProfile()`
+(`src/app/perfil/actions.ts`) grava tudo isso de verdade no Postgres — ver
+"Backend (Supabase)" acima. Para emissores, `LogoUpload.tsx` fica
+embutido nesta seção e faz upload real para o Supabase Storage (ver
+"Upload de logo do emissor" no Backend acima) — **diferente** de
+`AvatarUpload.tsx` (foto de perfil, PF **e** PJ), que segue 100%
+local/simulado: object URL via `URL.createObjectURL`, revogado no cleanup
+do `useEffect` e ao trocar de imagem, **nunca enviado**.
 
-🔴 **LGPD**: CPF/CNPJ, data de nascimento, endereço, telefone e a foto de
-avatar vivem **só em estado React** (`useState`), nunca em
-`localStorage`/`sessionStorage`/cookies — mesma regra que os demais dados
-de perfil abaixo. "Salvar (simulação)" só move o rascunho (`draft`) para o
-estado "salvo" (`saved`) da própria sessão do componente; nada sai do
-navegador.
+🔴 **LGPD**: nesta fase os dados gravados (nome/CPF-CNPJ/data de
+nascimento/telefone/endereço/setor/resumo do negócio) são fictícios de
+demonstração, mas já são **PII persistida de verdade** num Postgres — não
+mais só estado React efêmero como antes deste backend. Continua valendo a
+regra de nunca persistir nada disso em `localStorage`/`sessionStorage`
+(client-side) — a persistência acontece só no servidor, via Server
+Action, nunca no navegador. Se algum dia os dados deixarem de ser
+fictícios, a responsabilidade de LGPD passa a ser sobre o banco Supabase,
+não mais uma garantia "nada sai do navegador".
 
-### 2. Empresas (`CompaniesSection.tsx`)
+### 2. Minhas ofertas (`MyOffersSection.tsx`, só para `role==='issuer'`)
 
-Botão "Cadastrar empresa" abre um formulário cuja primeira escolha é a
-**finalidade**: empresa investidora ou empresa a ser tokenizada
-(`radio`, não `select`, para deixar as duas opções visíveis lado a lado
-com a descrição de cada uma). Setor/categoria reaproveita o tipo
-`TokenCategory` e os rótulos de `ptBr.ativos.categorias` já usados em
-`/ativos` (mesmas 5 classes: PMEs, Agro, Imobiliário, Auto, Títulos de
-dívida) — evita duplicar taxonomia. Empresas cadastradas entram em
-"Minhas empresas" (estado em memória, `crypto.randomUUID()` como id),
-com badge de finalidade e ações Editar/Remover (simulação). Ao escolher
-"a ser tokenizada", aparece a nota de que a estruturação da oferta é um
-fluxo à parte e o botão "Estruturar oferta" fica desabilitado/rotulado
-"(Em breve)" — mesmo padrão de botão do CTA do Hero e do catálogo de
-`/ativos`. LGPD: CNPJ e demais dados da empresa também só em memória.
+Substituiu a antiga seção "Empresas"/"Minhas empresas" (cadastro de
+empresa com escolha de finalidade dentro do perfil não existe mais — ver
+nota 🔴 no topo desta tela). Painel **só de leitura**: lista as ofertas
+reais do emissor logado (`loadMyOfferingsSummary()`, filtrado por
+`accountId` no servidor — nunca `select('*')`) com valor do cap, status
+(rótulos em `ptBr.empresaOfertas.status`) e meta mínima; botão "Gerenciar
+ofertas" linka para `/empresa/ofertas`, onde criação/ativação/fechamento
+acontecem de fato (ver seção própria abaixo). Estado vazio quando o
+emissor ainda não tem nenhuma oferta.
 
 ### 3. Perfil de investidor (`InvestorProfileSection.tsx` + `InvestorProfileQuiz.tsx` + `InvestorProfileResultCard.tsx`)
 
@@ -492,7 +791,18 @@ recalcula a categoria (`categorizeScore`, mesma lógica de tercis do
 escore + data) fica só no `PerfilContext` (React, em memória) — **nunca**
 em `localStorage`, diferente do `niara-site` (que persiste lá); decisão
 deliberada para manter a mesma garantia de "nada persiste além da sessão"
-que o resto da tela de perfil já promete.
+que o resto da tela de perfil já promete — **esta é a única parte da
+tela de perfil que continua assim** mesmo depois do backend real (ver nota
+🔴 no topo desta tela): as outras seções passaram a persistir, esta não,
+de propósito.
+
+A seção recebe `abrirAutomaticamente` (de `PerfilPage.tsx`, vindo de
+`abrirTesteInvestidor`) — `true` só na primeira visita a `/perfil` logo
+após criar conta em `/cadastro` (via `?onboarding=1`, ver "Backend
+(Supabase)" → "Autenticação"). Nesse caso o quiz abre direto, pulando o
+card de resultado padrão, e a URL é limpa via
+`window.history.replaceState` logo em seguida — sem isso, um F5 na mesma
+URL reabriria o quiz do zero, já que a prop é recalculada a cada mount.
 
 A escala Conservador–Moderado–Arrojado é uma barra de gradiente
 (`aria-hidden`, decorativa) com um indicador na posição do escore — a
@@ -505,11 +815,17 @@ recomendação...") vêm de `ptBr.perfil.investidor.categoryDetails`.
 
 ### 4. Carteira (`WalletSection.tsx`)
 
-🔴 **Conexão real** (única parte não-simulada do site) — lê endereço, rede
-e saldo de teste de uma carteira MetaMask de verdade via EIP-1193
-(`window.ethereum`); nenhuma transação é enviada, nenhuma chave privada é
-tocada pelo app (fica inteiramente a cargo do MetaMask) e nada é enviado a
-servidor (não há backend — tudo roda client-side). Reaproveita a mesma
+🔴 **Conexão real** — lê endereço, rede e saldo de teste de uma carteira
+MetaMask de verdade via EIP-1193 (`window.ethereum`); nenhuma transação é
+enviada e nenhuma chave privada é tocada pelo app (fica inteiramente a
+cargo do MetaMask). A conexão em si é sempre client-side, direto entre o
+navegador e o MetaMask — isso não mudou. O que mudou com o backend real
+(ver "Backend (Supabase)" → "Carteira vinculada ao banco" acima): o
+endereço conectado agora pode ser **salvo** (persistido em
+`investors.wallet_address`/`issuers.wallet_address`) via
+`saveWallet()`/`unlinkWallet()`, que são Server Actions de verdade — a
+frase antiga "nada é enviado a servidor" só vale para a conexão MetaMask
+propriamente dita, não mais para o botão de vincular. Reaproveita a mesma
 stack e estrutura do `ConnectWallet`/`ConnectionPanel` do `niara-site`
 (repositório irmão, `src/components/web3/` lá, originalmente construídos
 para a rota de piloto `/pilot` dele) — mesmos hooks (`useConnection`,
@@ -878,42 +1194,106 @@ tema verde-sálvia cheio (`bg-military`, mesmo padrão de `/ativos`,
 mesmo tema visual das demais telas internas mesmo sem reaproveitar
 componente nenhum de web3 aqui).
 
-🔴 **Sem login por carteira nesta tela** — esta tela **não** oferece
-conexão MetaMask; o formulário mostra direto campo Email (`disabled`,
-prop opcional em `TextField`, ver `src/components/perfil/FormField.tsx`
-— retro-compatível, default `undefined`) + botão "Continuar" e botão
-"Continuar com Google" (ícone inline próprio, `GoogleIcon` dentro de
-`EntrarPage.tsx` — lucide-react não tem logos de marca), ambos
-desabilitados e rotulados "(Em breve)", mesmo padrão visual do CTA do
-Hero. Não dependem de backend/provedor de auth que ainda não existe —
-não fingem enviar nem criar conta. Uma versão anterior desta tela tinha
-um botão "Entrar com MetaMask" (reaproveitando `<ConnectWallet />`) acima
-de um divisor "ou"; ambos foram removidos por decisão de produto — a
-única conexão de carteira real do site continua sendo a seção Carteira
-de `/perfil` (ver "Tela `/perfil`", seção "4. Carteira"), **intacta e
-sem relação com esta tela**. `ConnectWallet` manteve os props opcionais
-`connectLabel`/`connectButtonClassName` (hoje sem nenhum caller — só
-`/perfil` usa o componente, sem passá-los) para não mexer no componente
-compartilhado por causa de uma tela que parou de usá-lo.
+🔴 **Desde o backend Supabase, esta tela ficou só login de verdade —
+deixou de ter os campos decorativos/desabilitados que tinha antes.**
+`handleEntrar()` chama `supabase.auth.signInWithPassword({ email,
+password: senha })` de verdade; o único erro mapeado de
+`mapAuthError()` é `invalid_credentials` (criação de conta não acontece
+mais aqui, só em `/cadastro` — ver seção própria acima). Ao logar com
+sucesso, `router.push("/perfil")` (que por sua vez redireciona sozinho
+para `/cadastro` se a conta ainda não tiver dados de investidor/emissor,
+cobrindo quem criou login mas não terminou o cadastro). Abaixo do botão
+"Entrar", um link "Criar conta" leva para `/cadastro`, depois um divisor
+"ou" e só então o botão "Continuar com Google" (`GoogleIcon` inline —
+lucide-react não tem logos de marca) continua **desabilitado e rotulado
+"(Em breve)"**, mesmo padrão visual do CTA do Hero — este é o único
+elemento decorativo que sobrou nesta tela. Esta tela **não** oferece
+conexão MetaMask; a única conexão de carteira real do site continua
+sendo a seção Carteira de `/perfil` (ver "Tela `/perfil`", seção "4.
+Carteira"), **intacta e sem relação com esta tela**.
 - Nota de termos (`ptBr.entrar.termosNota`) menciona Termos de Uso e
   Política de Privacidade como "documentos em breve" — texto puro,
   **sem** links `href="#"` mortos, já que essas páginas ainda não
   existem.
 
-**Honestidade e LGPD**: o campo de email é decorativo (`disabled`, não
-envia nem persiste nada); o botão Google idem. Quando `intent=captacao`,
-o subtítulo (`ptBr.entrar.subtituloCaptacao`) já deixa explícito que a
-estruturação da oferta em si continua demonstração e depende das
-autorizações da CVM — sem mencionar carteira, já que esta tela não a
-oferece mais.
+**Honestidade e LGPD**: o formulário de email/senha grava de verdade
+(via Supabase Auth, ver "Backend (Supabase)" acima) — só o botão Google
+segue decorativo (`disabled`, não envia nem persiste nada). Quando
+`intent=captacao`, o subtítulo (`ptBr.entrar.subtituloCaptacao`) já
+deixa explícito que a estruturação da oferta em si continua demonstração
+e depende das autorizações da CVM — sem mencionar carteira, já que esta
+tela não a oferece.
 
 **i18n**: `ptBr.entrar` em `src/lib/i18n/pt-br.ts`.
 
-Verificado com dev server + Playwright (desktop 1280px): link do header
-e da hero navegando para `/entrar` (com e sem `intent=captacao`), split
-funcionando, sem botão de carteira nem divisor "ou", campos email/Google
-desabilitados, X e Esc voltando para a home, clique na capa do vídeo
-abrindo `youtu.be/m7lSSzq6xg4` em nova aba — sem erros de console.
+---
+
+## Tela `/cadastro` (criação de conta)
+
+Fluxo de 3 passos em `CadastroPage.tsx` (566 linhas): **conta** (email +
+senha, `supabase.auth.signUp`) → **tipo** (investidor "pf" vs. empresa
+"pj", escolha que fixa o `role` da conta para sempre — ver "Backend
+(Supabase)" → "Autenticação") → **dados** (formulário completo por tipo,
+submete para `createAccount()`). Erros de `signUp` tratados:
+`user_already_exists`, `weak_password`; erros de banco (`23514`
+`issuer_is_sep`, `23505` de `user_id` duplicado) traduzidos por
+`translateDbError()` — `23505` aqui não é tratado como erro, é sinal de
+"já tem conta", e a UI redireciona em vez de mostrar mensagem de falha.
+`createAccount()` sempre lê `user.id` do lado do servidor, nunca confia
+num id vindo do cliente. Ao concluir, redireciona para
+`/conta?onboarding=1`, que abre automaticamente o quiz de perfil de
+investidor na primeira visita a `/perfil` (ver "Tela `/perfil`", seção
+"3. Perfil de investidor").
+
+---
+
+## Telas `/investir` (listagem + reserva) e `/investir/[offeringId]` (detalhe real)
+
+Fluxo real de investimento — diferente de `/ativos` (que continua sendo o
+dashboard de portfólio 100% mock, inalterado, ver "Tela `/ativos`" acima)
+e diferente da boleta simulada de `/negociar` (que segue sem tocar em
+banco nenhum, ver seção própria abaixo). Acesso restrito a
+`role==='investor'` (redireciona para `/conta?aviso=apenas-investidor`),
+com uma exceção: o emissor dono de uma oferta específica pode ver o
+próprio `/investir/[offeringId]` (sem botão de reservar), via
+`isOfferingOwner()`.
+
+`InvestirPage.tsx`: cards de oferta ativa (linkam para o detalhe) +
+"Minhas reservas" (aportes `reserved`/`paid` do investidor logado), com
+botão "Confirmar pagamento" por reserva e, só quando a última tentativa
+voltou com `kycRequired: true`, um botão inline "Fazer KYC
+(demonstração)" — ver "Backend (Supabase)" → "Gate de KYC" acima.
+
+`OfferingDetailPage.tsx`: dados públicos do emissor, termos (meta/hard
+cap/arrecadado/valor por cota/cotas/janela), lista de documentos
+placeholder (mesmos 7 itens "Em breve" de `/negociar`) e riscos estilo
+CVM. `ReserveTicket` é o painel de reserva (sticky no desktop, bottom
+sheet no mobile, mesmo padrão do `OrderTicket` da boleta simulada de
+`/negociar`) — chama `reserveInvestment()` de verdade, não uma simulação.
+
+`RealOfferCard.tsx` (usado dentro de `CategoryPage.tsx`, nas 5 categorias
+de `/negociar`) mostra ofertas reais do banco lado a lado com o catálogo
+fictício das mesmas categorias — badge sólido + anel salmão, visualmente
+distinto do `ShowcaseCard` fictício, justamente para que uma oferta real
+e uma fictícia nunca se confundam na mesma tela (aplicação direta da
+regra "nada simulado pode parecer real" a essa superfície de dado real
+convivendo com a demonstração antiga).
+
+---
+
+## Tela `/empresa/ofertas` (criação e gestão de oferta pelo emissor)
+
+Só acessível a `role==='issuer'`. `OfertasPage.tsx`: formulário de criação
+(`createOffering()` — tamanho da captação, meta mínima, lote adicional
+0–25%, janela 1–180 dias, valor por cota, categoria) + lista "Minhas
+ofertas" com ação "Ativar" (`activateOffering()`, `draft→active`, única
+transição possível) e, depois de aberta, "Fechar captação"
+(`closeOffering()` — roda o fechamento all-or-nothing e emite os tokens
+mock). Ver "Backend (Supabase)" → "Ciclo de captação" acima para a
+mecânica completa (cálculo do hard cap, proteção contra corrida na
+ativação, tradução de erro por constraint). Esta é a mesma lista que
+`MyOffersSection.tsx` resume, só de leitura, dentro de `/perfil` (ver
+"Tela `/perfil`", seção "2. Minhas ofertas").
 
 ---
 
@@ -921,30 +1301,61 @@ abrindo `youtu.be/m7lSSzq6xg4` em nova aba — sem erros de console.
 
 ```
 src/
+  proxy.ts             Next 16 (era middleware.ts) — só revalida sessão
+                       Supabase a cada navegação, ver "Backend (Supabase)"
   app/                 rotas (App Router)
     layout.tsx         layout raiz, async (Next 16) — monta <Providers>
                        (wagmi/react-query) com initialState via cookie
     providers.tsx      Providers (WagmiProvider + QueryClientProvider) —
                        ver "Tela /perfil", seção "4. Carteira"
-    ativos/page.tsx    dashboard de portfólio (ver "Tela /ativos" abaixo)
-    perfil/page.tsx    tela de perfil (ver "Tela /perfil" abaixo)
+    cadastro/          criação de conta (3 passos), ver "Tela /cadastro"
+                       acima — actions.ts: createAccount()
+    entrar/page.tsx    login (overlay tela cheia, ver "Tela /entrar"
+                       abaixo); searchParams assíncrono (Next 16) para o
+                       parâmetro ?intent=captacao
+    conta/page.tsx     shim de redirect para /perfil (preserva ?aviso=/
+                       ?onboarding=), ver "Backend (Supabase)" →
+                       "Autenticação"
+    perfil/            tela de perfil (ver "Tela /perfil" abaixo) —
+                       actions.ts: loadProfile/updateProfile/
+                       loadMyOfferingsSummary/saveWallet/unlinkWallet/
+                       uploadIssuerLogo/removeIssuerLogo
+    investir/          listagem + reserva real (ver "Telas /investir"
+                       acima) — actions.ts: reserveInvestment/
+                       confirmInvestment/loadPublicOffering;
+                       kyc-actions.ts: submitKyc; [offeringId]/ é rota
+                       dinâmica com not-found.tsx próprio
+    empresa/ofertas/   criação/ativação/fechamento de oferta pelo emissor
+                       (ver "Tela /empresa/ofertas" acima) — actions.ts:
+                       createOffering/activateOffering/closeOffering
+    ativos/page.tsx    dashboard de portfólio mock (ver "Tela /ativos"
+                       abaixo) — não confundir com /investir (real)
     sobre/documentos/  documentação + FAQ (ver "Telas /sobre/documentos e
                        /sobre/contato" abaixo)
     sobre/contato/     formulário de contato via mailto (idem acima)
-    negociar/          hub + 5 categorias + detalhe de oferta (ver "Telas
-                       /negociar" abaixo); oferta/[slug]/ é rota dinâmica
-                       com not-found.tsx próprio
-    entrar/page.tsx    login/registro (overlay tela cheia, ver "Tela
-                       /entrar" abaixo); searchParams assíncrono (Next 16)
-                       para o parâmetro ?intent=captacao
+    negociar/          hub + 5 categorias + detalhe de oferta fictícia
+                       (ver "Telas /negociar" abaixo); oferta/[slug]/ é
+                       rota dinâmica com not-found.tsx próprio
   components/
+    cadastro/          CadastroPage (fluxo de 3 passos), ver "Tela
+                       /cadastro" acima
+    investir/          InvestirPage (listagem + minhas reservas),
+                       OfferingDetailPage (+ ReserveTicket), ver "Telas
+                       /investir" acima
+    empresa/           OfertasPage (criar/ativar/fechar oferta), ver
+                       "Tela /empresa/ofertas" acima
+    conta/             SignOutButton
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
                        (recharts), PositionsTable, AssetCatalog
     perfil/            PerfilPage (sidebar + badges + banners),
-                       PerfilContext (perfil de investidor, em memória),
-                       PersonalDataSection + AvatarUpload,
-                       CompaniesSection, InvestorProfileSection +
+                       PerfilContext (perfil de investidor, em memória —
+                       único pedaço desta tela que continua só em
+                       memória, ver "Tela /perfil"),
+                       PersonalDataSection (dados reais no banco) +
+                       AvatarUpload (simulado) + LogoUpload (upload real
+                       de logo do emissor), MyOffersSection (resumo
+                       real, só leitura), InvestorProfileSection +
                        InvestorProfileQuiz + InvestorProfileResultCard,
                        WalletSection (usa components/web3, ver abaixo),
                        FormField (TextField/SelectField/TextareaField/
@@ -957,13 +1368,14 @@ src/
                        estágio atual), DocumentacaoNav, FaqAccordion
     contato/           ContatoPage (formulário + painel de contato
                        direto), ContatoForm (envio via mailto)
-    negociar/          HubPage, CategoryPage (template das 5 categorias),
-                       CategoryChip (CategoryChip + CategoryBadge),
-                       CategoryCard, ShowcaseCard, OfertaDetailPage,
-                       FinanceiroChart (recharts), FundamentalIndicators
-                       + IndicatorHelp (indicadores fundamentalistas +
-                       popover "?"), OrderTicket (boleta simulada) —
-                       ver "Telas /negociar" abaixo
+    negociar/          HubPage, CategoryPage (template das 5 categorias,
+                       inclui RealOfferCard ao lado do catálogo
+                       fictício), CategoryChip (CategoryChip +
+                       CategoryBadge), CategoryCard, ShowcaseCard,
+                       OfertaDetailPage, FinanceiroChart (recharts),
+                       FundamentalIndicators + IndicatorHelp (indicadores
+                       fundamentalistas + popover "?"), OrderTicket
+                       (boleta simulada) — ver "Telas /negociar" abaixo
     entrar/            EntrarPage (overlay tela cheia, split + form),
                        VideoCover (capa do vídeo do YouTube) — ver
                        "Tela /entrar" acima
@@ -974,6 +1386,25 @@ src/
     sections/          narrativa por scroll (home), inclui pin de "Como funciona"
     ui/                compartilhados (Logo, botões etc.)
   lib/
+    supabase/          client.ts (browser) / server.ts (Server
+                       Components/Actions) / admin.ts (service role,
+                       bypassa RLS, server-only) — ver "Backend
+                       (Supabase)" acima
+    auth/resolveInvestor.ts  resolveAccount() — fonte única de
+                       userId/role/accountId, ver "Backend (Supabase)"
+                       → "Autenticação"
+    ports.ts           interfaces PaymentGateway/KycProvider/ChainRegistry
+    adapters.ts        escolhe implementação por env var, default mock
+    mocks.ts           implementação mock de pagamento/KYC/emissão —
+                       todo ref prefixado "MOCK-", ver "Backend
+                       (Supabase)" → "Ports & adapters"
+    investments.ts     leituras de oferta/investimento com lista branca
+                       explícita (nunca select('*')), ver "Backend
+                       (Supabase)" → "Ciclo de captação"
+    money.ts           MONEY_FORMAT (regex) / reaisToCents — parsing do
+                       campo de valor em reais dos formulários reais
+    storage/issuer-logo.ts  upload/URL versionada da logo do emissor no
+                       Supabase Storage, ver "Backend (Supabase)"
     ativos/derive.ts   funções puras de derivação (totais, alocação por
                        classe/ativo/setor) a partir do mock de /ativos
     categories.ts      CATEGORY_META: ícone + tokens de cor + href por
@@ -998,6 +1429,14 @@ src/
 public/
   niara-pme-logo.png   logo oficial (globo + anel + "NIARA", PNG com fundo
                        transparente, preto — só funciona sobre fundo claro)
+scripts/
+  seed-demo.ts         `npm run seed:demo` — conta emissor + oferta ativa +
+                       conta investidor prontas para pitch, ver "Backend
+                       (Supabase)" → "Seed de demonstração"
+supabase/
+  migrations/          0001–0010, schema + invariantes da Res. CVM 88 em
+                       triggers/CHECKs, ver "Backend (Supabase)" →
+                       "Schema e invariantes"
 ```
 
 ---
@@ -1087,15 +1526,41 @@ creditar.
   Peer-to-Peer) e "Quando posso usar a Tokenização?" (Antecipação do
   Caixa) — textos aprovados para exibição, mas ainda não validados
   juridicamente. Não alterar nem expandir esses textos sem instrução.
-- Envio real de formulário de contato (hoje via `mailto`, sem backend),
-  autenticação, backend — fora de escopo por ora
+- Envio real de formulário de contato continua fora de escopo (hoje via
+  `mailto`, sem backend, ver "Telas `/sobre/documentos` e `/sobre/contato`"
+  acima) — diferente de autenticação/backend, que **já existem** desde o
+  backend Supabase (ver "Backend (Supabase)" acima), mas só para o ciclo
+  cadastro → perfil → oferta → investimento. Não estender o backend real
+  para `/ativos` ou a boleta simulada de `/negociar` sem alinhar antes —
+  continuam demonstração 100% mock por decisão deliberada, não por
+  limitação técnica.
 - Conexão de carteira (`/perfil`, ver "4. Carteira" acima) é real, mas só
   leitura (endereço/rede/saldo nativo em Sepolia) — sem assinatura de
   transação, sem leitura de token ERC-20 (a Niara PMEs não tem contrato
   próprio implantado, diferente do `niara-site`, que lê mUSDT/outros
   tokens de teste reais). `NEXT_PUBLIC_SEPOLIA_RPC_URL` é opcional (cai no
   RPC público padrão do `wagmi/chains` se ausente) — não commitar em
-  `.env*` se for definida localmente.
+  `.env*` se for definida localmente. A **vinculação** desse endereço à
+  conta no banco (`wallet_address`) é real desde o backend Supabase, mas é
+  uma camada de persistência separada da conexão MetaMask em si — ver
+  "Backend (Supabase)" → "Carteira vinculada ao banco".
+- RLS das tabelas de domínio (`issuers`, `offerings`, `investors`,
+  `investments`, `payment_events`) é **default-deny sem nenhuma policy**
+  (ver "Backend (Supabase)" → "Schema e invariantes") — todo acesso passa
+  pelo client `admin` no servidor, controlado só pelo código do Server
+  Action via `resolveAccount()`. Não existe ainda policy de self-read para
+  o próprio usuário ler seus dados diretamente do client browser; se um
+  dia isso for adicionado, revisar com cuidado para não abrir leitura de
+  campo sensível (CNPJ, telefone, wallet) além do que as listas brancas
+  já expõem hoje.
+- Banner "Não verificado" de `/perfil` e o `kyc_status` real gravado no
+  banco (aprovado via `/investir`) não estão ligados um ao outro — ver
+  "Backend (Supabase)" → "Gate de KYC" para o porquê e para não "corrigir"
+  um lado sem entender o outro.
+- `npm run seed:demo` (`scripts/seed-demo.ts`, ver "Backend (Supabase)" →
+  "Seed de demonstração") cobre conta emissor + oferta ativa + conta
+  investidor prontas para um pitch — mas ainda é preciso rodar na mão
+  antes de cada demonstração (não é seed automático de CI/deploy).
 - Nenhuma rota do site continua como `StubPage` — `/ativos`, `/perfil`,
   as duas rotas de `/sobre/*` e as 6 rotas de `/negociar/*` (hub + 5
   categorias + detalhe da oferta) já têm conteúdo real de demonstração
