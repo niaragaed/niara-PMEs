@@ -6,6 +6,7 @@ import { AssetCatalog } from "./AssetCatalog";
 import { PortfolioEvolutionChart } from "./PortfolioEvolutionChart";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { PositionsTable } from "./PositionsTable";
+import { RealPositionCard } from "./RealPositionCard";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type Tab = "carteira" | "disponiveis";
@@ -64,6 +65,7 @@ export function AtivosPage() {
             aria-labelledby="ativos-tab-carteira"
             className="mt-8 flex flex-col gap-6"
           >
+            <RealPositionCard />
             <PortfolioSummary />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
               <div className="lg:col-span-7">

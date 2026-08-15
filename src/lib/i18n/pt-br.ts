@@ -242,11 +242,23 @@ export const ptBr = {
     subtitle: "Sua carteira de participações tokenizadas.",
     demoBanner: {
       label: "Demonstração",
-      text: "carteira e dados simulados. Não reflete posições ou valores reais.",
+      text: "carteira e dados simulados. Não reflete posições ou valores reais — exceto o cartão \"Posição real — Sepolia\" no topo de \"Minha carteira\", que lê direto de um contrato on-chain de verdade.",
     },
     tabs: {
       carteira: "Minha carteira",
       disponiveis: "Ativos disponíveis",
+    },
+    posicaoReal: {
+      selo: "Real — Sepolia",
+      link: "Investir / ver detalhes →",
+      explicacao:
+        "Sua posição real na oferta de demonstração em Sepolia — lida direto do contrato on-chain, diferente do restante desta tela (100% simulado).",
+      conectarPrompt: "Conecte sua carteira para ver sua posição real nesta oferta.",
+      redeErrada: "Troque para a rede Sepolia para ver sua posição real.",
+      semPosicao: "Você ainda não investiu na oferta real desta demonstração.",
+      aportado: "Você aportou",
+      cotas: "Suas cotas (ParticipacaoToken)",
+      estadoLabel: "Estado da oferta",
     },
     kpis: {
       patrimonioTotal: "Patrimônio total",
@@ -743,6 +755,13 @@ export const ptBr = {
       naoInformado: "Não informado",
       verOferta: "Ver oferta →",
     },
+    ofertaOnChain: {
+      selo: "Real — Sepolia",
+      titulo: "Oferta Niara PMEs Demo",
+      descricao:
+        "Transações reais, assinadas e confirmadas na testnet Sepolia — não é uma simulação de produto como o restante desta vitrine.",
+      verOferta: "Investir de verdade →",
+    },
     categorias: {
       pmes: {
         descricaoCurta: "Participação societária ou recebíveis de pequenas e médias empresas.",
@@ -806,6 +825,7 @@ export const ptBr = {
       suaOfertaTitle: "Sua oferta nesta categoria",
       suaOfertaNota:
         "Oferta cadastrada pela sua empresa. Visível só para você, dono da oferta — sem opção de reserva.",
+      ofertaOnChainTitle: "Oferta real em Sepolia",
       vitrineTitle: "Exemplos (demonstração)",
       notaRodape:
         "Exemplos fictícios com valores simulados. Não constitui oferta pública de valores mobiliários. Ofertas dependem das autorizações aplicáveis da CVM.",
@@ -1290,6 +1310,10 @@ export const ptBr = {
     subtitulo: "Ofertas reais de captação, abertas agora, de empresas cadastradas na plataforma.",
     avisoReal:
       "Estas são ofertas reais registradas no sistema — diferente das vitrines de demonstração em /negociar e /ativos. Reservar um aporte aqui grava no banco de verdade.",
+    linkOnChain: {
+      texto: "Procurando a demonstração com blockchain de verdade?",
+      link: "Investir na testnet Sepolia (transações reais)",
+    },
     vazio: "Nenhuma oferta aberta para reserva no momento.",
     card: {
       statusAtiva: "Ativa",
@@ -1374,6 +1398,107 @@ export const ptBr = {
         "Seu KYC (demonstração) ainda não foi aprovado — é preciso aprová-lo antes de confirmar o pagamento.",
       kycBotao: "Fazer KYC (demonstração)",
       kycEnviando: "Enviando…",
+    },
+  },
+  investirOnChain: {
+    meta: {
+      title: "Investir — Sepolia real",
+      description: "Fluxo de investimento com transações reais assinadas na testnet Sepolia.",
+    },
+    titulo: "Investimento real — testnet Sepolia",
+    subtitulo:
+      "Esta tela executa transações de verdade em Sepolia: MockBRL não tem valor nenhum, mas as assinaturas, os hashes e o estado do contrato são reais on-chain — diferente do restante da plataforma, que é demonstração/mock.",
+    avisoReal:
+      "Real na testnet Sepolia. Nenhum valor de mercado está envolvido (MockBRL é um mock de teste, sem lastro), mas cada transação abaixo é assinada e confirmada de verdade na rede — não é uma simulação de produto.",
+    requisitos: {
+      title: "Antes de começar",
+      itens: [
+        "MetaMask instalada, conectada e na rede Sepolia.",
+        "Sepolia ETH na carteira para pagar o gas de cada transação — obtenha num faucet público de Sepolia.",
+        "MockBRL de teste — pode ser obtido abaixo, direto pela carteira conectada.",
+      ],
+    },
+    contratoNaoConfigurado:
+      "Esta oferta ainda não foi configurada neste ambiente (endereços de contrato ausentes). É preciso rodar o script administrativo que cria a oferta em Sepolia e preencher o .env.local com os endereços gerados.",
+    semCarteira: "Conecte sua carteira para ver seu saldo, sua posição e investir nesta oferta.",
+    seletorOferta: {
+      label: "Oferta de demonstração (várias disponíveis — escolha uma antes de investir)",
+      opcao: "Oferta",
+    },
+    faucet: {
+      title: "1. Obter MockBRL de teste",
+      descricao:
+        "MockBRL é um mock de teste — sem lastro, sem valor, mint público e irrestrito. Qualquer carteira pode cunhar saldo para si mesma, sem depender de uma carteira administrativa.",
+      saldoLabel: "Seu saldo de MockBRL",
+      quantidadeLabel: "Quantidade a mintar",
+      botao: "Mintar MockBRL",
+      assinando: "Aguardando assinatura…",
+      confirmando: "Confirmando na rede…",
+      sucesso: "MockBRL mintado com sucesso.",
+    },
+    termos: {
+      title: "2. Termos da oferta (lidos direto do contrato)",
+      estadoLabel: "Estado",
+      estados: {
+        Aberta: "Aberta",
+        EncerradaSucesso: "Encerrada — sucesso",
+        EncerradaFalha: "Encerrada — fracasso",
+      },
+      totalArrecadado: "Total arrecadado",
+      metaMinima: "Meta mínima",
+      metaMaxima: "Meta máxima",
+      precoPorCota: "Preço por cota",
+      prazo: "Prazo",
+      tetoPorInvestidor: "Teto por investidor (nesta oferta)",
+      nota: "O teto por investidor aqui é só o limite desta oferta específica — não substitui o teto anual entre plataformas da Resolução CVM 88, que é off-chain e auto-declaratório.",
+    },
+    investir: {
+      title: "3. Investir",
+      quantidadeLabel: "Quantidade de cotas",
+      valorLabel: "Valor a aportar",
+      allowanceNota:
+        "Se sua autorização (allowance) de MockBRL for insuficiente, você vai assinar uma aprovação antes do aporte — só quando necessário.",
+      botao: "Investir",
+      status: {
+        idle: "",
+        "verificando-allowance": "Verificando autorização de MockBRL…",
+        "assinando-approve": "Aguardando assinatura da aprovação (approve) de MockBRL…",
+        "confirmando-approve": "Confirmando aprovação na rede…",
+        "assinando-aportar": "Aguardando assinatura do aporte…",
+        "confirmando-aportar": "Confirmando aporte na rede…",
+        sucesso: "Aporte confirmado on-chain.",
+        erro: "Não foi possível concluir o aporte.",
+      },
+      ofertaEncerradaSucesso: "Esta oferta já foi encerrada com sucesso — não é mais possível investir. Se você aportou, resgate suas cotas abaixo.",
+      ofertaEncerradaFalha: "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir.",
+    },
+    posicao: {
+      title: "Sua posição nesta oferta",
+      aportado: "Você já aportou",
+      elegivelParaResgate: "Cotas a resgatar",
+      jaResgatou: "Cotas já resgatadas para esta carteira",
+      saldoParticipacao: "Seu saldo de participação (on-chain)",
+    },
+    encerrar: {
+      title: "4. Encerrar a oferta",
+      descricao:
+        "Ação permissionless — qualquer carteira conectada pode encerrar assim que o prazo terminar ou o total arrecadado atingir a meta máxima exatamente.",
+      botao: "Encerrar oferta",
+      assinando: "Aguardando assinatura…",
+      confirmando: "Confirmando na rede…",
+      sucesso: "Oferta encerrada on-chain.",
+    },
+    resgatar: {
+      title: "5. Resgatar cotas",
+      descricao:
+        "Depois do encerramento com sucesso, resgate (pull, uma vez) as cotas proporcionais ao seu aporte.",
+      botao: "Resgatar cotas",
+      assinando: "Aguardando assinatura…",
+      confirmando: "Confirmando na rede…",
+      sucesso: "Cotas resgatadas — confira o saldo de participação acima.",
+    },
+    erros: {
+      redeErrada: "Troque para a rede Sepolia para continuar.",
     },
   },
 } as const;

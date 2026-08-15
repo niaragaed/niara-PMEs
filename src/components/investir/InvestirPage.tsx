@@ -87,6 +87,17 @@ export function InvestirPage({
           {t.avisoReal}
         </p>
 
+        <p className="mt-3 rounded-md border border-panel-border bg-panel px-4 py-3 text-sm text-on-military-muted">
+          {t.linkOnChain.texto}{" "}
+          <Link
+            href="/investir/onchain"
+            className="font-semibold text-salmon underline underline-offset-2 hover:text-salmon-600"
+          >
+            {t.linkOnChain.link}
+          </Link>
+          .
+        </p>
+
         <section className="mt-8">
           {ofertas.length === 0 ? (
             <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">

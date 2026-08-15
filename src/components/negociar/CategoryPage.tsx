@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CategoryChip } from "./CategoryChip";
 import { ShowcaseCard } from "./ShowcaseCard";
 import { RealOfferCard } from "./RealOfferCard";
+import { RealOnChainCard } from "./RealOnChainCard";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { getOfertasByCategoria } from "@/lib/mock/ofertas";
@@ -91,6 +92,15 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
             ))}
           </ul>
         </div>
+
+        {categoria === "pmes" && (
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold text-on-military">{tt.ofertaOnChainTitle}</h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <RealOnChainCard />
+            </div>
+          </div>
+        )}
 
         {ofertasReais.length > 0 && (
           <div className="mt-10">

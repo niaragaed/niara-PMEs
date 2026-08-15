@@ -1281,6 +1281,129 @@ convivendo com a demonstração antiga).
 
 ---
 
+## Tela `/investir/onchain` (investimento real em Sepolia — blockchain de verdade)
+
+Terceiro sistema de "investimento" da plataforma, distinto tanto de
+`/ativos` (dashboard 100% mock) quanto de `/investir` (grava reserva/
+pagamento *simulado* num Postgres real). Aqui não há Supabase nenhum:
+carteira MetaMask conecta direto contra contratos reais implantados e
+verificados em Sepolia (`niara-contracts-PMEs`, ver o `CLAUDE.md` daquele
+repositório) — `aportar`, `encerrar`, `resgatarCotas` são transações de
+verdade, assinadas pela carteira do usuário, confirmadas on-chain. A
+única coisa "mock" aqui é o `MockBRL` (moeda de teste do escrow, sem
+lastro) — a mecânica do contrato e o estado gravado são reais.
+
+🔴 **Diferente de `/investir`, esta rota não exige login/conta na Niara
+PMEs** — é dirigida inteiramente pela carteira conectada, decisão
+deliberada para que qualquer pessoa consiga demonstrar o ciclo completo
+sem precisar de cadastro.
+
+**Descoberta**: `/investir/onchain` **não está no menu principal**
+(`src/lib/nav-items.ts` só tem Negociar/Ativos/Perfil/Sobre — nem
+`/investir` nem `/investir/onchain` aparecem lá). Os caminhos que existem
+hoje: (1) link dentro de `/investir` (`ptBr.investir.linkOnChain`, exige
+login como investidor pra ser visto); (2) `RealOnChainCard.tsx`
+(`src/components/negociar/`) — card estático, mesmo padrão visual de
+`RealOfferCard.tsx` (selo sólido + anel salmão), presente na vitrine do
+hub `/negociar` **e** na categoria `/negociar/token-pmes` (a oferta se
+chama "Empresa Demo Niara PMEs Ltda" — só aparece nessa categoria, não
+nas outras 4, já que o contrato não tem conceito de categoria e forçar
+isso nas 5 seria inventar uma classificação que não existe on-chain).
+Nenhum item foi adicionado ao menu principal nesta rodada — decisão
+deliberada do usuário (ver opções discutidas: card na vitrine é a que
+tem menor risco, não mexe no `OrderTicket` simulado que já existe e é
+testado).
+
+**Uma ou várias ofertas**, cada uma criada por um script administrativo
+fora do frontend (`niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol`
+— ver aquele repositório) — este projeto nunca cria ofertas on-chain
+dinamicamente, só lê/escreve nas ofertas já existentes. `MockBRL` é
+compartilhado (`NEXT_PUBLIC_MOCKBRL_ADDRESS`, um endereço só);
+`ParticipacaoToken`/`OfertaCaptacao` de cada oferta vêm de
+`NEXT_PUBLIC_OFERTAS_ONCHAIN` — lista no formato
+`token1:oferta1;token2:oferta2;...` (ver `.env.example`), pensada para
+demo presencial: o apresentador troca de oferta entre um visitante e
+outro sem precisar de novo deploy. `OnChainInvestPage.tsx` mostra um
+seletor (`<select>`) só quando há mais de uma oferta configurada — com
+uma só, o comportamento é idêntico a antes desta mudança. Trocar de
+oferta no seletor reseta o formulário de investir e os estados de
+transação em andamento (`invest.reset()`/`encerrar.reset()`/
+`resgatar.reset()` + `key={ofertaIndex}` no `FaucetCard`), para nunca
+misturar estado de uma oferta com outra. Sem `MockBRL` nem ao menos 1
+oferta preenchidos, a tela mostra "contrato não configurado" em vez de
+quebrar (`getOnChainAddresses()`/`getOnChainContracts()` retornam
+`null`, nunca lançam). `RealPositionCard.tsx` (`/ativos`) sempre mostra
+a posição na primeira oferta da lista (índice 0) — simplificação
+deliberada, não tenta adivinhar qual oferta está "em demonstração" no
+momento.
+
+**Organização** (`src/lib/web3/`, estendendo a estrutura que já existia
+só para a conexão de carteira — nenhuma segunda camada Web3 paralela foi
+criada):
+- `abis/{mockBrl,ofertaCaptacao,participacaoToken}.ts` — ABIs extraídas
+  direto de `niara-contracts-PMEs/out/*.sol/*.json` (`forge build`), nunca
+  escritas à mão — nomes de função conferidos contra o `.sol` fonte antes
+  de qualquer parâmetro ser fixado (ver histórico desta parte).
+- `addresses.ts` / `contracts.ts` — únicos pontos que sabem os 3
+  endereços; nenhum componente React tem endereço de contrato hardcoded.
+- `errors.ts` — `describeOnChainError()` traduz `UserRejectedRequestError`,
+  reverts customizados (`AporteNaoMultiploDoPreco`, `OfertaNaoAberta`,
+  `ExcedeMetaMaxima`, `ExcedeTetoInvestidor`, etc. — nomes batidos contra
+  `OfertaCaptacao.sol`) e falhas de RPC/gas para pt-BR.
+- `hooks/useOfertaOnChain.ts` — leituras (`useReadContracts`, multicall):
+  termos da oferta (não depende de carteira) + posição do investidor
+  conectado (aportado, cotas resgatadas, saldo/allowance de `MockBRL`,
+  saldo de `ParticipacaoToken`).
+- `hooks/useOnChainActions.ts` — escritas: `useMintMockBrl` (faucet
+  auto-serviço — `MockBRL.mint` é público e irrestrito, então nenhuma
+  carteira administrativa é necessária para abastecer a demo),
+  `useInvestirOnChain` (checa allowance; só chama `approve` quando
+  insuficiente, depois `aportar` — nunca pede aprovação de novo à toa),
+  `useEncerrarOferta`, `useResgatarCotas`. Cada um expõe um status
+  explícito por etapa (`assinando` → `confirmando` → `sucesso`/`erro`) —
+  nunca mostra sucesso antes da confirmação on-chain (`publicClient.
+  waitForTransactionReceipt`), e nunca exige refresh manual (os hooks de
+  leitura são re-chamados depois de cada confirmação).
+
+**UI** (`src/components/investir-onchain/OnChainInvestPage.tsx`):
+reaproveita `<ConnectWallet />` (mesmo componente da seção Carteira de
+`/perfil` — não duplicado) para conectar/trocar de rede, depois mostra
+termos da oferta lidos do contrato, faucet de `MockBRL`, formulário de
+investir (input é **quantidade de cotas**, não valor em R$ — o valor em
+`MockBRL` é derivado como `quantidade * precoPorCota`, sempre múltiplo
+exato do preço por cota; resolve de propósito o gap documentado no
+`CLAUDE.md` de `niara-contracts-PMEs`, "UX real precisaria calcular/
+sugerir o múltiplo mais próximo"), posição do investidor, botão de
+encerrar (permissionless — qualquer carteira pode chamar) e botão de
+resgatar cotas.
+
+**Pré-requisito manual, não automatizável pela UI**: a carteira do
+investidor precisa de Sepolia ETH para pagar gas (`aportar`/`encerrar`/
+`resgatarCotas` são transações reais) — texto explícito na tela
+apontando para um faucet público de Sepolia; a Niara PMEs não tem, e não
+deveria ter, um faucet de ETH próprio.
+
+**Posição real dentro de `/ativos`**: `RealPositionCard.tsx`
+(`src/components/ativos/`) — único cartão real da tela, no topo da aba
+"Minha carteira" (antes de `PortfolioSummary`), mesmos hooks de leitura
+de `/investir/onchain`. Visualmente distinto de propósito (`ring-2
+ring-salmon` + selo sólido salmão com `BadgeCheck`), mesmo padrão já
+usado em `RealOfferCard.tsx` (`/negociar`) para diferenciar oferta real
+de fictícia — aqui adaptado ao cartão escuro (`bg-panel`) do resto de
+`/ativos`. **Nunca entra em `computeTotals`/`PortfolioSummary` nem nas
+linhas de `PositionsTable`** — mock e real ficam sempre separados, nunca
+somados juntos. O banner de demonstração do topo da página
+(`ptBr.ativos.demoBanner`) foi ajustado para citar essa exceção
+explicitamente, mesmo padrão já usado no banner de `/perfil` (que também
+carve-outs partes reais dentro de uma tela majoritariamente mock).
+
+`forge build` confirmado limpo no repositório de contratos após
+adicionar o script administrativo; a suíte completa de `forge test`
+(266+ testes/invariantes) rodou de novo depois — **266/266 passando**,
+sem regressão (nenhum contrato/teste foi alterado, só scripts novos).
+
+---
+
 ## Tela `/empresa/ofertas` (criação e gestão de oferta pelo emissor)
 
 Só acessível a `role==='issuer'`. `OfertasPage.tsx`: formulário de criação
@@ -1325,6 +1448,10 @@ src/
                        confirmInvestment/loadPublicOffering;
                        kyc-actions.ts: submitKyc; [offeringId]/ é rota
                        dinâmica com not-found.tsx próprio
+    investir/onchain/  investimento REAL em Sepolia (blockchain de
+                       verdade, não Supabase) — ver "Tela /investir/
+                       onchain" acima; sem gate de login/role, dirigido
+                       pela carteira conectada
     empresa/ofertas/   criação/ativação/fechamento de oferta pelo emissor
                        (ver "Tela /empresa/ofertas" acima) — actions.ts:
                        createOffering/activateOffering/closeOffering
@@ -1342,6 +1469,8 @@ src/
     investir/          InvestirPage (listagem + minhas reservas),
                        OfferingDetailPage (+ ReserveTicket), ver "Telas
                        /investir" acima
+    investir-onchain/  OnChainInvestPage — investimento real em Sepolia,
+                       ver "Tela /investir/onchain" acima
     empresa/           OfertasPage (criar/ativar/fechar oferta), ver
                        "Tela /empresa/ofertas" acima
     conta/             SignOutButton
@@ -1418,6 +1547,16 @@ src/
                        formato/comprimento, sem dígito verificador
     web3/config.ts     config wagmi (chain Sepolia, connector injected) da
                        conexão real de carteira — ver "Tela /perfil"
+    web3/addresses.ts  endereços dos 3 contratos da oferta on-chain real
+                       (env vars NEXT_PUBLIC_*, nunca hardcoded), ver
+                       "Tela /investir/onchain"
+    web3/contracts.ts  pareia addresses.ts com os ABIs de web3/abis/
+    web3/abis/         ABIs de MockBRL/OfertaCaptacao/ParticipacaoToken,
+                       extraídas de niara-contracts-PMEs/out/ (forge build)
+    web3/errors.ts     describeOnChainError() — reverts/erros wagmi -> pt-BR
+    web3/hooks/        useOfertaOnChain (leituras) + useOnChainActions
+                       (mint/investir/encerrar/resgatar), ver "Tela
+                       /investir/onchain"
     i18n/              dicionário de textos (pt-br.ts)
     mock/ativos.ts     dados fictícios tipados da tela /ativos (posições,
                        evolução mensal, catálogo) — nunca dado real
@@ -1572,6 +1711,35 @@ creditar.
   simulada em si — nenhuma ordem real é enviada hoje, mas o texto de
   enquadramento segue a mesma ressalva já registrada para
   `/sobre/documentos` (ver "Telas /negociar" acima).
+- `/investir/onchain` (ver seção própria acima) depende de uma oferta já
+  criada em Sepolia via script administrativo fora do frontend — sem os
+  3 `NEXT_PUBLIC_*` preenchidos, a tela mostra "contrato não configurado",
+  nunca quebra. **Já configurada e ativa em `.env.local`** desde
+  2026-08-15 (`niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol`,
+  rodado com sucesso — token `0xAD14...eE3A`, oferta `0x8390...C57c6`). 🔴
+  A chave do deployer original da infraestrutura da Fase 4 foi perdida no
+  meio desta parte — toda a infra (10 contratos) precisou ser redeployada
+  com uma carteira nova; ver `niara-contracts-PMEs/CLAUDE.md`, "Chave do
+  deployer da Fase 4 perdida" para o histórico completo e os endereços
+  novos. **Ciclo completo testado pela UI de verdade em 2026-08-15**
+  (mint → approve → aportar 2x, 100+100 mBRL → encerrar → resgatar) —
+  estado final `EncerradaSucesso`, `totalArrecadado=200 mBRL`, 20 `nPME`
+  resgatadas, tudo conferido também via `cast call` direto na chain, não
+  só pela tela. Essa oferta específica **já está encerrada**.
+  🔴 **Suporte a várias ofertas simultâneas adicionado em 2026-08-15**,
+  para uma demonstração presencial (Startup Summit) — ver seção acima
+  ("Uma ou várias ofertas"). Foram criadas **10 ofertas de reserva**
+  rodando `DemoNiaraPMEsOnChain.s.sol` 10x em sequência (todas `Aberta`,
+  confirmadas via `cast call`) — endereços completos das 10 em
+  `niara-contracts-PMEs/CLAUDE.md`, "10 ofertas de reserva para o Startup
+  Summit". Todas já estão em `NEXT_PUBLIC_OFERTAS_ONCHAIN` no
+  `.env.local` deste projeto. A posição real também aparece dentro do dashboard
+  `/ativos` desde então, via `RealPositionCard`
+  (ver "Tela `/investir/onchain`" acima) — cartão isolado, nunca somado ao
+  restante 100% mock daquela tela. Mercado secundário (`LiquidacaoSecundaria`, já
+  implantado em Sepolia do lado dos contratos) não foi integrado nesta
+  rodada — prioridade foi o ciclo primário completo (aportar → encerrar
+  → resgatar), conforme pedido.
 - **Bug conhecido (pré-existente, não corrigido nesta rodada):**
   `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
   framer-motion, que lê `window.matchMedia` de forma síncrona já no
