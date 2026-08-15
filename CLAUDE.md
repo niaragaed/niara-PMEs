@@ -1404,6 +1404,60 @@ sem regressão (nenhum contrato/teste foi alterado, só scripts novos).
 
 ---
 
+## Tela `/socios` (painel interno, restrito aos sócios)
+
+Área administrativa separada do resto do site — nunca voltada ao
+investidor/emissor final. Mostra transações e totais combinando dado
+real (Sepolia, via eventos on-chain) e dado demo/mock (Supabase,
+`/investir`), **sempre em seções/tabelas separadas**, nunca misturados
+numa linha só — mesma regra de honestidade do resto do projeto, aplicada
+ao contrário aqui (o risco não é mock parecer real, é os dois se
+confundirem num painel administrativo).
+
+🔴 **Controle de acesso é só uma allowlist de e-mail, não um "role"
+novo** — `src/lib/auth/resolveSocio.ts` (`resolveSocio()`) é totalmente
+separado de `resolveAccount()` (`resolveInvestor.ts`, investor/issuer);
+os dois nunca se misturam. Login continua sendo o mesmo Supabase Auth de
+sempre (`signInWithPassword`, client do navegador — mesmo mecanismo de
+`/entrar`, formulário próprio, não redireciona pra lá nem mexe naquela
+tela). A allowlist vem de `NIARA_SOCIOS_EMAILS` (env var, e-mails
+separados por vírgula) — **nunca hardcodada no código**, porque o
+repositório é público. Autenticado mas fora da allowlist não é
+redirecionado — fica na própria página com "Acesso restrito" + botão de
+sair. As contas do Supabase Auth dos sócios precisam existir antes
+(criadas direto no painel do Supabase, Authentication → Add User — não
+há fluxo de cadastro para isso, seria sistema paralelo).
+
+**Dados reais** (`src/lib/web3/events.ts`) — leitura de eventos via
+`viem getLogs` **direto no servidor**, sem carteira conectada nem wagmi
+(diferente dos hooks de `/investir/onchain`, que são client-side e
+dependem de MetaMask). Eventos lidos, nomes conferidos direto no `.sol`
+antes de escrever qualquer código (não presumidos): `Aporte`,
+`OfertaEncerrada`, `OfertaCancelada`, `CotasResgatadas`,
+`RecursosLiberados`, `Reembolso`. `FROM_BLOCK` é um bloco fixo (o do
+redeploy da infra em 2026-08-15) — evita escanear a chain desde o
+genesis; **precisa ser atualizado se a infra for redeployada nesta
+sessão** (ver `niara-contracts-PMEs/CLAUDE.md`, "Chave do deployer da
+Fase 4 perdida"). `getResumoOnChain()` lê `taxaBps` **direto do
+contrato** de cada oferta configurada (nunca hardcoda 0, mesmo sendo
+esse o valor real hoje, confirmado via `cast call` antes de escrever
+qualquer texto sobre taxa na tela).
+
+**Dados mock** (`src/lib/socios/mockTransacoes.ts`) — `investments` do
+Supabase, mesma REGRA DE OURO de `investments.ts` (lista branca de
+colunas, nunca `select('*')`). Este schema **não tem nenhum campo de
+taxa** — a tela não inventa um, só explica que o conceito não existe
+nesse fluxo (`ptBr.socios.resumoMock.semTaxaNota`).
+
+**Taxa exibida**: hoje `taxaBps = 0` em todas as ofertas (confirmado via
+`cast call`, não assumido) → mostra "R$ 0,00" com nota explícita "taxaBps
+= 0 nesta demo, lido direto do contrato — nenhuma taxa é cobrada hoje".
+Se um dia uma oferta tiver `taxaBps > 0`, o painel mostra o percentual
+real lido do contrato, nunca um valor simulado/projetado apresentado
+como se fosse cobrança de verdade.
+
+---
+
 ## Tela `/empresa/ofertas` (criação e gestão de oferta pelo emissor)
 
 Só acessível a `role==='issuer'`. `OfertasPage.tsx`: formulário de criação
@@ -1455,6 +1509,8 @@ src/
     empresa/ofertas/   criação/ativação/fechamento de oferta pelo emissor
                        (ver "Tela /empresa/ofertas" acima) — actions.ts:
                        createOffering/activateOffering/closeOffering
+    socios/page.tsx    painel interno restrito (ver "Tela /socios" acima)
+                       — allowlist de e-mail, nunca voltado ao investidor
     ativos/page.tsx    dashboard de portfólio mock (ver "Tela /ativos"
                        abaixo) — não confundir com /investir (real)
     sobre/documentos/  documentação + FAQ (ver "Telas /sobre/documentos e
@@ -1473,7 +1529,9 @@ src/
                        ver "Tela /investir/onchain" acima
     empresa/           OfertasPage (criar/ativar/fechar oferta), ver
                        "Tela /empresa/ofertas" acima
-    conta/             SignOutButton
+    socios/            SociosLoginForm + SociosDashboard, ver "Tela
+                       /socios" acima
+    conta/             SignOutButton (reaproveitado também por /socios)
     ativos/            AtivosPage (abas + banner demo), PortfolioSummary
                        (KPIs), PortfolioEvolutionChart e AllocationDonut
                        (recharts), PositionsTable, AssetCatalog
@@ -1522,6 +1580,12 @@ src/
     auth/resolveInvestor.ts  resolveAccount() — fonte única de
                        userId/role/accountId, ver "Backend (Supabase)"
                        → "Autenticação"
+    auth/resolveSocio.ts  resolveSocio() — allowlist de e-mail para
+                       /socios, separado por completo de resolveAccount()
+    socios/mockTransacoes.ts  leitura de investments (Supabase) para o
+                       painel /socios, ver "Tela /socios"
+    web3/events.ts     leitura de eventos on-chain (viem getLogs,
+                       servidor) para /socios — ver "Tela /socios"
     ports.ts           interfaces PaymentGateway/KycProvider/ChainRegistry
     adapters.ts        escolhe implementação por env var, default mock
     mocks.ts           implementação mock de pagamento/KYC/emissão —
