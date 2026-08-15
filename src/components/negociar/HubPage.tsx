@@ -1,4 +1,5 @@
 import { CategoryCard } from "./CategoryCard";
+import { RealOnChainCard } from "./RealOnChainCard";
 import { ShowcaseCard } from "./ShowcaseCard";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
@@ -30,6 +31,7 @@ export function HubPage() {
         <div className="mt-14">
           <h2 className="text-xl font-semibold text-on-military">{ptBr.negociar.vitrine.title}</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <RealOnChainCard />
             {vitrine.map((oferta) => (
               <ShowcaseCard key={oferta.slug} oferta={oferta} />
             ))}
