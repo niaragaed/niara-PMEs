@@ -39,6 +39,7 @@ export function SociosLoginForm() {
     }
 
     router.refresh();
+    setPending(false);
   }
 
   return (
