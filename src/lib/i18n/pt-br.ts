@@ -755,13 +755,6 @@ export const ptBr = {
       naoInformado: "Não informado",
       verOferta: "Ver oferta →",
     },
-    ofertaOnChain: {
-      selo: "Real — Sepolia",
-      titulo: "Oferta Niara PMEs Demo",
-      descricao:
-        "Transações reais, assinadas e confirmadas na testnet Sepolia — não é uma simulação de produto como o restante desta vitrine.",
-      verOferta: "Investir de verdade →",
-    },
     pmesOnChain: {
       selo: "Real — Sepolia",
       empresaFicticia: "Empresa fictícia de demonstração",
