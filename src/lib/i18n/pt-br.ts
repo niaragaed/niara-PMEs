@@ -762,6 +762,14 @@ export const ptBr = {
         "Transações reais, assinadas e confirmadas na testnet Sepolia — não é uma simulação de produto como o restante desta vitrine.",
       verOferta: "Investir de verdade →",
     },
+    pmesOnChain: {
+      selo: "Real — Sepolia",
+      empresaFicticia: "Empresa fictícia de demonstração",
+      metaCaptacao: "Meta de captação",
+      precoPorCota: "Preço por cota",
+      cotas: "Cotas",
+      verOferta: "Ver oferta →",
+    },
     categorias: {
       pmes: {
         descricaoCurta: "Participação societária ou recebíveis de pequenas e médias empresas.",
@@ -825,8 +833,8 @@ export const ptBr = {
       suaOfertaTitle: "Sua oferta nesta categoria",
       suaOfertaNota:
         "Oferta cadastrada pela sua empresa. Visível só para você, dono da oferta — sem opção de reserva.",
-      ofertaOnChainTitle: "Oferta real em Sepolia",
       vitrineTitle: "Exemplos (demonstração)",
+      vitrineTitlePmesOnChain: "Ofertas PMEs (Sepolia real, empresas fictícias)",
       notaRodape:
         "Exemplos fictícios com valores simulados. Não constitui oferta pública de valores mobiliários. Ofertas dependem das autorizações aplicáveis da CVM.",
     },
