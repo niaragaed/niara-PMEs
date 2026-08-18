@@ -5,6 +5,13 @@
 // Nenhuma promessa de retorno é feita: não há campo de rendimento/projeção.
 
 import type { TokenCategory } from "@/lib/mock/ativos";
+import { ONCHAIN_PMES_SLUGS_EM_ORDEM } from "@/lib/mock/ofertasOnChain";
+import {
+  ONCHAIN_PMES_COTAS_AUTORIZADAS,
+  ONCHAIN_PMES_META_MAXIMA_MBRL,
+  ONCHAIN_PMES_PRAZO_DIAS,
+  ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+} from "@/lib/web3/demoConstants";
 
 export type TipoToken = "participacao" | "recebivel" | "divida";
 
@@ -155,6 +162,22 @@ function buildSerieMensal(receitaBase: number, caixaBase: number, crescimento: n
   }));
 }
 
+// Termos das 10 ofertas PME que têm uma oferta real e ativa em Sepolia por trás (ver
+// src/lib/mock/ofertasOnChain.ts) — os números aqui são espelhados de
+// src/lib/web3/demoConstants.ts, os mesmos valores fixos das 10 ofertas reais, para que a
+// pré-visualização estática nunca discorde da leitura ao vivo do contrato (ver
+// RealOnChainInvestPanel.tsx). Campos que mudam com o tempo (estado, total arrecadado, prazo
+// exato) nunca vêm daqui — sempre de useOfertaOnChainTermos(), direto da chain.
+function buildTermosOnChainFixos(): Oferta["termos"] {
+  return {
+    tipoToken: "participacao",
+    metaCaptacao: ONCHAIN_PMES_META_MAXIMA_MBRL,
+    valorPorToken: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+    quantidadeTokens: ONCHAIN_PMES_COTAS_AUTORIZADAS,
+    prazoMeses: Math.round(ONCHAIN_PMES_PRAZO_DIAS / 30),
+  };
+}
+
 export const OFERTAS: Oferta[] = [
   {
     slug: "pme-padaria-bela-vista",
@@ -176,14 +199,8 @@ export const OFERTAS: Oferta[] = [
       serieMensal: buildSerieMensal(180_000, 28_000, 0.03),
     },
     indicadores: INDICADORES_DEMONSTRACAO,
-    termos: {
-      tipoToken: "participacao",
-      metaCaptacao: 500_000,
-      valorPorToken: 100,
-      quantidadeTokens: 5_000,
-      prazoMeses: 24,
-    },
-    precoSimulado: 100,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
   },
   {
     slug: "pme-clinica-vitalis",
@@ -205,14 +222,191 @@ export const OFERTAS: Oferta[] = [
       serieMensal: buildSerieMensal(85_000, 14_000, 0.025),
     },
     indicadores: INDICADORES_DEMONSTRACAO,
-    termos: {
-      tipoToken: "participacao",
-      metaCaptacao: 350_000,
-      valorPorToken: 50,
-      quantidadeTokens: 7_000,
-      prazoMeses: 18,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-barbearia-corte-estilo",
+    nome: "Token PME Barbearia Corte & Estilo",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Corte & Estilo Barbearia Ltda.",
+      nomeFantasia: "Barbearia Corte & Estilo",
+      cnpj: "13.456.789/0001-02",
+      setor: "Serviços de beleza e estética",
+      localizacao: "Salvador, BA",
+      resumo:
+        "Barbearia com 3 cadeiras e agenda cheia no bairro do Rio Vermelho, buscando capital para abrir uma segunda unidade e comprar equipamento novo.",
     },
-    precoSimulado: 50,
+    financeiro: {
+      receitaAnual: 620_000,
+      caixaDisponivel: 45_000,
+      endividamento: 30_000,
+      serieMensal: buildSerieMensal(48_000, 7_000, 0.025),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-petshop-amigo-fiel",
+    nome: "Token PME Pet Shop Amigo Fiel",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Amigo Fiel Comércio Pet Ltda.",
+      nomeFantasia: "Pet Shop Amigo Fiel",
+      cnpj: "14.567.890/0001-13",
+      setor: "Varejo pet e serviços veterinários",
+      localizacao: "Curitiba, PR",
+      resumo:
+        "Pet shop com banho e tosa e consultório veterinário associado, buscando capital de giro para ampliar o estoque de ração e medicamentos.",
+    },
+    financeiro: {
+      receitaAnual: 890_000,
+      caixaDisponivel: 60_000,
+      endividamento: 75_000,
+      serieMensal: buildSerieMensal(68_000, 9_500, 0.02),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-academia-vigor-fitness",
+    nome: "Token PME Academia Vigor Fitness",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Vigor Fitness Academia Ltda.",
+      nomeFantasia: "Academia Vigor Fitness",
+      cnpj: "15.678.901/0001-24",
+      setor: "Saúde e bem-estar — academia",
+      localizacao: "Goiânia, GO",
+      resumo:
+        "Academia de bairro com 400 alunos ativos, buscando recursos para renovar equipamentos de musculação e ampliar o estúdio de aulas coletivas.",
+    },
+    financeiro: {
+      receitaAnual: 1_350_000,
+      caixaDisponivel: 95_000,
+      endividamento: 180_000,
+      serieMensal: buildSerieMensal(105_000, 15_000, 0.02),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-marcenaria-raizes",
+    nome: "Token PME Marcenaria Raízes",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Raízes Marcenaria e Móveis Planejados Ltda.",
+      nomeFantasia: "Marcenaria Raízes",
+      cnpj: "16.789.012/0001-35",
+      setor: "Móveis planejados sob medida",
+      localizacao: "Caxias do Sul, RS",
+      resumo:
+        "Marcenaria especializada em móveis planejados sob medida, buscando capital para comprar uma nova máquina CNC e reduzir o prazo de entrega.",
+    },
+    financeiro: {
+      receitaAnual: 1_050_000,
+      caixaDisponivel: 70_000,
+      endividamento: 210_000,
+      serieMensal: buildSerieMensal(82_000, 11_000, 0.018),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-cafeteria-grao-arte",
+    nome: "Token PME Cafeteria Grão & Arte",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Grão & Arte Cafeteria Ltda.",
+      nomeFantasia: "Cafeteria Grão & Arte",
+      cnpj: "17.890.123/0001-46",
+      setor: "Alimentação — cafeteria especial",
+      localizacao: "Belo Horizonte, MG",
+      resumo: "Cafeteria de especialidade com torra própria, buscando capital para abrir um quiosque em um novo shopping da cidade.",
+    },
+    financeiro: {
+      receitaAnual: 780_000,
+      caixaDisponivel: 52_000,
+      endividamento: 40_000,
+      serieMensal: buildSerieMensal(60_000, 8_500, 0.03),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-lavanderia-expressa-clean",
+    nome: "Token PME Lavanderia Expressa Clean",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Clean Expressa Lavanderia Ltda.",
+      nomeFantasia: "Lavanderia Expressa Clean",
+      cnpj: "18.901.234/0001-57",
+      setor: "Serviços — lavanderia self-service e sob encomenda",
+      localizacao: "Recife, PE",
+      resumo:
+        "Rede de 2 lavanderias self-service com serviço sob encomenda para prédios residenciais, buscando capital para instalar máquinas industriais numa terceira unidade.",
+    },
+    financeiro: {
+      receitaAnual: 540_000,
+      caixaDisponivel: 38_000,
+      endividamento: 25_000,
+      serieMensal: buildSerieMensal(42_000, 6_000, 0.02),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-escola-idiomas-global-fluente",
+    nome: "Token PME Escola de Idiomas Global Fluente",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Global Fluente Idiomas Ltda.",
+      nomeFantasia: "Escola de Idiomas Global Fluente",
+      cnpj: "19.012.345/0001-68",
+      setor: "Educação — idiomas",
+      localizacao: "Florianópolis, SC",
+      resumo:
+        "Escola de inglês e espanhol com turmas presenciais e online, buscando capital para lançar uma plataforma própria de aulas ao vivo.",
+    },
+    financeiro: {
+      receitaAnual: 960_000,
+      caixaDisponivel: 68_000,
+      endividamento: 55_000,
+      serieMensal: buildSerieMensal(74_000, 10_500, 0.025),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
+  },
+  {
+    slug: "pme-estetica-bella-pele",
+    nome: "Token PME Estúdio de Estética Bella Pele",
+    categoria: "pmes",
+    empresa: {
+      razaoSocial: "Bella Pele Estética Ltda.",
+      nomeFantasia: "Estúdio de Estética Bella Pele",
+      cnpj: "20.123.456/0001-79",
+      setor: "Serviços de beleza e estética",
+      localizacao: "Fortaleza, CE",
+      resumo:
+        "Estúdio de estética facial e corporal com equipe de 6 profissionais, buscando capital para adquirir um novo equipamento de radiofrequência.",
+    },
+    financeiro: {
+      receitaAnual: 700_000,
+      caixaDisponivel: 48_000,
+      endividamento: 35_000,
+      serieMensal: buildSerieMensal(54_000, 7_500, 0.022),
+    },
+    indicadores: INDICADORES_DEMONSTRACAO,
+    termos: buildTermosOnChainFixos(),
+    precoSimulado: ONCHAIN_PMES_PRECO_POR_COTA_MBRL,
   },
   {
     slug: "agro-cerrado-norte",
@@ -439,6 +633,18 @@ export const OFERTAS: Oferta[] = [
     precoSimulado: 1_000,
   },
 ];
+
+if (process.env.NODE_ENV !== "production") {
+  for (const slug of ONCHAIN_PMES_SLUGS_EM_ORDEM) {
+    const oferta = OFERTAS.find((item) => item.slug === slug);
+    if (!oferta) {
+      throw new Error(`ONCHAIN_PMES_SLUGS_EM_ORDEM referencia o slug "${slug}", que não existe em OFERTAS.`);
+    }
+    if (oferta.categoria !== "pmes") {
+      throw new Error(`Oferta "${slug}" está ligada a uma oferta on-chain real, mas categoria não é "pmes".`);
+    }
+  }
+}
 
 export function getOfertaBySlug(slug: string): Oferta | undefined {
   return OFERTAS.find((oferta) => oferta.slug === slug);
