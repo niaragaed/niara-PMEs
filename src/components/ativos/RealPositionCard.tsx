@@ -17,20 +17,13 @@
 // padrão dos hooks) — não tenta adivinhar "qual oferta o usuário está demonstrando agora".
 // Quem quiser ver/trocar a oferta específica usa o seletor dentro de /investir/onchain.
 import Link from "next/link";
-import { formatUnits } from "viem";
 import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { BadgeCheck } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { useMinhaPosicaoOnChain, useOfertaOnChainTermos } from "@/lib/web3/hooks/useOfertaOnChain";
+import { formatToken } from "@/lib/web3/format";
 import { ptBr } from "@/lib/i18n/pt-br";
-
-function formatToken(value: bigint, decimals: number, symbol: string) {
-  const formatted = Number(formatUnits(value, decimals)).toLocaleString("pt-BR", {
-    maximumFractionDigits: 2,
-  });
-  return `${formatted} ${symbol}`;
-}
 
 export function RealPositionCard() {
   const t = ptBr.ativos.posicaoReal;
