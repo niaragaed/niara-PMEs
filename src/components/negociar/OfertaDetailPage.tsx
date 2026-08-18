@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { RealOnChainInvestPanel } from "@/components/investir-onchain/RealOnChainInvestPanel";
 import { CategoryBadge } from "./CategoryChip";
 import { FinanceiroChart } from "./FinanceiroChart";
 import { FundamentalIndicators } from "./FundamentalIndicators";
@@ -17,18 +18,22 @@ export function OfertaDetailPage({
   oferta,
   bannerUrl = null,
   logoUrl = null,
+  onChainIndex = null,
 }: {
   oferta: Oferta;
   bannerUrl?: string | null;
   logoUrl?: string | null;
+  onChainIndex?: number | null;
 }) {
   const [ticketOpen, setTicketOpen] = useState(false);
   const t = ptBr.negociar.oferta;
+  const isOnChain = onChainIndex !== null;
 
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.common.demonstracao}</span> — {t.demoBanner}
+        <span className="font-semibold text-salmon">{ptBr.common.demonstracao}</span> —{" "}
+        {isOnChain ? t.demoBannerOnChain : t.demoBanner}
       </div>
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
@@ -56,7 +61,7 @@ export function OfertaDetailPage({
             <p className="mt-1 text-on-military-muted">{oferta.empresa.nomeFantasia}</p>
           </div>
 
-          {!ticketOpen && (
+          {!ticketOpen && !isOnChain && (
             <button
               type="button"
               onClick={() => setTicketOpen(true)}
@@ -69,6 +74,16 @@ export function OfertaDetailPage({
 
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className={`flex flex-col gap-6 ${ticketOpen ? "lg:col-span-8" : "lg:col-span-12"}`}>
+            {isOnChain && (
+              <>
+                <p className="flex items-start gap-2 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
+                  {t.avisoMisto}
+                </p>
+                <RealOnChainInvestPanel ofertaIndex={onChainIndex} />
+              </>
+            )}
+
             <section className="rounded-lg bg-surface p-6 shadow-soft">
               <h2 className="text-lg font-semibold text-ink">{t.dadosPublicos.title}</h2>
               <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -123,32 +138,36 @@ export function OfertaDetailPage({
 
             <FundamentalIndicators indicadores={oferta.indicadores} />
 
-            <section className="rounded-lg bg-surface p-6 shadow-soft">
-              <h2 className="text-lg font-semibold text-ink">{t.termos.title}</h2>
-              <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs text-ink-muted">{t.termos.tipoToken}</dt>
-                  <dd className="mt-0.5 text-sm text-ink">{t.termos.tipoTokenValores[oferta.termos.tipoToken]}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-ink-muted">{t.termos.metaCaptacao}</dt>
-                  <dd className="mt-0.5 text-sm text-ink">{formatBRL(oferta.termos.metaCaptacao)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-ink-muted">{t.termos.valorPorToken}</dt>
-                  <dd className="mt-0.5 text-sm text-ink">{formatBRL(oferta.termos.valorPorToken)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-ink-muted">{t.termos.quantidadeTokens}</dt>
-                  <dd className="mt-0.5 text-sm text-ink">{oferta.termos.quantidadeTokens.toLocaleString("pt-BR")}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-ink-muted">{t.termos.prazo}</dt>
-                  <dd className="mt-0.5 text-sm text-ink">{t.termos.prazoMeses(oferta.termos.prazoMeses)}</dd>
-                </div>
-              </dl>
-              <p className="mt-4 text-xs text-ink-muted">{t.termos.nota}</p>
-            </section>
+            {!isOnChain && (
+              <section className="rounded-lg bg-surface p-6 shadow-soft">
+                <h2 className="text-lg font-semibold text-ink">{t.termos.title}</h2>
+                <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.termos.tipoToken}</dt>
+                    <dd className="mt-0.5 text-sm text-ink">{t.termos.tipoTokenValores[oferta.termos.tipoToken]}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.termos.metaCaptacao}</dt>
+                    <dd className="mt-0.5 text-sm text-ink">{formatBRL(oferta.termos.metaCaptacao)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.termos.valorPorToken}</dt>
+                    <dd className="mt-0.5 text-sm text-ink">{formatBRL(oferta.termos.valorPorToken)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.termos.quantidadeTokens}</dt>
+                    <dd className="mt-0.5 text-sm text-ink">
+                      {oferta.termos.quantidadeTokens.toLocaleString("pt-BR")}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.termos.prazo}</dt>
+                    <dd className="mt-0.5 text-sm text-ink">{t.termos.prazoMeses(oferta.termos.prazoMeses)}</dd>
+                  </div>
+                </dl>
+                <p className="mt-4 text-xs text-ink-muted">{t.termos.nota}</p>
+              </section>
+            )}
 
             <section className="rounded-lg bg-surface p-6 shadow-soft">
               <h2 className="text-lg font-semibold text-ink">{t.documentos.title}</h2>

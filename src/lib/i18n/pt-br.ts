@@ -832,6 +832,10 @@ export const ptBr = {
     },
     oferta: {
       demoBanner: "Conteúdo de demonstração — sem oferta real.",
+      demoBannerOnChain:
+        "Empresa fictícia de demonstração — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
+      avisoMisto:
+        "Esta empresa é fictícia (dados de demonstração) — mas o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
       voltarCategoria: "‹ Voltar para a categoria",
       dadosPublicos: {
         title: "Dados públicos da empresa",
