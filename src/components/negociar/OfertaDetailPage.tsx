@@ -6,13 +6,22 @@ import { AlertTriangle } from "lucide-react";
 import { CategoryBadge } from "./CategoryChip";
 import { FinanceiroChart } from "./FinanceiroChart";
 import { FundamentalIndicators } from "./FundamentalIndicators";
+import { OfertaBanner } from "./OfertaBanner";
 import { OrderTicket } from "./OrderTicket";
 import { CATEGORY_META } from "@/lib/categories";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { DOCUMENTOS_PADRAO, type Oferta } from "@/lib/mock/ofertas";
 
-export function OfertaDetailPage({ oferta }: { oferta: Oferta }) {
+export function OfertaDetailPage({
+  oferta,
+  bannerUrl = null,
+  logoUrl = null,
+}: {
+  oferta: Oferta;
+  bannerUrl?: string | null;
+  logoUrl?: string | null;
+}) {
   const [ticketOpen, setTicketOpen] = useState(false);
   const t = ptBr.negociar.oferta;
 
@@ -29,6 +38,16 @@ export function OfertaDetailPage({ oferta }: { oferta: Oferta }) {
         >
           {t.voltarCategoria}
         </Link>
+
+        <div className="mt-6 overflow-hidden rounded-lg shadow-soft">
+          <OfertaBanner
+            bannerUrl={bannerUrl}
+            logoUrl={logoUrl}
+            nomeFantasia={oferta.empresa.nomeFantasia}
+            categoria={oferta.categoria}
+            size="hero"
+          />
+        </div>
 
         <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
           <div>
