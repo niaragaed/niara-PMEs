@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { OfertaDetailPage } from "@/components/negociar/OfertaDetailPage";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { getOfertaBySlug } from "@/lib/mock/ofertas";
+import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
 
 type PageProps = {
@@ -35,6 +36,14 @@ export default async function Page({ params }: PageProps) {
   // Sepolia — ver src/lib/negociar/ofertaAssets.ts. Para as demais categorias nem vale a pena
   // checar o filesystem: nunca vai haver arquivo, OfertaBanner já mostra o placeholder sozinho.
   const assets = oferta.categoria === "pmes" ? getOfertaAssetPaths(oferta.slug) : { bannerUrl: null, logoUrl: null };
+  const onChainIndex = oferta.categoria === "pmes" ? getOnChainIndexBySlug(oferta.slug) : null;
 
-  return <OfertaDetailPage oferta={oferta} bannerUrl={assets.bannerUrl} logoUrl={assets.logoUrl} />;
+  return (
+    <OfertaDetailPage
+      oferta={oferta}
+      bannerUrl={assets.bannerUrl}
+      logoUrl={assets.logoUrl}
+      onChainIndex={onChainIndex}
+    />
+  );
 }
