@@ -1300,19 +1300,81 @@ sem precisar de cadastro.
 
 **Descoberta**: `/investir/onchain` **não está no menu principal**
 (`src/lib/nav-items.ts` só tem Negociar/Ativos/Perfil/Sobre — nem
-`/investir` nem `/investir/onchain` aparecem lá). Os caminhos que existem
-hoje: (1) link dentro de `/investir` (`ptBr.investir.linkOnChain`, exige
-login como investidor pra ser visto); (2) `RealOnChainCard.tsx`
-(`src/components/negociar/`) — card estático, mesmo padrão visual de
-`RealOfferCard.tsx` (selo sólido + anel salmão), presente na vitrine do
-hub `/negociar` **e** na categoria `/negociar/token-pmes` (a oferta se
-chama "Empresa Demo Niara PMEs Ltda" — só aparece nessa categoria, não
-nas outras 4, já que o contrato não tem conceito de categoria e forçar
-isso nas 5 seria inventar uma classificação que não existe on-chain).
-Nenhum item foi adicionado ao menu principal nesta rodada — decisão
-deliberada do usuário (ver opções discutidas: card na vitrine é a que
-tem menor risco, não mexe no `OrderTicket` simulado que já existe e é
-testado).
+`/investir` nem `/investir/onchain` aparecem lá). Desde a unificação com
+empresas fictícias de PME (ver seção própria abaixo), o caminho principal
+de descoberta é a categoria `/negociar/token-pmes`, onde cada uma das 10
+ofertas reais em Sepolia já aparece com nome, foto e link direto para sua
+própria página de detalhe (`/negociar/oferta/<slug>`, que embute o
+investimento real) — `/investir/onchain` continua existindo por trás
+disso só como a ferramenta multi-oferta do apresentador (ver "Uma ou
+várias ofertas" abaixo) e via link dentro de `/investir`
+(`ptBr.investir.linkOnChain`, exige login como investidor pra ser
+visto). Nenhum item foi adicionado ao menu principal — decisão
+deliberada do usuário.
+
+### Unificação com empresas fictícias de PME (`/negociar/token-pmes`)
+
+As 10 ofertas reais em Sepolia (ver "Uma ou várias ofertas" abaixo) não
+tinham nome nenhum na UI até esta parte — só apareciam como "Oferta
+1".."Oferta 10" no seletor de `/investir/onchain`. Para a categoria Token
+PMEs ficar mais atrativa (pedido do usuário, mockup com foto de banner +
+logo por empresa), cada uma das 10 ofertas reais ganhou a "cara" de uma
+empresa fictícia de PME do catálogo de demonstração (`src/lib/mock/
+ofertas.ts`) — as 2 que já existiam (Padaria Bela Vista, Clínica Vitalis)
+mais 8 novas (Barbearia Corte & Estilo, Pet Shop Amigo Fiel, Academia
+Vigor Fitness, Marcenaria Raízes, Cafeteria Grão & Arte, Lavanderia
+Expressa Clean, Escola de Idiomas Global Fluente, Estúdio de Estética
+Bella Pele). 🔴 **A transação em blockchain é real; a empresa por trás
+dela é fictícia** — a regra "nada simulado pode parecer real" se aplica
+ao caso inverso aqui, e por isso cada superfície repete o aviso: o card
+da grade traz "Empresa fictícia de demonstração" ao lado do selo "Real —
+Sepolia", o banner de demonstração da página de detalhe troca de texto
+(`ptBr.negociar.oferta.demoBannerOnChain`) e um aviso extra
+(`avisoMisto`) fica logo acima do painel de investir.
+
+- **Mapeamento slug → índice on-chain**: `src/lib/mock/ofertasOnChain.ts`
+  — `ONCHAIN_PMES_SLUGS_EM_ORDEM`, uma lista cuja **posição** de cada
+  slug é o índice usado em `NEXT_PUBLIC_OFERTAS_ONCHAIN`
+  (`getOnChainIndexBySlug()`). Deliberadamente uma lista ordenada, não um
+  campo `onChainIndex` solto em cada `Oferta` — evita literal duplicado e
+  fácil de dessincronizar. Checagem dev-only (10 entradas, sem
+  duplicata, todas com `categoria === "pmes"`) roda no import do módulo,
+  cruzada com `OFERTAS` em `ofertas.ts`.
+- **Termos sem conflito com a chain**: `src/lib/web3/demoConstants.ts`
+  espelha os valores fixos reais do contrato (as 10 ofertas são clones
+  do mesmo script — meta mín. 100 mBRL, meta máx. 200 mBRL, 10 mBRL/cota,
+  teto 200 mBRL, 20 cotas). O `termos` de cada uma das 10 `Oferta`
+  ficticías (`buildTermosOnChainFixos()`) usa exatamente esses números —
+  antes eram inventados e diferentes por empresa (ex. Padaria tinha meta
+  R$500 mil), o que teria gerado dois números conflitantes para "a mesma
+  oferta" nesta página unificada. Campos que mudam com o tempo (estado,
+  total arrecadado, prazo exato) nunca vêm de dado estático — sempre de
+  `useOfertaOnChainTermos()`, direto da chain — e a prévia no card usa
+  sempre **mBRL**, nunca "R$" (MockBRL não tem lastro).
+- **Fotos**: `src/lib/negociar/ofertaAssets.ts` (`getOfertaAssetPaths()`,
+  server-only via `fs.existsSync`) resolve `public/negociar/pmes/<slug>/
+  banner.jpg` + `logo.png` quando existem, `null` quando não — soltar os
+  arquivos reais nessas pastas troca o placeholder sem nenhuma mudança de
+  código (só um novo commit/deploy, já que `public/` é empacotado no
+  build). `OfertaBanner.tsx` (`src/components/negociar/`) renderiza a
+  foto + logo circular sobreposto, com placeholder (tokens de cor/ícone
+  da própria categoria, mesmos de `CategoryChip`/`CategoryBadge`) — usado
+  tanto no card da grade (`size="card"`) quanto no topo da página de
+  detalhe (`size="hero"`, todas as categorias, não só PMEs).
+- **Card unificado**: `PmesOnChainCard.tsx` substituiu tanto o antigo
+  `RealOnChainCard.tsx` (card único genérico, removido) quanto o
+  `ShowcaseCard` fictício na categoria/vitrine do hub PMEs — mesmo
+  padrão visual de selo sólido + anel salmão de `RealOfferCard.tsx`.
+- **Painel de investir reaproveitado**: `RealOnChainInvestPanel.tsx`
+  (`src/components/investir-onchain/`, extraído de `OnChainInvestPage.tsx`
+  — ver "Uma ou várias ofertas" acima) é montado direto dentro de
+  `OfertaDetailPage.tsx` quando o slug resolve um `onChainIndex`,
+  substituindo a seção estática "Termos da oferta" e o botão "Negociar
+  (simulação)"/`OrderTicket` (não faz sentido oferecer uma simulação de
+  compra ao lado de uma compra real na mesma página). Para as outras 4
+  categorias, `OfertaDetailPage.tsx` continua idêntica a antes — só
+  ganhou o mesmo `OfertaBanner` no topo, com placeholder (nenhuma foto
+  real é buscada fora da categoria PMEs).
 
 **Uma ou várias ofertas**, cada uma criada por um script administrativo
 fora do frontend (`niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol`
@@ -1323,19 +1385,22 @@ compartilhado (`NEXT_PUBLIC_MOCKBRL_ADDRESS`, um endereço só);
 `NEXT_PUBLIC_OFERTAS_ONCHAIN` — lista no formato
 `token1:oferta1;token2:oferta2;...` (ver `.env.example`), pensada para
 demo presencial: o apresentador troca de oferta entre um visitante e
-outro sem precisar de novo deploy. `OnChainInvestPage.tsx` mostra um
-seletor (`<select>`) só quando há mais de uma oferta configurada — com
-uma só, o comportamento é idêntico a antes desta mudança. Trocar de
-oferta no seletor reseta o formulário de investir e os estados de
-transação em andamento (`invest.reset()`/`encerrar.reset()`/
-`resgatar.reset()` + `key={ofertaIndex}` no `FaucetCard`), para nunca
-misturar estado de uma oferta com outra. Sem `MockBRL` nem ao menos 1
-oferta preenchidos, a tela mostra "contrato não configurado" em vez de
-quebrar (`getOnChainAddresses()`/`getOnChainContracts()` retornam
-`null`, nunca lançam). `RealPositionCard.tsx` (`/ativos`) sempre mostra
-a posição na primeira oferta da lista (índice 0) — simplificação
-deliberada, não tenta adivinhar qual oferta está "em demonstração" no
-momento.
+outro sem precisar de novo deploy. O miolo de investimento (termos,
+faucet, investir, posição, encerrar, resgatar) vive em
+`RealOnChainInvestPanel.tsx` (`{ ofertaIndex }`, ver "Unificação com
+empresas fictícias de PME" abaixo) — `OnChainInvestPage.tsx` ficou um
+host fino: título, o seletor (`<select>`, só aparece com mais de uma
+oferta configurada — com uma só, comportamento idêntico a antes desta
+mudança) e `<RealOnChainInvestPanel key={ofertaIndex} ofertaIndex=
+{ofertaIndex} />`. Trocar de oferta no seletor remonta o painel inteiro
+via esse `key` — reseta de graça todo o estado local (formulário de
+investir, status de invest/encerrar/resgatar, campo do faucet), sem
+precisar de resets manuais. Sem `MockBRL` nem ao menos 1 oferta
+preenchidos, a tela mostra "contrato não configurado" em vez de quebrar
+(`getOnChainAddresses()`/`getOnChainContracts()` retornam `null`, nunca
+lançam). `RealPositionCard.tsx` (`/ativos`) sempre mostra a posição na
+primeira oferta da lista (índice 0) — simplificação deliberada, não
+tenta adivinhar qual oferta está "em demonstração" no momento.
 
 **Organização** (`src/lib/web3/`, estendendo a estrutura que já existia
 só para a conexão de carteira — nenhuma segunda camada Web3 paralela foi
@@ -1525,8 +1590,11 @@ src/
     investir/          InvestirPage (listagem + minhas reservas),
                        OfferingDetailPage (+ ReserveTicket), ver "Telas
                        /investir" acima
-    investir-onchain/  OnChainInvestPage — investimento real em Sepolia,
-                       ver "Tela /investir/onchain" acima
+    investir-onchain/  OnChainInvestPage (host fino: título + seletor) +
+                       RealOnChainInvestPanel (miolo reutilizável do
+                       investimento real em Sepolia, também montado
+                       dentro de OfertaDetailPage/negociar) — ver "Tela
+                       /investir/onchain" acima
     empresa/           OfertasPage (criar/ativar/fechar oferta), ver
                        "Tela /empresa/ofertas" acima
     socios/            SociosLoginForm + SociosDashboard, ver "Tela
@@ -1559,10 +1627,16 @@ src/
                        inclui RealOfferCard ao lado do catálogo
                        fictício), CategoryChip (CategoryChip +
                        CategoryBadge), CategoryCard, ShowcaseCard,
-                       OfertaDetailPage, FinanceiroChart (recharts),
-                       FundamentalIndicators + IndicatorHelp (indicadores
-                       fundamentalistas + popover "?"), OrderTicket
-                       (boleta simulada) — ver "Telas /negociar" abaixo
+                       PmesOnChainCard (as 10 ofertas PMEs unificadas —
+                       real em Sepolia + empresa fictícia, ver "Tela
+                       /investir/onchain" → "Unificação com empresas
+                       fictícias de PME"), OfertaBanner (foto + logo,
+                       com placeholder), OfertaDetailPage, FinanceiroChart
+                       (recharts), FundamentalIndicators + IndicatorHelp
+                       (indicadores fundamentalistas + popover "?"),
+                       OrderTicket (boleta simulada, só para ofertas sem
+                       oferta real por trás) — ver "Telas /negociar"
+                       abaixo
     entrar/            EntrarPage (overlay tela cheia, split + form),
                        VideoCover (capa do vídeo do YouTube) — ver
                        "Tela /entrar" acima
@@ -1621,13 +1695,31 @@ src/
     web3/hooks/        useOfertaOnChain (leituras) + useOnChainActions
                        (mint/investir/encerrar/resgatar), ver "Tela
                        /investir/onchain"
+    web3/format.ts     formatToken/formatPrazo — formatação compartilhada
+                       de valores on-chain (bigint), usada por
+                       RealOnChainInvestPanel e RealPositionCard
+    web3/demoConstants.ts  meta/preço/teto/cotas/prazo fixos das 10
+                       ofertas reais em Sepolia, espelhados do script
+                       Solidity — fonte única para nunca a UI mostrar um
+                       número que discorda da chain, ver "Tela
+                       /investir/onchain" → "Unificação com empresas
+                       fictícias de PME"
+    negociar/ofertaAssets.ts  getOfertaAssetPaths() (server-only, fs) —
+                       resolve banner.jpg/logo.png reais em
+                       public/negociar/pmes/<slug>/ ou null (placeholder)
     i18n/              dicionário de textos (pt-br.ts)
     mock/ativos.ts     dados fictícios tipados da tela /ativos (posições,
                        evolução mensal, catálogo) — nunca dado real
-    mock/ofertas.ts    categorias + 10 ofertas fictícias tipadas das telas
-                       /negociar (dados públicos, financeiro, indicadores
-                       fundamentalistas, termos, documentos) — nunca
-                       dado real
+    mock/ofertasOnChain.ts  ONCHAIN_PMES_SLUGS_EM_ORDEM — mapeia slug →
+                       índice em NEXT_PUBLIC_OFERTAS_ONCHAIN (posição na
+                       lista É o índice), ver "Tela /investir/onchain" →
+                       "Unificação com empresas fictícias de PME"
+    mock/ofertas.ts    categorias + 18 ofertas fictícias tipadas das
+                       telas /negociar (dados públicos, financeiro,
+                       indicadores fundamentalistas, termos, documentos)
+                       — nunca dado real; as 10 da categoria pmes têm
+                       `termos` derivados de web3/demoConstants.ts e
+                       ligação com oferta real via mock/ofertasOnChain.ts
     nav-items.ts        itens de navegação compartilhados (Header/Footer)
 public/
   niara-pme-logo.png   logo oficial (globo + anel + "NIARA", PNG com fundo
