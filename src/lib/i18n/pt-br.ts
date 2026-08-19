@@ -727,7 +727,7 @@ export const ptBr = {
   negociar: {
     demoBanner: {
       label: "Demonstração",
-      text: "nenhuma oferta real disponível. Categorias e exemplos são ilustrativos.",
+      text: "categorias e exemplos são majoritariamente ilustrativos — ofertas com o selo \"Real — Sepolia\" envolvem transações reais na testnet, mas a empresa por trás continua fictícia.",
     },
     hub: {
       meta: {
