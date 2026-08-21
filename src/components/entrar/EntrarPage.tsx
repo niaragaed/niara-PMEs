@@ -9,6 +9,7 @@ import { TextField } from "@/components/perfil/FormField";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { isValidEmail } from "@/lib/masks";
 import { createClient } from "@/lib/supabase/client";
+import { resolvePosLoginDestino } from "@/app/entrar/actions";
 import type { AuthError } from "@supabase/supabase-js";
 
 type FormErrors = { email?: string; senha?: string };
@@ -73,10 +74,12 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
       return;
     }
     router.refresh();
-    // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver
-    // dados de investidor/empresa — cobre o caso de quem criou a conta mas
-    // não terminou o cadastro.
-    router.push("/perfil");
+    // Sócios (conta sem linha em investors/issuers, ver resolveSocio()) vão direto para
+    // /socios — senão cairiam no "completar cadastro" de /perfil. Para quem não é sócio,
+    // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver dados de
+    // investidor/empresa — cobre o caso de quem criou a conta mas não terminou o cadastro.
+    const destino = await resolvePosLoginDestino();
+    router.push(destino);
   }
 
   useEffect(() => {

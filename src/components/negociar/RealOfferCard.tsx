@@ -10,16 +10,14 @@ function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso));
 }
 
-// Card de oferta REAL (offerings.status = 'active'). Renderizado em dois
-// contextos, sempre a partir de CategoryPage.tsx: (1) investidor logado, com
-// isOwner=false — selo "Oferta real", leva à reserva na página de detalhe;
-// (2) issuer logado vendo a PRÓPRIA oferta (isOwner=true) — selo "Sua
-// oferta"; a página de detalhe (/investir/[offeringId]) já esconde o botão
-// de reserva sozinha para o dono, então nenhum outro ajuste é necessário
-// aqui além do texto do selo. Visualmente distinto do ShowcaseCard fictício
-// de propósito: selo sólido + anel salmão em volta do card, para ninguém
-// confundir os dois na mesma tela (REGRA DE HONESTIDADE).
-export function RealOfferCard({ oferta, isOwner = false }: { oferta: ActiveOfferingSummary; isOwner?: boolean }) {
+// Card de oferta REAL (offerings.status = 'active'), mostrado a um
+// investidor logado navegando as ofertas ativas de outras empresas nesta
+// categoria (CategoryPage.tsx, seção "ofertasReais"). Visualmente distinto
+// do ShowcaseCard fictício de propósito: selo sólido + anel salmão em volta
+// do card, para ninguém confundir os dois na mesma tela (REGRA DE
+// HONESTIDADE). A própria oferta do issuer logado usa um card à parte
+// (MyOfferCard.tsx), com selo neutro de demonstração — nunca este.
+export function RealOfferCard({ oferta }: { oferta: ActiveOfferingSummary }) {
   const t = ptBr.negociar.ofertaReal;
   const nome = oferta.issuerTradeName ?? oferta.issuerLegalName;
 
@@ -27,7 +25,7 @@ export function RealOfferCard({ oferta, isOwner = false }: { oferta: ActiveOffer
     <div className="flex h-full flex-col gap-3 rounded-lg bg-surface p-5 shadow-soft ring-2 ring-salmon">
       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-3 py-1 text-xs font-semibold text-on-salmon">
         <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-        {isOwner ? t.seloProprio : t.selo}
+        {t.selo}
       </span>
 
       <div className="flex items-center gap-3">

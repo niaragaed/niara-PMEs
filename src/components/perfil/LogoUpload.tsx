@@ -12,7 +12,16 @@ const MAX_SIZE_BYTES = 2 * 1024 * 1024;
 // da empresa, pública, e o envio é real: sobe pro Storage e grava em
 // issuers.logo_path via server action. A validação aqui é só cortesia de UX
 // — a autoridade é o servidor (uploadIssuerLogo, src/app/perfil/actions.ts).
-export function LogoUpload({ initialLogoUrl }: { initialLogoUrl: string | null }) {
+// `onUrlChange` é opcional — usado só por PersonalDataSection para manter a
+// "Prévia do card" (CardPreview.tsx) sincronizada em tempo real, sem tornar
+// este componente controlado (o estado de verdade continua local aqui).
+export function LogoUpload({
+  initialLogoUrl,
+  onUrlChange,
+}: {
+  initialLogoUrl: string | null;
+  onUrlChange?: (url: string | null) => void;
+}) {
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [error, setError] = useState<string | null>(null);
   const [justDid, setJustDid] = useState<"enviada" | "removida" | null>(null);
@@ -46,6 +55,7 @@ export function LogoUpload({ initialLogoUrl }: { initialLogoUrl: string | null }
         return;
       }
       setLogoUrl(result.logoUrl);
+      onUrlChange?.(result.logoUrl);
       setJustDid("enviada");
     });
   }
@@ -60,6 +70,7 @@ export function LogoUpload({ initialLogoUrl }: { initialLogoUrl: string | null }
         return;
       }
       setLogoUrl(null);
+      onUrlChange?.(null);
       setJustDid("removida");
     });
   }
@@ -72,6 +83,8 @@ export function LogoUpload({ initialLogoUrl }: { initialLogoUrl: string | null }
       <div className="mt-3 flex items-center gap-4">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-panel-border bg-military-600/40">
           {logoUrl ? (
+            // object-cover de propósito — mesmo recorte do card circular público (CardPreview.tsx
+            // reforça isso compondo banner+logo juntos; aqui é só a logo sozinha).
             // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image
             <img src={logoUrl} alt={t.logoAlt} className="h-full w-full object-cover" />
           ) : (

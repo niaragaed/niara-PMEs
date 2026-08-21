@@ -184,6 +184,12 @@ export const ptBr = {
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
     entrar: "Entrar",
+    contaMenu: {
+      abrirMenu: "Abrir menu da conta",
+      entrarOutraConta: "Entrar com outra conta",
+      sair: "Sair",
+      saindo: "Saindo…",
+    },
     negociar: "Negociar",
     ativos: "Ativos",
     perfil: "Perfil",
@@ -322,7 +328,7 @@ export const ptBr = {
     kyc: {
       naoVerificado: "Não verificado",
       aviso:
-        "A verificação de identidade (KYC) será exigida quando o produto entrar no ar. Nenhuma aprovação é simulada aqui.",
+        "O KYC desta demonstração é aprovado automaticamente, sem verificação real. A validação de identidade de verdade será implementada quando o produto entrar no ar.",
     },
     badges: {
       perfilPrefix: "Perfil",
@@ -360,11 +366,32 @@ export const ptBr = {
         removeLabel: "Remover",
         enviando: "Enviando…",
         selectLabel: "Selecionar arquivo de logo",
-        hint: "JPG, PNG ou WebP, até 2MB.",
+        hint: "JPG, PNG ou WebP, até 2MB. Imagem quadrada (ex.: 400×400) fica melhor no card.",
         invalidType: "Selecione um arquivo JPG, PNG ou WebP.",
         tooLarge: "A imagem deve ter até 2MB.",
         sucessoEnviada: "Logo enviada.",
         sucessoRemovida: "Logo removida.",
+      },
+      bannerEmpresa: {
+        title: "Banner da oferta",
+        subtitle:
+          "O banner é público — aparece como capa do card da sua oferta em /negociar, junto com a logo. Este envio é salvo de verdade.",
+        bannerAlt: "Banner da oferta",
+        sendLabel: "Enviar banner",
+        changeLabel: "Trocar",
+        removeLabel: "Remover",
+        enviando: "Enviando…",
+        selectLabel: "Selecionar arquivo de banner",
+        hint: "JPG, PNG ou WebP, até 3MB. Proporção larga (ex.: 1200×400) fica melhor no card.",
+        invalidType: "Selecione um arquivo JPG, PNG ou WebP.",
+        tooLarge: "A imagem deve ter até 3MB.",
+        sucessoEnviada: "Banner enviado.",
+        sucessoRemovida: "Banner removido.",
+      },
+      previaCard: {
+        title: "Prévia do card",
+        subtitle:
+          "Como o banner e a logo aparecem juntos no card da sua oferta em /negociar — o recorte é igual ao real, ajuste as imagens acima se ficar estranho.",
       },
       secaoPessoal: "Dados pessoais",
       secaoPublica: "Dados públicos da empresa",
@@ -747,7 +774,15 @@ export const ptBr = {
     },
     ofertaReal: {
       selo: "Oferta real · aceita reserva",
-      seloProprio: "Sua oferta",
+      metaCaptacao: "Meta de captação",
+      valorPorCota: "Valor por cota",
+      numeroCotas: "Número de cotas",
+      prazo: "Prazo",
+      naoInformado: "Não informado",
+      verOferta: "Ver oferta →",
+    },
+    minhaOfertaCard: {
+      selo: "Demonstração — criação de oferta",
       metaCaptacao: "Meta de captação",
       valorPorCota: "Valor por cota",
       numeroCotas: "Número de cotas",
@@ -828,6 +863,10 @@ export const ptBr = {
         "Oferta cadastrada pela sua empresa. Visível só para você, dono da oferta — sem opção de reserva.",
       vitrineTitle: "Exemplos (demonstração)",
       vitrineTitlePmesOnChain: "Ofertas PMEs (Sepolia real, empresas fictícias)",
+      filtroSetor: {
+        ariaLabel: "Filtrar por setor",
+        todos: "Todos",
+      },
       notaRodape:
         "Exemplos fictícios com valores simulados. Não constitui oferta pública de valores mobiliários. Ofertas dependem das autorizações aplicáveis da CVM.",
     },

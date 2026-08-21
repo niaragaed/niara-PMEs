@@ -5,6 +5,8 @@ import { Pencil } from "lucide-react";
 import { updateProfile, type LoadedProfile } from "@/app/perfil/actions";
 import { AvatarUpload } from "./AvatarUpload";
 import { LogoUpload } from "./LogoUpload";
+import { BannerUpload } from "./BannerUpload";
+import { CardPreview } from "./CardPreview";
 import { ReadField, SelectField, TextareaField, TextField } from "./FormField";
 import { ptBr } from "@/lib/i18n/pt-br";
 import {
@@ -137,6 +139,16 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
   const [justSaved, setJustSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  // Espelha o estado de LogoUpload/BannerUpload (via onUrlChange) só para
+  // alimentar a "Prévia do card" (CardPreview) em tempo real — nenhuma
+  // fonte de verdade nova, os dois uploads continuam donos do próprio estado.
+  const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(
+    profile.role === "issuer" ? profile.logoUrl : null,
+  );
+  const [previewBannerUrl, setPreviewBannerUrl] = useState<string | null>(
+    profile.role === "issuer" ? profile.bannerUrl : null,
+  );
+
   const t = ptBr.perfil.dadosCadastro;
   const documentoLabel = tipoPessoa === "pf" ? t.campos.documentoCpf : t.campos.documentoCnpj;
 
@@ -228,13 +240,31 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
         {t.title}
       </h2>
 
-      <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
-        <AvatarUpload />
-      </div>
+      {profile.role === "investor" && (
+        <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
+          <AvatarUpload />
+        </div>
+      )}
 
       {profile.role === "issuer" && (
         <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
-          <LogoUpload initialLogoUrl={profile.logoUrl} />
+          <LogoUpload initialLogoUrl={profile.logoUrl} onUrlChange={setPreviewLogoUrl} />
+        </div>
+      )}
+
+      {profile.role === "issuer" && (
+        <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
+          <BannerUpload initialBannerUrl={profile.bannerUrl} onUrlChange={setPreviewBannerUrl} />
+        </div>
+      )}
+
+      {profile.role === "issuer" && (
+        <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
+          <h3 className="text-sm font-semibold text-on-military">{t.previaCard.title}</h3>
+          <p className="mt-1 text-xs text-on-military-muted">{t.previaCard.subtitle}</p>
+          <div className="mt-3">
+            <CardPreview bannerUrl={previewBannerUrl} logoUrl={previewLogoUrl} />
+          </div>
         </div>
       )}
 

@@ -7,7 +7,6 @@ import { PersonalDataSection } from "./PersonalDataSection";
 import { MyOffersSection } from "./MyOffersSection";
 import { InvestorProfileSection } from "./InvestorProfileSection";
 import { WalletSection } from "./WalletSection";
-import { SignOutButton } from "@/components/conta/SignOutButton";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { LoadedProfile, OfferingSummary } from "@/app/perfil/actions";
 
@@ -38,12 +37,9 @@ export function PerfilPage({ profile, offerings, aviso, abrirTesteInvestidor }: 
         </div>
 
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.perfil.title}</h1>
-              <p className="mt-1 text-on-military-muted">{ptBr.perfil.subtitle}</p>
-            </div>
-            <SignOutButton />
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.perfil.title}</h1>
+            <p className="mt-1 text-on-military-muted">{ptBr.perfil.subtitle}</p>
           </div>
 
           {aviso === "apenas-empresa" && (

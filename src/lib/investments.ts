@@ -3,6 +3,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
+import { getIssuerBannerVersion, issuerBannerUrl } from "@/lib/storage/issuer-banner";
 
 // Conjunto de status que "ocupa" o hard_cap de uma oferta — mesmo conjunto
 // que o trigger enforce_offering_hard_cap usa (supabase/migrations/0001_core.sql).
@@ -16,7 +17,7 @@ export const CAP_OCCUPYING_STATUSES = ["reserved", "paid", "settled"];
 // /negociar (só chamado para investidor logado — ver CategoryPage.tsx).
 // REGRA DE OURO: lista branca explícita, nunca select('*') — traz só o
 // mínimo de vitrine (nome, setor, categoria, meta, valor por cota, cotas,
-// prazo). CNPJ, telefone, endereço completo, receita e wallet NUNCA são
+// prazo, logo/banner). CNPJ, telefone, endereço completo, receita e wallet NUNCA são
 // buscados aqui; quem precisa desses campos é a ficha completa em
 // /investir/[offeringId] (loadPublicOffering), que já aplica sua própria
 // lista branca mais ampla.
@@ -32,6 +33,7 @@ export type ActiveOfferingSummary = {
   opensAt: string;
   closesAt: string;
   logoUrl: string | null;
+  bannerUrl: string | null;
 };
 
 type ActiveOfferingIssuerRow = {
@@ -39,6 +41,7 @@ type ActiveOfferingIssuerRow = {
   trade_name: string | null;
   sector: string | null;
   logo_path: string | null;
+  banner_path: string | null;
 };
 
 type ActiveOfferingRow = {
@@ -70,7 +73,7 @@ export async function loadActiveOfferingsByCategory(
   const baseQuery = admin
     .from("offerings")
     .select(
-      "id, category, base_cap_cents, share_price_cents, opens_at, closes_at, issuers(legal_name, trade_name, sector, logo_path)",
+      "id, category, base_cap_cents, share_price_cents, opens_at, closes_at, issuers(legal_name, trade_name, sector, logo_path, banner_path)",
     )
     .eq("status", "active")
     .eq("category", category);
@@ -100,6 +103,9 @@ export async function loadActiveOfferingsByCategory(
       const logoUrl = issuerRow.logo_path
         ? issuerLogoUrl(issuerRow.logo_path, await getIssuerLogoVersion(admin, issuerRow.logo_path))
         : null;
+      const bannerUrl = issuerRow.banner_path
+        ? issuerBannerUrl(issuerRow.banner_path, await getIssuerBannerVersion(admin, issuerRow.banner_path))
+        : null;
 
       return {
         id: row.id,
@@ -113,6 +119,7 @@ export async function loadActiveOfferingsByCategory(
         opensAt: row.opens_at,
         closesAt: row.closes_at,
         logoUrl,
+        bannerUrl,
       };
     }),
   );
