@@ -26,6 +26,14 @@ import {
   isIssuerLogoMimeType,
   issuerLogoUrl,
 } from "@/lib/storage/issuer-logo";
+import {
+  getIssuerBannerVersion,
+  ISSUER_BANNER_BUCKET,
+  ISSUER_BANNER_EXT_BY_TYPE,
+  ISSUER_BANNER_MAX_BYTES,
+  isIssuerBannerMimeType,
+  issuerBannerUrl,
+} from "@/lib/storage/issuer-banner";
 
 type SharedFields = {
   email: string;
@@ -56,6 +64,7 @@ export type LoadedProfile =
       businessSummary: string; // idem
       publishCnpj: boolean; // opt-in — CNPJ (mascarado) na página pública da oferta (0009)
       logoUrl: string | null; // dado PÚBLICO — aparece na página da oferta (0010)
+      bannerUrl: string | null; // dado PÚBLICO — capa da oferta (0011)
     });
 
 export type UpdateProfileState =
@@ -125,7 +134,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
   const { data, error } = await admin
     .from("issuers")
     .select(
-      "legal_name, trade_name, tax_id, annual_revenue_cents, sector, business_summary, publish_cnpj, phone, wallet_address, logo_path, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
+      "legal_name, trade_name, tax_id, annual_revenue_cents, sector, business_summary, publish_cnpj, phone, wallet_address, logo_path, banner_path, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
     )
     .eq("id", accountId)
     .single();
@@ -137,6 +146,9 @@ export async function loadProfile(): Promise<LoadedProfile> {
 
   const logoUrl = data.logo_path
     ? issuerLogoUrl(data.logo_path, await getIssuerLogoVersion(admin, data.logo_path))
+    : null;
+  const bannerUrl = data.banner_path
+    ? issuerBannerUrl(data.banner_path, await getIssuerBannerVersion(admin, data.banner_path))
     : null;
 
   return {
@@ -151,6 +163,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
     businessSummary: data.business_summary ?? "",
     publishCnpj: data.publish_cnpj ?? false,
     logoUrl,
+    bannerUrl,
     phone: data.phone ?? "",
     walletAddress: data.wallet_address,
     cep: data.addr_cep ?? "",
@@ -543,6 +556,109 @@ export async function removeIssuerLogo(): Promise<UpdateProfileState> {
   if (error) {
     console.error("removeIssuerLogo: erro inesperado do banco", error);
     return { status: "error", message: "Não foi possível remover a logo. Tente novamente em instantes." };
+  }
+
+  revalidatePath("/perfil");
+  return { status: "success" };
+}
+
+// Banner de capa da oferta (0011) — mesmo padrão de uploadIssuerLogo/
+// removeIssuerLogo acima, bucket público próprio ('issuer-banners'). Só
+// role='issuer' pode chamar; accountId sempre de resolveAccount() (sessão
+// no servidor). Tipo/tamanho validados AQUI, não só no input do navegador
+// (BannerUpload.tsx) — essa validação é só cortesia de UX.
+export type UploadBannerState = { status: "success"; bannerUrl: string } | { status: "error"; message: string };
+
+export async function uploadIssuerBanner(formData: FormData): Promise<UploadBannerState> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/entrar");
+  }
+
+  const { role, accountId } = await resolveAccount();
+  if (role !== "issuer" || !accountId) {
+    return { status: "error", message: "Apenas empresas podem enviar banner." };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return { status: "error", message: "Selecione um arquivo de imagem." };
+  }
+  if (!isIssuerBannerMimeType(file.type)) {
+    return { status: "error", message: "Formato inválido — envie um arquivo JPG, PNG ou WebP." };
+  }
+  if (file.size > ISSUER_BANNER_MAX_BYTES) {
+    return { status: "error", message: "A imagem deve ter até 3MB." };
+  }
+
+  const admin = createAdminClient();
+  const path = `${accountId}/banner.${ISSUER_BANNER_EXT_BY_TYPE[file.type]}`;
+
+  const { data: current } = await admin.from("issuers").select("banner_path").eq("id", accountId).single();
+  const previousPath = current?.banner_path ?? null;
+
+  const { error: uploadError } = await admin.storage.from(ISSUER_BANNER_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+  });
+  if (uploadError) {
+    console.error("uploadIssuerBanner: falha no upload", uploadError);
+    return { status: "error", message: "Não foi possível enviar o banner. Tente novamente em instantes." };
+  }
+
+  const { error: dbError } = await admin.from("issuers").update({ banner_path: path }).eq("id", accountId);
+  if (dbError) {
+    console.error("uploadIssuerBanner: falha ao gravar banner_path", dbError);
+    return { status: "error", message: "Não foi possível salvar o banner. Tente novamente em instantes." };
+  }
+
+  // Mesma pegadinha de uploadIssuerLogo: extensão pode mudar entre uploads
+  // (ex.: png -> jpg), e o upsert só sobrescreve quando o caminho é
+  // idêntico — sem esta limpeza o arquivo anterior fica órfão no bucket.
+  if (previousPath && previousPath !== path) {
+    const { error: removeOldError } = await admin.storage.from(ISSUER_BANNER_BUCKET).remove([previousPath]);
+    if (removeOldError) {
+      console.error("uploadIssuerBanner: falha ao remover banner anterior", removeOldError);
+    }
+  }
+
+  const version = await getIssuerBannerVersion(admin, path);
+  revalidatePath("/perfil");
+  return { status: "success", bannerUrl: issuerBannerUrl(path, version)! };
+}
+
+export async function removeIssuerBanner(): Promise<UpdateProfileState> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/entrar");
+  }
+
+  const { role, accountId } = await resolveAccount();
+  if (role !== "issuer" || !accountId) {
+    return { status: "error", message: "Apenas empresas podem remover o banner." };
+  }
+
+  const admin = createAdminClient();
+  const { data: current } = await admin.from("issuers").select("banner_path").eq("id", accountId).single();
+  const path = current?.banner_path ?? null;
+
+  if (path) {
+    const { error: removeError } = await admin.storage.from(ISSUER_BANNER_BUCKET).remove([path]);
+    if (removeError) {
+      console.error("removeIssuerBanner: falha ao remover arquivo do bucket", removeError);
+    }
+  }
+
+  const { error } = await admin.from("issuers").update({ banner_path: null }).eq("id", accountId);
+  if (error) {
+    console.error("removeIssuerBanner: erro inesperado do banco", error);
+    return { status: "error", message: "Não foi possível remover o banner. Tente novamente em instantes." };
   }
 
   revalidatePath("/perfil");

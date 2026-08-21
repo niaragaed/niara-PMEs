@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { CategoryChip } from "./CategoryChip";
 import { ShowcaseCard } from "./ShowcaseCard";
-import { PmesOnChainCard } from "./PmesOnChainCard";
+import { PmesSectorFilter, type PmesCardData } from "./PmesSectorFilter";
 import { RealOfferCard } from "./RealOfferCard";
+import { MyOfferCard } from "./MyOfferCard";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { getOfertasByCategoria } from "@/lib/mock/ofertas";
@@ -36,6 +37,19 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
   const ofertasReais = role === "investor" ? await loadActiveOfferingsByCategory(categoria) : [];
   const ofertasProprias =
     role === "issuer" && accountId ? await loadActiveOfferingsByCategory(categoria, accountId) : [];
+
+  // getOnChainIndexBySlug/getOfertaAssetPaths precisam rodar aqui (server —
+  // o último é fs-based) mesmo com o filtro de setor sendo client-side
+  // (PmesSectorFilter.tsx): resolve tudo antes e passa a lista já pronta.
+  const pmesCards: PmesCardData[] =
+    categoria === "pmes"
+      ? ofertas.flatMap((oferta) => {
+          const onChainIndex = getOnChainIndexBySlug(oferta.slug);
+          if (onChainIndex === null) return [];
+          const assets = getOfertaAssetPaths(oferta.slug);
+          return [{ oferta, bannerUrl: assets.bannerUrl, logoUrl: assets.logoUrl }];
+        })
+      : [];
 
   return (
     <main className="flex flex-1 flex-col bg-military">
@@ -113,7 +127,7 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
             <p className="mt-1 text-xs text-on-military-muted">{tt.suaOfertaNota}</p>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {ofertasProprias.map((oferta) => (
-                <RealOfferCard key={oferta.id} oferta={oferta} isOwner />
+                <MyOfferCard key={oferta.id} oferta={oferta} />
               ))}
             </div>
           </div>
@@ -123,23 +137,15 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
           <h2 className="text-xl font-semibold text-on-military">
             {categoria === "pmes" ? tt.vitrineTitlePmesOnChain : tt.vitrineTitle}
           </h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {categoria === "pmes"
-              ? ofertas.map((oferta) => {
-                  const onChainIndex = getOnChainIndexBySlug(oferta.slug);
-                  if (onChainIndex === null) return null;
-                  const assets = getOfertaAssetPaths(oferta.slug);
-                  return (
-                    <PmesOnChainCard
-                      key={oferta.slug}
-                      oferta={oferta}
-                      bannerUrl={assets.bannerUrl}
-                      logoUrl={assets.logoUrl}
-                    />
-                  );
-                })
-              : ofertas.map((oferta) => <ShowcaseCard key={oferta.slug} oferta={oferta} />)}
-          </div>
+          {categoria === "pmes" ? (
+            <PmesSectorFilter items={pmesCards} />
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ofertas.map((oferta) => (
+                <ShowcaseCard key={oferta.slug} oferta={oferta} />
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="mt-10 text-xs text-on-military-muted">{tt.notaRodape}</p>

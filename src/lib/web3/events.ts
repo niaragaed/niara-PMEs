@@ -44,20 +44,30 @@ export type EventoOnChain = {
 function publicClient() {
   return createPublicClient({
     chain: sepolia,
-    transport: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL),
+    // `batch: true` funde várias chamadas JSON-RPC feitas na mesma volta do event loop numa
+    // única requisição HTTP — essencial no RPC público padrão (sem NEXT_PUBLIC_SEPOLIA_RPC_URL
+    // dedicado), que já devolveu 429 ("public-good RPC with strict rate limits") mesmo com
+    // poucas chamadas simultâneas via mapWithConcurrency; o limite ali é por requisição HTTP,
+    // não só por chamada lógica.
+    transport: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL, { batch: true }),
   });
 }
 
-function abiEvent(nome: TipoEventoOnChain): AbiEvent {
+// Todos os 6 eventos, uma única vez — usados juntos num só filtro `events` (não `event`) por
+// chamada getLogs, em vez de 1 chamada RPC por tipo.
+const ABI_EVENTS: AbiEvent[] = EVENT_NAMES.map((nome) => {
   const item = ofertaCaptacaoAbi.find((entry) => entry.type === "event" && entry.name === nome);
   if (!item) throw new Error(`Evento ${nome} não encontrado no ABI de OfertaCaptacao`);
   return item as AbiEvent;
-}
+});
 
-function parseLog(log: Log, tipo: TipoEventoOnChain, ofertaAddress: `0x${string}`, ofertaIndex: number): EventoOnChain {
-  // `args` só existe em runtime depois do parseAbiItem interno do viem (getLogs com `event`
-  // decodifica automaticamente) — checagem defensiva mantém o TS satisfeito sem `any`.
-  const args = (log as Log & { args?: Record<string, unknown> }).args ?? {};
+type LogDecodificado = Log & { eventName?: string; args?: Record<string, unknown> };
+
+function parseLog(log: LogDecodificado, ofertaAddress: `0x${string}`, ofertaIndex: number): EventoOnChain | null {
+  const tipo = log.eventName as TipoEventoOnChain | undefined;
+  if (!tipo || !EVENT_NAMES.includes(tipo)) return null;
+
+  const args = log.args ?? {};
 
   return {
     tipo,
@@ -72,37 +82,90 @@ function parseLog(log: Log, tipo: TipoEventoOnChain, ofertaAddress: `0x${string}
   };
 }
 
+// Vários provedores de RPC (inclusive o público padrão do viem para Sepolia) limitam
+// eth_getLogs a um intervalo de blocos. Como FROM_BLOCK é fixo e o bloco atual só cresce com o
+// tempo, [FROM_BLOCK, latest] eventualmente estoura esse limite — por isso o intervalo é sempre
+// dividido em janelas de no máximo CHUNK_SIZE blocos, nunca uma chamada só com toBlock: "latest"
+// direto. 🔴 1.000, não 10.000: o RPC público padrão para Sepolia sem NEXT_PUBLIC_SEPOLIA_RPC_URL
+// dedicado é o do thirdweb (fallback embutido no `sepolia` de wagmi/chains), que rejeita
+// (code -32005 "Log response size exceeded") qualquer janela acima de 1.000 blocos — confirmado
+// batendo o erro real contra o RPC antes de escrever isto; um valor maior passaria em outros
+// provedores mas quebra no fallback público que este projeto de fato usa por padrão.
+const CHUNK_SIZE = BigInt(1_000);
+
+function calcularJanelas(fromBlock: bigint, toBlock: bigint): Array<{ from: bigint; to: bigint }> {
+  const janelas: Array<{ from: bigint; to: bigint }> = [];
+  for (let inicio = fromBlock; inicio <= toBlock; inicio += CHUNK_SIZE) {
+    const fim = inicio + CHUNK_SIZE - BigInt(1) > toBlock ? toBlock : inicio + CHUNK_SIZE - BigInt(1);
+    janelas.push({ from: inicio, to: fim });
+  }
+  return janelas;
+}
+
+// O RPC público padrão (sem NEXT_PUBLIC_SEPOLIA_RPC_URL dedicado) tem rate limit estrito —
+// confirmado batendo 429 ("public-good RPC with strict rate limits") ao disparar dezenas de
+// getLogs em paralelo (1 por oferta × janela). Limita quantas chamadas ficam em voo ao mesmo
+// tempo em vez de um Promise.all sem controle; sobe com o tempo (mais janelas de bloco), então
+// o limite passa a importar mesmo quando hoje o número de ofertas × janelas ainda é pequeno.
+const RPC_CONCURRENCY = 5;
+
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const resultados: R[] = new Array(items.length);
+  let proximo = 0;
+
+  async function worker() {
+    while (proximo < items.length) {
+      const indice = proximo++;
+      resultados[indice] = await fn(items[indice]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return resultados;
+}
+
 /**
  * Lê todos os eventos de todas as ofertas configuradas (NEXT_PUBLIC_OFERTAS_ONCHAIN), mais
  * recentes primeiro. Retorna lista vazia (nunca lança) se nenhuma oferta estiver configurada.
+ * Uma chamada getLogs por janela de blocos (não por oferta × janela) — todas as ofertas juntas
+ * via `address: Address[]` e os 6 tipos de evento juntos via `events`, já que viem/eth_getLogs
+ * aceita os dois como lista no mesmo filtro. Reduz N ofertas × M janelas para só M chamadas,
+ * limitadas a RPC_CONCURRENCY em voo por vez.
  */
 export async function getEventosOnChain(): Promise<EventoOnChain[]> {
   const addresses = getOnChainAddresses();
   if (!addresses) return [];
 
   const client = publicClient();
-  const eventos: EventoOnChain[] = [];
+  const blocoAtual = await client.getBlockNumber();
+  const janelas = calcularJanelas(FROM_BLOCK, blocoAtual);
+  const indexPorEndereco = new Map(addresses.ofertas.map((oferta, indice) => [oferta.oferta.toLowerCase(), indice]));
 
-  for (let ofertaIndex = 0; ofertaIndex < addresses.ofertas.length; ofertaIndex++) {
-    const ofertaAddress = addresses.ofertas[ofertaIndex].oferta;
+  const porJanela = await mapWithConcurrency(janelas, RPC_CONCURRENCY, async (janela) => {
+    const logs = (await client.getLogs({
+      address: addresses.ofertas.map((oferta) => oferta.oferta),
+      events: ABI_EVENTS,
+      fromBlock: janela.from,
+      toBlock: janela.to,
+    })) as LogDecodificado[];
 
-    for (const tipo of EVENT_NAMES) {
-      const logs = await client.getLogs({
-        address: ofertaAddress,
-        event: abiEvent(tipo),
-        fromBlock: FROM_BLOCK,
-        toBlock: "latest",
-      });
+    return logs
+      .map((log) => {
+        const ofertaAddress = log.address as `0x${string}`;
+        const ofertaIndex = indexPorEndereco.get(ofertaAddress.toLowerCase());
+        if (ofertaIndex === undefined) return null;
+        return parseLog(log, ofertaAddress, ofertaIndex);
+      })
+      .filter((evento): evento is EventoOnChain => evento !== null);
+  });
 
-      for (const log of logs) {
-        eventos.push(parseLog(log, tipo, ofertaAddress, ofertaIndex));
-      }
-    }
-  }
+  const eventos = porJanela.flat();
 
-  // Preenche timestamp (1 chamada por bloco único, não por evento).
+  // Preenche timestamp (1 chamada por bloco único, não por evento), mesma limitação de concorrência.
   const blocosUnicos = [...new Set(eventos.map((evento) => evento.blockNumber))];
-  const blocos = await Promise.all(blocosUnicos.map((numero) => client.getBlock({ blockNumber: numero })));
+  const blocos = await mapWithConcurrency(blocosUnicos, RPC_CONCURRENCY, (numero) =>
+    client.getBlock({ blockNumber: numero }),
+  );
   const timestampPorBloco = new Map(blocos.map((bloco) => [bloco.number, Number(bloco.timestamp)]));
   for (const evento of eventos) {
     evento.timestamp = timestampPorBloco.get(evento.blockNumber) ?? null;
@@ -137,10 +200,8 @@ export async function getResumoOnChain(eventos: EventoOnChain[]): Promise<Resumo
     client.readContract({ address: addresses.mockBrl, abi: mockBrlAbi, functionName: "symbol" }),
   ]);
 
-  const taxaBpsPorOferta = await Promise.all(
-    addresses.ofertas.map((oferta) =>
-      client.readContract({ address: oferta.oferta, abi: ofertaCaptacaoAbi, functionName: "taxaBps" }),
-    ),
+  const taxaBpsPorOferta = await mapWithConcurrency(addresses.ofertas, RPC_CONCURRENCY, (oferta) =>
+    client.readContract({ address: oferta.oferta, abi: ofertaCaptacaoAbi, functionName: "taxaBps" }),
   );
 
   const aportes = eventos.filter((evento) => evento.tipo === "Aporte");
