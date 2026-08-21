@@ -9,7 +9,10 @@ const plataformaLinks = NAV_ITEMS.filter((item) => !item.children);
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-surface-alt">
+    // isolate: garante que o Footer sempre pinte por cima do SectionGlow (fixed, -z-10) das
+    // telas internas quando as caixas se sobrepõem perto do fim da rolagem — ver comentário
+    // "EFEITO COLATERAL" em src/components/ui/SectionGlow.tsx para o porquê.
+    <footer className="isolate border-t border-border bg-surface-alt">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-12 sm:grid-cols-4">
         <div className="col-span-2 flex flex-col gap-3 sm:col-span-1">
           <Logo />

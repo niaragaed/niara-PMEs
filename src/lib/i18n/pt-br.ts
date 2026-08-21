@@ -1526,7 +1526,8 @@ export const ptBr = {
     encerrar: {
       title: "4. Encerrar a oferta",
       descricao:
-        "Ação permissionless — qualquer carteira conectada pode encerrar assim que o prazo terminar ou o total arrecadado atingir a meta máxima exatamente.",
+        "O contrato em si é permissionless — qualquer carteira poderia encerrar diretamente na rede assim que o prazo terminar ou o total arrecadado atingir a meta máxima exatamente. Nesta interface, por enquanto, o botão abaixo fica disponível só para a equipe Niara.",
+      restrito: "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara.",
       botao: "Encerrar oferta",
       assinando: "Aguardando assinatura…",
       confirmando: "Confirmando na rede…",

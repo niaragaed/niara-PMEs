@@ -7,6 +7,7 @@ import { PortfolioEvolutionChart } from "./PortfolioEvolutionChart";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { PositionsTable } from "./PositionsTable";
 import { RealPositionCard } from "./RealPositionCard";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type Tab = "carteira" | "disponiveis";
@@ -15,7 +16,8 @@ export function AtivosPage() {
   const [tab, setTab] = useState<Tab>("carteira");
 
   return (
-    <main className="flex flex-1 flex-col bg-military">
+    <main className="isolate flex flex-1 flex-col bg-military">
+      <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
         <span className="font-semibold text-salmon">{ptBr.ativos.demoBanner.label}</span> —{" "}
         {ptBr.ativos.demoBanner.text}

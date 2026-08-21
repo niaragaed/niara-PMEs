@@ -5,6 +5,7 @@ import { ptBr } from "@/lib/i18n/pt-br";
 import { getOfertaBySlug } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
+import { resolveSocio } from "@/lib/auth/resolveSocio";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -37,6 +38,9 @@ export default async function Page({ params }: PageProps) {
   // checar o filesystem: nunca vai haver arquivo, OfertaBanner já mostra o placeholder sozinho.
   const assets = oferta.categoria === "pmes" ? getOfertaAssetPaths(oferta.slug) : { bannerUrl: null, logoUrl: null };
   const onChainIndex = oferta.categoria === "pmes" ? getOnChainIndexBySlug(oferta.slug) : null;
+  // Só importa quando onChainIndex !== null (decide o botão "Encerrar oferta" do painel
+  // on-chain) — resolver sempre é mais simples que condicionar, e resolveSocio() não redireciona.
+  const { autorizado: isSocio } = await resolveSocio();
 
   return (
     <OfertaDetailPage
@@ -44,6 +48,7 @@ export default async function Page({ params }: PageProps) {
       bannerUrl={assets.bannerUrl}
       logoUrl={assets.logoUrl}
       onChainIndex={onChainIndex}
+      isSocio={isSocio}
     />
   );
 }

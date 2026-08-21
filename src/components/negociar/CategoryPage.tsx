@@ -11,6 +11,7 @@ import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { loadActiveOfferingsByCategory } from "@/lib/investments";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 
 // Template reutilizado pelas 5 rotas de categoria (/negociar/token-pmes,
 // token-agro, token-imobiliario, token-auto, titulos-de-divida) — muda só
@@ -52,7 +53,8 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
       : [];
 
   return (
-    <main className="flex flex-1 flex-col bg-military">
+    <main className="isolate flex flex-1 flex-col bg-military">
+      <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
         <span className="font-semibold text-salmon">{ptBr.negociar.demoBanner.label}</span> —{" "}
         {ptBr.negociar.demoBanner.text}

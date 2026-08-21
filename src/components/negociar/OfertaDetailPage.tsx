@@ -9,6 +9,7 @@ import { FinanceiroChart } from "./FinanceiroChart";
 import { FundamentalIndicators } from "./FundamentalIndicators";
 import { OfertaBanner } from "./OfertaBanner";
 import { OrderTicket } from "./OrderTicket";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
@@ -19,18 +20,21 @@ export function OfertaDetailPage({
   bannerUrl = null,
   logoUrl = null,
   onChainIndex = null,
+  isSocio = false,
 }: {
   oferta: Oferta;
   bannerUrl?: string | null;
   logoUrl?: string | null;
   onChainIndex?: number | null;
+  isSocio?: boolean;
 }) {
   const [ticketOpen, setTicketOpen] = useState(false);
   const t = ptBr.negociar.oferta;
   const isOnChain = onChainIndex !== null;
 
   return (
-    <main className="flex flex-1 flex-col bg-military">
+    <main className="isolate flex flex-1 flex-col bg-military">
+      <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
         <span className="font-semibold text-salmon">{ptBr.common.demonstracao}</span> —{" "}
         {isOnChain ? t.demoBannerOnChain : t.demoBanner}
@@ -80,7 +84,7 @@ export function OfertaDetailPage({
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
                   {t.avisoMisto}
                 </p>
-                <RealOnChainInvestPanel ofertaIndex={onChainIndex} />
+                <RealOnChainInvestPanel ofertaIndex={onChainIndex} isSocio={isSocio} />
               </>
             )}
 

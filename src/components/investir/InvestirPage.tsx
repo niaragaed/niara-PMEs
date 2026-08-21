@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { confirmInvestment, type ConfirmInvestmentState } from "@/app/investir/actions";
 import { submitKyc } from "@/app/investir/kyc-actions";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 
@@ -78,7 +79,8 @@ export function InvestirPage({
   }
 
   return (
-    <main className="flex flex-1 flex-col bg-military">
+    <main className="isolate flex flex-1 flex-col bg-military">
+      <SectionGlow />
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.titulo}</h1>
         <p className="mt-2 text-sm text-on-military-muted">{t.subtitulo}</p>

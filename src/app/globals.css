@@ -114,6 +114,18 @@
   --animate-dropdown: dropdown-in 150ms ease-out forwards;
 }
 
+/* Efeito de luz de fundo das telas internas de fundo sálvia cheio (SectionGlow.tsx —
+   /negociar, /ativos, /perfil, /investir). Ajuste aqui pra calibrar sem precisar mexer no
+   componente nem em Tailwind: cor (sempre um token já existente — hoje --color-salmon, o mesmo
+   pêssego oficial dos selos/CTAs — nunca um hex novo) e intensidade de cada um dos dois glows
+   (primário = mais forte/maior, secundário = mais discreto). Ambos em porcentagem, direto como
+   o argumento de color-mix() em SectionGlow.tsx — sem precisar de calc(). */
+:root {
+  --section-glow-color: var(--color-salmon);
+  --section-glow-opacity-primary: 38%;
+  --section-glow-opacity-secondary: 22%;
+}
+
 @keyframes dropdown-in {
   from {
     opacity: 0;
@@ -144,11 +156,48 @@
   }
 }
 
+/* Drift muito lento e opcional dos glows de fundo (SectionGlow.tsx) — secundário nesta versão
+   (o que importa é cor/intensidade, não o movimento). "from"/"to" idênticos de propósito, mesma
+   técnica do anel do hero acima: sob prefers-reduced-motion (regra global abaixo reduz a 1
+   iteração quase instantânea), o elemento cai exatamente no estado neutro sem tratamento
+   especial. Só transform (translate + scale) — nunca propriedades que geram repaint/layout. */
+@keyframes section-glow-drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, -3%, 0) scale(1.06);
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes section-glow-drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-3%, 3%, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 @layer utilities {
   .hero-orbit-ring {
     transform-box: fill-box;
     transform-origin: center;
     animation: hero-orbit-ring-spin 56s linear infinite forwards;
+  }
+
+  .animate-section-glow-a {
+    animation: section-glow-drift-a 50s ease-in-out infinite forwards;
+  }
+
+  .animate-section-glow-b {
+    animation: section-glow-drift-b 62s ease-in-out infinite forwards;
   }
 }
 

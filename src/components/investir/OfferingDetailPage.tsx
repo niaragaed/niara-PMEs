@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, BadgeCheck, Building2, X } from "lucide-react";
 import { reserveInvestment, type PublicOffering, type ReserveInvestmentState } from "@/app/investir/actions";
 import { TextField } from "@/components/perfil/FormField";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { DOCUMENTOS_PADRAO } from "@/lib/mock/ofertas";
@@ -113,7 +114,8 @@ export function OfferingDetailPage({ oferta, isOwner }: { oferta: PublicOffering
       : Math.trunc(oferta.baseCapCents / oferta.sharePriceCents);
 
   return (
-    <main className="flex flex-1 flex-col bg-military">
+    <main className="isolate flex flex-1 flex-col bg-military">
+      <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
         {t.avisoReal}
       </div>
