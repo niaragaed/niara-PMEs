@@ -6,7 +6,7 @@ import { RealOnChainInvestPanel } from "./RealOnChainInvestPanel";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-export function OnChainInvestPage() {
+export function OnChainInvestPage({ isSocio = false }: { isSocio?: boolean }) {
   const t = ptBr.investirOnChain;
 
   // Várias ofertas podem estar configuradas ao mesmo tempo (demo presencial — ver
@@ -58,7 +58,7 @@ export function OnChainInvestPage() {
             </label>
           )}
 
-          <RealOnChainInvestPanel key={ofertaIndex} ofertaIndex={ofertaIndex} />
+          <RealOnChainInvestPanel key={ofertaIndex} ofertaIndex={ofertaIndex} isSocio={isSocio} />
         </div>
       </div>
     </main>

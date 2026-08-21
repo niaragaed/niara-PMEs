@@ -8,6 +8,12 @@
 // O chamador é responsável por remontar este componente ao trocar de oferta
 // (`key={ofertaIndex}`) — isso reseta de graça todo o estado local (quantidade, status de
 // invest/encerrar/resgatar, campo do faucet), sem precisar de resets manuais.
+//
+// `isSocio` (resolvido no servidor via resolveSocio(), repassado pelas duas páginas host —
+// OnChainInvestPage.tsx e OfertaDetailPage.tsx) só bloqueia o BOTÃO "Encerrar oferta" nesta
+// interface — o contrato OfertaCaptacao.encerrar() continua permissionless de verdade (qualquer
+// carteira poderia chamar via Etherscan/outro dApp); é uma restrição de produto, não uma
+// mudança na regra on-chain. Nunca usar isso para decidir mostrar/esconder o resto do painel.
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
@@ -109,7 +115,13 @@ function FaucetCard({
   );
 }
 
-export function RealOnChainInvestPanel({ ofertaIndex }: { ofertaIndex: number }) {
+export function RealOnChainInvestPanel({
+  ofertaIndex,
+  isSocio = false,
+}: {
+  ofertaIndex: number;
+  isSocio?: boolean;
+}) {
   const t = ptBr.investirOnChain;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
@@ -369,7 +381,7 @@ export function RealOnChainInvestPanel({ ofertaIndex }: { ofertaIndex: number })
           <p className="text-sm text-on-military-muted">{t.encerrar.descricao}</p>
           <button
             type="button"
-            disabled={encerrar.status === "assinando" || encerrar.status === "confirmando"}
+            disabled={!isSocio || encerrar.status === "assinando" || encerrar.status === "confirmando"}
             onClick={handleEncerrar}
             className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -379,6 +391,7 @@ export function RealOnChainInvestPanel({ ofertaIndex }: { ofertaIndex: number })
                 ? t.encerrar.confirmando
                 : t.encerrar.botao}
           </button>
+          {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.encerrar.restrito}</p>}
           {encerrar.status === "sucesso" && (
             <p role="status" className="mt-3 text-sm text-value-positive">
               {t.encerrar.sucesso}

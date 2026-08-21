@@ -6,6 +6,7 @@ import type { TokenCategory } from "@/lib/mock/ativos";
 import { getOfertaBySlug, VITRINE_HUB_SLUGS, type Oferta } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 
 const CATEGORIES: TokenCategory[] = ["pmes", "agro", "imobiliario", "auto", "divida"];
 
@@ -13,7 +14,8 @@ export function HubPage() {
   const vitrine = VITRINE_HUB_SLUGS.map(getOfertaBySlug).filter((oferta): oferta is Oferta => oferta !== undefined);
 
   return (
-    <main className="flex flex-1 flex-col bg-military">
+    <main className="isolate flex flex-1 flex-col bg-military">
+      <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
         <span className="font-semibold text-salmon">{ptBr.negociar.demoBanner.label}</span> —{" "}
         {ptBr.negociar.demoBanner.text}

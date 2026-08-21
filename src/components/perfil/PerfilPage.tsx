@@ -7,6 +7,7 @@ import { PersonalDataSection } from "./PersonalDataSection";
 import { MyOffersSection } from "./MyOffersSection";
 import { InvestorProfileSection } from "./InvestorProfileSection";
 import { WalletSection } from "./WalletSection";
+import { SectionGlow } from "@/components/ui/SectionGlow";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { LoadedProfile, OfferingSummary } from "@/app/perfil/actions";
 
@@ -20,7 +21,8 @@ type PerfilPageProps = {
 export function PerfilPage({ profile, offerings, aviso, abrirTesteInvestidor }: PerfilPageProps) {
   return (
     <PerfilProvider>
-      <main className="flex flex-1 flex-col bg-military">
+      <main className="isolate flex flex-1 flex-col bg-military">
+        <SectionGlow />
         <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
           <span className="font-semibold text-salmon">{ptBr.perfil.demoBanner.label}</span> —{" "}
           {ptBr.perfil.demoBanner.text}
