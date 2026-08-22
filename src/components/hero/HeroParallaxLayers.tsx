@@ -22,8 +22,6 @@ export function HeroParallaxLayers() {
   const orbitRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
     const hero = document.getElementById("hero");
     if (!hero) return;
 

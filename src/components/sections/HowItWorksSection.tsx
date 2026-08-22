@@ -18,13 +18,11 @@ export function HowItWorksSection() {
 
   // Sequência "pinned": a seção fica presa na tela enquanto o scroll avança
   // por um trecho longo, e cada card ocupa o palco por vez (crossfade). Sem
-  // JS ou com prefers-reduced-motion, os cards continuam em fluxo vertical
-  // normal — o JSX abaixo nunca muda; só aplicamos position:absolute/opacity
-  // via gsap.set (estilo inline imperativo), então não há divergência de
-  // markup entre servidor e cliente.
+  // JS, os cards continuam em fluxo vertical normal — o JSX abaixo nunca
+  // muda; só aplicamos position:absolute/opacity via gsap.set (estilo
+  // inline imperativo), então não há divergência de markup entre servidor
+  // e cliente.
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
     const section = sectionRef.current;
     const cards = cardRefs.current.filter((el): el is HTMLDivElement => el !== null);
     if (!section || cards.length < 2) return;

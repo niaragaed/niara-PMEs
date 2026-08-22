@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { ReactLenis, useLenis } from "lenis/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -50,24 +50,9 @@ function GsapScrollSync() {
 }
 
 export function LenisProvider({ children }: { children: ReactNode }) {
-  const [reducedMotion, setReducedMotion] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
-
-  // Com prefers-reduced-motion, não habilita o Lenis — o scroll nativo do
-  // navegador (sem inércia) é usado, e teclado/âncoras funcionam sem
-  // nenhuma interceptação de JS.
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    function onChange(event: MediaQueryListEvent) {
-      setReducedMotion(event.matches);
-    }
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
-
-  if (reducedMotion) return children;
-
+  // Decisão deliberada do usuário: as animações do site sempre tocam,
+  // mesmo com prefers-reduced-motion ativo no SO/navegador — não
+  // desligamos mais o Lenis/GSAP nesse caso (ver CLAUDE.md).
   return (
     <ReactLenis root options={{ autoRaf: false, lerp: 0.1, duration: 1.2 }}>
       <GsapScrollSync />

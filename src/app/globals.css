@@ -138,15 +138,11 @@
 }
 
 /* Rotação lenta do anel do planeta no hero. "to" fecha em 342deg (= -18deg
-   + 360, a inclinação estática original do traço) em vez de 360deg puro:
-   assim, quando a regra global de prefers-reduced-motion abaixo reduz a
-   animação a uma única iteração quase instantânea, o estado final
-   (rotate(342deg)) é visualmente idêntico à inclinação estática original
-   (342deg ≡ -18deg em módulo 360) — sem precisar de uma media query própria
-   para pausar/travar o traço num ângulo diferente. Precisa de
-   `forwards`: sem fill-mode, ao terminar a única iteração o navegador
-   descarta o valor do "to" e o transform volta a `none` (perde a
-   inclinação por completo) em vez de ficar parado em 342deg. */
+   + 360, a inclinação estática original do traço) em vez de 360deg puro,
+   então cada volta completa passa de novo pela inclinação original antes
+   de recomeçar. Roda em loop infinito (ver regra de uso abaixo) — as
+   animações do site sempre tocam, não são pausadas por
+   prefers-reduced-motion (decisão deliberada do usuário, ver CLAUDE.md). */
 @keyframes hero-orbit-ring-spin {
   from {
     transform: rotate(-18deg);
@@ -157,10 +153,8 @@
 }
 
 /* Drift muito lento e opcional dos glows de fundo (SectionGlow.tsx) — secundário nesta versão
-   (o que importa é cor/intensidade, não o movimento). "from"/"to" idênticos de propósito, mesma
-   técnica do anel do hero acima: sob prefers-reduced-motion (regra global abaixo reduz a 1
-   iteração quase instantânea), o elemento cai exatamente no estado neutro sem tratamento
-   especial. Só transform (translate + scale) — nunca propriedades que geram repaint/layout. */
+   (o que importa é cor/intensidade, não o movimento). Só transform (translate + scale) —
+   nunca propriedades que geram repaint/layout. */
 @keyframes section-glow-drift-a {
   from {
     transform: translate3d(0, 0, 0) scale(1);
@@ -237,13 +231,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* Removida de propósito a regra global @media (prefers-reduced-motion:
+   reduce) que zerava duração de animação/transição — decisão deliberada do
+   usuário: as animações do site sempre tocam por completo, independente da
+   preferência de SO/navegador do visitante (ver CLAUDE.md). */
