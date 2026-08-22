@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import type { ReactNode } from "react";
 
 const variants: Variants = {
@@ -8,8 +8,9 @@ const variants: Variants = {
   visible: { opacity: 1, y: 0 },
 };
 
-// Revela o conteúdo com fade + slide ao entrar na viewport. Com
-// prefers-reduced-motion, aparece direto no estado final (sem transform).
+// Revela o conteúdo com fade + slide ao entrar na viewport. Sempre anima —
+// decisão deliberada do usuário: não respeitamos mais prefers-reduced-motion
+// aqui (ver CLAUDE.md).
 export function Reveal({
   children,
   className,
@@ -19,12 +20,10 @@ export function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const reducedMotion = useReducedMotion();
-
   return (
     <motion.div
       className={className}
-      initial={reducedMotion ? "visible" : "hidden"}
+      initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
       variants={variants}
