@@ -79,13 +79,23 @@ export function EntrarPage({
       setPending(false);
       return;
     }
-    router.refresh();
-    // Sócios (conta sem linha em investors/issuers, ver resolveSocio()) vão direto para
-    // /socios — senão cairiam no "completar cadastro" de /perfil. Para quem não é sócio,
-    // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver dados de
-    // investidor/empresa — cobre o caso de quem criou a conta mas não terminou o cadastro.
-    const destino = await resolvePosLoginDestino();
-    router.push(destino);
+
+    try {
+      router.refresh();
+      // Sócios (conta sem linha em investors/issuers, ver resolveSocio()) vão direto para
+      // /socios — senão cairiam no "completar cadastro" de /perfil. Para quem não é sócio,
+      // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver dados de
+      // investidor/empresa — cobre o caso de quem criou a conta mas não terminou o cadastro.
+      const destino = await resolvePosLoginDestino();
+      router.push(destino);
+    } catch {
+      // O login em si já foi concluído (signInWithPassword não deu erro) — uma falha aqui é
+      // de rede/navegação, não de credencial. Sem este catch, uma falha transitória nessa
+      // etapa deixava o botão travado em "Entrando…" para sempre, sem nenhuma mensagem: nada
+      // chamava setPending(false) fora do branch de erro de login.
+      setFormError(t.erros.generico);
+      setPending(false);
+    }
   }
 
   useEffect(() => {
