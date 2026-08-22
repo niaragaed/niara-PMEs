@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Reveal } from "@/components/motion/Reveal";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 const SCROLL_PX_PER_STEP = 600;
-// Duração fixa (ms) da animação flip-2-hor-top-1 / flip-in-hor-bottom-1
-// (globals.css) — precisa bater com o "0.5s" do CSS: é o timeout de
-// segurança que garante a limpeza da classe mesmo se "animationend" não
-// disparar por algum motivo.
+// Duração fixa (ms) das animações de flip (globals.css) — precisa bater com
+// o "0.5s" do CSS: é o timeout de segurança que garante a limpeza da classe
+// mesmo se "animationend" não disparar por algum motivo, e também a janela
+// de "trava" (nenhum novo passo é aceito enquanto uma transição toca).
 const FLIP_DURATION_MS = 500;
+
+type FlipDirection = "forward" | "backward";
 
 function stepFromProgress(progress: number, totalSteps: number) {
   if (totalSteps <= 1) return 0;
@@ -19,21 +22,30 @@ function stepFromProgress(progress: number, totalSteps: number) {
   return Math.min(totalSteps - 1, Math.round(clamped * (totalSteps - 1)));
 }
 
+// Sequência "pinned": a seção fica presa na tela enquanto o usuário rola.
+// O Lenis continua cuidando do scroll normalmente (não interceptamos wheel/
+// touch diretamente — tentar "sequestrar" o input e pausar o Lenis foi o
+// que quebrou a versão anterior: o Lenis processa o scroll por conta
+// própria, então brigar com ele por fora só deixava os cards travados nos
+// resets de entrada/saída, sem nenhuma transição no meio). Em vez disso,
+// a cada atualização de scroll (onUpdate) só deixamos o índice avançar OU
+// voltar **um** passo por vez, mesmo que o progresso bruto do scroll tenha
+// pulado direto pra um card mais distante num scroll rápido — e, enquanto
+// o flip de 0.5s ainda está tocando, a posição real do scroll é forçada de
+// volta pro degrau atual (lenis.scrollTo) a cada tick, "travando" o scroll
+// até a transição terminar. Avançar usa .flip-2-hor-top-1 (sai) +
+// .flip-in-hor-bottom-1 (entra); voltar usa o par espelhado
+// .flip-2-hor-bottom-1 + .flip-in-hor-top-1 (globals.css), então a direção
+// do flip acompanha a direção real da navegação. Sem JS, os cards
+// continuam em fluxo vertical normal — o JSX abaixo nunca muda; só
+// aplicamos position:absolute/opacity/classes via gsap/DOM direto (estilo
+// imperativo), então não há divergência de markup entre servidor e
+// cliente.
 export function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const lenis = useLenis();
 
-  // Sequência "pinned": a seção fica presa na tela enquanto o scroll avança
-  // por um trecho longo. Diferente da versão anterior (crossfade contínuo
-  // escrubado 1:1 com o scroll), a troca entre cards agora é discreta: o
-  // scroll só decide QUANDO trocar de índice, e a transição em si é o flip
-  // 3D de duração fixa (.flip-2-hor-top-1 saindo + .flip-in-hor-bottom-1
-  // entrando, ambas em globals.css, 0.5s cada, sempre tocadas por completo
-  // mesmo que o scroll continue). Sem JS, os cards continuam em fluxo
-  // vertical normal — o JSX abaixo nunca muda; só aplicamos
-  // position:absolute/opacity/classes via gsap/DOM direto (estilo
-  // imperativo), então não há divergência de markup entre servidor e
-  // cliente.
   useEffect(() => {
     const section = sectionRef.current;
     const cards = cardRefs.current.filter((el): el is HTMLDivElement => el !== null);
@@ -43,62 +55,79 @@ export function HowItWorksSection() {
 
     // Não dá pra "envolver" um disparo de JS num bloco @media — a checagem
     // equivalente a @media (prefers-reduced-motion: reduce) para lógica de
-    // script é matchMedia, lida uma vez fora do listener de scroll.
+    // script é matchMedia, lida uma vez fora do onUpdate.
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let activeIndex = 0;
+    // Índice "autoritativo" de repouso: igual a activeIndex quando parado;
+    // durante um flip, é o alvo pra onde já pulamos o scroll (não o de
+    // origem) — evita que o próprio ScrollTrigger.onUpdate, disparado pelo
+    // nosso lenis.scrollTo abaixo, desfaça o pulo que acabamos de fazer.
+    let lockedIndex = 0;
+    let isAnimating = false;
+    let st: ScrollTrigger | null = null;
+
+    const stepScrollY = (index: number) => (st ? st.start + index * SCROLL_PX_PER_STEP : 0);
+
+    const resetTo = (index: number) => {
+      gsap.set(cards, { opacity: 0, zIndex: 0 });
+      gsap.set(cards[index], { opacity: 1, zIndex: 1 });
+      activeIndex = index;
+      lockedIndex = index;
+      isAnimating = false;
+    };
+
+    const runTransition = (nextIndex: number, direction: FlipDirection) => {
+      const outgoing = cards[activeIndex];
+      const incoming = cards[nextIndex];
+      isAnimating = true;
+
+      if (prefersReducedMotion) {
+        // Troca instantânea de opacidade, sem o flip 3D.
+        gsap.set(outgoing, { opacity: 0, zIndex: 0 });
+        gsap.set(incoming, { opacity: 1, zIndex: 1 });
+        activeIndex = nextIndex;
+        isAnimating = false;
+        return;
+      }
+
+      const outClass = direction === "forward" ? "flip-2-hor-top-1" : "flip-2-hor-bottom-1";
+      const inClass = direction === "forward" ? "flip-in-hor-bottom-1" : "flip-in-hor-top-1";
+
+      // Saindo por cima (z-index maior) enquanto o card seguinte já fica
+      // visível por baixo — é o que dá a ilusão de um único card virando e
+      // revelando o próximo, não duas trocas independentes.
+      gsap.set(outgoing, { zIndex: 2 });
+      gsap.set(incoming, { opacity: 1, zIndex: 1 });
+      outgoing.classList.add(outClass);
+      incoming.classList.add(inClass);
+
+      const finish = () => {
+        outgoing.removeEventListener("animationend", finish);
+        window.clearTimeout(fallbackTimer);
+        outgoing.classList.remove(outClass);
+        incoming.classList.remove(inClass);
+        gsap.set(outgoing, { opacity: 0, zIndex: 0 });
+        gsap.set(incoming, { zIndex: 1 });
+        activeIndex = nextIndex;
+        isAnimating = false;
+      };
+
+      const fallbackTimer = window.setTimeout(finish, FLIP_DURATION_MS);
+      outgoing.addEventListener("animationend", finish, { once: true });
+    };
+
+    const goToStep = (nextIndex: number, direction: FlipDirection) => {
+      lockedIndex = nextIndex;
+      runTransition(nextIndex, direction);
+      lenis?.scrollTo(stepScrollY(nextIndex), { immediate: true, force: true });
+    };
 
     const ctx = gsap.context(() => {
       gsap.set(cards, { position: "absolute", inset: 0, opacity: 0, zIndex: 0 });
       gsap.set(cards[0], { opacity: 1, zIndex: 1 });
 
-      let activeIndex = 0;
-      let pendingIndex = 0;
-      let isAnimating = false;
-
-      const runTransition = (nextIndex: number) => {
-        const outgoing = cards[activeIndex];
-        const incoming = cards[nextIndex];
-        isAnimating = true;
-
-        if (prefersReducedMotion) {
-          // Troca instantânea de opacidade, sem o flip 3D.
-          gsap.set(outgoing, { opacity: 0, zIndex: 0 });
-          gsap.set(incoming, { opacity: 1, zIndex: 1 });
-          activeIndex = nextIndex;
-          isAnimating = false;
-          if (pendingIndex !== activeIndex) runTransition(pendingIndex);
-          return;
-        }
-
-        // Saindo por cima (z-index maior) enquanto o card seguinte já fica
-        // visível por baixo — é o que dá a ilusão de um único card virando
-        // e revelando o próximo, não duas trocas independentes.
-        gsap.set(outgoing, { zIndex: 2 });
-        gsap.set(incoming, { opacity: 1, zIndex: 1 });
-        outgoing.classList.add("flip-2-hor-top-1");
-        incoming.classList.add("flip-in-hor-bottom-1");
-
-        const finish = () => {
-          outgoing.removeEventListener("animationend", finish);
-          window.clearTimeout(fallbackTimer);
-          // Remover a classe libera a próxima troca poder disparar a
-          // mesma animação de novo (senão o navegador ignora reaplicar
-          // uma classe já presente).
-          outgoing.classList.remove("flip-2-hor-top-1");
-          incoming.classList.remove("flip-in-hor-bottom-1");
-          gsap.set(outgoing, { opacity: 0, zIndex: 0 });
-          gsap.set(incoming, { zIndex: 1 });
-          activeIndex = nextIndex;
-          isAnimating = false;
-          // Se o scroll já avançou para um índice mais recente enquanto
-          // este flip tocava, encadeia a próxima transição imediatamente.
-          if (pendingIndex !== activeIndex) runTransition(pendingIndex);
-        };
-
-        const fallbackTimer = window.setTimeout(finish, FLIP_DURATION_MS);
-        outgoing.addEventListener("animationend", finish, { once: true });
-      };
-
-      ScrollTrigger.create({
+      st = ScrollTrigger.create({
         trigger: section,
         start: "top top",
         end: `+=${(cards.length - 1) * SCROLL_PX_PER_STEP}`,
@@ -109,17 +138,32 @@ export function HowItWorksSection() {
         // soltar cedo demais aqui. Forçar true reserva o espaço extra de
         // scroll corretamente.
         pinSpacing: true,
+        onEnter: () => resetTo(0),
+        onEnterBack: () => resetTo(cards.length - 1),
         onUpdate: (self) => {
-          pendingIndex = stepFromProgress(self.progress, cards.length);
-          if (!isAnimating && pendingIndex !== activeIndex) {
-            runTransition(pendingIndex);
+          if (isAnimating) {
+            // Trava: qualquer scroll que tenha acontecido durante o flip é
+            // desfeito, mantendo a posição exatamente no degrau-alvo até a
+            // transição terminar.
+            lenis?.scrollTo(stepScrollY(lockedIndex), { immediate: true, force: true });
+            return;
           }
+
+          const rawIndex = stepFromProgress(self.progress, cards.length);
+          if (rawIndex === activeIndex) return;
+
+          // Nunca avança/volta mais de um degrau por vez, mesmo que o
+          // progresso bruto do scroll tenha pulado direto pra um índice
+          // mais distante num scroll rápido.
+          const step = rawIndex > activeIndex ? 1 : -1;
+          const nextIndex = activeIndex + step;
+          goToStep(nextIndex, step > 0 ? "forward" : "backward");
         },
       });
     }, section);
 
     return () => ctx.revert();
-  }, []);
+  }, [lenis]);
 
   return (
     <section
@@ -137,8 +181,8 @@ export function HowItWorksSection() {
 
         {/* perspective no container (não no card): é o que faz o rotateX
             do flip parecer 3D em vez de achatado. overflow-hidden corta o
-            card saindo assim que ele passa do translateY(-100%) do topo,
-            em vez de vazar por cima do título. */}
+            card saindo assim que ele passa do translateY(±100%), em vez
+            de vazar por cima/baixo do resto da seção. */}
         <div
           className="relative mx-auto mt-12 grid min-h-[200px] w-full max-w-xl grid-cols-1 gap-6 overflow-hidden"
           style={{ perspective: "1000px" }}
