@@ -277,6 +277,69 @@
   }
 }
 
+/* Par espelhado das duas acima, usado quando o usuário rola para CIMA
+   (voltando um card) — mesmo timing/cubic-bezier, mas o card sai para
+   BAIXO (não para cima) e o próximo entra por CIMA (não por baixo), pra
+   a direção do flip acompanhar a direção real da navegação em vez de
+   sempre repetir a mesma animação de avanço ao voltar. */
+@-webkit-keyframes flip-2-hor-bottom-1 {
+  0% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+  100% {
+    -webkit-transform: translateY(100%) rotateX(180deg);
+    transform: translateY(100%) rotateX(180deg);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+}
+@keyframes flip-2-hor-bottom-1 {
+  0% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+  100% {
+    -webkit-transform: translateY(100%) rotateX(180deg);
+    transform: translateY(100%) rotateX(180deg);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+}
+
+@-webkit-keyframes flip-in-hor-top-1 {
+  0% {
+    -webkit-transform: translateY(-100%) rotateX(-180deg);
+    transform: translateY(-100%) rotateX(-180deg);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+  100% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+}
+@keyframes flip-in-hor-top-1 {
+  0% {
+    -webkit-transform: translateY(-100%) rotateX(-180deg);
+    transform: translateY(-100%) rotateX(-180deg);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+  100% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+}
+
 @layer utilities {
   .text-focus-in {
     -webkit-animation: text-focus-in 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
@@ -303,6 +366,28 @@
   .flip-in-hor-bottom-1 {
     -webkit-animation: flip-in-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
     animation: flip-in-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow: none;
+  }
+
+  /* Par espelhado (voltar um card) — mesmo tratamento de
+     backface-visibility/box-shadow que o par de avançar acima. */
+  .flip-2-hor-bottom-1 {
+    -webkit-animation: flip-2-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    animation: flip-2-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow: none;
+  }
+
+  .flip-in-hor-top-1 {
+    -webkit-animation: flip-in-hor-top-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    animation: flip-in-hor-top-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
     -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
     -webkit-backface-visibility: hidden;
