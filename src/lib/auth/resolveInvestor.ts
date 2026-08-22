@@ -7,6 +7,7 @@ import "server-only";
 // vínculo atual. Usa o admin client (service_role) para ler `investors`/
 // `issuers` porque RLS ali é default-deny e ainda não há policy de leitura
 // própria do usuário.
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -49,6 +50,21 @@ export async function resolveAccount(): Promise<ResolvedAccount> {
   }
 
   return { userId: user.id, role: null, accountId: null };
+}
+
+// Gate simples de "precisa estar logado" para telas que não exigem role
+// específico (investidor OU emissor servem) — /negociar/*, /ativos. Não
+// confundir com o gate de /perfil, que além de exigir login também exige
+// role já definido (redireciona para /cadastro se logado mas sem role).
+export async function requireLogin(): Promise<void> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/entrar?aviso=login-necessario");
+  }
 }
 
 export type ResolvedInvestor = {

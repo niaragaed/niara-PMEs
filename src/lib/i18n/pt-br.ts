@@ -1158,6 +1158,7 @@ export const ptBr = {
     tituloCaptacao: "Entre para estruturar sua captação",
     subtituloCaptacao:
       "Entre com sua conta (ou crie uma nova abaixo) para estruturar sua captação. A estruturação da oferta em si continua em demonstração e depende das autorizações da CVM — o onboarding de captação chega em breve.",
+    avisoLoginNecessario: "Faça login ou crie uma conta para acessar essa página.",
     video: {
       ariaLabel: "Assistir no YouTube: como criar sua conta na MetaMask (abre em nova aba)",
       texto: "Antes de criar sua conta na plataforma, veja o vídeo e crie sua conta na MetaMask.",
