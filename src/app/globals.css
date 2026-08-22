@@ -179,7 +179,137 @@
   }
 }
 
+/* text-focus-in (Animista) — animação do título da hero. Valores exatos
+   (duration, cubic-bezier, fill-mode both) preservados sem alteração; não
+   envolvida em @media (prefers-reduced-motion: reduce) de propósito — o
+   site sempre toca suas animações, ver decisão acima. */
+@-webkit-keyframes text-focus-in {
+  0% {
+    -webkit-filter: blur(12px);
+    filter: blur(12px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-filter: blur(0px);
+    filter: blur(0px);
+    opacity: 1;
+  }
+}
+@keyframes text-focus-in {
+  0% {
+    -webkit-filter: blur(12px);
+    filter: blur(12px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-filter: blur(0px);
+    filter: blur(0px);
+    opacity: 1;
+  }
+}
+
+/* flip-2-hor-top-1 (Animista) — saída dos cards de "Como funciona"
+   (HowItWorksSection.tsx). Valores exatos (duration 0.5s, cubic-bezier,
+   fill-mode both) preservados sem alteração; a classe é adicionada/
+   removida via JS no card que sai de cena a cada troca de índice, nunca
+   fica presa num elemento em repouso. */
+@-webkit-keyframes flip-2-hor-top-1 {
+  0% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+  100% {
+    -webkit-transform: translateY(-100%) rotateX(-180deg);
+    transform: translateY(-100%) rotateX(-180deg);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+}
+@keyframes flip-2-hor-top-1 {
+  0% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+  100% {
+    -webkit-transform: translateY(-100%) rotateX(-180deg);
+    transform: translateY(-100%) rotateX(-180deg);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+}
+
+/* Entrada simétrica do card que assume o lugar — não existe no Animista
+   nem no projeto, criada aqui com o mesmo timing/cubic-bezier da saída
+   acima (pedido do usuário quando não há uma equivalente pronta). Hinge
+   espelhado (começa com origem embaixo + rotacionado 180deg, termina com
+   origem em cima + sem rotação) para as duas parecerem um único card
+   virando, não duas animações independentes. */
+@-webkit-keyframes flip-in-hor-bottom-1 {
+  0% {
+    -webkit-transform: translateY(100%) rotateX(180deg);
+    transform: translateY(100%) rotateX(180deg);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+  100% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+}
+@keyframes flip-in-hor-bottom-1 {
+  0% {
+    -webkit-transform: translateY(100%) rotateX(180deg);
+    transform: translateY(100%) rotateX(180deg);
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+  100% {
+    -webkit-transform: translateY(0) rotateX(0);
+    transform: translateY(0) rotateX(0);
+    -webkit-transform-origin: 50% 0%;
+    transform-origin: 50% 0%;
+  }
+}
+
 @layer utilities {
+  .text-focus-in {
+    -webkit-animation: text-focus-in 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+    animation: text-focus-in 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+  }
+
+  /* backface-visibility:hidden e box-shadow:none só valem enquanto a
+     classe está presente (durante o flip) — não mexem no timing da
+     animação em si (duration/cubic-bezier/fill-mode continuam exatos).
+     Sem backface-visibility, o navegador mostra o verso do card (texto
+     espelhado/de cabeça para baixo) ao cruzar 90°; sem suprimir o
+     box-shadow, a sombra do card (shadow-soft-lg) se distorce durante a
+     rotação 3D e aparece como um bloco preto atrás do card. */
+  .flip-2-hor-top-1 {
+    -webkit-animation: flip-2-hor-top-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    animation: flip-2-hor-top-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow: none;
+  }
+
+  .flip-in-hor-bottom-1 {
+    -webkit-animation: flip-in-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    animation: flip-in-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow: none;
+  }
+
   .hero-orbit-ring {
     transform-box: fill-box;
     transform-origin: center;

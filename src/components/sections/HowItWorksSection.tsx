@@ -7,21 +7,33 @@ import { Reveal } from "@/components/motion/Reveal";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 const SCROLL_PX_PER_STEP = 600;
-// Duração (em "segundos" da timeline, 1 = 1 step) do crossfade entre dois
-// cards. Fica no fim de cada step, então a maior parte do tempo só um card
-// fica parado e nítido na tela — só uma fração curta é transição.
-const FADE_DURATION = 0.25;
+// Duração fixa (ms) da animação flip-2-hor-top-1 / flip-in-hor-bottom-1
+// (globals.css) — precisa bater com o "0.5s" do CSS: é o timeout de
+// segurança que garante a limpeza da classe mesmo se "animationend" não
+// disparar por algum motivo.
+const FLIP_DURATION_MS = 500;
+
+function stepFromProgress(progress: number, totalSteps: number) {
+  if (totalSteps <= 1) return 0;
+  const clamped = Math.min(1, Math.max(0, progress));
+  return Math.min(totalSteps - 1, Math.round(clamped * (totalSteps - 1)));
+}
 
 export function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Sequência "pinned": a seção fica presa na tela enquanto o scroll avança
-  // por um trecho longo, e cada card ocupa o palco por vez (crossfade). Sem
-  // JS, os cards continuam em fluxo vertical normal — o JSX abaixo nunca
-  // muda; só aplicamos position:absolute/opacity via gsap.set (estilo
-  // inline imperativo), então não há divergência de markup entre servidor
-  // e cliente.
+  // por um trecho longo. Diferente da versão anterior (crossfade contínuo
+  // escrubado 1:1 com o scroll), a troca entre cards agora é discreta: o
+  // scroll só decide QUANDO trocar de índice, e a transição em si é o flip
+  // 3D de duração fixa (.flip-2-hor-top-1 saindo + .flip-in-hor-bottom-1
+  // entrando, ambas em globals.css, 0.5s cada, sempre tocadas por completo
+  // mesmo que o scroll continue). Sem JS, os cards continuam em fluxo
+  // vertical normal — o JSX abaixo nunca muda; só aplicamos
+  // position:absolute/opacity/classes via gsap/DOM direto (estilo
+  // imperativo), então não há divergência de markup entre servidor e
+  // cliente.
   useEffect(() => {
     const section = sectionRef.current;
     const cards = cardRefs.current.filter((el): el is HTMLDivElement => el !== null);
@@ -29,21 +41,62 @@ export function HowItWorksSection() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const ctx = gsap.context(() => {
-      gsap.set(cards, { position: "absolute", inset: 0 });
-      gsap.set(cards.slice(1), { opacity: 0, y: 16 });
-      gsap.set(cards[0], { opacity: 1, y: 0 });
+    // Não dá pra "envolver" um disparo de JS num bloco @media — a checagem
+    // equivalente a @media (prefers-reduced-motion: reduce) para lógica de
+    // script é matchMedia, lida uma vez fora do listener de scroll.
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      const timeline = gsap.timeline();
-      for (let i = 0; i < cards.length - 1; i++) {
-        // O crossfade acontece só no finalzinho do step i (entre
-        // i + 1 - FADE_DURATION e i + 1), não no step inteiro — assim cada
-        // card fica parado e sozinho na tela na maior parte do scroll, e a
-        // sobreposição visual dura só a transição curta.
-        const start = i + 1 - FADE_DURATION;
-        timeline.to(cards[i], { opacity: 0, y: -16, ease: "none" }, start);
-        timeline.to(cards[i + 1], { opacity: 1, y: 0, ease: "none" }, start);
-      }
+    const ctx = gsap.context(() => {
+      gsap.set(cards, { position: "absolute", inset: 0, opacity: 0, zIndex: 0 });
+      gsap.set(cards[0], { opacity: 1, zIndex: 1 });
+
+      let activeIndex = 0;
+      let pendingIndex = 0;
+      let isAnimating = false;
+
+      const runTransition = (nextIndex: number) => {
+        const outgoing = cards[activeIndex];
+        const incoming = cards[nextIndex];
+        isAnimating = true;
+
+        if (prefersReducedMotion) {
+          // Troca instantânea de opacidade, sem o flip 3D.
+          gsap.set(outgoing, { opacity: 0, zIndex: 0 });
+          gsap.set(incoming, { opacity: 1, zIndex: 1 });
+          activeIndex = nextIndex;
+          isAnimating = false;
+          if (pendingIndex !== activeIndex) runTransition(pendingIndex);
+          return;
+        }
+
+        // Saindo por cima (z-index maior) enquanto o card seguinte já fica
+        // visível por baixo — é o que dá a ilusão de um único card virando
+        // e revelando o próximo, não duas trocas independentes.
+        gsap.set(outgoing, { zIndex: 2 });
+        gsap.set(incoming, { opacity: 1, zIndex: 1 });
+        outgoing.classList.add("flip-2-hor-top-1");
+        incoming.classList.add("flip-in-hor-bottom-1");
+
+        const finish = () => {
+          outgoing.removeEventListener("animationend", finish);
+          window.clearTimeout(fallbackTimer);
+          // Remover a classe libera a próxima troca poder disparar a
+          // mesma animação de novo (senão o navegador ignora reaplicar
+          // uma classe já presente).
+          outgoing.classList.remove("flip-2-hor-top-1");
+          incoming.classList.remove("flip-in-hor-bottom-1");
+          gsap.set(outgoing, { opacity: 0, zIndex: 0 });
+          gsap.set(incoming, { zIndex: 1 });
+          activeIndex = nextIndex;
+          isAnimating = false;
+          // Se o scroll já avançou para um índice mais recente enquanto
+          // este flip tocava, encadeia a próxima transição imediatamente.
+          if (pendingIndex !== activeIndex) runTransition(pendingIndex);
+        };
+
+        const fallbackTimer = window.setTimeout(finish, FLIP_DURATION_MS);
+        outgoing.addEventListener("animationend", finish, { once: true });
+      };
 
       ScrollTrigger.create({
         trigger: section,
@@ -56,8 +109,12 @@ export function HowItWorksSection() {
         // soltar cedo demais aqui. Forçar true reserva o espaço extra de
         // scroll corretamente.
         pinSpacing: true,
-        scrub: 0.3,
-        animation: timeline,
+        onUpdate: (self) => {
+          pendingIndex = stepFromProgress(self.progress, cards.length);
+          if (!isAnimating && pendingIndex !== activeIndex) {
+            runTransition(pendingIndex);
+          }
+        },
       });
     }, section);
 
@@ -78,14 +135,21 @@ export function HowItWorksSection() {
           <p className="mt-3 text-lg text-ink-muted">{ptBr.sections.howItWorks.subtitle}</p>
         </Reveal>
 
-        <div className="relative mx-auto mt-12 grid min-h-[200px] w-full max-w-xl grid-cols-1 gap-6">
+        {/* perspective no container (não no card): é o que faz o rotateX
+            do flip parecer 3D em vez de achatado. overflow-hidden corta o
+            card saindo assim que ele passa do translateY(-100%) do topo,
+            em vez de vazar por cima do título. */}
+        <div
+          className="relative mx-auto mt-12 grid min-h-[200px] w-full max-w-xl grid-cols-1 gap-6 overflow-hidden"
+          style={{ perspective: "1000px" }}
+        >
           {ptBr.sections.howItWorks.steps.map((step, index) => (
             <div
               key={step.title}
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-6 shadow-soft-lg"
+              className="flex flex-col gap-3 border border-border bg-surface p-6 shadow-soft-lg"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-military-100 text-sm font-semibold text-military">
                 {index + 1}
