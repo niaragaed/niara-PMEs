@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PerfilPage } from "@/components/perfil/PerfilPage";
 import { loadMyOfferingsSummary, loadProfile } from "./actions";
-import { resolveAccount } from "@/lib/auth/resolveInvestor";
+import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 import { ptBr } from "@/lib/i18n/pt-br";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: `${ptBr.perfil.meta.title} · Niara PMEs`,
@@ -19,14 +18,7 @@ type PageProps = {
 export default async function Page({ searchParams }: PageProps) {
   const { aviso, onboarding } = await searchParams;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/entrar");
-  }
+  await requireLogin();
 
   const { role } = await resolveAccount();
   if (!role) {

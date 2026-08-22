@@ -42,7 +42,13 @@ function GoogleIcon() {
 // Tela só de LOGIN (signInWithPassword) — criar conta é um fluxo à parte,
 // ver "Criar conta" abaixo, que apenas navega para /cadastro (a tela
 // dedicada de criação de conta + cadastro completo).
-export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) {
+export function EntrarPage({
+  isCaptacaoIntent,
+  avisoLoginNecessario,
+}: {
+  isCaptacaoIntent: boolean;
+  avisoLoginNecessario?: boolean;
+}) {
   const t = ptBr.entrar;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
@@ -123,6 +129,12 @@ export function EntrarPage({ isCaptacaoIntent }: { isCaptacaoIntent: boolean }) 
           <p className="mt-2 text-sm text-on-military-muted">
             {isCaptacaoIntent ? t.subtituloCaptacao : t.subtitulo}
           </p>
+
+          {avisoLoginNecessario && (
+            <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
+              {t.avisoLoginNecessario}
+            </p>
+          )}
 
           <form onSubmit={handleEntrar} noValidate className="mt-8 flex flex-col gap-3">
             <TextField

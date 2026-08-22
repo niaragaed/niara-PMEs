@@ -6,6 +6,7 @@ import { getOfertaBySlug } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { resolveSocio } from "@/lib/auth/resolveSocio";
+import { requireLogin } from "@/lib/auth/resolveInvestor";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -26,6 +27,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
+  await requireLogin();
+
   const { slug } = await params;
   const oferta = getOfertaBySlug(slug);
 

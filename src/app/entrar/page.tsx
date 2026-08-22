@@ -7,10 +7,12 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ intent?: string }>;
+  searchParams: Promise<{ intent?: string; aviso?: string }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const { intent } = await searchParams;
-  return <EntrarPage isCaptacaoIntent={intent === "captacao"} />;
+  const { intent, aviso } = await searchParams;
+  return (
+    <EntrarPage isCaptacaoIntent={intent === "captacao"} avisoLoginNecessario={aviso === "login-necessario"} />
+  );
 }
