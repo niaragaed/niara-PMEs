@@ -20,7 +20,7 @@ export function Hero() {
           {ptBr.hero.badge}
         </span>
 
-        <h1 className="text-5xl font-semibold leading-tight tracking-tight text-on-military sm:text-6xl">
+        <h1 className="text-focus-in text-5xl font-semibold leading-tight tracking-tight text-on-military sm:text-6xl">
           {ptBr.hero.title}
         </h1>
 
