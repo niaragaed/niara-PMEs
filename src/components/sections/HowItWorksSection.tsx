@@ -53,11 +53,6 @@ export function HowItWorksSection() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    // Não dá pra "envolver" um disparo de JS num bloco @media — a checagem
-    // equivalente a @media (prefers-reduced-motion: reduce) para lógica de
-    // script é matchMedia, lida uma vez fora do onUpdate.
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
     let activeIndex = 0;
     // Índice "autoritativo" de repouso: igual a activeIndex quando parado;
     // durante um flip, é o alvo pra onde já pulamos o scroll (não o de
@@ -81,15 +76,6 @@ export function HowItWorksSection() {
       const outgoing = cards[activeIndex];
       const incoming = cards[nextIndex];
       isAnimating = true;
-
-      if (prefersReducedMotion) {
-        // Troca instantânea de opacidade, sem o flip 3D.
-        gsap.set(outgoing, { opacity: 0, zIndex: 0 });
-        gsap.set(incoming, { opacity: 1, zIndex: 1 });
-        activeIndex = nextIndex;
-        isAnimating = false;
-        return;
-      }
 
       const outClass = direction === "forward" ? "flip-2-hor-top-1" : "flip-2-hor-bottom-1";
       const inClass = direction === "forward" ? "flip-in-hor-bottom-1" : "flip-in-hor-top-1";
