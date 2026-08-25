@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AlertTriangle } from "lucide-react";
 import { resolveSocio } from "@/lib/auth/resolveSocio";
 import { SociosLoginForm } from "@/components/socios/SociosLoginForm";
 import { SociosDashboard } from "@/components/socios/SociosDashboard";
+import { RealOnChainSection } from "@/components/socios/RealOnChainSection";
+import { RealOnChainSkeleton } from "@/components/socios/RealOnChainSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
-import { getEventosOnChain, getResumoOnChain } from "@/lib/web3/events";
 import { computeResumoMock, listarTransacoesMock } from "@/lib/socios/mockTransacoes";
 import { ptBr } from "@/lib/i18n/pt-br";
 
@@ -46,17 +48,19 @@ export default async function Page() {
     );
   }
 
-  const [eventosOnChain, transacoesMock] = await Promise.all([getEventosOnChain(), listarTransacoesMock()]);
-  const resumoOnChain = await getResumoOnChain(eventosOnChain);
+  const transacoesMock = await listarTransacoesMock();
   const resumoMock = computeResumoMock(transacoesMock);
 
   return (
     <SociosDashboard
       email={email ?? ""}
-      eventosOnChain={eventosOnChain}
-      resumoOnChain={resumoOnChain}
       transacoesMock={transacoesMock}
       resumoMock={resumoMock}
+      realOnChainSlot={
+        <Suspense fallback={<RealOnChainSkeleton />}>
+          <RealOnChainSection />
+        </Suspense>
+      }
     />
   );
 }
