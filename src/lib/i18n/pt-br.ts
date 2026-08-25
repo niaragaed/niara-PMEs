@@ -1584,6 +1584,8 @@ export const ptBr = {
       taxaVariavel: "Varia por oferta",
       ofertasConfiguradas: "Ofertas configuradas",
       naoConfigurado: "Nenhuma oferta on-chain configurada (NEXT_PUBLIC_OFERTAS_ONCHAIN ausente).",
+      carregando: "Lendo eventos on-chain (Sepolia)... pode levar um pouco sem uma RPC dedicada.",
+      erroCarregamento: "Não foi possível ler os dados on-chain agora (RPC lenta ou indisponível). Tente atualizar a página em alguns instantes.",
     },
     resumoMock: {
       title: "Resumo — Demo/mock (Supabase)",
