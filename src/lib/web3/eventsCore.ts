@@ -137,7 +137,22 @@ export function calcularJanelas(fromBlock: bigint, toBlock: bigint): Array<{ fro
   return janelas;
 }
 
-const RPC_CONCURRENCY = 5;
+// Alchemy no plano Free limita não só o range por chamada (10 blocos, CHUNK_SIZE acima) mas
+// também "compute units por segundo" — um teto de RAJADA, não só de range. RPC_CONCURRENCY=5
+// (valor antigo) disparava 5 chamadas eth_getLogs ao mesmo tempo, cada uma já pesada (10
+// contratos + 6 tipos de evento no filtro), e estourava esse teto mesmo respeitando os 10 blocos
+// por chamada — confirmado em produção com "exceeded its compute units per second capacity"
+// mesmo depois da correção do bug de falso-positivo de redeploy (ver events.ts) já ter reduzido
+// drasticamente o total de janelas a escanear. RPC_CONCURRENCY=1 (sequencial) + um pequeno
+// intervalo entre chamadas (RPC_THROTTLE_MS) resolve isso definitivamente, ao custo de um
+// catch-up um pouco mais lento — aceitável, já que isso só roda para o intervalo NOVO desde a
+// última sincronização (tipicamente pequeno), nunca desde o início da vida do contrato.
+const RPC_CONCURRENCY = 1;
+const RPC_THROTTLE_MS = 150;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const resultados: R[] = new Array(items.length);
@@ -180,6 +195,8 @@ export async function fetchEventosOnChainRange(
       fromBlock: janela.from,
       toBlock: janela.to,
     })) as LogDecodificado[];
+
+    await sleep(RPC_THROTTLE_MS);
 
     return logs
       .map((log) => {
