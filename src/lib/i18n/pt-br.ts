@@ -1626,5 +1626,20 @@ export const ptBr = {
         cancelled: "Cancelado",
       },
     },
+    movimentacoes: {
+      title: "Todas as movimentações",
+      subtitle:
+        "Timeline única com tudo que acontece no site — eventos reais on-chain (Sepolia) e movimentações off-chain (cadastros, ofertas, aportes, pagamentos), mais recentes primeiro.",
+      resumoTitle: "Resumo agregado",
+      carregando: "Lendo movimentações (on-chain + Supabase)... pode levar um pouco sem uma RPC dedicada.",
+      colOrigem: "Origem",
+      colTipo: "Tipo",
+      colAtor: "Quem",
+      colValor: "Valor",
+      colData: "Data",
+      colLink: "Link",
+      verNaChain: "Ver na chain",
+      vazio: "Nenhuma movimentação ainda.",
+    },
   },
 } as const;

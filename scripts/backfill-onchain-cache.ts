@@ -1,6 +1,6 @@
 // Preenche o cache incremental de eventos on-chain (onchain_events_cache/onchain_sync_state,
 // ver supabase/migrations/0012_onchain_events_cache.sql e src/lib/web3/events.ts) de uma vez só,
-// escaneando desde FROM_BLOCK — a leitura "cara" que antes acontecia na primeira visita a
+// escaneando desde o bloco de deploy — a leitura "cara" que antes acontecia na primeira visita a
 // /socios depois de qualquer redeploy, e que sozinha já estourava o timeout de 60s da função
 // serverless da Vercel. Rodar este script localmente (sem esse teto) evita que esse custo caia
 // em cima de uma requisição HTTP de verdade. Chamadas seguintes de getEventosOnChain() só
@@ -22,7 +22,12 @@ config({ path: ".env.local" });
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
-import { FROM_BLOCK, publicClient, fetchEventosOnChainRange, type EventoOnChain } from "@/lib/web3/eventsCore";
+import {
+  encontrarBlocoDeploy,
+  publicClient,
+  fetchEventosOnChainRange,
+  type EventoOnChain,
+} from "@/lib/web3/eventsCore";
 
 function createAdminClient() {
   return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -56,12 +61,25 @@ async function main() {
 
   const { data: syncState, error: syncError } = await admin
     .from("onchain_sync_state")
-    .select("last_synced_block")
+    .select("last_synced_block, mock_brl_address")
     .eq("id", 1)
     .maybeSingle();
   if (syncError) throw syncError;
 
-  const fromBlock = syncState ? BigInt(syncState.last_synced_block) + BigInt(1) : FROM_BLOCK;
+  const redeployDetectado = syncState !== null && syncState.mock_brl_address !== addresses.mockBrl.toLowerCase();
+
+  let fromBlock: bigint;
+  if (!syncState || redeployDetectado) {
+    fromBlock = await encontrarBlocoDeploy(client, addresses.mockBrl);
+    if (redeployDetectado) {
+      console.log(
+        `Endereço de MockBRL mudou (era ${syncState?.mock_brl_address}, agora ${addresses.mockBrl}) — recalculando bloco de deploy: ${fromBlock}.`,
+      );
+    }
+  } else {
+    fromBlock = BigInt(syncState.last_synced_block) + BigInt(1);
+  }
+
   const toBlock = await client.getBlockNumber();
 
   if (fromBlock > toBlock) {
@@ -84,7 +102,7 @@ async function main() {
 
   const { error: upsertSyncError } = await admin
     .from("onchain_sync_state")
-    .upsert({ id: 1, last_synced_block: toBlock.toString() });
+    .upsert({ id: 1, last_synced_block: toBlock.toString(), mock_brl_address: addresses.mockBrl.toLowerCase() });
   if (upsertSyncError) throw upsertSyncError;
 
   console.log(`Cache atualizado até o bloco ${toBlock}. Pronto.`);

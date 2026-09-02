@@ -22,7 +22,7 @@ import { getOnChainAddresses } from "./addresses";
 import { mockBrlAbi } from "./abis/mockBrl";
 import { ofertaCaptacaoAbi } from "./abis/ofertaCaptacao";
 import {
-  FROM_BLOCK,
+  encontrarBlocoDeploy,
   publicClient,
   fetchEventosOnChainRange,
   mapWithConcurrency,
@@ -74,21 +74,32 @@ function eventoParaRow(evento: EventoOnChain): OnchainEventCacheRow {
   };
 }
 
-async function lerSyncState(): Promise<bigint | null> {
+type SyncState = { lastSyncedBlock: bigint; mockBrlAddress: string | null };
+
+async function lerSyncState(): Promise<SyncState | null> {
   const admin = createAdminClient();
-  const { data, error } = await admin.from("onchain_sync_state").select("last_synced_block").eq("id", 1).maybeSingle();
+  const { data, error } = await admin
+    .from("onchain_sync_state")
+    .select("last_synced_block, mock_brl_address")
+    .eq("id", 1)
+    .maybeSingle();
   if (error) throw error;
-  return data ? BigInt(data.last_synced_block) : null;
+  return data ? { lastSyncedBlock: BigInt(data.last_synced_block), mockBrlAddress: data.mock_brl_address } : null;
 }
 
-async function lerEventosCache(): Promise<EventoOnChain[]> {
+// Só devolve eventos de ofertas que ainda estão configuradas em
+// NEXT_PUBLIC_OFERTAS_ONCHAIN hoje — evita misturar, para sempre, eventos de uma geração de
+// contratos antiga (pré-redeploy) com a atual, caso a tabela algum dia acumule as duas.
+async function lerEventosCache(enderecosValidos: Set<string>): Promise<EventoOnChain[]> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("onchain_events_cache")
     .select("*")
     .order("block_number", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(rowParaEvento);
+  return (data ?? [])
+    .filter((row) => enderecosValidos.has((row.oferta_address as string).toLowerCase()))
+    .map(rowParaEvento);
 }
 
 async function salvarNovosEventos(eventos: EventoOnChain[]): Promise<void> {
@@ -100,11 +111,11 @@ async function salvarNovosEventos(eventos: EventoOnChain[]): Promise<void> {
   if (error) throw error;
 }
 
-async function atualizarSyncState(blocoAtual: bigint): Promise<void> {
+async function atualizarSyncState(blocoAtual: bigint, mockBrlAddress: `0x${string}`): Promise<void> {
   const admin = createAdminClient();
   const { error } = await admin
     .from("onchain_sync_state")
-    .upsert({ id: 1, last_synced_block: blocoAtual.toString() });
+    .upsert({ id: 1, last_synced_block: blocoAtual.toString(), mock_brl_address: mockBrlAddress.toLowerCase() });
   if (error) throw error;
 }
 
@@ -115,18 +126,43 @@ async function atualizarSyncState(blocoAtual: bigint): Promise<void> {
  * arquivo) — o resto vem do cache em Supabase. Uma falha ao gravar o cache não derruba a
  * resposta (loga e segue) — na pior hipótese, a próxima chamada reescaneia o mesmo intervalo de
  * novo (idempotente via UPSERT com unique key), nunca perde dado nem quebra a página.
+ *
+ * Correção redeploy: antes, o piso da primeira sincronização era um bloco fixo (`FROM_BLOCK`)
+ * mantido à mão no código, e nada detectava se a infra fosse redeployada — o cache continuaria
+ * escaneando a partir do último bloco salvo, que pertencia aos contratos ANTIGOS, perdendo em
+ * silêncio todo o histórico do início da vida dos contratos NOVOS. Agora onchain_sync_state
+ * também guarda o endereço do MockBRL de quando aquele bloco foi sincronizado
+ * (`mock_brl_address`, ver migration 0013): se ele não bate com o endereço atual, entende-se
+ * que houve um redeploy, e o bloco de partida é recalculado automaticamente via
+ * `encontrarBlocoDeploy` (busca binária por `eth_getCode`, sem depender de nenhum artefato de
+ * deploy nem de constante atualizada manualmente).
  */
 export async function getEventosOnChain(): Promise<EventoOnChain[]> {
   const addresses = getOnChainAddresses();
   if (!addresses) return [];
 
+  const enderecosValidos = new Set(addresses.ofertas.map((oferta) => oferta.oferta.toLowerCase()));
   const client = publicClient();
-  const [blocoAtual, eventosCache, syncedAteRaw] = await Promise.all([
+  const [blocoAtual, syncState, eventosCache] = await Promise.all([
     client.getBlockNumber(),
-    lerEventosCache(),
     lerSyncState(),
+    lerEventosCache(enderecosValidos),
   ]);
-  const syncedAte = syncedAteRaw ?? FROM_BLOCK - BigInt(1);
+
+  const redeployDetectado = syncState !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
+
+  let syncedAte: bigint;
+  if (syncState === null || redeployDetectado) {
+    const blocoDeploy = await encontrarBlocoDeploy(client, addresses.mockBrl);
+    if (redeployDetectado) {
+      console.warn(
+        `[socios] Endereço de MockBRL mudou (era ${syncState?.mockBrlAddress}, agora ${addresses.mockBrl}) — infra parece ter sido redeployada. Bloco de deploy recalculado automaticamente: ${blocoDeploy}. Eventos de contratos anteriores seguem no banco mas não entram mais na leitura (filtrados por endereço vigente).`,
+      );
+    }
+    syncedAte = blocoDeploy - BigInt(1);
+  } else {
+    syncedAte = syncState.lastSyncedBlock;
+  }
 
   if (blocoAtual <= syncedAte) {
     return eventosCache;
@@ -135,7 +171,7 @@ export async function getEventosOnChain(): Promise<EventoOnChain[]> {
   const novosEventos = await fetchEventosOnChainRange(client, addresses.ofertas, syncedAte + BigInt(1), blocoAtual);
 
   try {
-    await Promise.all([salvarNovosEventos(novosEventos), atualizarSyncState(blocoAtual)]);
+    await Promise.all([salvarNovosEventos(novosEventos), atualizarSyncState(blocoAtual, addresses.mockBrl)]);
   } catch (error) {
     console.error("[socios] falha ao gravar cache on-chain (resposta atual não é afetada):", error);
   }

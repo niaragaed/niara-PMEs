@@ -9,13 +9,49 @@ import { sepolia } from "wagmi/chains";
 import type { OfertaOnChainAddresses } from "./addresses";
 import { ofertaCaptacaoAbi } from "./abis/ofertaCaptacao";
 
-// Bloco em que a infraestrutura atual (Fase 4 redeployada) foi implantada em Sepolia
-// (2026-08-15) — usado como fromBlock para nunca escanear a chain inteira desde o genesis. Só
-// importa de fato para a primeira sincronização (ver events.ts) — depois disso, o cache em
-// Supabase é quem decide de onde continuar. Se a infra for redeployada de novo no futuro,
-// atualizar este valor (ver niara-contracts-PMEs/CLAUDE.md, "Chave do deployer da Fase 4
-// perdida").
-export const FROM_BLOCK = BigInt(11_495_000);
+/**
+ * Descobre o bloco em que `address` recebeu código pela primeira vez (ou seja, o bloco de
+ * deploy), via busca binária com `eth_getCode` em vez de um número fixo mantido à mão. Usada
+ * como piso para nunca escanear a chain inteira desde o genesis (ver events.ts e
+ * scripts/backfill-onchain-cache.ts) — tanto na primeira sincronização quanto sempre que um
+ * redeploy é detectado (endereço de MockBRL mudou em relação ao salvo em onchain_sync_state),
+ * então nunca precisa ser atualizada manualmente, ao contrário do antigo `FROM_BLOCK` fixo (que
+ * já causou perda silenciosa de histórico num redeploy anterior — ver
+ * "Correção redeploy" em events.ts). Custo: ~log2(bloco atual) chamadas RPC (~25 para a Sepolia
+ * de hoje), rodada só nesses dois casos raros, nunca a cada leitura normal.
+ */
+export async function encontrarBlocoDeploy(
+  client: ReturnType<typeof publicClient>,
+  address: `0x${string}`,
+): Promise<bigint> {
+  const temCodigo = async (bloco: bigint) => {
+    const bytecode = await client.getCode({ address, blockNumber: bloco });
+    return Boolean(bytecode) && bytecode !== "0x";
+  };
+
+  let lo = BigInt(0);
+  let hi = await client.getBlockNumber();
+
+  if (await temCodigo(lo)) return lo;
+  if (!(await temCodigo(hi))) {
+    throw new Error(
+      `encontrarBlocoDeploy: endereço ${address} não tem código no bloco atual (${hi}) — endereço errado ou RPC sem acesso a estado histórico (archive node)?`,
+    );
+  }
+
+  // Busca binária pelo primeiro bloco em que o código já existe: lo sempre "sem código", hi
+  // sempre "com código", até sobrar só a fronteira entre os dois.
+  while (lo + BigInt(1) < hi) {
+    const meio = lo + (hi - lo) / BigInt(2);
+    if (await temCodigo(meio)) {
+      hi = meio;
+    } else {
+      lo = meio;
+    }
+  }
+
+  return hi;
+}
 
 const EVENT_NAMES = [
   "Aporte",

@@ -4,10 +4,9 @@ import { AlertTriangle } from "lucide-react";
 import { resolveSocio } from "@/lib/auth/resolveSocio";
 import { SociosLoginForm } from "@/components/socios/SociosLoginForm";
 import { SociosDashboard } from "@/components/socios/SociosDashboard";
-import { RealOnChainSection } from "@/components/socios/RealOnChainSection";
-import { RealOnChainSkeleton } from "@/components/socios/RealOnChainSkeleton";
+import { MovimentacoesSection } from "@/components/socios/MovimentacoesSection";
+import { MovimentacoesSkeleton } from "@/components/socios/MovimentacoesSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
-import { computeResumoMock, listarTransacoesMock } from "@/lib/socios/mockTransacoes";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
@@ -16,11 +15,12 @@ export const metadata: Metadata = {
 };
 
 // 60s (máximo do plano Hobby da Vercel) em vez do padrão de 10s — a leitura on-chain
-// (getEventosOnChain/getResumoOnChain, dentro do <Suspense> abaixo) escaneia uma janela de
-// blocos que só cresce com o tempo e, sem NEXT_PUBLIC_SEPOLIA_RPC_URL dedicada, sofre rate
-// limit no RPC público; sem isto, a Vercel mata a função no meio da execução (sem erro nenhum
-// pro navegador, só a requisição pendurada para sempre) antes mesmo do Suspense conseguir
-// entregar o resto da página. Não substitui uma RPC dedicada — só evita o pior caso.
+// (dentro de getMovimentacoes(), via getEventosOnChain/getResumoOnChain no <Suspense> abaixo)
+// escaneia uma janela de blocos que só cresce com o tempo e, sem NEXT_PUBLIC_SEPOLIA_RPC_URL
+// dedicada, sofre rate limit no RPC público; sem isto, a Vercel mata a função no meio da
+// execução (sem erro nenhum pro navegador, só a requisição pendurada para sempre) antes mesmo do
+// Suspense conseguir entregar o resto da página. Não substitui uma RPC dedicada — só evita o
+// pior caso.
 export const maxDuration = 60;
 
 // Área interna, não é o mesmo fluxo de /entrar (investidor/emissor) — ver
@@ -56,17 +56,12 @@ export default async function Page() {
     );
   }
 
-  const transacoesMock = await listarTransacoesMock();
-  const resumoMock = computeResumoMock(transacoesMock);
-
   return (
     <SociosDashboard
       email={email ?? ""}
-      transacoesMock={transacoesMock}
-      resumoMock={resumoMock}
-      realOnChainSlot={
-        <Suspense fallback={<RealOnChainSkeleton />}>
-          <RealOnChainSection />
+      movimentacoesSlot={
+        <Suspense fallback={<MovimentacoesSkeleton />}>
+          <MovimentacoesSection />
         </Suspense>
       }
     />
