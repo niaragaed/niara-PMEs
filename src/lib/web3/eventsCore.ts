@@ -83,10 +83,14 @@ function parseLog(log: LogDecodificado, ofertaAddress: `0x${string}`, ofertaInde
 
 // Vários provedores de RPC limitam eth_getLogs a um intervalo de blocos — e cada provedor tem um
 // teto diferente (o público padrão do viem para Sepolia aceitava até 1.000; a Alchemy no plano
-// Free aceita só 10, ver histórico desta constante no commit que introduziu o cache em Supabase).
-// 1.000 é conservador o bastante pro RPC público antigo; ver NEXT_PUBLIC_SEPOLIA_RPC_URL/plano
-// contratado antes de assumir que um valor maior funciona.
-const CHUNK_SIZE = BigInt(1_000);
+// Free aceita só 10 — confirmado em produção com "Under the Free tier plan, you can make
+// eth_getLogs requests with up to a 10 block range", mesmo depois do cache em Supabase reduzir o
+// intervalo total escaneado por chamada). 10 é o menor teto conhecido entre os provedores já
+// testados neste projeto — universalmente seguro, e barato agora que o cache em Supabase
+// (events.ts) garante que o intervalo total por chamada já é pequeno (só o que for novo desde a
+// última sincronização), então mais janelas de 10 blocos não pesa como pesaria escaneando desde
+// FROM_BLOCK. Se um dia trocar de RPC por um com teto maior, pode subir este valor.
+const CHUNK_SIZE = BigInt(10);
 
 export function calcularJanelas(fromBlock: bigint, toBlock: bigint): Array<{ from: bigint; to: bigint }> {
   const janelas: Array<{ from: bigint; to: bigint }> = [];
