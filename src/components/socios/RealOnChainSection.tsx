@@ -9,7 +9,12 @@ async function lerDadosOnChain(): Promise<
     const eventosOnChain = await getEventosOnChain();
     const resumoOnChain = await getResumoOnChain(eventosOnChain);
     return { ok: true, eventosOnChain, resumoOnChain };
-  } catch {
+  } catch (error) {
+    // Sem isto, uma falha aqui virava um "{ ok: false }" mudo — nenhuma linha nos Logs da
+    // Vercel (só apareceria como "Vercel Runtime Timeout Error" se estourasse os 60s de
+    // maxDuration; qualquer outro erro, mais rápido, ficava invisível). Loga pro stdout/stderr
+    // da função, que a Vercel captura nos Runtime Logs.
+    console.error("[socios] falha ao ler dados on-chain:", error);
     return { ok: false };
   }
 }
