@@ -149,8 +149,14 @@ export async function getEventosOnChain(): Promise<EventoOnChain[]> {
     lerEventosCache(enderecosValidos),
   ]);
 
-  const redeployDetectado = syncState !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
-
+  // syncState.mockBrlAddress === null significa "coluna recém-criada pela migration 0013, nunca
+// gravada ainda" — NÃO é redeploy, é só ausência de dado histórico. Tratar null como "mudou"
+// dispararia um falso positivo em todo projeto pré-existente logo após rodar a migration
+// (fazendo reescanear dezenas de milhares de blocos de uma vez e estourar rate limit do RPC).
+// Só é redeploy de verdade quando JÁ existe um endereço anterior salvo e ele é diferente do
+// atual.
+const redeployDetectado =
+  syncState !== null && syncState.mockBrlAddress !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
   let syncedAte: bigint;
   if (syncState === null || redeployDetectado) {
     const blocoDeploy = await encontrarBlocoDeploy(client, addresses.mockBrl);
