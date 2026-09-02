@@ -84,9 +84,14 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
         aria-controls={panelId}
         aria-label={t.abrirMenu}
         onClick={() => setOpen((current) => !current)}
-        className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-alt transition-colors hover:border-salmon"
+        className="flex h-9 items-center gap-2 rounded-full border border-border bg-surface-alt py-1 pl-3 pr-1 transition-colors hover:border-salmon"
       >
-        <AccountAvatar account={account} />
+        {account.name && (
+          <span className="max-w-[10rem] truncate text-sm font-medium text-ink">{account.name}</span>
+        )}
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface">
+          <AccountAvatar account={account} />
+        </span>
       </button>
 
       {open && (

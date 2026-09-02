@@ -71,6 +71,9 @@ export type EventoOnChain = {
   investidor: `0x${string}` | null;
   valorWei: bigint | null;
   cotas: bigint | null;
+  // Só preenchido para `RecursosLiberados` (args.taxa) — a taxa de fato transferida ao
+  // protocoloWallet naquele evento. `null` para os demais 5 tipos de evento.
+  taxaWei: bigint | null;
   txHash: `0x${string}`;
   blockNumber: bigint;
   timestamp: number | null;
@@ -111,6 +114,7 @@ function parseLog(log: LogDecodificado, ofertaAddress: `0x${string}`, ofertaInde
     investidor: (args.investidor as `0x${string}` | undefined) ?? null,
     valorWei: (args.valor as bigint | undefined) ?? (args.valorEmissor as bigint | undefined) ?? null,
     cotas: (args.cotas as bigint | undefined) ?? null,
+    taxaWei: (args.taxa as bigint | undefined) ?? null,
     txHash: log.transactionHash as `0x${string}`,
     blockNumber: log.blockNumber as bigint,
     timestamp: null,

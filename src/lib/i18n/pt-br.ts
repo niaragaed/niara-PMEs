@@ -1315,6 +1315,8 @@ export const ptBr = {
     criandoBotao: "Criando…",
     ativarBotao: "Ativar",
     ativandoBotao: "Ativando…",
+    ativarAviso:
+      "Ativação de novas ofertas pausada nesta demonstração — a captação está migrando para rodar direto em Sepolia real, sem passar por este fluxo simulado.",
     fecharBotao: "Fechar captação (simulado)",
     fechandoBotao: "Fechando…",
     fecharAviso:
@@ -1496,6 +1498,10 @@ export const ptBr = {
       prazo: "Prazo",
       tetoPorInvestidor: "Teto por investidor (nesta oferta)",
       nota: "O teto por investidor aqui é só o limite desta oferta específica — não substitui o teto anual entre plataformas da Resolução CVM 88, que é off-chain e auto-declaratório.",
+      taxaLabel: "Taxa da plataforma",
+      taxaComTaxa: (pct: string) =>
+        `${pct}% — retida do valor repassado ao emissor quando a captação fecha com sucesso (ver seção "Liberar recursos" abaixo). Não é descontada da quantidade de cotas que você recebe.`,
+      taxaSemTaxa: "Sem taxa nesta oferta (taxaBps = 0, lido direto do contrato).",
     },
     investir: {
       title: "3. Investir",
@@ -1543,6 +1549,18 @@ export const ptBr = {
       confirmando: "Confirmando na rede…",
       sucesso: "Cotas resgatadas — confira o saldo de participação acima.",
     },
+    liberar: {
+      title: "6. Liberar recursos ao emissor",
+      descricao:
+        "Transfere (pull, uma vez, permissionless no contrato) o valor arrecadado ao emissor e, se esta oferta tiver taxaBps > 0, a taxa da plataforma ao protocoloWallet. Sem esta chamada o dinheiro fica retido no escrow para sempre. Nesta interface, por enquanto, o botão abaixo fica disponível só para a equipe Niara.",
+      restrito: "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara.",
+      previa: (valorEmissor: string, taxa: string) => `Ao liberar agora: ${valorEmissor} ao emissor, ${taxa} de taxa ao protocolo.`,
+      jaLiberado: "Recursos já liberados para esta oferta.",
+      botao: "Liberar recursos",
+      assinando: "Aguardando assinatura…",
+      confirmando: "Confirmando na rede…",
+      sucesso: "Recursos liberados on-chain — confira a transação no Etherscan.",
+    },
     erros: {
       redeErrada: "Troque para a rede Sepolia para continuar.",
     },
@@ -1579,8 +1597,11 @@ export const ptBr = {
       title: "Resumo — Sepolia real",
       totalArrecadado: "Total arrecadado (todas as ofertas)",
       carteirasUnicas: "Carteiras únicas que investiram",
-      taxaRecebida: "Taxa recebida",
-      taxaZeradaNota: "taxaBps = 0 nesta demo, lido direto do contrato — nenhuma taxa é cobrada hoje.",
+      aliquotaConfigurada: "Alíquota de taxa configurada",
+      taxaZeradaNota: "taxaBps = 0 em todas as ofertas hoje, lido direto do contrato — nenhuma taxa é cobrada nelas.",
+      receitaTaxa: "Receita da plataforma (taxa)",
+      receitaTaxaNota:
+        "Soma real de RecursosLiberados.taxa já transferida ao protocoloWallet via liberarParaEmissor() — mBRL de testnet, não moeda real. Nunca um valor projetado.",
       taxaVariavel: "Varia por oferta",
       ofertasConfiguradas: "Ofertas configuradas",
       naoConfigurado: "Nenhuma oferta on-chain configurada (NEXT_PUBLIC_OFERTAS_ONCHAIN ausente).",
