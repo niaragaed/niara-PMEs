@@ -41,6 +41,7 @@ type OnchainEventCacheRow = {
   investidor: string | null;
   valor_wei: string | null;
   cotas: string | null;
+  taxa_wei: string | null;
   tx_hash: string;
   block_number: number | string;
   block_timestamp: number | string | null;
@@ -54,6 +55,7 @@ function rowParaEvento(row: OnchainEventCacheRow): EventoOnChain {
     investidor: (row.investidor as `0x${string}` | null) ?? null,
     valorWei: row.valor_wei !== null ? BigInt(row.valor_wei) : null,
     cotas: row.cotas !== null ? BigInt(row.cotas) : null,
+    taxaWei: row.taxa_wei !== null ? BigInt(row.taxa_wei) : null,
     txHash: row.tx_hash as `0x${string}`,
     blockNumber: BigInt(row.block_number),
     timestamp: row.block_timestamp !== null ? Number(row.block_timestamp) : null,
@@ -68,6 +70,7 @@ function eventoParaRow(evento: EventoOnChain): OnchainEventCacheRow {
     investidor: evento.investidor,
     valor_wei: evento.valorWei !== null ? evento.valorWei.toString() : null,
     cotas: evento.cotas !== null ? evento.cotas.toString() : null,
+    taxa_wei: evento.taxaWei !== null ? evento.taxaWei.toString() : null,
     tx_hash: evento.txHash,
     block_number: evento.blockNumber.toString(),
     block_timestamp: evento.timestamp,
@@ -213,14 +216,21 @@ export type ResumoOnChain = {
   totalArrecadadoWei: bigint;
   carteirasUnicas: number;
   taxaBpsPorOferta: number[];
+  // Soma real de `RecursosLiberados.taxa` (mBRL efetivamente transferidos ao protocoloWallet),
+  // não um valor projetado/derivado de taxaBps × arrecadado — só conta o que já foi de fato
+  // liberado on-chain via `liberarParaEmissor()`.
+  taxaRecebidaWei: bigint;
 };
 
 /**
  * Resumo agregado — total arrecadado (soma de todos os Aporte, todas as ofertas), carteiras
- * únicas que já aportaram, e a taxaBps vigente de cada oferta (lida direto do contrato, nunca
- * assumida — hoje é 0 em todas, ver niara-contracts-PMEs, mas isto lê o valor real, não
- * hardcoda). Não faz getLogs (só readContract, sem limite de faixa de blocos) — não precisa do
- * cache acima.
+ * únicas que já aportaram, a taxaBps vigente de cada oferta (lida direto do contrato, nunca
+ * assumida — hoje é 0 na maioria das ofertas, mas isto lê o valor real, não hardcoda) e a
+ * receita real de taxa já recebida pelo protocolo (soma de `RecursosLiberados.taxa` entre todas
+ * as ofertas — só conta o que `liberarParaEmissor()` já transferiu de fato, nunca uma
+ * projeção). Não faz getLogs (só readContract, sem limite de faixa de blocos) — não precisa do
+ * cache acima; a soma da taxa vem de `eventos`, que já é o resultado cacheado de
+ * `getEventosOnChain()`.
  */
 export async function getResumoOnChain(eventos: EventoOnChain[]): Promise<ResumoOnChain | null> {
   const addresses = getOnChainAddresses();
@@ -241,11 +251,15 @@ export async function getResumoOnChain(eventos: EventoOnChain[]): Promise<Resumo
   const totalArrecadadoWei = aportes.reduce((total, evento) => total + (evento.valorWei ?? BigInt(0)), BigInt(0));
   const carteirasUnicas = new Set(aportes.map((evento) => evento.investidor).filter(Boolean)).size;
 
+  const recursosLiberados = eventos.filter((evento) => evento.tipo === "RecursosLiberados");
+  const taxaRecebidaWei = recursosLiberados.reduce((total, evento) => total + (evento.taxaWei ?? BigInt(0)), BigInt(0));
+
   return {
     mockBrlDecimals,
     mockBrlSymbol,
     totalArrecadadoWei,
     carteirasUnicas,
     taxaBpsPorOferta: taxaBpsPorOferta.map(Number),
+    taxaRecebidaWei,
   };
 }

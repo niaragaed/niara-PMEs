@@ -27,6 +27,7 @@ import {
 import {
   useEncerrarOferta,
   useInvestirOnChain,
+  useLiberarParaEmissor,
   useMintMockBrl,
   useResgatarCotas,
 } from "@/lib/web3/hooks/useOnChainActions";
@@ -134,6 +135,7 @@ export function RealOnChainInvestPanel({
   const invest = useInvestirOnChain(ofertaIndex);
   const encerrar = useEncerrarOferta(ofertaIndex);
   const resgatar = useResgatarCotas(ofertaIndex);
+  const liberar = useLiberarParaEmissor(ofertaIndex);
 
   const quantidadeBigInt = useMemo(() => {
     const parsed = quantidadeCotas.trim();
@@ -179,6 +181,15 @@ export function RealOnChainInvestPanel({
     termos.refetch();
     posicao.refetch();
   }
+
+  async function handleLiberar() {
+    await liberar.liberar();
+    termos.refetch();
+  }
+
+  const BPS_DENOMINADOR = BigInt(10_000);
+  const taxaWei = (termos.totalArrecadado * termos.taxaBps) / BPS_DENOMINADOR;
+  const valorEmissorWei = termos.totalArrecadado - taxaWei;
 
   if (!termos.configurado) {
     return (
@@ -255,6 +266,14 @@ export function RealOnChainInvestPanel({
           <div className="sm:col-span-2">
             <dt className="text-xs text-on-military-muted">{t.termos.prazo}</dt>
             <dd className="mt-0.5 text-sm text-on-military">{formatPrazo(termos.prazo)}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs text-on-military-muted">{t.termos.taxaLabel}</dt>
+            <dd className="mt-0.5 text-sm text-on-military">
+              {termos.taxaBps === BigInt(0)
+                ? t.termos.taxaSemTaxa
+                : t.termos.taxaComTaxa((Number(termos.taxaBps) / 100).toFixed(2))}
+            </dd>
           </div>
         </dl>
         <p className="mt-4 text-xs text-on-military-muted">{t.termos.nota}</p>
@@ -432,6 +451,49 @@ export function RealOnChainInvestPanel({
             <p role="alert" className="mt-3 text-sm text-value-negative">
               {resgatar.errorMessage}
             </p>
+          )}
+        </Card>
+      )}
+
+      {podeOperar && termos.estado === "EncerradaSucesso" && (
+        <Card title={t.liberar.title}>
+          <p className="text-sm text-on-military-muted">{t.liberar.descricao}</p>
+          {!termos.recursosLiberados && (
+            <p className="mt-2 text-sm text-on-military">
+              {t.liberar.previa(
+                formatToken(valorEmissorWei, termos.mockBrlDecimals, termos.mockBrlSymbol),
+                formatToken(taxaWei, termos.mockBrlDecimals, termos.mockBrlSymbol),
+              )}
+            </p>
+          )}
+          {termos.recursosLiberados ? (
+            <p className="mt-4 text-sm text-value-positive">{t.liberar.jaLiberado}</p>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={!isSocio || liberar.status === "assinando" || liberar.status === "confirmando"}
+                onClick={handleLiberar}
+                className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {liberar.status === "assinando"
+                  ? t.liberar.assinando
+                  : liberar.status === "confirmando"
+                    ? t.liberar.confirmando
+                    : t.liberar.botao}
+              </button>
+              {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.liberar.restrito}</p>}
+              {liberar.status === "sucesso" && (
+                <p role="status" className="mt-3 text-sm text-value-positive">
+                  {t.liberar.sucesso}
+                </p>
+              )}
+              {liberar.status === "erro" && liberar.errorMessage && (
+                <p role="alert" className="mt-3 text-sm text-value-negative">
+                  {liberar.errorMessage}
+                </p>
+              )}
+            </>
           )}
         </Card>
       )}
