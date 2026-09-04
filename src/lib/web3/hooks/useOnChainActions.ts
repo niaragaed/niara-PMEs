@@ -183,3 +183,35 @@ export function useResgatarCotas(ofertaIndex = 0) {
 
   return { ...state, resgatar, reset };
 }
+
+/**
+ * `liberarParaEmissor()` é pull, uma vez, permissionless, só após `EncerradaSucesso` — transfere
+ * o arrecadado (menos a taxa, se `taxaBps > 0`) ao emissor e a taxa ao `protocoloWallet` (ver
+ * OfertaCaptacao.sol). Sem chamar esta função, o dinheiro fica retido no escrow para sempre — é o
+ * gatilho que de fato move a receita de taxa da plataforma, quando existir. `ofertaIndex` seleciona
+ * qual das várias ofertas disponíveis usar.
+ */
+export function useLiberarParaEmissor(ofertaIndex = 0) {
+  const [state, setState] = useState<SimpleTxState>(IDLE);
+  const publicClient = usePublicClient();
+  const { writeContractAsync } = useWriteContract();
+
+  const liberar = useCallback(async () => {
+    const contracts = getOnChainContracts(ofertaIndex);
+    if (!contracts || !publicClient) return;
+
+    setState({ status: "assinando", errorMessage: null });
+    try {
+      const hash = await writeContractAsync({ ...contracts.ofertaCaptacao, functionName: "liberarParaEmissor" });
+      setState({ status: "confirmando", errorMessage: null });
+      await publicClient.waitForTransactionReceipt({ hash });
+      setState({ status: "sucesso", errorMessage: null });
+    } catch (error) {
+      setState({ status: "erro", errorMessage: describeOnChainError(error) });
+    }
+  }, [publicClient, writeContractAsync, ofertaIndex]);
+
+  const reset = useCallback(() => setState(IDLE), []);
+
+  return { ...state, liberar, reset };
+}

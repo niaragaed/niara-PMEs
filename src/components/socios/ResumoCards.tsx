@@ -22,7 +22,7 @@ export function ResumoCards({ resumo }: { resumo: ResumoMovimentacoes }) {
   return (
     <section className="mt-8">
       <h2 className="text-lg font-semibold text-on-military">{t.movimentacoes.resumoTitle}</h2>
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {onChain ? (
           <>
             <KpiCard
@@ -32,9 +32,14 @@ export function ResumoCards({ resumo }: { resumo: ResumoMovimentacoes }) {
             />
             <KpiCard label={t.resumoReal.carteirasUnicas} value={String(onChain.carteirasUnicas)} note={t.origem.real} />
             <KpiCard
-              label={t.resumoReal.taxaRecebida}
-              value={taxaBpsUnica === 0 ? formatBRL(0) : taxaBpsUnica === null ? t.resumoReal.taxaVariavel : `${(taxaBpsUnica / 100).toFixed(2)}%`}
+              label={t.resumoReal.aliquotaConfigurada}
+              value={taxaBpsUnica === 0 ? "0%" : taxaBpsUnica === null ? t.resumoReal.taxaVariavel : `${(taxaBpsUnica / 100).toFixed(2)}%`}
               note={taxaBpsUnica === 0 ? t.resumoReal.taxaZeradaNota : t.origem.real}
+            />
+            <KpiCard
+              label={t.resumoReal.receitaTaxa}
+              value={formatToken(onChain.taxaRecebidaWei, onChain.mockBrlDecimals, onChain.mockBrlSymbol)}
+              note={t.resumoReal.receitaTaxaNota}
             />
           </>
         ) : (

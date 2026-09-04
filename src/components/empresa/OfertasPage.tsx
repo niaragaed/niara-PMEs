@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
-import {
-  activateOffering,
-  closeOffering,
-  createOffering,
-  type OfferingActionState,
-} from "@/app/empresa/ofertas/actions";
+import { closeOffering, createOffering, type OfferingActionState } from "@/app/empresa/ofertas/actions";
 import { SelectField, TextField } from "@/components/perfil/FormField";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
@@ -106,8 +101,6 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
   const [draft, setDraft] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [createState, setCreateState] = useState<OfferingActionState | null>(null);
-  const [activatingId, setActivatingId] = useState<string | null>(null);
-  const [activateError, setActivateError] = useState<string | null>(null);
   const [closingId, setClosingId] = useState<string | null>(null);
   const [closeError, setCloseError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -145,18 +138,6 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
       } else {
         setDraft(EMPTY_FORM);
       }
-    });
-  }
-
-  function handleActivate(offeringId: string) {
-    setActivateError(null);
-    setActivatingId(offeringId);
-    startTransition(async () => {
-      const result = await activateOffering(offeringId);
-      if (result.status === "error") {
-        setActivateError(result.message);
-      }
-      setActivatingId(null);
     });
   }
 
@@ -249,14 +230,18 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                   </dl>
 
                   {offering.status === "draft" && (
-                    <button
-                      type="button"
-                      onClick={() => handleActivate(offering.id)}
-                      disabled={isPending && activatingId === offering.id}
-                      className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isPending && activatingId === offering.id ? t.ativandoBotao : t.ativarBotao}
-                    </button>
+                    <div className="mt-4 flex flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                        title={ptBr.common.emBreve}
+                        className="self-start cursor-not-allowed rounded-md bg-salmon/90 px-4 py-2 text-sm font-semibold text-on-salmon opacity-60"
+                      >
+                        {t.ativarBotao} <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
+                      </button>
+                      <p className="text-xs text-on-military-muted">{t.ativarAviso}</p>
+                    </div>
                   )}
 
                   {offering.status === "active" && (
@@ -299,11 +284,6 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                 </li>
               ))}
             </ul>
-          )}
-          {activateError && (
-            <p role="alert" className="mt-3 text-sm text-value-negative">
-              {activateError}
-            </p>
           )}
           {closeError && (
             <p role="alert" className="mt-3 text-sm text-value-negative">

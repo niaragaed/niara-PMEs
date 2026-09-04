@@ -43,6 +43,7 @@ function eventoParaRow(evento: EventoOnChain) {
     investidor: evento.investidor,
     valor_wei: evento.valorWei !== null ? evento.valorWei.toString() : null,
     cotas: evento.cotas !== null ? evento.cotas.toString() : null,
+    taxa_wei: evento.taxaWei !== null ? evento.taxaWei.toString() : null,
     tx_hash: evento.txHash,
     block_number: evento.blockNumber.toString(),
     block_timestamp: evento.timestamp,
