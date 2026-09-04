@@ -119,6 +119,14 @@ async function atualizarSyncState(blocoAtual: bigint, mockBrlAddress: `0x${strin
   if (error) throw error;
 }
 
+// Com CHUNK_SIZE=10 blocos e RPC_CONCURRENCY=1 + RPC_THROTTLE_MS=150 (eventsCore.ts), cada janela
+// de 10 blocos leva ~300-500ms (rede + throttle). 3000 blocos ≈ 300 janelas ≈ 90-150s no pior
+// caso — ainda alto demais para o maxDuration=60s da página. 1500 blocos ≈ 150 janelas ≈ 45-75s:
+// ainda arriscado perto do limite. Fica em 800 blocos (~80 janelas, ~25-40s) com boa margem de
+// segurança mesmo em cold start ou rede mais lenta — se um dia RPC_THROTTLE_MS ou CHUNK_SIZE
+// mudarem, revisar esta conta junto.
+const MAX_BLOCOS_POR_EXECUCAO = BigInt(800);
+
 /**
  * Lê todos os eventos de todas as ofertas configuradas (NEXT_PUBLIC_OFERTAS_ONCHAIN), mais
  * recentes primeiro. Retorna lista vazia (nunca lança) se nenhuma oferta estiver configurada. Só
@@ -150,13 +158,14 @@ export async function getEventosOnChain(): Promise<EventoOnChain[]> {
   ]);
 
   // syncState.mockBrlAddress === null significa "coluna recém-criada pela migration 0013, nunca
-// gravada ainda" — NÃO é redeploy, é só ausência de dado histórico. Tratar null como "mudou"
-// dispararia um falso positivo em todo projeto pré-existente logo após rodar a migration
-// (fazendo reescanear dezenas de milhares de blocos de uma vez e estourar rate limit do RPC).
-// Só é redeploy de verdade quando JÁ existe um endereço anterior salvo e ele é diferente do
-// atual.
-const redeployDetectado =
-  syncState !== null && syncState.mockBrlAddress !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
+  // gravada ainda" — NÃO é redeploy, é só ausência de dado histórico. Tratar null como "mudou"
+  // dispararia um falso positivo em todo projeto pré-existente logo após rodar a migration
+  // (fazendo reescanear dezenas de milhares de blocos de uma vez e estourar rate limit do RPC).
+  // Só é redeploy de verdade quando JÁ existe um endereço anterior salvo e ele é diferente do
+  // atual.
+  const redeployDetectado =
+    syncState !== null && syncState.mockBrlAddress !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
+
   let syncedAte: bigint;
   if (syncState === null || redeployDetectado) {
     const blocoDeploy = await encontrarBlocoDeploy(client, addresses.mockBrl);
@@ -174,10 +183,21 @@ const redeployDetectado =
     return eventosCache;
   }
 
-  const novosEventos = await fetchEventosOnChainRange(client, addresses.ofertas, syncedAte + BigInt(1), blocoAtual);
+  // Teto de blocos por execução: sem isso, um intervalo pendente grande (ex.: ninguém visitou
+  // /socios por muitas horas, ou o cron ficou fora do ar) faz uma única chamada tentar escanear
+  // tudo de uma vez — e como cada janela de RPC é sequencial e pequena (10 blocos, ver
+  // eventsCore.ts), isso já estourou o timeout de 60s da Vercel mais de uma vez em produção. Com
+  // o teto, cada execução avança no máximo MAX_BLOCOS_POR_EXECUCAO blocos e para aí — o resto
+  // fica para a PRÓXIMA chamada (visita ao /socios ou o cron em /api/cron/sync-onchain). Nunca
+  // estoura o timeout, custe o backlog o que custar; só demora mais chamadas para se atualizar
+  // por completo, o que é um trade-off muito melhor que timeout e perda silenciosa dos dados
+  // on-chain na tela.
+  const blocoAlvo = blocoAtual - syncedAte > MAX_BLOCOS_POR_EXECUCAO ? syncedAte + MAX_BLOCOS_POR_EXECUCAO : blocoAtual;
+
+  const novosEventos = await fetchEventosOnChainRange(client, addresses.ofertas, syncedAte + BigInt(1), blocoAlvo);
 
   try {
-    await Promise.all([salvarNovosEventos(novosEventos), atualizarSyncState(blocoAtual, addresses.mockBrl)]);
+    await Promise.all([salvarNovosEventos(novosEventos), atualizarSyncState(blocoAlvo, addresses.mockBrl)]);
   } catch (error) {
     console.error("[socios] falha ao gravar cache on-chain (resposta atual não é afetada):", error);
   }
