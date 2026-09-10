@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { AlertTriangle, Check, Copy, Loader2, LogOut, Wallet } from "lucide-react";
 import { useConnect, useConnectors, useConnection, useDisconnect, useSwitchChain } from "wagmi";
 import { UserRejectedRequestError } from "viem";
 import { sepolia } from "wagmi/chains";
 import { ptBr } from "@/lib/i18n/pt-br";
+
+// Quanto tempo a reconexão automática do wagmi (reconnectOnMount) pode ficar em "Conectando…"
+// antes de o botão ser liberado para conexão manual — ver comentário em isPending.
+const RECONNECT_TIMEOUT_MS = 5000;
 
 function subscribeToProvider() {
   // Presença de window.ethereum não muda de forma observável — não há
@@ -53,6 +57,16 @@ export function ConnectWallet({
   const { mutate: disconnect } = useDisconnect();
   const { mutate: switchChain, isPending: isSwitching } = useSwitchChain();
   const [copied, setCopied] = useState(false);
+
+  // Nunca é resetado de propósito: só tem efeito enquanto isReconnecting (ver autoReconnectPending/
+  // reconnectStalled), e o wagmi entra em "reconnecting" no máximo uma vez por carregamento —
+  // reconnect() só roda no mount e tem trava de reentrada.
+  const [reconnectTimedOut, setReconnectTimedOut] = useState(false);
+  useEffect(() => {
+    if (!connection.isReconnecting) return;
+    const timer = setTimeout(() => setReconnectTimedOut(true), RECONNECT_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [connection.isReconnecting]);
 
   const injectedConnector = connectors[0];
   const isWrongNetwork = connection.isConnected && connection.chainId !== sepolia.id;
@@ -153,7 +167,18 @@ export function ConnectWallet({
     );
   }
 
-  const isPending = isConnectPending || connection.isConnecting || connection.isReconnecting;
+  // 🔴 A reconexão automática só conta como pendente enquanto (a) há provider injetado — sem
+  // window.ethereum o próprio wagmi já pula o connector sem chamar nada — e (b) não estourou
+  // RECONNECT_TIMEOUT_MS. Sem isso o botão travava em "Conectando…" para sempre: com conexão
+  // salva no cookie mas carteira bloqueada/indisponível, o eth_accounts/eth_chainId da reconexão
+  // pode nunca responder, e `reconnect()` do core só volta o status para "disconnected" DEPOIS
+  // de esperar o connector (e ainda deixa uma trava interna que torna qualquer `reconnect()`
+  // seguinte no-op). O clique manual usa `connect()`, que não passa por essa trava. Conexão
+  // iniciada pelo usuário (isConnectPending/isConnecting) não tem timeout — ali a espera é pelo
+  // popup da carteira, que pode demorar legitimamente.
+  const autoReconnectPending = connection.isReconnecting && hasProvider && !reconnectTimedOut;
+  const isPending = isConnectPending || connection.isConnecting || autoReconnectPending;
+  const reconnectStalled = connection.isReconnecting && reconnectTimedOut;
 
   return (
     <div className="flex flex-col items-start gap-1.5">
@@ -171,6 +196,9 @@ export function ConnectWallet({
         <span>{isPending ? t.conectando : (connectLabel ?? t.conectarBotao)}</span>
       </button>
       {rejected && <span className="text-xs text-on-military-muted">{t.conexaoRejeitada}</span>}
+      {reconnectStalled && !rejected && (
+        <span className="text-xs text-on-military-muted">{t.reconexaoDemorou}</span>
+      )}
     </div>
   );
 }

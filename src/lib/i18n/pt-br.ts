@@ -565,6 +565,8 @@ export const ptBr = {
       instalarMetaMask: "Instalar MetaMask",
       conectarBotao: "Conectar carteira",
       conectando: "Conectando…",
+      reconexaoDemorou:
+        "A reconexão automática não respondeu. Desbloqueie a carteira e conecte manualmente.",
       conexaoRejeitada: "Pedido de conexão recusado na carteira.",
       desconectarBotao: "Desconectar",
       desconectarAriaLabel: "Desconectar carteira",
