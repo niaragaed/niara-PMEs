@@ -1768,8 +1768,25 @@ supabase/
    respondem sem erro de SSR/WebGL.
 4. **Commit local ao final de cada parte**, mensagem em português no padrão
    `feat:` / `fix:` / `refactor:` / `chore:`.
-5. Nunca `--force`, nunca reescrever histórico, nunca push sem ser pedido.
-6. Se algo quebrar ou ficar ambíguo: **parar e explicar**, não improvisar.
+5. 🔴 **Sem trailer `Co-Authored-By: Claude` nos commits** — regra do projeto, mas
+   **não é automática nem garantida só por isso estar escrito aqui**. Depende de
+   `.claude/settings.json` existir, na raiz do repo, com exatamente:
+   ```json
+   {
+     "includeCoAuthoredBy": false
+   }
+   ```
+   Esse arquivo está no `.gitignore` (`/.claude/`) — nunca é versionado, então
+   **precisa ser criado à mão em cada máquina/clone novo**, antes do primeiro commit.
+   Sem ele, o Claude Code adiciona o trailer por padrão, mesmo com `git config
+   user.name`/`user.email` corretamente configurados (identidade de autor/committer é
+   uma coisa; o trailer no corpo da mensagem é outra, sem nenhuma relação entre as
+   duas). Descoberto na prática: os 3 primeiros commits da Fase 3 (publicação
+   on-chain) saíram com o trailer nesta máquina antes de este arquivo existir aqui,
+   mesmo com a identidade já certa — corrigidos depois via `git commit --amend` +
+   recomposição dos commits anteriores (sem `rebase -i`, proibido por instrução).
+6. Nunca `--force`, nunca reescrever histórico, nunca push sem ser pedido.
+7. Se algo quebrar ou ficar ambíguo: **parar e explicar**, não improvisar.
 
 ---
 
