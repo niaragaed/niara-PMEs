@@ -1349,6 +1349,73 @@ export const ptBr = {
       tokensEmitidos: "Tokens emitidos (simulado)",
       ref: "Referência (simulada)",
     },
+    publicarLink: "Publicar on-chain →",
+    publicarOnChain: {
+      meta: {
+        title: "Publicar on-chain",
+        description: "Verificação de elegibilidade para publicar sua oferta em Sepolia.",
+      },
+      voltar: "← Voltar para Minhas ofertas",
+      titulo: "Publicar on-chain",
+      subtitulo:
+        "Esta etapa só verifica se sua carteira está pronta — nenhuma transação é assinada aqui.",
+      naoEncontrada: {
+        title: "Oferta não encontrada",
+        description: "Esta oferta não existe ou não pertence à sua conta.",
+        voltar: "Voltar para Minhas ofertas",
+      },
+      naoElegivel: {
+        titulo: "Esta oferta não pode ser publicada agora",
+        texto: "Só ofertas em rascunho podem ser publicadas on-chain — esta já mudou de status.",
+      },
+      semCarteiraVinculada: {
+        titulo: "Nenhuma carteira vinculada à sua conta",
+        texto: "Antes de publicar, vá em Perfil e vincule a carteira MetaMask que vai assinar por esta empresa.",
+        link: "Ir para Perfil →",
+      },
+      gates: {
+        titulo: "Checklist antes de assinar",
+        provider: {
+          label: "Carteira MetaMask detectada",
+          reprovado: "Nenhuma carteira injetada foi detectada neste navegador — instale a MetaMask para continuar.",
+        },
+        rede: {
+          label: "Conectado à rede Sepolia",
+          naoConectado: "Conecte sua carteira para checar a rede.",
+          redeErrada: (chainId: number) => `Conectado à rede ${chainId} — troque para Sepolia na MetaMask.`,
+        },
+        saldo: {
+          label: "Saldo de ETH suficiente para o gás",
+          carregando: "Consultando saldo e preço do gás em Sepolia…",
+          erro: "Não foi possível consultar o saldo ou o preço do gás agora — tente de novo em instantes.",
+          reprovado: (saldo: string, custo: string) =>
+            `Saldo de ${saldo} é insuficiente para o custo estimado de ${custo} de gás (estimativa com margem de segurança — o preço do gás em Sepolia já variou bastante numa mesma sessão).`,
+          ok: (saldo: string, custo: string) => `Saldo de ${saldo} — custo estimado de gás: ${custo}.`,
+        },
+        autorizado: {
+          label: "Carteira autorizada pela Niara para publicar (emissoresAutorizados)",
+          naoConectado: "Conecte sua carteira para checar a autorização.",
+          reprovado: "Esta carteira ainda não foi autorizada pela Niara a publicar ofertas — fale com a equipe.",
+          erro: "Não foi possível consultar a autorização on-chain agora — tente de novo em instantes.",
+        },
+        titularidade: {
+          label: "Carteira conectada é a vinculada à sua conta",
+          semCarteiraVinculada: "Nenhuma carteira vinculada — veja o aviso acima.",
+          naoConectado: "Conecte sua carteira para comparar.",
+          diferente: (vinculada: string, conectada: string) =>
+            `A carteira vinculada à sua conta (${vinculada}) é diferente da conectada agora (${conectada}). Troque na MetaMask ou vincule a atual em Perfil.`,
+        },
+        termo: {
+          label: "Termo de publicação aceito",
+          reprovado: "O termo de publicação ainda não está disponível nesta etapa do projeto — chega na próxima parte da Fase 3.",
+        },
+      },
+      botao: {
+        label: "Publicar on-chain",
+        bloqueadoAria: "Publicação bloqueada",
+        pendencias: "Pendências antes de habilitar o botão:",
+      },
+    },
   },
   investir: {
     meta: {
