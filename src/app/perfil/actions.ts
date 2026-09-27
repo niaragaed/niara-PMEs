@@ -182,6 +182,7 @@ export type OfferingSummary = {
   base_cap_cents: number;
   target_min_cents: number;
   created_at: string;
+  sync_status: "nao_onchain" | "pendente" | "confirmada" | "divergente";
 };
 
 // Resumo (não-CRUD) das ofertas REAIS do issuer logado, para a seção "Minhas
@@ -198,7 +199,7 @@ export async function loadMyOfferingsSummary(): Promise<OfferingSummary[]> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("offerings")
-    .select("id, status, base_cap_cents, target_min_cents, created_at")
+    .select("id, status, base_cap_cents, target_min_cents, created_at, sync_status")
     .eq("issuer_id", accountId)
     .order("created_at", { ascending: false });
 

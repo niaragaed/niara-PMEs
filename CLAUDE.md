@@ -1665,6 +1665,57 @@ tiver sido trocada** desde a assinatura original — motivo pelo qual a migratio
 rodada e conferida (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` em ambos os
 lados) antes de qualquer troca de carteira vinculada para as contas afetadas.
 
+### Reconciliação contínua (`verificarConsistencia`) — sub-etapa 5 do plano
+
+A oferta on-chain é **imutável** depois de criada, mas a linha de `offerings` não
+é — nada impede um `UPDATE` manual (ou um bug futuro) em `hard_cap_cents`/
+`share_price_cents`/`target_min_cents`/`closes_at` depois da confirmação.
+`verificarConsistencia(offeringId)` (`onchain-actions.ts`) lê ao vivo, direto do
+`contract_address` já gravado, os getters `metaMinima`/`metaMaxima`/`precoPorCota`/
+`prazo` do clone `OfertaCaptacao` (valores `immutable` de fato — escritos uma
+única vez em `initialize`, nunca alterados depois, então uma leitura de agora vale
+tanto quanto o evento original) e compara contra os valores **atuais** da linha no
+Supabase. **Nunca corrige nenhum dos dois lados** — só marca `sync_status` e grava
+o motivo em `onchain_last_error`; a correção, quando existir, é sempre humana (a
+chain nunca muda, então só o Supabase pode estar errado).
+
+🔴 **`divergente` passa a cobrir DUAS causas distintas, diferenciadas por
+`contract_address`, não por uma coluna nova**: sem endereço gravado, é uma falha de
+`confirmarPublicacao()` que nunca chegou a confirmar (log ausente, evento errado,
+clone não registrado) — resolvida só por "Reprocessar". Com endereço gravado, só
+pode ser um drift de consistência pós-confirmação — resolvida por "Verificar
+consistência" (`verificarConsistencia`), nunca por "Reprocessar" (que dependeria de
+re-decodificar o evento original, desnecessário aqui). `PublicarOnChainPage.tsx`
+decide qual dos dois botões mostrar checando `displayContract`.
+
+**Quando roda**: automaticamente, uma única vez, ao abrir
+`/empresa/ofertas/[id]/publicar` de uma oferta `confirmada` (ou `divergente` já com
+`contract_address`) — mesmo padrão já usado para `confirmarPublicacao` em ofertas
+`pendente`. Também sob demanda, via botão "Verificar consistência" nos painéis
+`confirmada` e `divergente`-por-drift. **Nunca** roda na listagem `/empresa/ofertas`
+(um card por oferta ali só mostra o último `sync_status` já conhecido, sem leitura
+nova) nem em polling — cada chamada é uma leitura RPC real (`eth_call`, sem gás,
+mas ainda uma requisição contra o RPC configurado), e o custo dela precisa ficar
+proporcional a quantas vezes um humano efetivamente abre aquela oferta específica,
+não a quantas ofertas existem nem a quanto tempo passa.
+
+`SyncStatusBadge.tsx` (`src/components/empresa/publicar/`) — pequeno indicador
+reutilizável de `sync_status`, usado no card de `OfertasPage.tsx` (substituindo os
+títulos ad hoc que cada painel tinha antes) e no resumo de `MyOffersSection.tsx`
+(`/perfil`, que antes só mostrava `offerings.status`, nunca `sync_status`).
+`PublicarOnChainPage.tsx` não usa o badge — já comunica cada status com um painel
+próprio, mais detalhado; o badge existe para os dois lugares que só têm espaço para
+um indicador compacto.
+
+**Prova de que funciona (pendente de confirmação do usuário no navegador — ver
+instruções passadas fora deste arquivo)**: `hard_cap_cents` de uma das duas ofertas
+`confirmada` é editado direto no Supabase (±1 centavo — pequeno o bastante para
+nunca violar o CHECK `additional_lot`, grande o bastante para a comparação de
+igualdade exata em `bigint` acusar), a tela precisa virar `divergente` com o motivo
+citando os dois valores (Supabase vs. on-chain), e restaurado o valor original,
+"Verificar consistência" precisa trazer de volta `confirmada` sozinha, sem tocar em
+nenhuma transação nos dois sentidos. Atualizar este parágrafo depois de confirmado.
+
 ---
 
 ## Organização

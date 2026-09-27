@@ -1473,6 +1473,11 @@ export const ptBr = {
         reprocessar: "Reprocessar",
         reprocessarNota: "Reconfere a mesma transação (não assina nada de novo) — use depois de entender por que divergiu.",
         verificarNovamente: "Verificar novamente",
+        divergenteConsistenciaTexto:
+          "Os dados desta oferta no Supabase mudaram depois da publicação e não batem mais com os valores imutáveis já gravados no contrato — reveja o motivo abaixo. A chain nunca muda; a correção, se houver, é sempre no Supabase.",
+        verificarConsistencia: "Verificar consistência",
+        verificarConsistenciaNota:
+          "Relê os valores do contrato (metaMinima/metaMaxima/precoPorCota/prazo) e compara com esta oferta no Supabase agora — não corrige nenhum dos dois lados, só sinaliza.",
       },
     },
   },

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { formatBRL } from "@/lib/format";
+import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
 import type { OfferingSummary } from "@/app/perfil/actions";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
@@ -55,6 +56,7 @@ export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] })
                       <span className="rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
                         {ptBr.empresaOfertas.status[offering.status]}
                       </span>
+                      <SyncStatusBadge status={offering.sync_status} />
                     </div>
                     <p className="mt-1 text-xs text-on-military-muted">
                       {t.card.criadaEm} {formatDate(offering.created_at)} · {t.card.metaMinima}{" "}
