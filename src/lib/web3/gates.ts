@@ -46,6 +46,12 @@ export function avaliarGateRede(isConnected: boolean, chainIdConectado: number |
 // abaixo do ES2020 exigido para literais BigInt nativos; mesma convenção já usada em
 // src/lib/money.ts.
 export const GAS_LIMITE_PUBLICACAO = BigInt(1_200_000);
+
+// Centavos de R$ (bigint em offerings.*_cents) -> unidade de 18 casas do MockBRL (1 "unidade" =
+// 1 real equivalente): valor_wei = centavos * 10^16. Fonte única — usada tanto ao montar os
+// argumentos da transação (client) quanto ao conferir o evento minerado contra o Supabase
+// (confirmarPublicacao, server).
+export const UNIDADE_ON_CHAIN = BigInt("10000000000000000");
 export const MARGEM_SEGURANCA_PERCENT = BigInt(130); // 130% = +30% sobre o custo base
 
 export function estimarCustoPublicacaoWei(precoGasWei: bigint): bigint {
