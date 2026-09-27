@@ -6,7 +6,7 @@
 // projeto) e traduz qualquer erro via describeOnChainError antes de devolvê-lo à UI.
 import { useCallback, useState } from "react";
 import { useConnection, usePublicClient, useWriteContract } from "wagmi";
-import { getOnChainContracts } from "../contracts";
+import { getMockBrlContract, getOnChainContracts, type OfertaOnChainEnderecos } from "../contracts";
 import { describeOnChainError } from "../errors";
 
 export type SimpleTxStatus = "idle" | "assinando" | "confirmando" | "sucesso" | "erro";
@@ -30,13 +30,13 @@ export function useMintMockBrl() {
 
   const mint = useCallback(
     async (amount: bigint) => {
-      const contracts = getOnChainContracts();
-      if (!contracts || !address || !publicClient) return;
+      const mockBrl = getMockBrlContract();
+      if (!mockBrl || !address || !publicClient) return;
 
       setState({ status: "assinando", errorMessage: null });
       try {
         const hash = await writeContractAsync({
-          ...contracts.mockBrl,
+          ...mockBrl,
           functionName: "mint",
           args: [address, amount],
         });
@@ -76,16 +76,16 @@ export type InvestState = {
  * suficiente); só então chama `aportar`. `valor` já deve vir calculado como
  * `quantidadeDeCotas * precoPorCota` (múltiplo exato — ver OfertaCaptacao.aportar) e
  * `allowanceAtual` deve vir do hook de leitura (useMinhaPosicaoOnChain), para não duplicar a
- * mesma leitura aqui. `ofertaIndex` seleciona qual das várias ofertas disponíveis usar.
+ * mesma leitura aqui. `enderecos` identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useInvestirOnChain(ofertaIndex = 0) {
+export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<InvestState>({ status: "idle", errorMessage: null });
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
   const investir = useCallback(
     async (valor: bigint, allowanceAtual: bigint) => {
-      const contracts = getOnChainContracts(ofertaIndex);
+      const contracts = getOnChainContracts(enderecos);
       if (!contracts || !publicClient) return;
 
       try {
@@ -116,7 +116,7 @@ export function useInvestirOnChain(ofertaIndex = 0) {
         setState({ status: "erro", errorMessage: describeOnChainError(error) });
       }
     },
-    [publicClient, writeContractAsync, ofertaIndex],
+    [publicClient, writeContractAsync, enderecos],
   );
 
   const reset = useCallback(() => setState({ status: "idle", errorMessage: null }), []);
@@ -126,16 +126,16 @@ export function useInvestirOnChain(ofertaIndex = 0) {
 
 /**
  * `encerrar()` é permissionless — qualquer carteira conectada pode chamar assim que a oferta
- * for elegível (prazo atingido, ou total arrecadado == meta máxima exata). `ofertaIndex`
- * seleciona qual das várias ofertas disponíveis usar.
+ * for elegível (prazo atingido, ou total arrecadado == meta máxima exata). `enderecos`
+ * identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useEncerrarOferta(ofertaIndex = 0) {
+export function useEncerrarOferta(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
   const encerrar = useCallback(async () => {
-    const contracts = getOnChainContracts(ofertaIndex);
+    const contracts = getOnChainContracts(enderecos);
     if (!contracts || !publicClient) return;
 
     setState({ status: "assinando", errorMessage: null });
@@ -147,7 +147,7 @@ export function useEncerrarOferta(ofertaIndex = 0) {
     } catch (error) {
       setState({ status: "erro", errorMessage: describeOnChainError(error) });
     }
-  }, [publicClient, writeContractAsync, ofertaIndex]);
+  }, [publicClient, writeContractAsync, enderecos]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
@@ -157,15 +157,15 @@ export function useEncerrarOferta(ofertaIndex = 0) {
 /**
  * `resgatarCotas()` é pull, uma vez por investidor, só após `EncerradaSucesso` — independente
  * de `liberarParaEmissor` (ver OfertaCaptacao.sol, confirmado antes de fixar este fluxo).
- * `ofertaIndex` seleciona qual das várias ofertas disponíveis usar.
+ * `enderecos` identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useResgatarCotas(ofertaIndex = 0) {
+export function useResgatarCotas(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
   const resgatar = useCallback(async () => {
-    const contracts = getOnChainContracts(ofertaIndex);
+    const contracts = getOnChainContracts(enderecos);
     if (!contracts || !publicClient) return;
 
     setState({ status: "assinando", errorMessage: null });
@@ -177,7 +177,7 @@ export function useResgatarCotas(ofertaIndex = 0) {
     } catch (error) {
       setState({ status: "erro", errorMessage: describeOnChainError(error) });
     }
-  }, [publicClient, writeContractAsync, ofertaIndex]);
+  }, [publicClient, writeContractAsync, enderecos]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
@@ -188,16 +188,16 @@ export function useResgatarCotas(ofertaIndex = 0) {
  * `liberarParaEmissor()` é pull, uma vez, permissionless, só após `EncerradaSucesso` — transfere
  * o arrecadado (menos a taxa, se `taxaBps > 0`) ao emissor e a taxa ao `protocoloWallet` (ver
  * OfertaCaptacao.sol). Sem chamar esta função, o dinheiro fica retido no escrow para sempre — é o
- * gatilho que de fato move a receita de taxa da plataforma, quando existir. `ofertaIndex` seleciona
- * qual das várias ofertas disponíveis usar.
+ * gatilho que de fato move a receita de taxa da plataforma, quando existir. `enderecos`
+ * identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useLiberarParaEmissor(ofertaIndex = 0) {
+export function useLiberarParaEmissor(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
   const liberar = useCallback(async () => {
-    const contracts = getOnChainContracts(ofertaIndex);
+    const contracts = getOnChainContracts(enderecos);
     if (!contracts || !publicClient) return;
 
     setState({ status: "assinando", errorMessage: null });
@@ -209,7 +209,7 @@ export function useLiberarParaEmissor(ofertaIndex = 0) {
     } catch (error) {
       setState({ status: "erro", errorMessage: describeOnChainError(error) });
     }
-  }, [publicClient, writeContractAsync, ofertaIndex]);
+  }, [publicClient, writeContractAsync, enderecos]);
 
   const reset = useCallback(() => setState(IDLE), []);
 

@@ -4,7 +4,7 @@
 // Todo valor monetário/de cotas trafega em bigint (unidade bruta do contrato, 18 casas) — a
 // conversão para exibição (formatUnits) acontece só na UI, nunca aqui.
 import { useConnection, useReadContracts } from "wagmi";
-import { getOnChainContracts } from "../contracts";
+import { getOnChainContracts, type OfertaOnChainEnderecos } from "../contracts";
 
 const ESTADO_LABELS = ["Aberta", "EncerradaSucesso", "EncerradaFalha"] as const;
 export type EstadoOferta = (typeof ESTADO_LABELS)[number];
@@ -30,10 +30,11 @@ export type OfertaOnChainTermos = {
 
 /**
  * Termos públicos da oferta + metadados dos dois tokens — não depende de carteira conectada.
- * `ofertaIndex` seleciona qual das várias ofertas disponíveis usar (padrão: a primeira).
+ * `enderecos` identifica a oferta (par token/oferta, ver contracts.ts) — `null` enquanto nenhuma
+ * estiver selecionada/configurada.
  */
-export function useOfertaOnChainTermos(ofertaIndex = 0): OfertaOnChainTermos {
-  const contracts = getOnChainContracts(ofertaIndex);
+export function useOfertaOnChainTermos(enderecos: OfertaOnChainEnderecos | null): OfertaOnChainTermos {
+  const contracts = getOnChainContracts(enderecos);
 
   const { data, isLoading, refetch } = useReadContracts({
     contracts: contracts
@@ -91,12 +92,13 @@ export type MinhaPosicaoOnChain = {
 
 /**
  * Posição do investidor conectado nesta oferta + saldos das duas carteiras de token. Desligado
- * (todos os campos zerados) enquanto não houver carteira conectada. `ofertaIndex` seleciona
- * qual das várias ofertas disponíveis usar (padrão: a primeira).
+ * (todos os campos zerados) enquanto não houver carteira conectada. `enderecos` identifica a
+ * oferta (par token/oferta, ver contracts.ts) — `null` enquanto nenhuma estiver
+ * selecionada/configurada.
  */
-export function useMinhaPosicaoOnChain(ofertaIndex = 0): MinhaPosicaoOnChain {
+export function useMinhaPosicaoOnChain(enderecos: OfertaOnChainEnderecos | null): MinhaPosicaoOnChain {
   const { address, isConnected } = useConnection();
-  const contracts = getOnChainContracts(ofertaIndex);
+  const contracts = getOnChainContracts(enderecos);
   const enabled = Boolean(contracts) && isConnected && Boolean(address);
 
   const { data, isLoading, refetch } = useReadContracts({

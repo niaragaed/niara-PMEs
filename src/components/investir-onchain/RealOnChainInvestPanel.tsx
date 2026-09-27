@@ -2,12 +2,17 @@
 
 // Painel de investimento real em Sepolia — extraído de OnChainInvestPage.tsx para ser
 // reutilizável também dentro da página de detalhe das ofertas PMEs unificadas
-// (OfertaDetailPage.tsx, ver CLAUDE.md "Tela /negociar"). Refatoração pura: nenhuma regra de
-// negócio on-chain mudou, só o componente ganhou uma fronteira própria (`{ ofertaIndex }`).
+// (OfertaDetailPage.tsx, ver CLAUDE.md "Tela /negociar").
+//
+// Desde a Fase 4 (sub-etapa 5.2): recebe o par de endereços da oferta diretamente
+// (`tokenAddress`/`ofertaAddress`), não mais um `ofertaIndex` numa lista fixa — a oferta pode vir
+// tanto da lista legada (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) quanto do Supabase (ofertas self-service
+// já confirmadas, `loadConfirmedOnChainOfferings`). Este componente não sabe nem precisa saber a
+// origem.
 //
 // O chamador é responsável por remontar este componente ao trocar de oferta
-// (`key={ofertaIndex}`) — isso reseta de graça todo o estado local (quantidade, status de
-// invest/encerrar/resgatar, campo do faucet), sem precisar de resets manuais.
+// (`key={...}`, único por oferta) — isso reseta de graça todo o estado local (quantidade, status
+// de invest/encerrar/resgatar, campo do faucet), sem precisar de resets manuais.
 //
 // `isSocio` (resolvido no servidor via resolveSocio(), repassado pelas duas páginas host —
 // OnChainInvestPage.tsx e OfertaDetailPage.tsx) só bloqueia o BOTÃO "Encerrar oferta" nesta
@@ -117,10 +122,12 @@ function FaucetCard({
 }
 
 export function RealOnChainInvestPanel({
-  ofertaIndex,
+  tokenAddress,
+  ofertaAddress,
   isSocio = false,
 }: {
-  ofertaIndex: number;
+  tokenAddress: `0x${string}`;
+  ofertaAddress: `0x${string}`;
   isSocio?: boolean;
 }) {
   const t = ptBr.investirOnChain;
@@ -128,14 +135,18 @@ export function RealOnChainInvestPanel({
   const isOnSepolia = connection.chainId === sepolia.id;
   const podeOperar = connection.isConnected && isOnSepolia;
 
-  const termos = useOfertaOnChainTermos(ofertaIndex);
-  const posicao = useMinhaPosicaoOnChain(ofertaIndex);
+  // Referência estável (mesmo objeto entre renders enquanto os endereços não mudarem) — evita
+  // recriar os 6 hooks/callbacks abaixo a cada render só por causa de um objeto novo.
+  const enderecos = useMemo(() => ({ token: tokenAddress, oferta: ofertaAddress }), [tokenAddress, ofertaAddress]);
+
+  const termos = useOfertaOnChainTermos(enderecos);
+  const posicao = useMinhaPosicaoOnChain(enderecos);
 
   const [quantidadeCotas, setQuantidadeCotas] = useState("1");
-  const invest = useInvestirOnChain(ofertaIndex);
-  const encerrar = useEncerrarOferta(ofertaIndex);
-  const resgatar = useResgatarCotas(ofertaIndex);
-  const liberar = useLiberarParaEmissor(ofertaIndex);
+  const invest = useInvestirOnChain(enderecos);
+  const encerrar = useEncerrarOferta(enderecos);
+  const resgatar = useResgatarCotas(enderecos);
+  const liberar = useLiberarParaEmissor(enderecos);
 
   const quantidadeBigInt = useMemo(() => {
     const parsed = quantidadeCotas.trim();
