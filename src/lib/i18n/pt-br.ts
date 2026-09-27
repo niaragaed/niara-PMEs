@@ -1315,8 +1315,6 @@ export const ptBr = {
     },
     criarBotao: "Criar oferta (rascunho)",
     criandoBotao: "Criando…",
-    ativarBotao: "Ativar",
-    ativandoBotao: "Ativando…",
     ativarAviso:
       "Ativação de novas ofertas pausada nesta demonstração — a captação está migrando para rodar direto em Sepolia real, sem passar por este fluxo simulado.",
     fecharBotao: "Fechar captação (simulado)",
@@ -1350,6 +1348,23 @@ export const ptBr = {
       ref: "Referência (simulada)",
     },
     publicarLink: "Publicar on-chain →",
+    onchainStatus: {
+      pendente: {
+        titulo: "Publicação em andamento",
+        texto: "Transação assinada — aguardando confirmação on-chain.",
+        link: "Ver status →",
+      },
+      confirmada: {
+        titulo: "Publicada on-chain",
+        contrato: "Contrato da oferta",
+        token: "Contrato do token",
+      },
+      divergente: {
+        titulo: "Divergência encontrada na publicação",
+        texto: "A verificação encontrou uma inconsistência entre a transação e os dados desta oferta — revise antes de prosseguir.",
+        link: "Revisar →",
+      },
+    },
     publicarOnChain: {
       meta: {
         title: "Publicar on-chain",

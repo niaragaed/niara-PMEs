@@ -1541,7 +1541,28 @@ Fase 3 (publicação self-service em Sepolia, ver `PLANO_FASE_3_PUBLICACAO_ONCHA
 — plano completo, não repetido aqui) acrescenta `/empresa/ofertas/[id]/publicar`:
 o próprio emissor assina `OfertaOrquestrador.criarOfertaCompleta` com a própria
 carteira. `src/app/empresa/ofertas/onchain-actions.ts` (`registrarTentativa`/
-`confirmarPublicacao`) e `src/lib/web3/hooks/usePublicarOfertaOnChain.ts`.
+`confirmarPublicacao`) e `src/lib/web3/hooks/usePublicarOfertaOnChain.ts`. A rota já
+está linkada em `OfertasPage.tsx`: uma oferta `draft` com `sync_status='nao_onchain'`
+mostra o link "Publicar on-chain →" no lugar do antigo botão "Ativar" (desabilitado
+desde antes desta fase, ver seção 1.1 do plano); `pendente`/`divergente` mostram
+estado + link para a mesma rota; `confirmada` mostra só o estado (endereços de
+contrato/token com link pro Etherscan) — nunca um botão, a publicação já aconteceu.
+
+**Teste ponta a ponta validado depois da correção de `expected_emissor_wallet`
+abaixo**: nova oferta, emissor `0x21443ADa1d36e5DCAadD62896Ca2c21aDFE396E1` (carteira
+limpa, nunca usada para assinar nada antes, autorizada via `autorizarEmissor` só para
+este teste), hash
+[`0x8f3010c9a2287848bfcf351dfdbcb73b0203e22d707b3a32954a2c89be07866a`](https://sepolia.etherscan.io/tx/0x8f3010c9a2287848bfcf351dfdbcb73b0203e22d707b3a32954a2c89be07866a).
+Desta vez a MetaMask **não** reescreveu a transação em envelope EIP-7702 — `to` foi
+direto ao `OfertaOrquestrador`, sem delegação nenhuma envolvida (nem toda conta vira
+EIP-7702; a primeira vez foi uma escolha da MetaMask para aquela conta especificamente,
+não algo que este projeto controla ou pode prevenir do lado do dApp — por isso a
+validação por log continua sendo a única forma correta, independente de qual dos dois
+formatos aparecer). `sync_status` chegou a `confirmada` sozinho, sem precisar de
+"Reprocessar": oferta `0xE340Bb941E3FADfEbe2454dFd17a10F35b4A5EF6`, token
+`0x0dB0FaB0a41891f023aF58C9AE9C271575590F56`, ambos lidos do evento
+`OfertaCompletaCriada`, ambos confirmados como registrados nas factories
+(`isOferta`/`isCaptacao`).
 
 ### 🔴 EIP-7702 — a MetaMask pode reescrever a transação; nunca validar por `receipt.to`
 
