@@ -285,6 +285,23 @@ export function PublicarOnChainPage({
             <p className="font-medium">{tp.divergenteTitulo}</p>
             <p className="mt-1">{tp.divergenteTexto}</p>
             {displayError && <p className="mt-1 text-xs">{displayError}</p>}
+            {displayTxHash && (
+              <a href={etherscanTx(displayTxHash)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-value-negative underline">
+                {tp.verNoEtherscan}
+              </a>
+            )}
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={verificarNovamente}
+                disabled={verificando}
+                className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {verificando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {tp.reprocessar}
+              </button>
+              <p className="mt-1 text-xs text-on-military-muted">{tp.reprocessarNota}</p>
+            </div>
           </div>
         )}
 

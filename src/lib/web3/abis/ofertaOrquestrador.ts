@@ -10,6 +10,13 @@
 //   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'function' && e.name === 'criarOfertaCompleta'), null, 2))"
 //   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'event' && e.name === 'OfertaCompletaCriada'), null, 2))"
 //   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.filter(e => e.type === 'error' && ['ZeroAddress','EmissorNaoAutorizado','OfertaAnteriorAindaAberta','PrecoInvalido','PrazoInvalido','PrazoExcedeLimite','MetaMaximaExcedeTeto','LoteAdicionalExcedeLimite','PrecoNaoDivideMetaMaxima','TaxaExcedeMaximo'].includes(e.name)), null, 2))"
+//   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'function' && e.name === 'tokenFactory'), null, 2))"
+//   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'function' && e.name === 'captacaoFactory'), null, 2))"
+//
+// `tokenFactory`/`captacaoFactory` (getters de `address public immutable`, ver o .sol) foram
+// adicionados na Fase 3 para confirmarPublicacao() poder achar as duas factories a partir do
+// próprio orquestrador — em vez de precisar de mais duas env vars — e checar que o token/oferta
+// do evento realmente foram registrados nelas (ver achado do EIP-7702, CLAUDE.md).
 //
 // Os demais erros herdados de AccessControl/Pausable/TimelockedAccessControl (ex.:
 // AccessControlUnauthorizedAccount, EnforcedPause) não entram aqui — o gate 4 já impede o
@@ -22,6 +29,20 @@ export const ofertaOrquestradorAbi = [
     name: "emissoresAutorizados",
     inputs: [{ name: "", type: "address", internalType: "address" }],
     outputs: [{ name: "", type: "bool", internalType: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "tokenFactory",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "captacaoFactory",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
     stateMutability: "view",
   },
   {

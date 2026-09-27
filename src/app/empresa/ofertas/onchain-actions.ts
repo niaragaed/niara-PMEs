@@ -6,12 +6,21 @@
 // leitura verificada do próprio servidor contra a chain (confirmarPublicacao), nunca de um
 // parâmetro. issuer_id/accountId sempre vem de resolveAccount() (sessão no servidor), nunca do
 // cliente — mesmo padrão de toda outra Server Action deste projeto.
+//
+// 🔴 confirmarPublicacao() NUNCA valida por `receipt.to` — incidente real documentado no
+// CLAUDE.md: a MetaMask pode reescrever a transação num envelope EIP-7702 (type 4), e nesse
+// caso `receipt.to` é um contrato executor da própria MetaMask, não o OfertaOrquestrador,
+// mesmo a chamada tendo sido executada corretamente por dentro. A validação correta é pelos
+// LOGS: só o próprio OfertaOrquestrador consegue emitir um log cujo `address` é o dele — isso
+// é inforjável, diferente de `to`, que a wallet pode reescrever livremente antes de assinar.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { decodeEventLog, TransactionReceiptNotFoundError } from "viem";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID } from "@/lib/web3/orquestrador";
+import { participacaoTokenFactoryAbi } from "@/lib/web3/abis/participacaoTokenFactory";
+import { ofertaCaptacaoFactoryAbi } from "@/lib/web3/abis/ofertaCaptacaoFactory";
 import { publicClient } from "@/lib/web3/eventsCore";
 import { describeOnChainError } from "@/lib/web3/errors";
 import { UNIDADE_ON_CHAIN } from "@/lib/web3/gates";
@@ -86,11 +95,21 @@ export type ConfirmarPublicacaoState =
 
 /**
  * Nunca confia em nada vindo do client além do `offeringId`. Lê o `tx_hash` da própria linha,
- * busca o recibo no servidor, confere que é uma chamada bem-sucedida ao endereço esperado do
- * orquestrador, decodifica o evento `OfertaCompletaCriada` e só grava `contract_address`/
- * `token_address`/`onchain_emissor_wallet` depois de conferir que os parâmetros do evento
- * batem com os que a própria oferta tinha no momento em que a transação foi montada (ver
- * `registrarTentativa`) — nunca uma alegação aceita de ninguém, sempre uma leitura verificada.
+ * busca o recibo no servidor e valida a autenticidade da publicação INTEIRAMENTE por logs +
+ * procedência dos clones, nunca por `receipt.to` (ver nota no topo do arquivo):
+ *
+ *   1. Existe, no recibo, um log cujo `address` é exatamente o OfertaOrquestrador configurado,
+ *      e que decodifica como `OfertaCompletaCriada` — só o próprio contrato consegue emitir um
+ *      log com o endereço dele.
+ *   2. O `emissor` do evento bate com `issuers.wallet_address` da conta logada, e
+ *      metaMinima/metaMaxima/precoPorCota/prazo batem com os que a oferta tinha no momento em
+ *      que a transação foi montada (ver `registrarTentativa`).
+ *   3. O `token`/`oferta` do evento estão REALMENTE registrados nas factories corretas
+ *      (`ParticipacaoTokenFactory.isOferta` / `OfertaCaptacaoFactory.isCaptacao`) — confirma a
+ *      procedência dos clones, não só que "algum contrato existe nesse endereço".
+ *
+ * Só depois das três checagens é que contract_address/token_address/onchain_emissor_wallet são
+ * gravados — sempre os valores lidos do evento, nunca uma alegação aceita de ninguém.
  */
 export async function confirmarPublicacao(offeringId: string): Promise<ConfirmarPublicacaoState> {
   const { role, accountId } = await resolveAccount();
@@ -124,8 +143,18 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
       tokenAddress: offering.token_address as string,
     };
   }
-  if (offering.sync_status !== "pendente" || !offering.tx_hash) {
+  // 'divergente' também pode ser reprocessada por aqui (não só 'pendente') — é exatamente o
+  // caminho normal de corrigir um falso positivo do verificador (ex.: o incidente do EIP-7702,
+  // ver CLAUDE.md), sem precisar de UPDATE manual. tx_hash nunca é limpo ao marcar divergente
+  // (só ao reverter de verdade), então ele continua disponível para reprocessar.
+  if (!["pendente", "divergente"].includes(offering.sync_status as string) || !offering.tx_hash) {
     return { status: "error", message: "Esta oferta não está com uma publicação pendente." };
+  }
+
+  const { data: issuer } = await admin.from("issuers").select("wallet_address").eq("id", accountId).maybeSingle();
+  const walletVinculada = (issuer?.wallet_address as string | null) ?? null;
+  if (!walletVinculada) {
+    return { status: "error", message: "Nenhuma carteira vinculada a esta conta — não é possível confirmar." };
   }
 
   const orquestrador = getOrquestradorContract();
@@ -146,26 +175,22 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
     return { status: "error", message: describeOnChainError(e) };
   }
 
-  if (receipt.to?.toLowerCase() !== orquestrador.address.toLowerCase()) {
-    const motivo = "O recibo desta transação não corresponde ao contrato OfertaOrquestrador esperado.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
-  }
-
   if (receipt.status === "reverted") {
     await admin
       .from("offerings")
       .update({ sync_status: "nao_onchain", tx_hash: null, onchain_last_error: "A transação reverteu on-chain." })
       .eq("id", parsedId.data)
       .eq("issuer_id", accountId)
-      .eq("sync_status", "pendente");
+      .in("sync_status", ["pendente", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
     return { status: "revertida", motivo: "A transação reverteu on-chain — tente publicar de novo." };
   }
 
+  // Log do próprio OfertaOrquestrador — inforjável: só o contrato nesse endereço consegue
+  // emitir um log com esse `address`, não importa qual foi o `to` de nível superior da tx.
   const log = receipt.logs.find((l) => l.address.toLowerCase() === orquestrador.address.toLowerCase());
   if (!log) {
-    const motivo = "Nenhum evento do OfertaOrquestrador encontrado neste recibo.";
+    const motivo = "Nenhum evento emitido pelo endereço do OfertaOrquestrador foi encontrado neste recibo.";
     await marcarDivergente(admin, parsedId.data, accountId, motivo);
     return { status: "divergente", motivo };
   }
@@ -174,7 +199,7 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   try {
     decoded = decodeEventLog({ abi: orquestrador.abi, data: log.data, topics: log.topics, eventName: "OfertaCompletaCriada" });
   } catch {
-    const motivo = "Não foi possível decodificar o evento OfertaCompletaCriada deste recibo.";
+    const motivo = "O evento emitido pelo OfertaOrquestrador neste recibo não é OfertaCompletaCriada.";
     await marcarDivergente(admin, parsedId.data, accountId, motivo);
     return { status: "divergente", motivo };
   }
@@ -187,12 +212,31 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   const prazoEsperado = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
 
   if (
+    emissor.toLowerCase() !== walletVinculada.toLowerCase() ||
     metaMinima !== metaMinimaEsperada ||
     metaMaxima !== metaMaximaEsperada ||
     precoPorCota !== precoPorCotaEsperado ||
     prazo !== prazoEsperado
   ) {
-    const motivo = "Os parâmetros do evento on-chain não batem com os desta oferta no Supabase.";
+    const motivo = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira vinculada) no Supabase.";
+    await marcarDivergente(admin, parsedId.data, accountId, motivo);
+    return { status: "divergente", motivo };
+  }
+
+  // Procedência dos clones: confirma que token/oferta foram REALMENTE registrados pelas
+  // factories do próprio orquestrador (lidas dele mesmo, nunca de env var solta) — não basta
+  // "existir algum contrato nesse endereço".
+  const [tokenFactoryAddress, captacaoFactoryAddress] = await Promise.all([
+    client.readContract({ address: orquestrador.address, abi: orquestrador.abi, functionName: "tokenFactory" }),
+    client.readContract({ address: orquestrador.address, abi: orquestrador.abi, functionName: "captacaoFactory" }),
+  ]);
+  const [tokenRegistrado, ofertaRegistrada] = await Promise.all([
+    client.readContract({ address: tokenFactoryAddress, abi: participacaoTokenFactoryAbi, functionName: "isOferta", args: [token] }),
+    client.readContract({ address: captacaoFactoryAddress, abi: ofertaCaptacaoFactoryAbi, functionName: "isCaptacao", args: [oferta] }),
+  ]);
+
+  if (!tokenRegistrado || !ofertaRegistrada) {
+    const motivo = "O token/oferta do evento não está registrado nas factories do OfertaOrquestrador.";
     await marcarDivergente(admin, parsedId.data, accountId, motivo);
     return { status: "divergente", motivo };
   }
@@ -208,7 +252,7 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
     })
     .eq("id", parsedId.data)
     .eq("issuer_id", accountId)
-    .eq("sync_status", "pendente");
+    .in("sync_status", ["pendente", "divergente"]);
 
   if (updateError) {
     console.error("confirmarPublicacao: erro ao gravar confirmação", updateError);
@@ -230,6 +274,6 @@ async function marcarDivergente(
     .update({ sync_status: "divergente", onchain_last_error: motivo })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
-    .eq("sync_status", "pendente");
+    .in("sync_status", ["pendente", "divergente"]);
   revalidatePath(`/empresa/ofertas/${offeringId}/publicar`);
 }
