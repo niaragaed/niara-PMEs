@@ -19,6 +19,11 @@ export type OfferingRow = {
   opens_at: string;
   closes_at: string;
   created_at: string;
+  /** Publicação on-chain (Fase 3) — ortogonal a `status` (ver CLAUDE.md, "Tela /empresa/ofertas"):
+   * uma oferta publicada em Sepolia continua com status='draft' do ponto de vista do Supabase. */
+  sync_status: "nao_onchain" | "pendente" | "confirmada" | "divergente";
+  contract_address: string | null;
+  token_address: string | null;
   /** Soma de investments pagos/liquidados desta oferta — derivado, não vem da tabela offerings. */
   paidCents: number;
   /** Refs (MOCK-TX-...) dos eventos tokens_issued já gravados para esta oferta. */
@@ -63,6 +68,12 @@ function computeQuotasPreview(
   const sharePriceCents = reaisToCents(sharePriceReais);
   if (baseCapCents === null || sharePriceCents === null || sharePriceCents <= BigInt(0)) return null;
   return { quotas: baseCapCents / sharePriceCents, exact: baseCapCents % sharePriceCents === BigInt(0) };
+}
+
+// Mesmo padrão de PublicarOnChainPage.tsx — helper pequeno, duplicado em vez de extraído
+// para um módulo compartilhado (só 2 usos, ver convenção de não abstrair sem necessidade).
+function etherscanAddress(address: string) {
+  return `https://sepolia.etherscan.io/address/${address}`;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
@@ -229,18 +240,73 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                     </div>
                   </dl>
 
-                  {offering.status === "draft" && (
+                  {offering.status === "draft" && offering.sync_status === "nao_onchain" && (
                     <div className="mt-4 flex flex-col gap-2">
-                      <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        title={ptBr.common.emBreve}
-                        className="self-start cursor-not-allowed rounded-md bg-salmon/90 px-4 py-2 text-sm font-semibold text-on-salmon opacity-60"
-                      >
-                        {t.ativarBotao} <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
-                      </button>
                       <p className="text-xs text-on-military-muted">{t.ativarAviso}</p>
+                      <a
+                        href={`/empresa/ofertas/${offering.id}/publicar`}
+                        className="self-start rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600"
+                      >
+                        {t.publicarLink}
+                      </a>
+                    </div>
+                  )}
+
+                  {offering.status === "draft" && offering.sync_status === "pendente" && (
+                    <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
+                      <p className="text-sm font-medium text-on-military">{t.onchainStatus.pendente.titulo}</p>
+                      <p className="mt-1 text-xs text-on-military-muted">{t.onchainStatus.pendente.texto}</p>
+                      <a
+                        href={`/empresa/ofertas/${offering.id}/publicar`}
+                        className="mt-2 inline-block text-xs font-medium text-salmon hover:text-salmon-600"
+                      >
+                        {t.onchainStatus.pendente.link}
+                      </a>
+                    </div>
+                  )}
+
+                  {offering.status === "draft" && offering.sync_status === "confirmada" && (
+                    <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
+                      <p className="text-sm font-medium text-on-military">{t.onchainStatus.confirmada.titulo}</p>
+                      {offering.contract_address && (
+                        <p className="mt-1 text-xs text-on-military-muted">
+                          {t.onchainStatus.confirmada.contrato}:{" "}
+                          <a
+                            href={etherscanAddress(offering.contract_address)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-salmon hover:text-salmon-600"
+                          >
+                            {offering.contract_address}
+                          </a>
+                        </p>
+                      )}
+                      {offering.token_address && (
+                        <p className="mt-1 text-xs text-on-military-muted">
+                          {t.onchainStatus.confirmada.token}:{" "}
+                          <a
+                            href={etherscanAddress(offering.token_address)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-salmon hover:text-salmon-600"
+                          >
+                            {offering.token_address}
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {offering.status === "draft" && offering.sync_status === "divergente" && (
+                    <div role="alert" className="mt-4 rounded-md border border-value-negative/30 bg-value-negative/10 p-3">
+                      <p className="text-sm font-medium text-value-negative">{t.onchainStatus.divergente.titulo}</p>
+                      <p className="mt-1 text-xs text-value-negative">{t.onchainStatus.divergente.texto}</p>
+                      <a
+                        href={`/empresa/ofertas/${offering.id}/publicar`}
+                        className="mt-2 inline-block text-xs font-medium text-value-negative underline"
+                      >
+                        {t.onchainStatus.divergente.link}
+                      </a>
                     </div>
                   )}
 
