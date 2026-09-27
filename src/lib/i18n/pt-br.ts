@@ -772,7 +772,7 @@ export const ptBr = {
     vitrine: {
       title: "Vitrine (demonstração)",
       tagExemplo: "Exemplo fictício · valores simulados",
-      verDetalhes: "Ver detalhes",
+      verDetalhes: "Negociar →",
     },
     ofertaReal: {
       selo: "Oferta real · aceita reserva",
@@ -781,7 +781,7 @@ export const ptBr = {
       numeroCotas: "Número de cotas",
       prazo: "Prazo",
       naoInformado: "Não informado",
-      verOferta: "Ver oferta →",
+      verOferta: "Negociar →",
     },
     minhaOfertaCard: {
       selo: "Demonstração — criação de oferta",
@@ -790,7 +790,7 @@ export const ptBr = {
       numeroCotas: "Número de cotas",
       prazo: "Prazo",
       naoInformado: "Não informado",
-      verOferta: "Ver oferta →",
+      verOferta: "Negociar →",
     },
     pmesOnChain: {
       selo: "Real — Sepolia",
@@ -798,7 +798,7 @@ export const ptBr = {
       metaCaptacao: "Meta de captação",
       precoPorCota: "Preço por cota",
       cotas: "Cotas",
-      verOferta: "Ver oferta →",
+      verOferta: "Negociar →",
     },
     categorias: {
       pmes: {
