@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { RealOnChainInvestPanel } from "@/components/investir-onchain/RealOnChainInvestPanel";
+import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { CategoryBadge } from "./CategoryChip";
 import { FinanceiroChart } from "./FinanceiroChart";
 import { FundamentalIndicators } from "./FundamentalIndicators";
@@ -30,7 +31,12 @@ export function OfertaDetailPage({
 }) {
   const [ticketOpen, setTicketOpen] = useState(false);
   const t = ptBr.negociar.oferta;
-  const isOnChain = onChainIndex !== null;
+  // Fase 4, sub-etapa 5.2: RealOnChainInvestPanel não aceita mais índice, só o par de endereços
+  // — esta tela continua só com as 10 ofertas legadas (env var), nunca ofertas self-service (ver
+  // PLANO_FASE_3_PUBLICACAO_ONCHAIN.md — /negociar/token-pmes fica fora desta sub-etapa de
+  // propósito), então o índice ainda resolve direto contra a lista legada.
+  const enderecosLegado = onChainIndex !== null ? (getOnChainAddresses()?.ofertas[onChainIndex] ?? null) : null;
+  const isOnChain = enderecosLegado !== null;
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">
@@ -84,7 +90,13 @@ export function OfertaDetailPage({
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
                   {t.avisoMisto}
                 </p>
-                <RealOnChainInvestPanel ofertaIndex={onChainIndex} isSocio={isSocio} />
+                {enderecosLegado && (
+                  <RealOnChainInvestPanel
+                    tokenAddress={enderecosLegado.token}
+                    ofertaAddress={enderecosLegado.oferta}
+                    isSocio={isSocio}
+                  />
+                )}
               </>
             )}
 

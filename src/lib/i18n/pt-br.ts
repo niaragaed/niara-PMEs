@@ -1604,6 +1604,10 @@ export const ptBr = {
     seletorOferta: {
       label: "Oferta de demonstração (várias disponíveis — escolha uma antes de investir)",
       opcao: "Oferta",
+      proveniencia: {
+        legado: "Empresa fictícia de demonstração",
+        selfService: "Dados informados pelo próprio emissor (demonstração)",
+      },
     },
     faucet: {
       title: "1. Obter MockBRL de teste",

@@ -22,6 +22,7 @@ import { sepolia } from "wagmi/chains";
 import { BadgeCheck } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { useMinhaPosicaoOnChain, useOfertaOnChainTermos } from "@/lib/web3/hooks/useOfertaOnChain";
+import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { formatToken } from "@/lib/web3/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 
@@ -30,8 +31,12 @@ export function RealPositionCard() {
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 
-  const termos = useOfertaOnChainTermos();
-  const posicao = useMinhaPosicaoOnChain();
+  // Continua sempre a primeira oferta da lista LEGADA (env var) — mesma simplificação
+  // deliberada de antes da Fase 4, sub-etapa 5.2: este cartão nunca tentou "adivinhar" qual
+  // oferta mostrar, e não é o lugar de decidir isso entre legado/self-service.
+  const enderecos = getOnChainAddresses()?.ofertas[0] ?? null;
+  const termos = useOfertaOnChainTermos(enderecos);
+  const posicao = useMinhaPosicaoOnChain(enderecos);
 
   // Sem os 3 endereços configurados, o cartão simplesmente não aparece — não há posição real
   // para mostrar (mesma regra de "nunca quebra" de OnChainInvestPage.tsx).

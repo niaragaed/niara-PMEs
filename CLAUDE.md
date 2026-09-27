@@ -1467,6 +1467,62 @@ adicionar o script administrativo; a suíte completa de `forge test`
 (266+ testes/invariantes) rodou de novo depois — **266/266 passando**,
 sem regressão (nenhum contrato/teste foi alterado, só scripts novos).
 
+### Fase 4 — `/investir/onchain` também investe em ofertas self-service
+
+Até aqui, `/investir/onchain` só sabia investir nas 10 ofertas legadas
+(`NEXT_PUBLIC_OFERTAS_ONCHAIN`, criadas por script administrativo). A Fase
+3 (publicação self-service pelo emissor, ver "Tela `/empresa/ofertas`")
+passou a criar ofertas reais em Sepolia sem nenhuma UI de investimento
+apontando para elas — a Fase 4 fecha essa lacuna, em duas sub-etapas.
+
+🔴 **Não existe "misturar real com fictício" aqui** — as duas origens têm
+o mesmo estatuto: toda a plataforma é demonstração, sem autorização da
+CVM, `MockBRL` sem lastro para as duas (confirmado por leitura on-chain
+antes de codar: `OfertaCaptacao.moeda()` de uma oferta self-service
+retornou exatamente `0xEC377e00e022675B67Da6ab1966Bc0764bF792A4`, o mesmo
+`MockBRL` das 10 legadas). A única diferença é de **proveniência do
+conteúdo** — empresa inventada à mão (`mock/ofertas.ts`) vs. dados que o
+próprio emissor preencheu — por isso a solução é uma linha de texto no
+seletor, não uma separação estrutural tipo `/socios`.
+
+**5.1 — leitura** (`src/lib/web3/confirmedOfferings.ts`,
+`loadConfirmedOnChainOfferings()`): ofertas com `sync_status='confirmada'`,
+trazendo `contract_address`/`token_address`/nome do emissor. Mesma REGRA DE
+OURO de `investments.ts` — lista branca explícita, nunca `select('*')`.
+Filtra por `sync_status`, não por `status` (que fica sempre `'draft'` para
+essas linhas, por desenho da Fase 3) — nenhuma leitura existente
+(`loadActiveOfferingsByCategory`, `/investir`) filtra por `sync_status`,
+então nenhuma delas jamais mostraria essas ofertas; não havia nada para
+"relaxar", só uma leitura nova para escrever.
+
+**5.2 — identidade por endereço, não por índice**: antes, `ofertaIndex:
+number` (posição na lista da env var) era a unidade de identidade passada
+por `getOnChainContracts` e pelas seis hooks de
+`useOfertaOnChain.ts`/`useOnChainActions.ts` — não dava para apontar para
+uma oferta do Supabase, que não tem "índice" nenhum. `getOnChainContracts`
+passou a receber o par `{token, oferta}` já resolvido (tipo
+`OfertaOnChainEnderecos`); `getMockBrlContract()`, novo, resolve o
+`MockBRL` à parte (não depende de qual oferta está selecionada —
+`useMintMockBrl` não precisava de índice nenhum, só fingia precisar por
+causa do default `ofertaIndex = 0`). `RealOnChainInvestPanel` recebe
+`tokenAddress`/`ofertaAddress` direto (memoizados num único objeto via
+`useMemo`, para as seis hooks não recriarem callbacks a cada render por
+causa de um objeto novo). `OnChainInvestPage.tsx` monta a lista unida
+(legado + `confirmedOfferings`, prop vinda do `page.tsx` via 5.1) e mostra,
+por opção, a proveniência: "Empresa fictícia de demonstração" para as
+antigas, "Dados informados pelo próprio emissor (demonstração)" para as
+novas.
+
+Efeito colateral necessário do refactor (não é escopo novo, é só manter
+compilando): `RealPositionCard.tsx` (`/ativos`) e `OfertaDetailPage.tsx`
+(`/negociar`) chamavam as hooks com índice — os dois continuam resolvendo
+contra a lista LEGADA exatamente como antes (`RealPositionCard` sempre no
+índice 0; `OfertaDetailPage` via `getOnChainIndexBySlug`), só que
+convertendo para o par de endereços antes de chamar. **`/negociar/token-
+pmes` e `/socios` ficam de fora desta fase** — nenhuma oferta self-service
+ganha a vitrine com foto/logo nem aparece nos eventos do painel interno;
+só `/investir/onchain` enxerga as duas origens.
+
 ---
 
 ## Tela `/socios` (painel interno, restrito aos sócios)

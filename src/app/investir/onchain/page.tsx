@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { OnChainInvestPage } from "@/components/investir-onchain/OnChainInvestPage";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { resolveSocio } from "@/lib/auth/resolveSocio";
+import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 
 export const metadata: Metadata = {
   title: `${ptBr.investirOnChain.meta.title} · Niara PMEs`,
@@ -18,5 +19,6 @@ export const metadata: Metadata = {
 // que continua acessível sem login nenhum.
 export default async function Page() {
   const { autorizado: isSocio } = await resolveSocio();
-  return <OnChainInvestPage isSocio={isSocio} />;
+  const confirmedOfferings = await loadConfirmedOnChainOfferings();
+  return <OnChainInvestPage isSocio={isSocio} confirmedOfferings={confirmedOfferings} />;
 }
