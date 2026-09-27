@@ -13,6 +13,18 @@
 // mesmo a chamada tendo sido executada corretamente por dentro. A validação correta é pelos
 // LOGS: só o próprio OfertaOrquestrador consegue emitir um log cujo `address` é o dele — isso
 // é inforjável, diferente de `to`, que a wallet pode reescrever livremente antes de assinar.
+//
+// 🔴 confirmarPublicacao() também NUNCA compara o emissor do evento contra uma leitura AO VIVO
+// de issuers.wallet_address — segundo bug real, encontrado ao adicionar o botão "Reprocessar"
+// (que existe justamente para rodar esta função a qualquer distância no tempo da assinatura
+// original). issuers.wallet_address pode mudar entre a assinatura e um reprocessamento futuro;
+// comparar contra o valor atual responde "quem está vinculado agora?", não "quem tinha
+// autoridade no momento em que assinou?" — as duas só coincidem por acaso enquanto a
+// confirmação roda logo após a assinatura. A âncora correta é `offerings.expected_emissor_wallet`
+// (migration 0016), congelada por registrarTentativa a partir de uma leitura do PRÓPRIO
+// SERVIDOR de issuers.wallet_address no instante da tentativa — nunca aceita do cliente, pelo
+// mesmo motivo de accountId/issuer_id nunca virem do cliente em nenhuma Server Action deste
+// projeto.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { decodeEventLog, TransactionReceiptNotFoundError } from "viem";
@@ -40,6 +52,13 @@ const registrarTentativaSchema = z.object({
  * no client, uma única vez, imediatamente antes de montar a chamada) — grava opens_at/closes_at
  * com ele para "congelar" a janela real que foi para a chain, já que a oferta on-chain é
  * imutável e a linha do Supabase não é (ver seção 5 do plano).
+ *
+ * Também congela `expected_emissor_wallet` (migration 0016) a partir de uma leitura própria de
+ * issuers.wallet_address, feita AQUI, no servidor — nunca aceita do cliente. É esse valor,
+ * nunca uma releitura futura de issuers.wallet_address, que confirmarPublicacao vai comparar
+ * contra o `emissor` do evento minerado, inclusive num reprocessamento muito depois da
+ * assinatura. Fail-closed: sem carteira vinculada, nem registra a tentativa (gate 5 no client já
+ * deveria ter impedido chegar aqui — isso é só a mesma checagem, mas no servidor).
  */
 export async function registrarTentativa(input: unknown): Promise<RegistrarTentativaState> {
   const { role, accountId } = await resolveAccount();
@@ -54,6 +73,21 @@ export async function registrarTentativa(input: unknown): Promise<RegistrarTenta
   const { offeringId, txHash, prazoUnixSeconds } = parsed.data;
 
   const admin = createAdminClient();
+
+  const { data: issuer, error: issuerError } = await admin
+    .from("issuers")
+    .select("wallet_address")
+    .eq("id", accountId)
+    .maybeSingle();
+  if (issuerError) {
+    console.error("registrarTentativa: erro ao ler carteira do emissor", issuerError);
+    return { status: "error", message: "Não foi possível registrar a tentativa de publicação." };
+  }
+  const walletVinculada = (issuer?.wallet_address as string | null) ?? null;
+  if (!walletVinculada) {
+    return { status: "error", message: "Nenhuma carteira vinculada a esta conta — não é possível registrar a publicação." };
+  }
+
   const opensAt = new Date();
   const closesAt = new Date(prazoUnixSeconds * 1000);
 
@@ -68,6 +102,7 @@ export async function registrarTentativa(input: unknown): Promise<RegistrarTenta
       sync_status: "pendente",
       opens_at: opensAt.toISOString(),
       closes_at: closesAt.toISOString(),
+      expected_emissor_wallet: walletVinculada,
     })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
@@ -101,7 +136,9 @@ export type ConfirmarPublicacaoState =
  *   1. Existe, no recibo, um log cujo `address` é exatamente o OfertaOrquestrador configurado,
  *      e que decodifica como `OfertaCompletaCriada` — só o próprio contrato consegue emitir um
  *      log com o endereço dele.
- *   2. O `emissor` do evento bate com `issuers.wallet_address` da conta logada, e
+ *   2. O `emissor` do evento bate com `offerings.expected_emissor_wallet` — o valor de
+ *      issuers.wallet_address CONGELADO por `registrarTentativa` no momento da tentativa, nunca
+ *      uma releitura ao vivo de issuers (ver migration 0016) — e
  *      metaMinima/metaMaxima/precoPorCota/prazo batem com os que a oferta tinha no momento em
  *      que a transação foi montada (ver `registrarTentativa`).
  *   3. O `token`/`oferta` do evento estão REALMENTE registrados nas factories corretas
@@ -125,7 +162,9 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   const admin = createAdminClient();
   const { data: offering, error: fetchError } = await admin
     .from("offerings")
-    .select("id, tx_hash, sync_status, target_min_cents, hard_cap_cents, share_price_cents, closes_at, contract_address, token_address")
+    .select(
+      "id, tx_hash, sync_status, target_min_cents, hard_cap_cents, share_price_cents, closes_at, contract_address, token_address, expected_emissor_wallet",
+    )
     .eq("id", parsedId.data)
     .eq("issuer_id", accountId)
     .maybeSingle();
@@ -151,10 +190,12 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
     return { status: "error", message: "Esta oferta não está com uma publicação pendente." };
   }
 
-  const { data: issuer } = await admin.from("issuers").select("wallet_address").eq("id", accountId).maybeSingle();
-  const walletVinculada = (issuer?.wallet_address as string | null) ?? null;
+  // Defensivo: a constraint sync_status_tem_wallet_esperada (migration 0016) já garante isso no
+  // banco para qualquer linha nova, mas o código não confia cegamente nela — mesmo padrão já
+  // usado acima para tx_hash.
+  const walletVinculada = (offering.expected_emissor_wallet as string | null) ?? null;
   if (!walletVinculada) {
-    return { status: "error", message: "Nenhuma carteira vinculada a esta conta — não é possível confirmar." };
+    return { status: "error", message: "Esta oferta não tem uma carteira esperada congelada — não é possível confirmar." };
   }
 
   const orquestrador = getOrquestradorContract();
@@ -176,9 +217,17 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   }
 
   if (receipt.status === "reverted") {
+    // expected_emissor_wallet volta a null junto com tx_hash: os dois pertencem à MESMA
+    // tentativa (a que reverteu) e uma nova, via registrarTentativa, precisa poder recongelar os
+    // dois do zero. Permitido pela trigger de 0016 porque o destino é 'nao_onchain'.
     await admin
       .from("offerings")
-      .update({ sync_status: "nao_onchain", tx_hash: null, onchain_last_error: "A transação reverteu on-chain." })
+      .update({
+        sync_status: "nao_onchain",
+        tx_hash: null,
+        expected_emissor_wallet: null,
+        onchain_last_error: "A transação reverteu on-chain.",
+      })
       .eq("id", parsedId.data)
       .eq("issuer_id", accountId)
       .in("sync_status", ["pendente", "divergente"]);
