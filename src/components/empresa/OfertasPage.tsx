@@ -3,6 +3,7 @@
 import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
 import { closeOffering, createOffering, type OfferingActionState } from "@/app/empresa/ofertas/actions";
 import { SelectField, TextField } from "@/components/perfil/FormField";
+import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
@@ -254,7 +255,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
 
                   {offering.status === "draft" && offering.sync_status === "pendente" && (
                     <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
-                      <p className="text-sm font-medium text-on-military">{t.onchainStatus.pendente.titulo}</p>
+                      <SyncStatusBadge status={offering.sync_status} />
                       <p className="mt-1 text-xs text-on-military-muted">{t.onchainStatus.pendente.texto}</p>
                       <a
                         href={`/empresa/ofertas/${offering.id}/publicar`}
@@ -267,7 +268,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
 
                   {offering.status === "draft" && offering.sync_status === "confirmada" && (
                     <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
-                      <p className="text-sm font-medium text-on-military">{t.onchainStatus.confirmada.titulo}</p>
+                      <SyncStatusBadge status={offering.sync_status} />
                       {offering.contract_address && (
                         <p className="mt-1 text-xs text-on-military-muted">
                           {t.onchainStatus.confirmada.contrato}:{" "}
@@ -299,7 +300,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
 
                   {offering.status === "draft" && offering.sync_status === "divergente" && (
                     <div role="alert" className="mt-4 rounded-md border border-value-negative/30 bg-value-negative/10 p-3">
-                      <p className="text-sm font-medium text-value-negative">{t.onchainStatus.divergente.titulo}</p>
+                      <SyncStatusBadge status={offering.sync_status} />
                       <p className="mt-1 text-xs text-value-negative">{t.onchainStatus.divergente.texto}</p>
                       <a
                         href={`/empresa/ofertas/${offering.id}/publicar`}

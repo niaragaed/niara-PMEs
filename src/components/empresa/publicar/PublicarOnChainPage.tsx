@@ -14,7 +14,12 @@ import { usePublicarOnChainGates } from "@/lib/web3/hooks/usePublicarOnChainGate
 import { usePublicarOfertaOnChain } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
 import { UNIDADE_ON_CHAIN } from "@/lib/web3/gates";
 import { formatEth } from "@/lib/web3/format";
-import { confirmarPublicacao, type ConfirmarPublicacaoState } from "@/app/empresa/ofertas/onchain-actions";
+import {
+  confirmarPublicacao,
+  verificarConsistencia,
+  type ConfirmarPublicacaoState,
+  type VerificarConsistenciaState,
+} from "@/app/empresa/ofertas/onchain-actions";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type Props = {
@@ -94,8 +99,34 @@ export function PublicarOnChainPage({
     setVerificando(false);
   }
 
-  // Prioridade de exibição: ação em andamento nesta sessão (hook) > reconciliação recém-feita >
-  // estado persistido que a página já carregou (props).
+  // Sub-etapa 5 (reconciliação contínua, ver onchain-actions.ts): roda ao (re)abrir a tela
+  // sempre que já existe um contract_address para comparar — oferta confirmada (checagem de
+  // rotina) ou divergente com endereço já gravado (um drift anterior, possivelmente já corrigido
+  // no Supabase desde a última visita). Nunca roda para 'pendente'/'divergente' sem endereço —
+  // esses não têm contrato nenhum ainda para ler, e continuam resolvidos por
+  // confirmarPublicacao()/"Reprocessar" acima.
+  const deveVerificarConsistencia = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
+  const [consistencia, setConsistencia] = useState<VerificarConsistenciaState | null>(null);
+  const [verificandoConsistencia, setVerificandoConsistencia] = useState(deveVerificarConsistencia);
+  useEffect(() => {
+    if (deveVerificarConsistencia) {
+      verificarConsistencia(offeringId)
+        .then(setConsistencia)
+        .finally(() => setVerificandoConsistencia(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function verificarConsistenciaNovamente() {
+    setVerificandoConsistencia(true);
+    const resultado = await verificarConsistencia(offeringId);
+    setConsistencia(resultado);
+    setVerificandoConsistencia(false);
+  }
+
+  // Prioridade de exibição: ação em andamento nesta sessão (hook) > reconciliação de publicação
+  // pendente (reconciliado) > verificação de consistência (consistencia) > estado persistido que
+  // a página já carregou (props).
   const displayStatus: string =
     hook.status !== "idle"
       ? hook.status
@@ -103,18 +134,33 @@ export function PublicarOnChainPage({
         ? reconciliado.status === "error"
           ? "erro"
           : reconciliado.status
-        : syncStatus === "pendente"
-          ? "pendente"
-          : syncStatus === "confirmada"
-            ? "confirmada"
-            : syncStatus === "divergente"
-              ? "divergente"
-              : "idle";
+        : consistencia
+          ? consistencia.status === "error"
+            ? "erro"
+            : consistencia.status
+          : syncStatus === "pendente"
+            ? "pendente"
+            : syncStatus === "confirmada"
+              ? "confirmada"
+              : syncStatus === "divergente"
+                ? "divergente"
+                : "idle";
 
   const displayTxHash = hook.txHash ?? txHash;
   const displayContract = hook.contractAddress ?? contractAddress ?? (reconciliado?.status === "confirmada" ? reconciliado.contractAddress : null);
   const displayToken = hook.tokenAddress ?? tokenAddress ?? (reconciliado?.status === "confirmada" ? reconciliado.tokenAddress : null);
-  const displayError = hook.errorMessage ?? onchainLastError ?? (reconciliado && "motivo" in reconciliado ? reconciliado.motivo : null) ?? (reconciliado?.status === "error" ? reconciliado.message : null);
+  const displayError =
+    hook.errorMessage ??
+    onchainLastError ??
+    (reconciliado && "motivo" in reconciliado ? reconciliado.motivo : null) ??
+    (reconciliado?.status === "error" ? reconciliado.message : null) ??
+    (consistencia && "motivo" in consistencia ? consistencia.motivo : null) ??
+    (consistencia?.status === "error" ? consistencia.message : null);
+  // Distingue as duas causas possíveis de 'divergente' (ver onchain-actions.ts): com endereço já
+  // gravado, é drift de consistência (recuperável por verificarConsistencia, sem tocar em
+  // nenhuma transação); sem endereço, é uma falha de confirmarPublicacao que nunca chegou a
+  // confirmar (recuperável só por "Reprocessar").
+  const divergenteEhDriftDeConsistencia = Boolean(displayContract);
 
   // ── Gate 1 — MetaMask detectada ────────────────────────────────────────────────────────
   const rowProvider: GateRow = {
@@ -247,6 +293,18 @@ export function PublicarOnChainPage({
                 {tp.verNoEtherscan}
               </a>
             )}
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={verificarConsistenciaNovamente}
+                disabled={verificandoConsistencia}
+                className="flex items-center gap-2 rounded-md border border-panel-border px-3 py-1.5 text-sm text-on-military hover:text-salmon disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {verificandoConsistencia && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {tp.verificarConsistencia}
+              </button>
+              <p className="mt-1 text-xs text-on-military-muted">{tp.verificarConsistenciaNota}</p>
+            </div>
           </div>
         )}
 
@@ -283,25 +341,40 @@ export function PublicarOnChainPage({
         {displayStatus === "divergente" && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
             <p className="font-medium">{tp.divergenteTitulo}</p>
-            <p className="mt-1">{tp.divergenteTexto}</p>
+            <p className="mt-1">{divergenteEhDriftDeConsistencia ? tp.divergenteConsistenciaTexto : tp.divergenteTexto}</p>
             {displayError && <p className="mt-1 text-xs">{displayError}</p>}
             {displayTxHash && (
               <a href={etherscanTx(displayTxHash)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-value-negative underline">
                 {tp.verNoEtherscan}
               </a>
             )}
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={verificarNovamente}
-                disabled={verificando}
-                className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {verificando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {tp.reprocessar}
-              </button>
-              <p className="mt-1 text-xs text-on-military-muted">{tp.reprocessarNota}</p>
-            </div>
+            {divergenteEhDriftDeConsistencia ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={verificarConsistenciaNovamente}
+                  disabled={verificandoConsistencia}
+                  className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {verificandoConsistencia && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {tp.verificarConsistencia}
+                </button>
+                <p className="mt-1 text-xs text-on-military-muted">{tp.verificarConsistenciaNota}</p>
+              </div>
+            ) : (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={verificarNovamente}
+                  disabled={verificando}
+                  className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {verificando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {tp.reprocessar}
+                </button>
+                <p className="mt-1 text-xs text-on-military-muted">{tp.reprocessarNota}</p>
+              </div>
+            )}
           </div>
         )}
 

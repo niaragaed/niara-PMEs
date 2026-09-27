@@ -33,9 +33,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID } from "@/lib/web3/orquestrador";
 import { participacaoTokenFactoryAbi } from "@/lib/web3/abis/participacaoTokenFactory";
 import { ofertaCaptacaoFactoryAbi } from "@/lib/web3/abis/ofertaCaptacaoFactory";
+import { ofertaCaptacaoAbi } from "@/lib/web3/abis/ofertaCaptacao";
 import { publicClient } from "@/lib/web3/eventsCore";
 import { describeOnChainError } from "@/lib/web3/errors";
 import { UNIDADE_ON_CHAIN } from "@/lib/web3/gates";
+import { formatBRL } from "@/lib/format";
 
 export type RegistrarTentativaState = { status: "success" } | { status: "error"; message: string };
 
@@ -325,4 +327,132 @@ async function marcarDivergente(
     .eq("issuer_id", accountId)
     .in("sync_status", ["pendente", "divergente"]);
   revalidatePath(`/empresa/ofertas/${offeringId}/publicar`);
+}
+
+export type VerificarConsistenciaState =
+  | { status: "confirmada" }
+  | { status: "divergente"; motivo: string }
+  | { status: "error"; message: string };
+
+/**
+ * Sub-etapa 5 do plano (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md, seção 4.2) — reconciliação
+ * contínua. A oferta on-chain é IMUTÁVEL depois de criada, mas a linha de `offerings` não é:
+ * nada impede um UPDATE manual em `hard_cap_cents`/`share_price_cents`/`target_min_cents`/
+ * `closes_at` depois da confirmação. Esta função só COMPARA os dois lados e sinaliza — NUNCA
+ * corrige nenhum dos dois (nem o Supabase a partir da chain, nem a chain a partir do Supabase,
+ * que é imutável de qualquer forma). A correção, quando existir, é sempre humana: alguém edita o
+ * Supabase de volta para bater com a chain (a chain nunca muda), e uma nova chamada aqui limpa o
+ * `divergente`.
+ *
+ * Roda contra `contract_address` diretamente (getters `metaMinima`/`metaMaxima`/`precoPorCota`/
+ * `prazo` do próprio clone `OfertaCaptacao`) — não precisa do `tx_hash` nem de decodificar o
+ * evento de novo (diferente de `confirmarPublicacao`), porque esses quatro valores são
+ * `immutable` de fato no contrato (escritos uma única vez em `initialize`, nunca alterados
+ * depois) — uma leitura direta deles hoje é tão válida quanto o evento original.
+ *
+ * Só roda quando `contract_address` já existe — ou seja, quando a oferta já foi confirmada pelo
+ * menos uma vez (`sync_status` atual pode ser `confirmada` ou `divergente`: um `divergente`
+ * anterior desta MESMA função, já corrigido no Supabase, precisa poder voltar a `confirmada`
+ * por aqui). Uma oferta `divergente` que nunca chegou a ser confirmada (log ausente, evento
+ * errado, clone não registrado — falha de `confirmarPublicacao`) não tem `contract_address`
+ * nenhum para comparar; essa continua sendo resolvida por "Reprocessar", não por esta função.
+ */
+export async function verificarConsistencia(offeringId: string): Promise<VerificarConsistenciaState> {
+  const { role, accountId } = await resolveAccount();
+  if (role !== "issuer" || !accountId) {
+    return { status: "error", message: "Apenas empresas cadastradas podem verificar publicações." };
+  }
+
+  const parsedId = z.string().uuid().safeParse(offeringId);
+  if (!parsedId.success) {
+    return { status: "error", message: "Oferta inválida." };
+  }
+
+  const admin = createAdminClient();
+  const { data: offering, error: fetchError } = await admin
+    .from("offerings")
+    .select("id, sync_status, contract_address, target_min_cents, hard_cap_cents, share_price_cents, closes_at")
+    .eq("id", parsedId.data)
+    .eq("issuer_id", accountId)
+    .maybeSingle();
+
+  if (fetchError || !offering) {
+    return { status: "error", message: "Oferta não encontrada." };
+  }
+
+  if (!["confirmada", "divergente"].includes(offering.sync_status as string) || !offering.contract_address) {
+    return { status: "error", message: "Esta oferta ainda não tem uma publicação confirmada para verificar." };
+  }
+
+  const client = publicClient();
+  const contractAddress = offering.contract_address as `0x${string}`;
+
+  let onchain;
+  try {
+    const [metaMinima, metaMaxima, precoPorCota, prazo] = await Promise.all([
+      client.readContract({ address: contractAddress, abi: ofertaCaptacaoAbi, functionName: "metaMinima" }),
+      client.readContract({ address: contractAddress, abi: ofertaCaptacaoAbi, functionName: "metaMaxima" }),
+      client.readContract({ address: contractAddress, abi: ofertaCaptacaoAbi, functionName: "precoPorCota" }),
+      client.readContract({ address: contractAddress, abi: ofertaCaptacaoAbi, functionName: "prazo" }),
+    ]);
+    onchain = { metaMinima, metaMaxima, precoPorCota, prazo };
+  } catch (e) {
+    // RPC fora do ar, timeout etc. — nunca marca divergente por não ter conseguido perguntar.
+    return { status: "error", message: describeOnChainError(e) };
+  }
+
+  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIDADE_ON_CHAIN;
+  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIDADE_ON_CHAIN;
+  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIDADE_ON_CHAIN;
+  const prazoEsperado = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
+
+  const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+  const centsFromChain = (valorWei: bigint) => Number(valorWei / UNIDADE_ON_CHAIN);
+
+  const diffs: string[] = [];
+  if (onchain.metaMinima !== metaMinimaEsperada) {
+    diffs.push(
+      `meta mínima: Supabase ${formatBRL(offering.target_min_cents / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.metaMinima) / 100)}`,
+    );
+  }
+  if (onchain.metaMaxima !== metaMaximaEsperada) {
+    diffs.push(
+      `hard cap: Supabase ${formatBRL(offering.hard_cap_cents / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.metaMaxima) / 100)}`,
+    );
+  }
+  if (onchain.precoPorCota !== precoPorCotaEsperado) {
+    diffs.push(
+      `valor por cota: Supabase ${formatBRL((offering.share_price_cents as number) / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.precoPorCota) / 100)}`,
+    );
+  }
+  if (onchain.prazo !== prazoEsperado) {
+    diffs.push(
+      `prazo: Supabase ${dateFormatter.format(new Date(offering.closes_at as string))} ≠ on-chain ${dateFormatter.format(new Date(Number(onchain.prazo) * 1000))}`,
+    );
+  }
+
+  if (diffs.length > 0) {
+    const motivo = `Divergência de consistência (Supabase mudou depois da confirmação) — ${diffs.join("; ")}.`;
+    await admin
+      .from("offerings")
+      .update({ sync_status: "divergente", onchain_last_error: motivo })
+      .eq("id", parsedId.data)
+      .eq("issuer_id", accountId)
+      .in("sync_status", ["confirmada", "divergente"]);
+    revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
+    revalidatePath("/empresa/ofertas");
+    return { status: "divergente", motivo };
+  }
+
+  // Sem diferenças: garante 'confirmada' (pode estar vindo de 'divergente', se o drift
+  // detectado antes já foi corrigido no Supabase) e limpa o erro anterior.
+  await admin
+    .from("offerings")
+    .update({ sync_status: "confirmada", onchain_last_error: null })
+    .eq("id", parsedId.data)
+    .eq("issuer_id", accountId)
+    .in("sync_status", ["confirmada", "divergente"]);
+  revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
+  revalidatePath("/empresa/ofertas");
+  return { status: "confirmada" };
 }
