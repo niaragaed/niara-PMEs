@@ -1578,12 +1578,63 @@ transação fez** — só o log emitido pelo próprio contrato prova isso (só o
 deste projeto compara `receipt.to` contra o endereço esperado. A validação correta
 é sempre: (1) existe um log cujo `address` é o contrato esperado e decodifica como
 o evento esperado; (2) os parâmetros indexados/decodificados do evento batem com o
-que o Supabase esperava (incluindo o emissor, comparado contra
-`issuers.wallet_address`, não contra `receipt.from`/`to`); (3), quando aplicável,
-os endereços resultantes (clones) estão de fato registrados no contrato de
-origem (`isOferta`/`isCaptacao`), não só "existe algum contrato nesse endereço".
+que o Supabase esperava (incluindo o emissor, comparado contra o valor congelado
+em `offerings.expected_emissor_wallet` — ver "expected_emissor_wallet" logo
+abaixo — não contra `receipt.from`/`to` nem contra uma releitura ao vivo de
+`issuers.wallet_address`); (3), quando aplicável, os endereços resultantes
+(clones) estão de fato registrados no contrato de origem (`isOferta`/
+`isCaptacao`), não só "existe algum contrato nesse endereço".
 `confirmarPublicacao()` em `onchain-actions.ts` é a implementação de referência
 disso.
+
+### 🔴 `expected_emissor_wallet` — nunca comparar o evento contra uma leitura ao vivo de `issuers.wallet_address`
+
+Segundo bug real, encontrado ao adicionar o botão "Reprocessar" que corrigiu o
+incidente do EIP-7702 acima. `confirmarPublicacao()` comparava `emissor` do evento
+contra `issuers.wallet_address` lido **no momento da confirmação** — o que é uma
+pergunta diferente da que precisa ser respondida. A pergunta certa é "quem tinha
+autoridade **no momento em que assinou**?"; a versão antiga respondia "quem está
+vinculado **agora**?". As duas só coincidem por acaso enquanto `confirmarPublicacao`
+roda logo após a assinatura (o caminho feliz original) — mas "Reprocessar" existe
+justamente para rodar essa função a qualquer distância no tempo da assinatura, e
+`issuers.wallet_address` pode ter mudado nesse intervalo (ex.: a empresa vincula
+uma carteira nova em `/perfil` meses depois). Reconfirmar uma oferta antiga
+compararia o evento contra a carteira **errada**, de forma silenciosa.
+
+Corrigido com `offerings.expected_emissor_wallet` (`supabase/migrations/
+0016_offering_expected_emissor_wallet.sql`): `registrarTentativa()` lê
+`issuers.wallet_address` **no próprio servidor**, no instante da tentativa (mesmo
+momento em que já congelava `opens_at`/`closes_at`), e grava esse valor congelado
+— nunca aceito do cliente, pelo mesmo motivo de `accountId` nunca vir do cliente em
+nenhuma Server Action deste projeto: um cliente malicioso poderia simplesmente
+declarar como "esperada" a própria carteira que vai assinar, e a checagem inteira
+viraria teatro. `confirmarPublicacao()` compara `emissor` do evento só contra esta
+coluna — nunca mais lê `issuers` diretamente. Fail-closed: `registrarTentativa()`
+recusa registrar a tentativa se `issuers.wallet_address` estiver nulo (gate 5 no
+client já deveria ter impedido chegar aqui; isso é a mesma checagem, no servidor).
+
+A coluna é limpa junto com `tx_hash` no reset de uma transação revertida
+(`sync_status: pendente/divergente → nao_onchain`) — os dois pertencem à mesma
+tentativa, e uma nova tentativa via `registrarTentativa()` precisa poder recongelar
+ambos do zero. Por isso fica **fora** da trigger de imutabilidade de 0015
+(`enforce_onchain_publish_immutable`, mesmo tratamento que `tx_hash` já recebe) e
+ganha a própria trigger condicional (`enforce_expected_wallet_locked`, 0016): trava
+a coluna quando a mudança levaria a linha **para** `confirmada`/`divergente` (os
+dois estados em que o valor já cumpriu seu papel de comparação e vira fato
+histórico), permite quando o destino é `nao_onchain` ou `pendente` — checado por
+`NEW.sync_status`, não `OLD`, porque o reset legítimo por reversão pode partir
+tanto de `pendente` quanto de `divergente`.
+
+🔴 **Migration com backfill, verificado à mão**: a única linha afetada quando 0016
+rodou (a oferta de teste "Empresa Teste", então em `sync_status='divergente'` por
+causa do próprio incidente EIP-7702) não tinha `expected_emissor_wallet` — a
+migration faz um backfill geral (join com `issuers.wallet_address`, não hardcoded)
+para qualquer linha em `pendente`/`divergente`/`confirmada` sem o valor congelado,
+e imprime um SELECT final comparando "antes"/"depois" para conferência manual no
+Studio antes de prosseguir. Isso só é seguro **enquanto a carteira vinculada não
+tiver sido trocada** desde a assinatura original — motivo pelo qual a migration foi
+rodada e conferida (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` em ambos os
+lados) antes de qualquer troca de carteira vinculada para as contas afetadas.
 
 ---
 
