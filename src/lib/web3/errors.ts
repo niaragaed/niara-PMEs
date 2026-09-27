@@ -35,6 +35,24 @@ const CUSTOM_ERROR_MESSAGES: Record<string, string> = {
   RecursosJaLiberados: "Os recursos desta oferta já foram liberados ao emissor.",
   ERC20InsufficientAllowance: "Autorização (allowance) insuficiente para o MockBRL — tente aprovar novamente.",
   ERC20InsufficientBalance: "Saldo insuficiente de MockBRL para esta operação.",
+
+  // OfertaOrquestrador (Fase 3, publicação self-service) — nomes conferidos direto contra
+  // niara-contracts-PMEs/src/orquestracao/OfertaOrquestrador.sol. A maioria não deveria ser
+  // alcançável na prática (os valores da oferta já passaram pelos CHECKs do Supabase antes de
+  // chegar a 'draft' — ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md, seção 8), mas mapeados mesmo
+  // assim: se algum aparecer de verdade, é sinal de uma divergência entre os limites
+  // espelhados no Postgres e os limites reais do contrato, e merece uma frase real, não um
+  // "Execution reverted" cru nem um alarme falso de bug de UI.
+  ZeroAddress: "Configuração inválida do contrato — avise a Niara.",
+  EmissorNaoAutorizado: "Sua carteira ainda não está autorizada a publicar ofertas — fale com a Niara para liberar o acesso.",
+  OfertaAnteriorAindaAberta: "Você já tem uma oferta em aberto em Sepolia — encerre-a antes de publicar uma nova.",
+  PrecoInvalido: "O valor por cota não pode ser zero.",
+  PrazoInvalido: "O prazo da oferta precisa ser no futuro.",
+  PrazoExcedeLimite: "O prazo da oferta ultrapassa o limite de 180 dias da Resolução CVM 88.",
+  MetaMaximaExcedeTeto: "O valor da oferta ultrapassa o teto de R$15 milhões por oferta.",
+  LoteAdicionalExcedeLimite: "O lote adicional ultrapassa 25% da oferta original.",
+  PrecoNaoDivideMetaMaxima: "O valor da oferta precisa ser múltiplo exato do valor por cota.",
+  TaxaExcedeMaximo: "Configuração de taxa da plataforma inválida — avise a Niara.",
 };
 
 /**

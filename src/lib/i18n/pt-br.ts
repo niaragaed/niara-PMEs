@@ -1357,8 +1357,7 @@ export const ptBr = {
       },
       voltar: "← Voltar para Minhas ofertas",
       titulo: "Publicar on-chain",
-      subtitulo:
-        "Esta etapa só verifica se sua carteira está pronta — nenhuma transação é assinada aqui.",
+      subtitulo: "Confira o checklist, revise os dados que vão para a blockchain e assine com sua própria carteira.",
       naoEncontrada: {
         title: "Oferta não encontrada",
         description: "Esta oferta não existe ou não pertence à sua conta.",
@@ -1367,6 +1366,7 @@ export const ptBr = {
       naoElegivel: {
         titulo: "Esta oferta não pode ser publicada agora",
         texto: "Só ofertas em rascunho podem ser publicadas on-chain — esta já mudou de status.",
+        semValorPorCota: "Esta oferta não tem valor por cota definido — não é possível calcular a quantidade de cotas para publicar on-chain.",
       },
       semCarteiraVinculada: {
         titulo: "Nenhuma carteira vinculada à sua conta",
@@ -1407,13 +1407,55 @@ export const ptBr = {
         },
         termo: {
           label: "Termo de publicação aceito",
-          reprovado: "O termo de publicação ainda não está disponível nesta etapa do projeto — chega na próxima parte da Fase 3.",
+          reprovado: "Preencha os dados do token e marque a caixa do termo abaixo antes de publicar.",
         },
       },
       botao: {
         label: "Publicar on-chain",
         bloqueadoAria: "Publicação bloqueada",
         pendencias: "Pendências antes de habilitar o botão:",
+      },
+      formulario: {
+        titulo: "Dados que vão para a blockchain",
+        aviso: "Estes três campos ficam gravados para sempre no token ERC-20 criado em Sepolia — revise antes de assinar.",
+        nome: "Nome da oferta (ERC-20 “name”)",
+        simbolo: "Símbolo do token (ERC-20 “symbol”)",
+        serie: "Série",
+        erros: {
+          nomeObrigatorio: "Informe um nome.",
+          simboloObrigatorio: "Informe um símbolo.",
+          serieObrigatoria: "Informe uma série.",
+        },
+      },
+      termoTexto: {
+        titulo: "Antes de publicar, leia com atenção",
+        intro:
+          "Você está prestes a assinar uma transação real na rede de teste Sepolia, usando sua própria carteira e pagando o próprio gás em ETH de teste. Diferente da conexão de carteira em Perfil (que só lê seu endereço e saldo), esta ação grava dados permanentes numa blockchain pública — a Niara não assina por você e não pode desfazer isso depois.",
+        itens: [
+          "É uma rede de teste, sem valor real. Sepolia ETH e o MockBRL usado nesta demonstração não têm lastro nem valor financeiro nenhum. Nenhum dinheiro real muda de mãos aqui.",
+          "O registro é público e permanente. O nome da sua empresa e os termos desta oferta (meta, prazo, valor por cota) ficarão gravados para sempre numa blockchain pública, visíveis a qualquer pessoa no Etherscan — inclusive depois de você excluir sua conta na Niara PMEs. Seu CNPJ não é gravado em texto — só um hash (bytes32) dele, que não pode ser revertido para o número original a partir da chain.",
+          "Você paga o próprio gás. A transação custa ETH de teste da sua carteira — a Niara não cobre, não reembolsa e não patrocina essa taxa.",
+          "Isto não é uma oferta pública de valores mobiliários. A Niara PMEs não é uma plataforma autorizada pela Comissão de Valores Mobiliários (CVM). Nada aqui constitui oferta real de investimento, e o registro on-chain não substitui os livros societários da Lei 6.404/76 nem o registro em cartório.",
+          "Diferente de um investidor nesta plataforma, esta é a primeira vez que você, como emissor, assina uma transação aqui. Depois de publicada, sua oferta poderá receber aportes reais de teste de outras carteiras — revise os termos com cuidado antes de confirmar.",
+        ],
+        checkbox: "Li e entendi os pontos acima, e quero prosseguir com a publicação em Sepolia.",
+      },
+      publicacao: {
+        assinando: "Aguardando sua assinatura na MetaMask…",
+        registrando: "Assinatura recebida — registrando a tentativa…",
+        confirmando: "Transação enviada — aguardando confirmação em Sepolia…",
+        pendenteTitulo: "Ainda não publicada",
+        pendenteTexto:
+          "Sua transação foi enviada mas ainda não confirmou. Isto NÃO significa que a oferta já está publicada — volte aqui em instantes para conferir. Acompanhe direto no Etherscan:",
+        verNoEtherscan: "Ver no Etherscan →",
+        confirmadaTitulo: "Publicada em Sepolia",
+        confirmadaTexto: "Sua oferta foi confirmada on-chain. Endereços do contrato:",
+        contractLabel: "Oferta (escrow)",
+        tokenLabel: "Token (cotas)",
+        revertidaTitulo: "A transação reverteu",
+        divergenteTitulo: "Divergência detectada",
+        divergenteTexto: "A leitura da chain não bateu com o esperado — isto exige verificação manual da equipe, não tente publicar de novo sozinho.",
+        verificarNovamente: "Verificar novamente",
       },
     },
   },
