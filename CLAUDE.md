@@ -1537,6 +1537,54 @@ ativação, tradução de erro por constraint). Esta é a mesma lista que
 `MyOffersSection.tsx` resume, só de leitura, dentro de `/perfil` (ver
 "Tela `/perfil`", seção "2. Minhas ofertas").
 
+Fase 3 (publicação self-service em Sepolia, ver `PLANO_FASE_3_PUBLICACAO_ONCHAIN.md`
+— plano completo, não repetido aqui) acrescenta `/empresa/ofertas/[id]/publicar`:
+o próprio emissor assina `OfertaOrquestrador.criarOfertaCompleta` com a própria
+carteira. `src/app/empresa/ofertas/onchain-actions.ts` (`registrarTentativa`/
+`confirmarPublicacao`) e `src/lib/web3/hooks/usePublicarOfertaOnChain.ts`.
+
+### 🔴 EIP-7702 — a MetaMask pode reescrever a transação; nunca validar por `receipt.to`
+
+Incidente real, não hipotético: no primeiro teste ponta a ponta (emissor
+`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` assinando `criarOfertaCompleta` pela
+MetaMask), a transação minerada (`0x533a5bc4…`) tinha `type: 4` — uma transação
+**EIP-7702** ("Set Code Transaction", parte do Pectra, que a Sepolia já suporta) —
+com `to = 0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`, um contrato de
+infraestrutura da própria MetaMask (23KB de bytecode, sem nenhuma relação com este
+projeto), **não** o `OfertaOrquestrador` (`0xde9cC84d…796e5`) que a MetaMask
+mostrou na tela de confirmação e que `writeContractAsync` de fato recebeu como
+alvo. A `authorizationList` da transação continha uma autorização assinada pelo
+próprio emissor delegando sua conta para um contrato de implementação da MetaMask
+(`0x63c0c19a…`) — confirmado lendo `cast code` da conta do emissor **depois** da
+transação: `0xef010063c0c19a282a1b52b07dd5a65b58948a07dae32b`. `0xef0100` é o
+prefixo padrão do "delegation designator" do EIP-7702 — a partir dessa transação,
+**a conta do emissor deixou de ser uma EOA pura, de forma permanente** (fica assim
+até uma nova autorização EIP-7702 mudar isso), e passou a ter bytecode. Qualquer
+lógica futura que assuma "carteira de usuário = EOA sem código" precisa saber
+disso — inclusive fora deste fluxo de publicação.
+
+A chamada em si funcionou perfeitamente (conferido, não presumido): o
+`OfertaOrquestrador` real emitiu `OfertaCompletaCriada` com o emissor certo,
+token/oferta existem on-chain e estão registrados nas duas factories
+(`isOferta`/`isCaptacao` = `true`). O problema era só que `confirmarPublicacao()`
+validava comparando `receipt.to === orquestrador.address` — uma checagem que a
+própria MetaMask pode invalidar reescrevendo a transação nos bastidores, depois
+que o dApp já pediu a chamada original. `receipt.to` **nunca prova o que a
+transação fez** — só o log emitido pelo próprio contrato prova isso (só o
+`OfertaOrquestrador` consegue emitir um log com `log.address` igual ao dele; isso
+é inforjável do jeito que `to` não é).
+
+**Regra travada a partir desta fase**: nenhuma verificação de escrita on-chain
+deste projeto compara `receipt.to` contra o endereço esperado. A validação correta
+é sempre: (1) existe um log cujo `address` é o contrato esperado e decodifica como
+o evento esperado; (2) os parâmetros indexados/decodificados do evento batem com o
+que o Supabase esperava (incluindo o emissor, comparado contra
+`issuers.wallet_address`, não contra `receipt.from`/`to`); (3), quando aplicável,
+os endereços resultantes (clones) estão de fato registrados no contrato de
+origem (`isOferta`/`isCaptacao`), não só "existe algum contrato nesse endereço".
+`confirmarPublicacao()` em `onchain-actions.ts` é a implementação de referência
+disso.
+
 ---
 
 ## Organização
