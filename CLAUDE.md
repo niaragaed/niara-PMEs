@@ -1564,6 +1564,14 @@ formatos aparecer). `sync_status` chegou a `confirmada` sozinho, sem precisar de
 `OfertaCompletaCriada`, ambos confirmados como registrados nas factories
 (`isOferta`/`isCaptacao`).
 
+A oferta antiga "Empresa Teste" (a que ficou `divergente` por causa do incidente
+EIP-7702 original) foi **reprocessada com sucesso** pelo mesmo caminho — clique em
+"Reprocessar" na própria tela, sem UPDATE manual — e também chegou a `confirmada`,
+usando o valor de `expected_emissor_wallet` recuperado pelo backfill da migration
+0016 (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6`, o mesmo que realmente assinou
+aquela transação). As duas ofertas de teste deste repositório estão hoje
+`confirmada`.
+
 ### 🔴 EIP-7702 — a MetaMask pode reescrever a transação; nunca validar por `receipt.to`
 
 Incidente real, não hipotético: no primeiro teste ponta a ponta (emissor
