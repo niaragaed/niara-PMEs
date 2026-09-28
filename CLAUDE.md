@@ -1631,6 +1631,35 @@ valor de React state entra nessa decisão. E `approveReceipt.status` agora
 mensagem própria ("a aprovação reverteu — o aporte não foi tentado"),
 nunca cai para `aportar`.
 
+🔴 **Pendência aberta, não resolvida pela correção acima**: depois desse
+fix, o teste ponta a ponta mostrou que **o aporte funciona nas 10 ofertas
+legadas** (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) — approve e aportar na sequência
+certa, "Aporte confirmado on-chain" — mas **continua falhando nas ofertas
+criadas via `OfertaOrquestrador`** (self-service, Fase 3/4): allowance
+zero nas três ofertas de teste (confirmado por `cast call`), `approve`
+pulado, `aportar` revertendo. Como `useInvestirOnChain.investir()` é
+**exatamente o mesmo código** para as duas origens (nenhuma ramificação
+por proveniência depois que `enderecos` é resolvido, ver "Fase 4" acima),
+a correção do allowance obsoleto era necessária mas **não é suficiente**
+— a diferença real está ou nas próprias ofertas do orquestrador (algo no
+clone/inicialização que as torna diferentes das legadas) ou na resolução
+de endereços vinda do Supabase (`loadConfirmedOnChainOfferings`/
+`OnChainInvestPage`/`RealOnChainInvestPanel`), não na lógica de
+approve/aportar em si. **Não investigado ainda** — próximo passo antes de
+declarar o aporte self-service funcional.
+
+Como proteção adicional, independente de qual seja essa causa ainda não
+encontrada: `investir()` agora chama `publicClient.simulateContract` para
+`aportar` **antes** de `writeContractAsync` — se a simulação reverter, o
+motivo é decodificado (`describeOnChainError`, mesma tradução de sempre)
+e a função para ali, nunca chegando a pedir assinatura de uma transação
+já sabida como condenada. Mata a classe inteira do sintoma "gás
+absurdo/MetaMask não consegue estimar", não só a causa específica já
+corrigida (allowance obsoleta). 🔴 **Ainda não testada no navegador** —
+adicionada e compilando (`tsc`/`lint`/`build` limpos), mas sem
+confirmação de que de fato intercepta o caso das ofertas do orquestrador
+antes de pedir assinatura.
+
 ---
 
 ## Tela `/socios` (painel interno, restrito aos sócios)

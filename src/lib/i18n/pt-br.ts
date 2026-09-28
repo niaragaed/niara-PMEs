@@ -1661,6 +1661,7 @@ export const ptBr = {
         "verificando-allowance": "Verificando autorização de MockBRL…",
         "assinando-approve": "Aguardando assinatura da aprovação (approve) de MockBRL…",
         "confirmando-approve": "Confirmando aprovação na rede…",
+        "simulando-aportar": "Conferindo se o aporte seria aceito antes de pedir sua assinatura…",
         "assinando-aportar": "Aguardando assinatura do aporte…",
         "confirmando-aportar": "Confirmando aporte na rede…",
         sucesso: "Aporte confirmado on-chain.",
