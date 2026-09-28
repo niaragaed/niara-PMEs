@@ -1523,6 +1523,78 @@ pmes` e `/socios` ficam de fora desta fase** — nenhuma oferta self-service
 ganha a vitrine com foto/logo nem aparece nos eventos do painel interno;
 só `/investir/onchain` enxerga as duas origens.
 
+### 🔴 Incidente real: aporte pulou o `approve` porque uma leitura não confiável foi tratada como dado
+
+No primeiro teste ponta a ponta de aporte numa oferta self-service, a
+transação falhou com `eth_sendRawTransaction: transaction gas limit too
+high (cap: 16777216, tx: 21000000)`. Investigado a fundo antes de
+corrigir (nunca assumir a primeira explicação):
+
+- **O gás de 21 milhões era sintoma, não causa.** `cast call`/`cast
+  estimate` contra a própria oferta reproduziram o revert real:
+  `ERC20InsufficientAllowance(spender=<oferta>, allowance=0,
+  needed=<valor>)` — o `allowance` de MockBRL para aquele par
+  carteira/oferta era **zero** de verdade. Uma chamada que reverte não
+  tem gás nenhum pra `eth_estimateGas` devolver; o "21.000.000" é a
+  MetaMask improvisando um valor quando não consegue estimar, não algo
+  que este código define (conferido: nenhuma hook de escrita em
+  `useOnChainActions.ts` jamais definiu `gas` explícito, nem antes nem
+  depois do refactor da 5.2 — o único `gas` fixo do projeto é
+  `GAS_LIMITE_PUBLICACAO`, do fluxo de publicação, sem nenhuma relação).
+- **Não era o refactor da 5.2** — `useMinhaPosicaoOnChain` (leitura de
+  `allowance`) e `useInvestirOnChain` (escrita de `aportar`) sempre leram
+  o mesmo objeto `enderecos`, nunca endereços diferentes; não existe (e
+  nunca existiu, nem antes do refactor) um ponto de código onde os dois
+  pudessem divergir.
+- **A causa real**: `handleInvestir()` passava `posicao.allowanceMockBrl`
+  pro fluxo de investir sem checar se aquela leitura tinha de fato
+  terminado com sucesso. `useReadContracts` devolvia `0` tanto para "a
+  chain respondeu: allowance é zero" quanto para "a leitura ainda não
+  voltou" quanto para "a leitura falhou" — os três casos eram
+  indistinguíveis pelo tipo de retorno, e só o primeiro deveria ter
+  disparado o approve (os outros dois deveriam ter bloqueado o clique,
+  não deixado passar). O mesmo defeito já tinha aparecido minutos antes
+  como `metaMaxima=0` sendo mostrado como "capacidade zero" da oferta —
+  mesma classe de bug, dois sintomas.
+- **Por que a leitura falhava/atrasava**: `NEXT_PUBLIC_SEPOLIA_RPC_URL`
+  não estava configurada — toda leitura deste app (cliente e servidor,
+  mesma variável, ver `config.ts`/`eventsCore.ts`) caía no RPC público
+  padrão do `viem/chains` para Sepolia (`https://11155111.rpc.thirdweb.com`),
+  sujeito a rate-limit, sem relação nenhuma com o `SEPOLIA_RPC_URL`
+  (sem `NEXT_PUBLIC_`) do repositório `niara-contracts-PMEs` — variável,
+  arquivo e propósito diferentes, apesar do nome parecido.
+
+**Correção, em três frentes**:
+
+1. **`NEXT_PUBLIC_SEPOLIA_RPC_URL` configurada** (`.env.local`/`.env.example`,
+   ver comentário lá) — resolve a causa raiz de leituras lentas/instáveis.
+   Continua opcional em código (nunca quebra sem ela), mas nunca deve
+   ficar ausente em produção.
+2. **Gate rígido, mesmo princípio de `useEmissorAutorizado`** (que desde a
+   sub-etapa 1 da Fase 3 já separa "a chain disse não" de "não consegui
+   perguntar", ver "Tela `/empresa/ofertas`" acima): `useOfertaOnChainTermos`
+   e `useMinhaPosicaoOnChain` ganharam um campo `pronto: boolean` — só
+   `true` quando **todas** as leituras do multicall terminaram com
+   `status: "success"` (não só ausência de erro na query como um todo;
+   uma chamada individual dentro de um multicall pode falhar sem que a
+   query inteira seja marcada como erro) — mais `errorMessage: string |
+   null`, traduzido via `describeOnChainError`. `RealOnChainInvestPanel.tsx`
+   calcula `leiturasProntas = termos.pronto && posicao.pronto` e exige
+   isso em `investirDesabilitado`; enquanto não pronto, a seção de
+   investir mostra "carregando" ou o motivo do erro em vez do formulário
+   — nunca o formulário com números de fallback.
+3. **Fallback nunca vira dado**: os campos individuais (`metaMaxima`,
+   `allowanceMockBrl` etc.) continuam retornando `0`/`false` quando a
+   leitura correspondente falha — isso não mudou, e não precisa mudar,
+   porque agora `pronto` é checado **antes** de qualquer decisão usar
+   esses campos. O defeito nunca foi o valor de fallback existir; foi
+   alguém decidir com ele sem checar se era real.
+
+`RealPositionCard.tsx` (`/ativos`) usa as mesmas duas hooks mas não foi
+atualizado para consumir `pronto` — é leitura pura, sem botão de
+investir, risco bem menor; fica como gap conhecido, não corrigido nesta
+rodada.
+
 ---
 
 ## Tela `/socios` (painel interno, restrito aos sócios)
