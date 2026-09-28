@@ -60,6 +60,7 @@ export type InvestStatus =
   | "verificando-allowance"
   | "assinando-approve"
   | "confirmando-approve"
+  | "simulando-aportar"
   | "assinando-aportar"
   | "confirmando-aportar"
   | "sucesso"
@@ -127,6 +128,27 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
             });
             return;
           }
+        }
+
+        // 🔴 Proteção final, independente da causa raiz: nunca pede assinatura de algo que já
+        // sabemos que vai reverter. Simula a MESMA chamada que estamos prestes a pedir pra
+        // assinar — se reverter, decodifica o motivo real (describeOnChainError, mesma tradução
+        // de sempre) e para aqui, sem chegar a chamar writeContractAsync. Isso mata a classe
+        // inteira do sintoma "gás absurdo/MetaMask não consegue estimar", não só a causa já
+        // corrigida acima (allowance obsoleta) — vale mesmo que a causa desta vez seja outra
+        // (ver CLAUDE.md: aporte nas ofertas do OfertaOrquestrador ainda falha por motivo não
+        // identificado, mesmo código de approve/aportar das 10 ofertas legadas que funcionam).
+        setState({ status: "simulando-aportar", errorMessage: null });
+        try {
+          await publicClient.simulateContract({
+            ...contracts.ofertaCaptacao,
+            functionName: "aportar",
+            args: [valor],
+            account: address,
+          });
+        } catch (simError) {
+          setState({ status: "erro", errorMessage: describeOnChainError(simError) });
+          return;
         }
 
         setState({ status: "assinando-aportar", errorMessage: null });
