@@ -27,10 +27,10 @@
 // projeto.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { decodeEventLog, TransactionReceiptNotFoundError } from "viem";
+import { decodeEventLog, decodeFunctionData, TransactionReceiptNotFoundError } from "viem";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID } from "@/lib/web3/orquestrador";
+import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID, type OrquestradorContract } from "@/lib/web3/orquestrador";
 import { participacaoTokenFactoryAbi } from "@/lib/web3/abis/participacaoTokenFactory";
 import { ofertaCaptacaoFactoryAbi } from "@/lib/web3/abis/ofertaCaptacaoFactory";
 import { ofertaCaptacaoAbi } from "@/lib/web3/abis/ofertaCaptacao";
@@ -219,6 +219,21 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   }
 
   if (receipt.status === "reverted") {
+    // 🔴 Bug real corrigido aqui: até esta correção, este ramo NUNCA tentava decodificar o
+    // motivo do revert — gravava sempre a mesma frase genérica "A transação reverteu on-chain —
+    // tente publicar de novo", mesmo quando o motivo real era uma violação de limite da Res. 88
+    // (ex. LoteAdicionalExcedeLimite), caso em que "tente de novo" é um conselho ERRADO: os
+    // valores da oferta são os mesmos, então reverteria de novo, sempre. O mapeamento de erros
+    // customizados (CUSTOM_ERROR_MESSAGES, errors.ts) já cobria esse caso desde a sub-etapa 4 —
+    // só nunca era consultado neste caminho específico (só no catch do lado do cliente, que só
+    // dispara quando a assinatura/estimativa falha ANTES de minerar; aqui a transação já minerou
+    // e reverteu, sem lançar exceção nenhuma pro cliente capturar).
+    //
+    // O recibo não guarda o motivo do revert (a EVM não grava isso no receipt) — a única forma de
+    // obter o motivo real é RESSIMULAR a MESMA calldata já minerada (nunca reconstruída a partir
+    // do Supabase, que pode ter mudado desde a assinatura) contra o estado da chain de então.
+    const motivo = await descreverMotivoDoRevert(client, orquestrador, offering.tx_hash as `0x${string}`, receipt.blockNumber);
+
     // expected_emissor_wallet volta a null junto com tx_hash: os dois pertencem à MESMA
     // tentativa (a que reverteu) e uma nova, via registrarTentativa, precisa poder recongelar os
     // dois do zero. Permitido pela trigger de 0016 porque o destino é 'nao_onchain'.
@@ -228,13 +243,13 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
         sync_status: "nao_onchain",
         tx_hash: null,
         expected_emissor_wallet: null,
-        onchain_last_error: "A transação reverteu on-chain.",
+        onchain_last_error: motivo,
       })
       .eq("id", parsedId.data)
       .eq("issuer_id", accountId)
       .in("sync_status", ["pendente", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
-    return { status: "revertida", motivo: "A transação reverteu on-chain — tente publicar de novo." };
+    return { status: "revertida", motivo };
   }
 
   // Log do próprio OfertaOrquestrador — inforjável: só o contrato nesse endereço consegue
@@ -327,6 +342,49 @@ async function marcarDivergente(
     .eq("issuer_id", accountId)
     .in("sync_status", ["pendente", "divergente"]);
   revalidatePath(`/empresa/ofertas/${offeringId}/publicar`);
+}
+
+/**
+ * Decodifica o motivo real de uma transação MINERADA com `status: "reverted"` — o recibo não
+ * guarda o motivo (a EVM não grava isso ali), então a única forma confiável é ressimular a MESMA
+ * calldata já minerada (decodificada de volta do `input` da própria transação, nunca reconstruída
+ * a partir do Supabase — que já pode ter mudado desde a assinatura) contra o estado da chain no
+ * bloco em que reverteu. `simulateContract` decodifica erros customizados em
+ * `ContractFunctionRevertedError` do jeito que `describeOnChainError` já sabe traduzir — mesma
+ * função usada no catch do lado do cliente (usePublicarOfertaOnChain.ts), nunca uma segunda
+ * lógica de tradução. Nunca lança — sempre devolve uma string, com um fallback só se a própria
+ * decodificação falhar (ex.: a transação reverteu por um motivo que não se reproduz mais).
+ */
+async function descreverMotivoDoRevert(
+  client: ReturnType<typeof publicClient>,
+  orquestrador: OrquestradorContract,
+  txHash: `0x${string}`,
+  blockNumber: bigint,
+): Promise<string> {
+  try {
+    const tx = await client.getTransaction({ hash: txHash });
+    const decoded = decodeFunctionData({ abi: orquestrador.abi, data: tx.input });
+    if (decoded.functionName !== "criarOfertaCompleta" || !decoded.args) {
+      return "A transação reverteu on-chain, mas não foi possível decodificar o motivo (calldata inesperada).";
+    }
+
+    await client.simulateContract({
+      address: orquestrador.address,
+      abi: orquestrador.abi,
+      functionName: "criarOfertaCompleta",
+      args: decoded.args as readonly [string, string, string, `0x${string}`, string, bigint, bigint, bigint, bigint],
+      account: tx.from,
+      blockNumber,
+    });
+
+    // Não deveria chegar aqui: se a ressimulação não reverte, a transação minerada reverteu por
+    // um motivo que já não se reproduz mais agora (ex.: estado mudou entre o bloco minerado e a
+    // chamada acima) — raro o bastante para não merecer uma frase própria, mas melhor que inventar
+    // um motivo.
+    return "A transação reverteu on-chain, mas a nova simulação não reproduziu o motivo agora — pode ter sido uma condição temporária.";
+  } catch (error) {
+    return describeOnChainError(error);
+  }
 }
 
 export type VerificarConsistenciaState =

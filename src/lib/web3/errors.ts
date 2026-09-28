@@ -46,12 +46,15 @@ const CUSTOM_ERROR_MESSAGES: Record<string, string> = {
   ZeroAddress: "Configuração inválida do contrato — avise a Niara.",
   EmissorNaoAutorizado: "Sua carteira ainda não está autorizada a publicar ofertas — fale com a Niara para liberar o acesso.",
   OfertaAnteriorAindaAberta: "Você já tem uma oferta em aberto em Sepolia — encerre-a antes de publicar uma nova.",
-  PrecoInvalido: "O valor por cota não pode ser zero.",
-  PrazoInvalido: "O prazo da oferta precisa ser no futuro.",
-  PrazoExcedeLimite: "O prazo da oferta ultrapassa o limite de 180 dias da Resolução CVM 88.",
-  MetaMaximaExcedeTeto: "O valor da oferta ultrapassa o teto de R$15 milhões por oferta.",
-  LoteAdicionalExcedeLimite: "O lote adicional ultrapassa 25% da oferta original.",
-  PrecoNaoDivideMetaMaxima: "O valor da oferta precisa ser múltiplo exato do valor por cota.",
+  // Os cinco abaixo são violações de valor da PRÓPRIA oferta (não do estado da chain/carteira) —
+  // permanentes: os números já estão gravados na oferta, então tentar publicar de novo reverte
+  // exatamente igual. A frase por isso nunca sugere "tente de novo" — sempre "recrie a oferta".
+  PrecoInvalido: "O valor por cota não pode ser zero — esta oferta precisa ser recriada com um valor por cota válido; publicar de novo vai reverter do mesmo jeito.",
+  PrazoInvalido: "O prazo da oferta precisa ser no futuro — esta oferta precisa ser recriada com um prazo válido; publicar de novo vai reverter do mesmo jeito.",
+  PrazoExcedeLimite: "O prazo da oferta ultrapassa o limite de 180 dias da Resolução CVM 88 — esta oferta precisa ser recriada com um prazo válido; publicar de novo vai reverter do mesmo jeito.",
+  MetaMaximaExcedeTeto: "O valor da oferta ultrapassa o teto de R$15 milhões por oferta (Resolução CVM 88) — esta oferta precisa ser recriada com um teto válido; publicar de novo vai reverter do mesmo jeito.",
+  LoteAdicionalExcedeLimite: "O lote adicional ultrapassa 25% do valor base da oferta (Resolução CVM 88) — esta oferta precisa ser recriada com um lote adicional válido; publicar de novo vai reverter do mesmo jeito.",
+  PrecoNaoDivideMetaMaxima: "O valor da oferta precisa ser múltiplo exato do valor por cota — esta oferta precisa ser recriada com valores compatíveis; publicar de novo vai reverter do mesmo jeito.",
   TaxaExcedeMaximo: "Configuração de taxa da plataforma inválida — avise a Niara.",
 };
 

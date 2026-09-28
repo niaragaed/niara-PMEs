@@ -1383,6 +1383,14 @@ export const ptBr = {
         titulo: "Esta oferta não pode ser publicada agora",
         texto: "Só ofertas em rascunho podem ser publicadas on-chain — esta já mudou de status.",
         semValorPorCota: "Esta oferta não tem valor por cota definido — não é possível calcular a quantidade de cotas para publicar on-chain.",
+        limitesRes88: {
+          intro:
+            "Esta oferta viola limites da Resolução CVM 88 gravados nela mesma — a chain sempre vai recusar a publicação, porque o contrato confere os mesmos limites de novo. Não adianta tentar publicar de novo: é preciso recriar a oferta em Minhas ofertas com valores válidos.",
+          teto: (valorTeto: string) => `Teto da oferta (${valorTeto}) ultrapassa o limite de R$15.000.000,00 da Resolução CVM 88.`,
+          loteAdicional: (valorBase: string, valorTeto: string, maximoPermitido: string) =>
+            `Teto da oferta (${valorTeto}) ultrapassa 25% do valor base (${valorBase}) — o máximo permitido seria ${maximoPermitido}, conforme a Resolução CVM 88.`,
+          prazo: (dias: number) => `Prazo de ${dias} dias ultrapassa o limite de 180 dias da Resolução CVM 88.`,
+        },
       },
       semCarteiraVinculada: {
         titulo: "Nenhuma carteira vinculada à sua conta",

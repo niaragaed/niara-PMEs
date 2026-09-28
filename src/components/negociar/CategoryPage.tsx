@@ -11,7 +11,6 @@ import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { loadActiveOfferingsByCategory } from "@/lib/investments";
-import { loadMyOfferingsSummary } from "@/app/perfil/actions";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 
 // Template reutilizado pelas 5 rotas de categoria (/negociar/token-pmes,
@@ -41,26 +40,11 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
     role === "issuer" && accountId ? await loadActiveOfferingsByCategory(categoria, accountId) : [];
 
   // Botão "Publicar oferta" (só na categoria pmes, ver JSX abaixo) — visível só para o emissor
-  // logado (nunca investidor/visitante). Destino decidido por quantas ofertas em
-  // status='draft' && sync_status='nao_onchain' o emissor tem hoje — mesma condição exata que já
-  // decide mostrar o link "Publicar on-chain" no card de OfertasPage.tsx, não uma nova regra:
-  // nenhuma (nunca criou oferta nenhuma) -> direto pro formulário de criação; exatamente uma ->
-  // direto pra publicação daquela oferta, sem ambiguidade; mais de uma -> lista em /empresa/ofertas
-  // (nunca adivinha qual), mesma decisão para "tem outras ofertas, mas nenhuma nao_onchain agora".
-  let publicarOfertaHref: string | null = null;
-  if (role === "issuer" && accountId) {
-    const minhasOfertas = await loadMyOfferingsSummary();
-    const naoOnchain = minhasOfertas.filter(
-      (oferta) => oferta.status === "draft" && oferta.sync_status === "nao_onchain",
-    );
-    if (minhasOfertas.length === 0) {
-      publicarOfertaHref = "/empresa/ofertas#criar-oferta";
-    } else if (naoOnchain.length === 1) {
-      publicarOfertaHref = `/empresa/ofertas/${naoOnchain[0].id}/publicar`;
-    } else {
-      publicarOfertaHref = "/empresa/ofertas";
-    }
-  }
+  // logado (nunca investidor/visitante). Leva sempre para /empresa/ofertas ("Minhas ofertas") —
+  // simplificado de propósito: a lista de lá já mostra o estado de cada oferta e o link certo por
+  // oferta (ver OfertasPage.tsx), então não vale a pena este botão tentar adivinhar/pular direto
+  // para uma oferta específica.
+  const publicarOfertaHref = role === "issuer" && accountId ? "/empresa/ofertas" : null;
 
   // getOnChainIndexBySlug/getOfertaAssetPaths precisam rodar aqui (server —
   // o último é fs-based) mesmo com o filtro de setor sendo client-side
