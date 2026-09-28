@@ -359,7 +359,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
           )}
         </section>
 
-        <section className="mt-10">
+        <section id="criar-oferta" className="mt-10 scroll-mt-24">
           <h2 className="text-xl font-semibold text-on-military">{t.criarTitulo}</h2>
 
           <form

@@ -865,6 +865,7 @@ export const ptBr = {
         "Oferta cadastrada pela sua empresa. Visível só para você, dono da oferta — sem opção de reserva.",
       vitrineTitle: "Exemplos (demonstração)",
       vitrineTitlePmesOnChain: "Ofertas PMEs (Sepolia real, empresas fictícias)",
+      publicarOfertaBotao: "Publicar oferta",
       filtroSetor: {
         ariaLabel: "Filtrar por setor",
         todos: "Todos",
