@@ -167,8 +167,16 @@ export function RealOnChainInvestPanel({
   const saldoInsuficiente = valorAporte > posicao.saldoMockBrl;
   const valorInvalido = valorAporte <= BigInt(0);
 
+  // Gate rígido: nunca decidir com leitura não confiável. Enquanto `termos`/`posicao` não
+  // terminaram com sucesso, os campos acima (capacidadeRestante, saldoInsuficiente etc.) podem
+  // estar calculados a partir do valor de fallback 0 — incidente real (ver CLAUDE.md): um
+  // metaMaxima=0 por leitura falha já apareceu como "capacidade zero" (falso), e um
+  // allowanceMockBrl obsoleto/não confirmado já fez o fluxo pular o approve por engano.
+  const leiturasProntas = termos.pronto && posicao.pronto;
+
   const investirDesabilitado =
     !podeOperar ||
+    !leiturasProntas ||
     termos.estado !== "Aberta" ||
     valorInvalido ||
     excedeCapacidade ||
@@ -306,75 +314,85 @@ export function RealOnChainInvestPanel({
         />
       )}
 
-      {podeOperar && termos.estado !== null && termos.estado !== "Aberta" && (
+      {podeOperar && leiturasProntas && termos.estado !== null && termos.estado !== "Aberta" && (
         <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
           {termos.estado === "EncerradaSucesso" ? t.investir.ofertaEncerradaSucesso : t.investir.ofertaEncerradaFalha}
         </p>
       )}
 
-      {podeOperar && termos.estado === "Aberta" && (
+      {podeOperar && (!leiturasProntas || termos.estado === "Aberta") && (
         <Card title={t.investir.title}>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs text-on-military-muted">{t.investir.quantidadeLabel}</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={quantidadeCotas}
-                onChange={(event) => setQuantidadeCotas(event.target.value)}
-                className="w-32 rounded-md border border-panel-border bg-military px-3 py-2 text-on-military focus:outline-none focus:ring-2 focus:ring-salmon"
-              />
-            </label>
-            <div className="text-sm text-on-military-muted">
-              {t.investir.valorLabel}:{" "}
-              <span className="font-mono text-on-military">
-                {formatToken(valorAporte, termos.mockBrlDecimals, termos.mockBrlSymbol)}
-              </span>
-            </div>
-          </div>
-
-          <p className="mt-2 text-xs text-on-military-muted">{t.investir.allowanceNota}</p>
-
-          {valorInvalido && quantidadeCotas !== "" && (
-            <p className="mt-2 text-sm text-value-negative">Informe uma quantidade de cotas válida.</p>
-          )}
-          {!valorInvalido && excedeCapacidade && (
-            <p className="mt-2 text-sm text-value-negative">
-              Esse valor ultrapassa a capacidade restante da oferta (
-              {formatToken(capacidadeRestante, termos.mockBrlDecimals, termos.mockBrlSymbol)}).
+          {!leiturasProntas ? (
+            <p className={termos.errorMessage || posicao.errorMessage ? "text-sm text-value-negative" : "text-sm text-on-military-muted"}>
+              {termos.errorMessage || posicao.errorMessage
+                ? t.investir.erroLeitura((termos.errorMessage ?? posicao.errorMessage) as string)
+                : t.investir.carregando}
             </p>
-          )}
-          {!valorInvalido && !excedeCapacidade && excedeTeto && (
-            <p className="mt-2 text-sm text-value-negative">
-              Esse valor ultrapassa o teto por investidor (
-              {formatToken(tetoRestanteInvestidor, termos.mockBrlDecimals, termos.mockBrlSymbol)} restantes).
-            </p>
-          )}
-          {!valorInvalido && saldoInsuficiente && (
-            <p className="mt-2 text-sm text-value-negative">Saldo de MockBRL insuficiente — use o faucet acima.</p>
-          )}
+          ) : (
+            <>
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs text-on-military-muted">{t.investir.quantidadeLabel}</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={quantidadeCotas}
+                    onChange={(event) => setQuantidadeCotas(event.target.value)}
+                    className="w-32 rounded-md border border-panel-border bg-military px-3 py-2 text-on-military focus:outline-none focus:ring-2 focus:ring-salmon"
+                  />
+                </label>
+                <div className="text-sm text-on-military-muted">
+                  {t.investir.valorLabel}:{" "}
+                  <span className="font-mono text-on-military">
+                    {formatToken(valorAporte, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+                  </span>
+                </div>
+              </div>
 
-          <button
-            type="button"
-            disabled={investirDesabilitado}
-            onClick={handleInvestir}
-            className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {invest.status === "idle" || invest.status === "sucesso" || invest.status === "erro"
-              ? t.investir.botao
-              : t.investir.status[invest.status]}
-          </button>
+              <p className="mt-2 text-xs text-on-military-muted">{t.investir.allowanceNota}</p>
 
-          {invest.status === "sucesso" && (
-            <p role="status" className="mt-3 flex items-center gap-2 text-sm text-value-positive">
-              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-              {t.investir.status.sucesso}
-            </p>
-          )}
-          {invest.status === "erro" && invest.errorMessage && (
-            <p role="alert" className="mt-3 text-sm text-value-negative">
-              {invest.errorMessage}
-            </p>
+              {valorInvalido && quantidadeCotas !== "" && (
+                <p className="mt-2 text-sm text-value-negative">Informe uma quantidade de cotas válida.</p>
+              )}
+              {!valorInvalido && excedeCapacidade && (
+                <p className="mt-2 text-sm text-value-negative">
+                  Esse valor ultrapassa a capacidade restante da oferta (
+                  {formatToken(capacidadeRestante, termos.mockBrlDecimals, termos.mockBrlSymbol)}).
+                </p>
+              )}
+              {!valorInvalido && !excedeCapacidade && excedeTeto && (
+                <p className="mt-2 text-sm text-value-negative">
+                  Esse valor ultrapassa o teto por investidor (
+                  {formatToken(tetoRestanteInvestidor, termos.mockBrlDecimals, termos.mockBrlSymbol)} restantes).
+                </p>
+              )}
+              {!valorInvalido && saldoInsuficiente && (
+                <p className="mt-2 text-sm text-value-negative">Saldo de MockBRL insuficiente — use o faucet acima.</p>
+              )}
+
+              <button
+                type="button"
+                disabled={investirDesabilitado}
+                onClick={handleInvestir}
+                className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {invest.status === "idle" || invest.status === "sucesso" || invest.status === "erro"
+                  ? t.investir.botao
+                  : t.investir.status[invest.status]}
+              </button>
+
+              {invest.status === "sucesso" && (
+                <p role="status" className="mt-3 flex items-center gap-2 text-sm text-value-positive">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  {t.investir.status.sucesso}
+                </p>
+              )}
+              {invest.status === "erro" && invest.errorMessage && (
+                <p role="alert" className="mt-3 text-sm text-value-negative">
+                  {invest.errorMessage}
+                </p>
+              )}
+            </>
           )}
         </Card>
       )}

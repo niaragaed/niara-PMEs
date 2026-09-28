@@ -1660,6 +1660,9 @@ export const ptBr = {
       },
       ofertaEncerradaSucesso: "Esta oferta já foi encerrada com sucesso — não é mais possível investir. Se você aportou, resgate suas cotas abaixo.",
       ofertaEncerradaFalha: "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir.",
+      carregando: "Carregando os dados desta oferta e a sua posição — aguarde antes de investir.",
+      erroLeitura: (motivo: string) =>
+        `Não foi possível confirmar os dados desta oferta agora (${motivo}) — investir fica bloqueado até a leitura funcionar, para nunca decidir com um valor não confirmado.`,
     },
     posicao: {
       title: "Sua posição nesta oferta",
