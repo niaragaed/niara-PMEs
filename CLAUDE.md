@@ -1844,6 +1844,62 @@ citando os dois valores (Supabase vs. on-chain), e restaurado o valor original,
 "Verificar consistência" precisa trazer de volta `confirmada` sozinha, sem tocar em
 nenhuma transação nos dois sentidos. Atualizar este parágrafo depois de confirmado.
 
+### 🔴 Incidente real: revert por violação da Res. 88 mostrava mensagem genérica e conselho errado
+
+Uma oferta de teste antiga (meta mínima R$1.000, teto R$5.000.000 — lote
+adicional de ~500.000% contra o limite de 25% da Res. 88) foi publicada de
+propósito para testar o caminho de erro. O contrato reverteu corretamente
+(`LoteAdicionalExcedeLimite`), mas a tela mostrou só "A transação reverteu
+on-chain — tente publicar de novo" — um conselho **errado**: os valores da
+oferta são permanentes, então publicar de novo reverteria exatamente igual.
+
+**Causa, investigada antes de corrigir**: o mapeamento de erros customizados
+(`CUSTOM_ERROR_MESSAGES`/`describeOnChainError`, `errors.ts`) já cobria
+`LoteAdicionalExcedeLimite` desde a sub-etapa 4 — a mensagem existia. O
+problema é que esse mapeamento **nunca era consultado** no caminho que essa
+transação percorreu. `criarOfertaCompleta` é assinado com `gas` **fixo**
+(`GAS_LIMITE_PUBLICACAO`, ver `usePublicarOfertaOnChain.ts`) de propósito
+(evitar falsos reverts por volatilidade do preço do gás, ver seção acima) —
+isso significa que a MetaMask nunca faz `eth_estimateGas` antes de assinar,
+então uma chamada que reverte por regra de negócio **não lança exceção
+nenhuma no cliente**: ela é minerada normalmente, só que com
+`status: "reverted"`. Só o servidor (`confirmarPublicacao`, no ramo
+`receipt.status === "reverted"`) via essa transação, e esse ramo nunca tinha
+tentado decodificar o motivo — só gravava a frase genérica direto.
+
+**Correção**: o recibo de uma transação não guarda o motivo do revert (a EVM
+não grava isso ali) — a única forma confiável de descobrir é **ressimular a
+mesma calldata já minerada** contra o estado da chain de então.
+`descreverMotivoDoRevert()` (`onchain-actions.ts`) lê a transação original
+(`client.getTransaction`), decodifica os argumentos de volta com
+`decodeFunctionData` (nunca reconstruídos a partir do Supabase, que já pode
+ter mudado), e chama `client.simulateContract` com esses mesmos argumentos —
+que decodifica o erro customizado do jeito que `describeOnChainError` já
+sabe traduzir, a mesma função usada no catch do lado do cliente. Nenhuma
+lógica de tradução nova: só o caminho que faltava chamar a que já existia.
+
+As cinco mensagens de erro que descrevem valores permanentes da própria
+oferta (`PrecoInvalido`, `PrazoInvalido`, `PrazoExcedeLimite`,
+`MetaMaximaExcedeTeto`, `LoteAdicionalExcedeLimite`, `PrecoNaoDivideMetaMaxima`)
+foram reescritas para nunca mais sugerir "tente de novo" — todas agora
+terminam em "esta oferta precisa ser recriada... publicar de novo vai
+reverter do mesmo jeito", porque tentar de novo com os MESMOS números
+sempre reverte igual (a chain é determinística).
+
+**Gate de pré-validação, antes de gastar gás**: os três limites numéricos da
+Res. 88 (teto ≤ R$15.000.000, lote adicional ≤ 25% do valor base, prazo ≤
+180 dias) são conhecidos direto do Supabase, sem nenhuma leitura on-chain —
+`/empresa/ofertas/[id]/publicar/page.tsx` checa os três **antes** de
+renderizar qualquer gate/botão, mesmo padrão já usado para `status !== 'draft'`
+e `share_price_cents === null` (ambos no mesmo arquivo). Só bloqueia quando
+`sync_status === 'nao_onchain'` — uma oferta já `pendente`/`divergente`
+continua chegando normalmente em `PublicarOnChainPage.tsx`, porque é lá que
+a reconciliação (`confirmarPublicacao`, já corrigida acima) precisa rodar e
+gravar o motivo decodificado; bloquear estaticamente ali também deixaria
+essas ofertas presas para sempre, sem nunca reconciliar. Mensagem explica
+qual limite falhou (com os valores reais formatados em R$) e deixa explícito
+que a oferta precisa ser **recriada** em "Minhas ofertas", não republicada.
+
 ---
 
 ## Organização
