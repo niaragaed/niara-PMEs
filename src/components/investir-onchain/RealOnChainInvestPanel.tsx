@@ -185,7 +185,9 @@ export function RealOnChainInvestPanel({
     (invest.status !== "idle" && invest.status !== "sucesso" && invest.status !== "erro");
 
   async function handleInvestir() {
-    await invest.investir(valorAporte, posicao.allowanceMockBrl);
+    // invest.investir() não recebe mais allowance de fora — lê direto da chain no momento em que
+    // roda, para nunca decidir pular o approve com um valor obsoleto (ver useOnChainActions.ts).
+    await invest.investir(valorAporte);
     termos.refetch();
     posicao.refetch();
   }

@@ -1595,6 +1595,42 @@ atualizado para consumir `pronto` — é leitura pura, sem botão de
 investir, risco bem menor; fica como gap conhecido, não corrigido nesta
 rodada.
 
+### 🔴 Incidente real: segunda tentativa de aporte pulou o `approve` com allowance obsoleta
+
+Depois do gate rígido acima, o mesmo sintoma (gás absurdo por
+`eth_estimateGas` falhar numa chamada que reverte) voltou a acontecer —
+desta vez confirmado que **nenhuma das três ofertas de teste tinha
+allowance aprovada** (`cast call` em todas, allowance = 0). A sequência
+real: primeiro clique → `approve` falhou com "nonce too low" (erro da
+própria carteira ao assinar, antes de minerar); segundo clique → o revert
+já veio de `aportar`, não de `approve` — ou seja, a segunda tentativa
+pulou o `approve` inteiro.
+
+**Causa**: `useInvestirOnChain.investir()` decidia se chamava `approve`
+comparando `valor` contra um `allowanceAtual` recebido **de fora**, via
+parâmetro (`posicao.allowanceMockBrl`, do hook de leitura
+`useMinhaPosicaoOnChain`). Depois de uma tentativa falhar,
+`handleInvestir()` dispara `posicao.refetch()` — mas isso é assíncrono e
+**não é esperado** antes do botão reabilitar (`invest.status` volta a
+`"erro"`, que já reabilita o botão, antes do refetch sequer começar). Um
+segundo clique rápido o bastante herdava o `allowanceAtual` de ANTES da
+tentativa anterior — nesse caso felizmente ainda `0`, mas a decisão em si
+nunca reconferia a chain, então qualquer timing de refetch atrasado (RPC
+lento, etc.) podia produzir o mesmo pulo do `approve` mesmo com allowance
+genuinamente insuficiente. `investir()` também nunca conferia
+`approveReceipt.status` — se um `approve` minerasse e revertesse (em vez
+de falhar na assinatura), o código seguia para `aportar` do mesmo jeito,
+mesma classe de bug que `confirmarPublicacao()` já tinha tido do lado do
+servidor (recibo existir ≠ recibo ter dado certo).
+
+**Correção**: `investir()` não recebe mais `allowanceAtual` de fora —
+lê `allowance` **direto da chain, na hora**, dentro da própria função
+(`publicClient.readContract`), imediatamente antes de decidir. Nenhum
+valor de React state entra nessa decisão. E `approveReceipt.status` agora
+é checado explicitamente: `"reverted"` interrompe a sequência com uma
+mensagem própria ("a aprovação reverteu — o aporte não foi tentado"),
+nunca cai para `aportar`.
+
 ---
 
 ## Tela `/socios` (painel interno, restrito aos sócios)

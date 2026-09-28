@@ -74,22 +74,39 @@ export type InvestState = {
  * Fluxo completo de investimento: checa a allowance atual do MockBRL contra `valor`; só chama
  * `approve` quando insuficiente (nunca pede aprovação de novo se já houver allowance
  * suficiente); só então chama `aportar`. `valor` já deve vir calculado como
- * `quantidadeDeCotas * precoPorCota` (múltiplo exato — ver OfertaCaptacao.aportar) e
- * `allowanceAtual` deve vir do hook de leitura (useMinhaPosicaoOnChain), para não duplicar a
- * mesma leitura aqui. `enderecos` identifica a oferta (par token/oferta, ver contracts.ts).
+ * `quantidadeDeCotas * precoPorCota` (múltiplo exato — ver OfertaCaptacao.aportar).
+ *
+ * 🔴 Incidente real corrigido aqui: `allowanceAtual` costumava vir de fora, do hook de leitura
+ * (`useMinhaPosicaoOnChain`, via React state) — e podia estar OBSOLETO numa segunda tentativa
+ * logo após a primeira falhar (ex.: `approve` rejeitado por "nonce too low" na carteira): o
+ * `refetch()` disparado depois da falha é assíncrono e não é esperado antes do botão reabilitar,
+ * então um clique rápido em seguida podia herdar um `allowanceAtual` de antes da tentativa
+ * anterior, decidir (errado) que a allowance já era suficiente, pular o `approve` inteiro e ir
+ * direto para `aportar` — que revertia por allowance insuficiente de verdade (e, como
+ * `criarOfertaCompleta`/`aportar` não têm gas fixo aqui, a MetaMask nem consegue estimar uma
+ * chamada que reverte, daí o gás absurdo de novo — mesma classe de sintoma já documentada no
+ * CLAUDE.md). Corrigido lendo a allowance **direto da chain, agora, dentro desta função** — nunca
+ * mais um valor herdado de fora, que pode estar desatualizado por qualquer motivo (timing de
+ * refetch, RPC, o que for).
  */
 export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<InvestState>({ status: "idle", errorMessage: null });
+  const { address } = useConnection();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
   const investir = useCallback(
-    async (valor: bigint, allowanceAtual: bigint) => {
+    async (valor: bigint) => {
       const contracts = getOnChainContracts(enderecos);
-      if (!contracts || !publicClient) return;
+      if (!contracts || !publicClient || !address) return;
 
       try {
         setState({ status: "verificando-allowance", errorMessage: null });
+        const allowanceAtual = (await publicClient.readContract({
+          ...contracts.mockBrl,
+          functionName: "allowance",
+          args: [address, contracts.ofertaCaptacao.address],
+        })) as bigint;
 
         if (allowanceAtual < valor) {
           setState({ status: "assinando-approve", errorMessage: null });
@@ -99,7 +116,17 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
             args: [contracts.ofertaCaptacao.address, valor],
           });
           setState({ status: "confirmando-approve", errorMessage: null });
-          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+          const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash });
+          // A aprovação foi MINERADA (não lançou exceção), mas pode ter revertido — checar o
+          // status é obrigatório aqui, pelo mesmo motivo que confirmarPublicacao() checa
+          // receipt.status do lado do servidor: um recibo existir não significa que deu certo.
+          if (approveReceipt.status === "reverted") {
+            setState({
+              status: "erro",
+              errorMessage: "A aprovação (approve) de MockBRL reverteu on-chain — o aporte não foi tentado.",
+            });
+            return;
+          }
         }
 
         setState({ status: "assinando-aportar", errorMessage: null });
@@ -116,7 +143,7 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
         setState({ status: "erro", errorMessage: describeOnChainError(error) });
       }
     },
-    [publicClient, writeContractAsync, enderecos],
+    [address, publicClient, writeContractAsync, enderecos],
   );
 
   const reset = useCallback(() => setState({ status: "idle", errorMessage: null }), []);
