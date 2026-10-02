@@ -75,6 +75,9 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
             setor: oferta.issuerSector,
             bannerUrl: oferta.bannerUrl,
             logoUrl: oferta.logoUrl,
+            hardCapCents: oferta.hardCapCents,
+            sharePriceCents: oferta.sharePriceCents,
+            sharesCount: oferta.sharesCount,
           }))
       : [];
 
