@@ -36,10 +36,24 @@ export type ConfirmedOnChainOffering = {
    * src/lib/storage/issuer-logo.ts / issuer-banner.ts. `null` quando o emissor não enviou. */
   logoUrl: string | null;
   bannerUrl: string | null;
+  /**
+   * Meta máxima (hard cap) em centavos — mesma unidade/coluna que `confirmarPublicacao()`/
+   * `verificarConsistencia()` (onchain-actions.ts) usam para conferir contra o `metaMaxima` já
+   * minerado on-chain (`UNIDADE_ON_CHAIN`, src/lib/web3/gates.ts: "1 unidade MockBRL = 1 real
+   * equivalente") — por isso é seguro mostrar direto, sem leitura on-chain por card: para uma
+   * oferta `sync_status='confirmada'`, este valor JÁ bateu com a chain na hora da confirmação
+   * (e é checado de novo a cada reconciliação, ver "Reconciliação contínua" no CLAUDE.md).
+   */
+  hardCapCents: number;
+  /** Preço por cota em centavos, mesma unidade/garantia de `hardCapCents` acima. */
+  sharePriceCents: number | null;
+  /** Derivado de hardCapCents/sharePriceCents (mesma derivação de ActiveOfferingSummary,
+   * src/lib/investments.ts) — `null` só se por algum motivo sharePriceCents também for `null`. */
+  sharesCount: number | null;
 };
 
 const SELECT_COLUMNS =
-  "id, contract_address, token_address, category, issuers(legal_name, trade_name, sector, business_summary, logo_path, banner_path)";
+  "id, contract_address, token_address, category, hard_cap_cents, share_price_cents, issuers(legal_name, trade_name, sector, business_summary, logo_path, banner_path)";
 
 type ConfirmedOfferingIssuerRow = {
   legal_name: string;
@@ -55,6 +69,8 @@ type ConfirmedOfferingRow = {
   contract_address: string | null;
   token_address: string | null;
   category: string | null;
+  hard_cap_cents: number;
+  share_price_cents: number | null;
   issuers: ConfirmedOfferingIssuerRow | ConfirmedOfferingIssuerRow[] | null;
 };
 
@@ -78,6 +94,14 @@ async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise
     ? issuerBannerUrl(issuerRow.banner_path, await getIssuerBannerVersion(admin, issuerRow.banner_path))
     : null;
 
+  // Mesma derivação de ActiveOfferingSummary (src/lib/investments.ts): número de cotas nunca é
+  // coluna, sempre hardCap/sharePrice — seguro aqui porque o CHECK on-chain
+  // (PrecoNaoDivideMetaMaxima) já teria barrado a publicação se não dividisse exato.
+  const sharesCount =
+    row.share_price_cents && row.share_price_cents > 0
+      ? Math.round(Number(row.hard_cap_cents) / Number(row.share_price_cents))
+      : null;
+
   return {
     id: row.id,
     contractAddress: row.contract_address as `0x${string}`,
@@ -89,6 +113,9 @@ async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise
     issuerBusinessSummary: issuerRow.business_summary,
     logoUrl,
     bannerUrl,
+    hardCapCents: Number(row.hard_cap_cents),
+    sharePriceCents: row.share_price_cents === null ? null : Number(row.share_price_cents),
+    sharesCount,
   };
 }
 

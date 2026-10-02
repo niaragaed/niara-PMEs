@@ -20,6 +20,9 @@ export type PmesCardData =
       setor: string | null;
       bannerUrl: string | null;
       logoUrl: string | null;
+      hardCapCents: number;
+      sharePriceCents: number | null;
+      sharesCount: number | null;
     };
 
 function getSetor(item: PmesCardData): string | null {
@@ -92,6 +95,9 @@ export function PmesSectorFilter({ items }: { items: PmesCardData[] }) {
               setor={item.setor}
               bannerUrl={item.bannerUrl}
               logoUrl={item.logoUrl}
+              hardCapCents={item.hardCapCents}
+              sharePriceCents={item.sharePriceCents}
+              sharesCount={item.sharesCount}
             />
           ),
         )}

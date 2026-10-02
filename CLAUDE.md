@@ -1815,11 +1815,28 @@ página de detalhe — strings próprias desta área por simplicidade (duas
 linhas de texto, não justifica importar entre áreas do dicionário i18n).
 
 **Card da vitrine**: `SelfServicePmesCard.tsx` (novo), irmão de
-`PmesOnChainCard.tsx` (legado) em vez de generalizá-lo — nunca mostra
-meta/preço/cotas fixos de demonstração (`ONCHAIN_PMES_*` só vale para o
-clone das 10 legadas; os termos de uma oferta self-service variam e só
-são confiáveis lidos ao vivo da chain, o que já acontece na página de
-detalhe). `PmesSectorFilter.tsx` passou a aceitar uma união discriminada
+`PmesOnChainCard.tsx` (legado) em vez de generalizá-lo — mesmo layout de
+3 colunas (meta de captação/preço por cota/cotas), mas os números vêm de
+`offerings.hard_cap_cents`/`share_price_cents` (nunca das constantes fixas
+`ONCHAIN_PMES_*`, que só valem para o clone das 10 legadas; os termos de
+uma oferta self-service variam por oferta). 🔴 Mostrar esses valores sem
+reler a chain por card é seguro, não um atalho arriscado: para qualquer
+oferta com `sync_status='confirmada'`, essa mesma coluna já foi conferida
+contra o `metaMaxima`/`precoPorCota` minerado on-chain por
+`confirmarPublicacao()` (na hora da confirmação) e segue sendo reconferida
+a cada chamada de "Verificar consistência" (`verificarConsistencia()`, ver
+"Reconciliação contínua" acima) — nunca um número que só existe no
+Supabase sem checagem contra a chain. Conversão cents→mBRL é a mesma de
+`verificarConsistencia()` (`UNIDADE_ON_CHAIN`, `src/lib/web3/gates.ts`:
+"1 unidade MockBRL = 1 real equivalente"), só que rotulada **mBRL, nunca
+R$** aqui (texto público da vitrine) — ao contrário das mensagens de diff
+daquela função, que são só para o próprio emissor na tela de publicação e
+usam `formatBRL` por serem um log técnico interno, não uma superfície
+pública. Número de cotas é derivado (`hardCapCents / sharePriceCents`,
+mesma fórmula de `ActiveOfferingSummary` em `investments.ts`) — seguro
+porque o contrato já teria revertido com `PrecoNaoDivideMetaMaxima` na
+publicação se não dividisse exato. `PmesSectorFilter.tsx` passou a aceitar
+uma união discriminada
 (`PmesCardData`, campo `origin: "legado" | "selfService"`) em vez de só o
 tipo mock `Oferta`, e escolhe o card certo por item; o filtro de setor
 (client-side, poucos itens) extrai o setor de qualquer uma das duas
