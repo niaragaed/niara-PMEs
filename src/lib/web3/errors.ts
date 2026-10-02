@@ -34,6 +34,15 @@ const CUSTOM_ERROR_MESSAGES: Record<string, string> = {
   PrazoExpirado: "O prazo desta oferta já expirou.",
   RecursosJaLiberados: "Os recursos desta oferta já foram liberados ao emissor.",
   ERC20InsufficientAllowance: "Autorização (allowance) insuficiente para o MockBRL — tente aprovar novamente.",
+  // 🔴 Mesmo erro acima, mas pela chave do SELECTOR cru (0xfb8f41b2 = keccak256 de
+  // "ERC20InsufficientAllowance(address,uint256,uint256)"), não pelo nome. Precisa das duas
+  // chaves: quando `aportar()` (OfertaCaptacao) reverte porque a chamada INTERNA a
+  // `moeda.safeTransferFrom` (MockBRL) falhou, o viem decodifica contra `ofertaCaptacaoAbi` — que
+  // não declara este erro (ele pertence ao ERC20, não ao OfertaCaptacao) — então não consegue
+  // resolver o nome e usa o selector cru como `errorName`. Decodificar contra `mockBrlAbi`
+  // diretamente (ex.: um `approve` revertendo) já resolve pelo nome normalmente; é só a simulação
+  // de `aportar()` que vê o erro de fora, sem o ABI certo pra nomeá-lo.
+  "0xfb8f41b2": "Autorização (allowance) de MockBRL insuficiente para esta oferta — aprove o valor antes de tentar o aporte de novo.",
   ERC20InsufficientBalance: "Saldo insuficiente de MockBRL para esta operação.",
 
   // OfertaOrquestrador (Fase 3, publicação self-service) — nomes conferidos direto contra

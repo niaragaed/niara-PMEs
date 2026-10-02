@@ -109,6 +109,21 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
           args: [address, contracts.ofertaCaptacao.address],
         })) as bigint;
 
+        // 🔴 Diagnóstico temporário (ver CLAUDE.md, incidente "approve pulado de novo em
+        // 02/10") — a ordem do código já garante que este check roda antes de
+        // simulateContract/aportar (ver comentário mais abaixo); se mesmo assim um approve for
+        // pulado indevidamente, só pode ser porque `allowanceAtual`/`contracts.ofertaCaptacao.
+        // address` não eram o que se esperava neste exato instante. Loga os três valores
+        // envolvidos na decisão para a próxima tentativa deixar isso inequívoco. Remover quando
+        // o incidente for fechado.
+        console.log("[useInvestirOnChain] decisão de approve:", {
+          ofertaCaptacao: contracts.ofertaCaptacao.address,
+          carteira: address,
+          allowanceAtual: allowanceAtual.toString(),
+          valorNecessario: valor.toString(),
+          vaiAprovar: allowanceAtual < valor,
+        });
+
         if (allowanceAtual < valor) {
           setState({ status: "assinando-approve", errorMessage: null });
           const approveHash = await writeContractAsync({

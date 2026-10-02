@@ -1660,6 +1660,40 @@ adicionada e compilando (`tsc`/`lint`/`build` limpos), mas sem
 confirmação de que de fato intercepta o caso das ofertas do orquestrador
 antes de pedir assinatura.
 
+A `simulateContract` acima rodou de verdade e capturou um revert real — mas a
+mensagem traduzida mentiu sobre a causa (ver "`describeOnChainError` nunca mais
+classifica revert como RPC fora do ar" logo abaixo): o revert real era
+`ERC20InsufficientAllowance` (selector `0xfb8f41b2`), não uma falha de RPC.
+Corrigido ali; `0xfb8f41b2` também ganhou entrada própria em
+`CUSTOM_ERROR_MESSAGES` (`errors.ts`) — o erro pertence ao ERC20 (MockBRL), não
+a `OfertaCaptacao`, então decodificar a simulação de `aportar()` contra
+`ofertaCaptacaoAbi` nunca resolve o NOME do erro (ele não está declarado
+naquele ABI) e o viem cai pro selector cru como `errorName`; a entrada
+`ERC20InsufficientAllowance` (por nome) continua existindo para quando a
+decodificação É contra `mockBrlAbi` diretamente (ex.: um `approve`
+revertendo).
+
+🔴 **Pendência aberta, ainda não resolvida**: com a mensagem agora honesta,
+ficou claro que o allowance real da oferta testada era mesmo zero — mas
+`investir()` não pediu `approve` antes de tentar `aportar`, o que deveria ter
+acontecido (`allowanceAtual < valor` deveria ter sido `true`). Hipótese
+descartada por leitura direta do código: `simulateContract` **não** roda antes
+da checagem de allowance — o bloco `verificando-allowance`/`assinando-approve`
+(que sempre retorna cedo se o `approve` reverter) vem inteiramente antes do
+bloco `simulando-aportar` no arquivo (`useOnChainActions.ts`, linhas ~105–141);
+não há caminho de código onde a ordem esteja invertida. A causa real continua
+desconhecida — candidatos mais prováveis: (a) build/servidor desatualizado no
+momento do teste (não confirmado se houve reinício depois dos últimos
+commits), ou (b) o `publicClient.readContract` da allowance consultou um
+endereço de `ofertaCaptacao` diferente do que `simulateContract`/`aportar`
+de fato usaram (reabriria a suspeita, nunca confirmada, de resolução de
+endereço vinda do Supabase/seleção da oferta — ver incidente anterior).
+Instrumentado com `console.log("[useInvestirOnChain] decisão de approve:",
+...)` logo após a leitura de allowance (endereço da oferta, carteira,
+allowance lida, valor necessário, decisão) — remover quando o incidente for
+fechado. Próximo teste deve mostrar esse log e dizer qual das duas hipóteses
+bate.
+
 ---
 
 ## Tela `/socios` (painel interno, restrito aos sócios)
