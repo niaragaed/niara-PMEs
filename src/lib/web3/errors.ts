@@ -63,11 +63,28 @@ const CUSTOM_ERROR_MESSAGES: Record<string, string> = {
  * apresentável. Nunca lança — sempre retorna uma string.
  */
 export function describeOnChainError(error: unknown): string {
+  // 🔴 Sempre loga o erro ORIGINAL, cru, antes de qualquer tradução — incidente real: um revert
+  // decodificável estava sendo classificado como "RPC fora do ar" (ver bloco de revert abaixo),
+  // e a mensagem traduzida sozinha escondeu a causa real até alguém olhar a aba Network do
+  // navegador. Nunca remover este log sem um jeito equivalente de inspecionar o erro cru.
+  console.error("[describeOnChainError] erro original:", error);
+
   if (error instanceof BaseError) {
     if (error.walk((e) => e instanceof UserRejectedRequestError)) {
       return "Você cancelou a assinatura na carteira.";
     }
 
+    // 🔴 Revert do PRÓPRIO contrato — checado e SEMPRE retornado aqui, antes de qualquer check
+    // de transporte/RPC abaixo. Incidente real corrigido: quando `errorName` vinha vazio (revert
+    // sem erro customizado decodificável — string crua, panic, ou um erro fora do ABI passado),
+    // o código antigo não retornava nada neste bloco e CAÍA para os checks de
+    // Insufficient/Http/Timeout/Rpc abaixo — e um "execution reverted" chega como erro de
+    // JSON-RPC (a chamada HTTP teve sucesso, 200; o erro vem no corpo da resposta), então o
+    // `error.walk` de RpcRequestError podia bater em QUALQUER revert, não só numa falha de RPC de
+    // verdade. Resultado: um revert virava "Não foi possível falar com o RPC de Sepolia" — errado
+    // na causa E no conselho (um revert não se resolve "tentando de novo em instantes"). Por
+    // isso este bloco inteiro agora sempre retorna assim que identifica QUALQUER revert,
+    // decodificado ou não — nunca mais cai para os checks de transporte.
     const revertError = error.walk((e) => e instanceof ContractFunctionRevertedError);
     if (revertError instanceof ContractFunctionRevertedError) {
       const errorName = revertError.data?.errorName;
@@ -75,6 +92,7 @@ export function describeOnChainError(error: unknown): string {
         return CUSTOM_ERROR_MESSAGES[errorName];
       }
       if (errorName) return `A transação reverteu (${errorName}).`;
+      return `A transação reverteu on-chain${revertError.shortMessage ? `: ${revertError.shortMessage}` : " (motivo não identificado pelo ABI)"}.`;
     }
 
     // Checados por classe real do viem (error.walk + instanceof), não por regex sobre
@@ -82,7 +100,8 @@ export function describeOnChainError(error: unknown): string {
     // confiáveis (ex.: HttpRequestError.shortMessage é só "HTTP request failed.", sem
     // "network"/"rpc"/"timeout"; InsufficientFundsError.shortMessage não contém
     // "insufficient funds" em lugar nenhum). Conferido direto em
-    // node_modules/viem/_esm/errors/{node,request}.js antes de escrever isto.
+    // node_modules/viem/_esm/errors/{node,request}.js antes de escrever isto. Só chegam aqui
+    // erros que já NÃO são revert do contrato (ver bloco acima, que sempre retorna primeiro).
     if (error.walk((e) => e instanceof InsufficientFundsError)) {
       return "Saldo de ETH de Sepolia insuficiente para pagar o gas desta transação.";
     }
