@@ -6,7 +6,7 @@
 // projeto) e traduz qualquer erro via describeOnChainError antes de devolvê-lo à UI.
 import { useCallback, useState } from "react";
 import { useConnection, usePublicClient, useWriteContract } from "wagmi";
-import { getMockBrlContract, getOnChainContracts, type OfertaOnChainEnderecos } from "../contracts";
+import { getMockBrlContractAt, getOnChainContracts, type OfertaOnChainEnderecos } from "../contracts";
 import { describeOnChainError } from "../errors";
 
 export type SimpleTxStatus = "idle" | "assinando" | "confirmando" | "sucesso" | "erro";
@@ -21,8 +21,13 @@ const IDLE: SimpleTxState = { status: "idle", errorMessage: null };
 /**
  * MockBRL.mint é público e irrestrito (mock de teste) — qualquer carteira conectada pode
  * cunhar saldo para si mesma, sem depender de nenhuma carteira administrativa.
+ *
+ * `enderecos` identifica a oferta para a qual se está mintando saldo — necessário porque o
+ * MockBRL não é mais uma constante global (ver CLAUDE.md, incidente do MockBRL por oferta):
+ * cada oferta pode ter seu próprio MockBRL (`OfertaCaptacao.moeda()`), resolvido on-chain aqui
+ * dentro, nunca herdado de outro hook nem de env var.
  */
-export function useMintMockBrl() {
+export function useMintMockBrl(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const { address } = useConnection();
   const publicClient = usePublicClient();
@@ -30,11 +35,17 @@ export function useMintMockBrl() {
 
   const mint = useCallback(
     async (amount: bigint) => {
-      const mockBrl = getMockBrlContract();
-      if (!mockBrl || !address || !publicClient) return;
+      const contracts = getOnChainContracts(enderecos);
+      if (!contracts || !address || !publicClient) return;
 
       setState({ status: "assinando", errorMessage: null });
       try {
+        const moedaAddress = (await publicClient.readContract({
+          ...contracts.ofertaCaptacao,
+          functionName: "moeda",
+        })) as `0x${string}`;
+        const mockBrl = getMockBrlContractAt(moedaAddress);
+
         const hash = await writeContractAsync({
           ...mockBrl,
           functionName: "mint",
@@ -47,7 +58,7 @@ export function useMintMockBrl() {
         setState({ status: "erro", errorMessage: describeOnChainError(error) });
       }
     },
-    [address, publicClient, writeContractAsync],
+    [address, publicClient, writeContractAsync, enderecos],
   );
 
   const reset = useCallback(() => setState(IDLE), []);
@@ -77,7 +88,7 @@ export type InvestState = {
  * suficiente); só então chama `aportar`. `valor` já deve vir calculado como
  * `quantidadeDeCotas * precoPorCota` (múltiplo exato — ver OfertaCaptacao.aportar).
  *
- * 🔴 Incidente real corrigido aqui: `allowanceAtual` costumava vir de fora, do hook de leitura
+ * 🔴 Incidente real corrigido aqui (1): `allowanceAtual` costumava vir de fora, do hook de leitura
  * (`useMinhaPosicaoOnChain`, via React state) — e podia estar OBSOLETO numa segunda tentativa
  * logo após a primeira falhar (ex.: `approve` rejeitado por "nonce too low" na carteira): o
  * `refetch()` disparado depois da falha é assíncrono e não é esperado antes do botão reabilitar,
@@ -89,6 +100,16 @@ export type InvestState = {
  * CLAUDE.md). Corrigido lendo a allowance **direto da chain, agora, dentro desta função** — nunca
  * mais um valor herdado de fora, que pode estar desatualizado por qualquer motivo (timing de
  * refetch, RPC, o que for).
+ *
+ * 🔴 Incidente real corrigido aqui (2), a causa de fundo do mesmo sintoma: o MockBRL em si também
+ * nunca deve vir de fora — resolvido de `OfertaCaptacao.moeda()`, lido on-chain, da PRÓPRIA
+ * oferta, imediatamente antes de decidir o approve. Antes, `contracts.mockBrl` vinha de uma
+ * constante global (`NEXT_PUBLIC_MOCKBRL_ADDRESS`) — certa por coincidência para as 10 ofertas
+ * legadas (que de fato compartilham esse MockBRL, confirmado via `cast call`), mas ERRADA para
+ * qualquer oferta self-service (`OfertaOrquestrador`), que usa um MockBRL próprio, diferente. O
+ * `approve` minerava com sucesso contra o MockBRL errado; o allowance na oferta de verdade
+ * continuava zero; `aportar` revertia com `ERC20InsufficientAllowance` sempre, mesmo logo após um
+ * approve aparentemente bem-sucedido. Ver CLAUDE.md para o incidente completo.
  */
 export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
   const [state, setState] = useState<InvestState>({ status: "idle", errorMessage: null });
@@ -103,31 +124,22 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
 
       try {
         setState({ status: "verificando-allowance", errorMessage: null });
+        const moedaAddress = (await publicClient.readContract({
+          ...contracts.ofertaCaptacao,
+          functionName: "moeda",
+        })) as `0x${string}`;
+        const mockBrl = getMockBrlContractAt(moedaAddress);
+
         const allowanceAtual = (await publicClient.readContract({
-          ...contracts.mockBrl,
+          ...mockBrl,
           functionName: "allowance",
           args: [address, contracts.ofertaCaptacao.address],
         })) as bigint;
 
-        // 🔴 Diagnóstico temporário (ver CLAUDE.md, incidente "approve pulado de novo em
-        // 02/10") — a ordem do código já garante que este check roda antes de
-        // simulateContract/aportar (ver comentário mais abaixo); se mesmo assim um approve for
-        // pulado indevidamente, só pode ser porque `allowanceAtual`/`contracts.ofertaCaptacao.
-        // address` não eram o que se esperava neste exato instante. Loga os três valores
-        // envolvidos na decisão para a próxima tentativa deixar isso inequívoco. Remover quando
-        // o incidente for fechado.
-        console.log("[useInvestirOnChain] decisão de approve:", {
-          ofertaCaptacao: contracts.ofertaCaptacao.address,
-          carteira: address,
-          allowanceAtual: allowanceAtual.toString(),
-          valorNecessario: valor.toString(),
-          vaiAprovar: allowanceAtual < valor,
-        });
-
         if (allowanceAtual < valor) {
           setState({ status: "assinando-approve", errorMessage: null });
           const approveHash = await writeContractAsync({
-            ...contracts.mockBrl,
+            ...mockBrl,
             functionName: "approve",
             args: [contracts.ofertaCaptacao.address, valor],
           });

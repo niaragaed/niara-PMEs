@@ -3,7 +3,6 @@
 import { useState, type ChangeEvent } from "react";
 import { AlertTriangle } from "lucide-react";
 import { RealOnChainInvestPanel } from "./RealOnChainInvestPanel";
-import { getMockBrlContract } from "@/lib/web3/contracts";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 import { ptBr } from "@/lib/i18n/pt-br";
@@ -20,11 +19,16 @@ type OpcaoOferta = {
 // origens de oferta — a lista legada (NEXT_PUBLIC_OFERTAS_ONCHAIN, 10 ofertas de reserva criadas
 // por script administrativo) e as ofertas self-service já confirmadas no Supabase
 // (`confirmedOfferings`, lida no servidor por page.tsx via loadConfirmedOnChainOfferings()).
-// Nenhuma das duas é "mais real" que a outra — toda a plataforma é demonstração, mesmo MockBRL
-// sem lastro para as duas (confirmado on-chain antes desta sub-etapa: OfertaCaptacao.moeda() bate
-// para ambas). A única diferença é de PROVENIÊNCIA do conteúdo (empresa inventada à mão vs. dados
-// que o próprio emissor preencheu) — por isso cada opção carrega uma linha de proveniência, não
-// uma separação estrutural.
+// Nenhuma das duas é "mais real" que a outra — toda a plataforma é demonstração, MockBRL sem
+// lastro para as duas. 🔴 Mas os dois lados NÃO compartilham o mesmo MockBRL — incidente real
+// corrigido (ver CLAUDE.md, "Tela /investir/onchain"): a afirmação anterior deste comentário
+// ("OfertaCaptacao.moeda() bate para ambas") nunca foi verificada linha a linha e estava errada.
+// As 10 ofertas legadas de fato compartilham um único MockBRL; as self-service usam o MockBRL
+// próprio do OfertaOrquestrador, diferente. Por isso cada oferta resolve seu próprio MockBRL
+// on-chain (ver RealOnChainInvestPanel/useOfertaOnChain/useOnChainActions), nunca uma constante
+// global — a única diferença que ESTE seletor precisa expor é a linha de proveniência do
+// conteúdo (empresa inventada à mão vs. dados que o próprio emissor preencheu), não uma
+// separação estrutural.
 function montarOpcoes(confirmedOfferings: ConfirmedOnChainOffering[]): OpcaoOferta[] {
   const t = ptBr.investirOnChain.seletorOferta;
   const legado = getOnChainAddresses()?.ofertas ?? [];
@@ -65,10 +69,11 @@ export function OnChainInvestPage({
     setSelectedKey(event.target.value);
   }
 
-  // Sem MockBRL configurado, nenhuma oferta (legada ou self-service) é investível — mesmo aviso
-  // de "contrato não configurado" de antes desta sub-etapa. Sem nenhuma opção disponível (nem
-  // legada nem self-service confirmada), o resultado prático é o mesmo: nada para mostrar.
-  if (!getMockBrlContract() || opcoes.length === 0 || !selecionada) {
+  // Sem nenhuma opção disponível (nem legada nem self-service confirmada), não há o que mostrar.
+  // Não existe mais um check de "MockBRL global configurado" aqui — cada oferta resolve o seu
+  // próprio MockBRL on-chain (ver RealOnChainInvestPanel), então a única coisa que pode faltar
+  // neste nível é a lista de ofertas em si.
+  if (opcoes.length === 0 || !selecionada) {
     return (
       <main className="flex flex-1 flex-col bg-military">
         <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">

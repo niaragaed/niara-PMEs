@@ -29,6 +29,7 @@ import {
   useOfertaOnChainTermos,
   type EstadoOferta,
 } from "@/lib/web3/hooks/useOfertaOnChain";
+import type { OfertaOnChainEnderecos } from "@/lib/web3/contracts";
 import {
   useEncerrarOferta,
   useInvestirOnChain,
@@ -49,12 +50,14 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function FaucetCard({
+  enderecos,
   saldoMockBrl,
   mockBrlDecimals,
   mockBrlSymbol,
   disabled,
   onMinted,
 }: {
+  enderecos: OfertaOnChainEnderecos | null;
   saldoMockBrl: bigint;
   mockBrlDecimals: number;
   mockBrlSymbol: string;
@@ -63,7 +66,7 @@ function FaucetCard({
 }) {
   const t = ptBr.investirOnChain.faucet;
   const [quantidade, setQuantidade] = useState("100");
-  const { status, errorMessage, mint } = useMintMockBrl();
+  const { status, errorMessage, mint } = useMintMockBrl(enderecos);
 
   const isBusy = status === "assinando" || status === "confirmando";
 
@@ -308,6 +311,7 @@ export function RealOnChainInvestPanel({
 
       {podeOperar && (
         <FaucetCard
+          enderecos={enderecos}
           saldoMockBrl={posicao.saldoMockBrl}
           mockBrlDecimals={termos.mockBrlDecimals}
           mockBrlSymbol={termos.mockBrlSymbol}

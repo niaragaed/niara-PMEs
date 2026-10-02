@@ -1477,13 +1477,23 @@ apontando para elas — a Fase 4 fecha essa lacuna, em duas sub-etapas.
 
 🔴 **Não existe "misturar real com fictício" aqui** — as duas origens têm
 o mesmo estatuto: toda a plataforma é demonstração, sem autorização da
-CVM, `MockBRL` sem lastro para as duas (confirmado por leitura on-chain
-antes de codar: `OfertaCaptacao.moeda()` de uma oferta self-service
-retornou exatamente `0xEC377e00e022675B67Da6ab1966Bc0764bF792A4`, o mesmo
-`MockBRL` das 10 legadas). A única diferença é de **proveniência do
-conteúdo** — empresa inventada à mão (`mock/ofertas.ts`) vs. dados que o
-próprio emissor preencheu — por isso a solução é uma linha de texto no
-seletor, não uma separação estrutural tipo `/socios`.
+CVM, `MockBRL` sem lastro para as duas. A única diferença é de
+**proveniência do conteúdo** — empresa inventada à mão (`mock/ofertas.ts`)
+vs. dados que o próprio emissor preencheu — por isso a solução é uma linha
+de texto no seletor, não uma separação estrutural tipo `/socios`.
+
+🔴 **Correção retroativa**: esta seção originalmente afirmava que as duas
+origens "confirmadas por leitura on-chain antes de codar" compartilhavam o
+mesmo `MockBRL` (`0xEC377e00e022675B67Da6ab1966Bc0764bF792A4`). Essa
+verificação nunca foi feita linha a linha contra uma transação de verdade
+— era uma leitura isolada mal interpretada — e era **falsa**: as 10
+ofertas legadas de fato compartilham um `MockBRL` (`0xb99dda4e...`,
+`NEXT_PUBLIC_MOCKBRL_ADDRESS`), mas cada oferta self-service tem o seu
+próprio, diferente (`OfertaCaptacao.moeda()`, fixado na criação). Isso
+causou um incidente real de aporte (approve contra o MockBRL errado, ver
+"Incidente real, causa de fundo encontrada: MockBRL resolvido como
+constante global..." mais abaixo). Desde a correção, nenhum código lê
+MockBRL de uma constante — sempre de `moeda()`, por oferta.
 
 **5.1 — leitura** (`src/lib/web3/confirmedOfferings.ts`,
 `loadConfirmedOnChainOfferings()`): ofertas com `sync_status='confirmada'`,
@@ -1501,10 +1511,12 @@ por `getOnChainContracts` e pelas seis hooks de
 `useOfertaOnChain.ts`/`useOnChainActions.ts` — não dava para apontar para
 uma oferta do Supabase, que não tem "índice" nenhum. `getOnChainContracts`
 passou a receber o par `{token, oferta}` já resolvido (tipo
-`OfertaOnChainEnderecos`); `getMockBrlContract()`, novo, resolve o
-`MockBRL` à parte (não depende de qual oferta está selecionada —
-`useMintMockBrl` não precisava de índice nenhum, só fingia precisar por
-causa do default `ofertaIndex = 0`). `RealOnChainInvestPanel` recebe
+`OfertaOnChainEnderecos`). 🔴 Nesta sub-etapa, um `getMockBrlContract()`
+resolvia o `MockBRL` como constante global (`NEXT_PUBLIC_MOCKBRL_ADDRESS`)
+— **removido depois**, num incidente real corrigido (ver "Incidente real,
+causa de fundo encontrada: MockBRL resolvido como constante global..."
+mais abaixo): o MockBRL não é global, é `OfertaCaptacao.moeda()` por
+oferta. `RealOnChainInvestPanel` recebe
 `tokenAddress`/`ofertaAddress` direto (memoizados num único objeto via
 `useMemo`, para as seis hooks não recriarem callbacks a cada render por
 causa de um objeto novo). `OnChainInvestPage.tsx` monta a lista unida
@@ -1631,35 +1643,6 @@ valor de React state entra nessa decisão. E `approveReceipt.status` agora
 mensagem própria ("a aprovação reverteu — o aporte não foi tentado"),
 nunca cai para `aportar`.
 
-🔴 **Pendência aberta, não resolvida pela correção acima**: depois desse
-fix, o teste ponta a ponta mostrou que **o aporte funciona nas 10 ofertas
-legadas** (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) — approve e aportar na sequência
-certa, "Aporte confirmado on-chain" — mas **continua falhando nas ofertas
-criadas via `OfertaOrquestrador`** (self-service, Fase 3/4): allowance
-zero nas três ofertas de teste (confirmado por `cast call`), `approve`
-pulado, `aportar` revertendo. Como `useInvestirOnChain.investir()` é
-**exatamente o mesmo código** para as duas origens (nenhuma ramificação
-por proveniência depois que `enderecos` é resolvido, ver "Fase 4" acima),
-a correção do allowance obsoleto era necessária mas **não é suficiente**
-— a diferença real está ou nas próprias ofertas do orquestrador (algo no
-clone/inicialização que as torna diferentes das legadas) ou na resolução
-de endereços vinda do Supabase (`loadConfirmedOnChainOfferings`/
-`OnChainInvestPage`/`RealOnChainInvestPanel`), não na lógica de
-approve/aportar em si. **Não investigado ainda** — próximo passo antes de
-declarar o aporte self-service funcional.
-
-Como proteção adicional, independente de qual seja essa causa ainda não
-encontrada: `investir()` agora chama `publicClient.simulateContract` para
-`aportar` **antes** de `writeContractAsync` — se a simulação reverter, o
-motivo é decodificado (`describeOnChainError`, mesma tradução de sempre)
-e a função para ali, nunca chegando a pedir assinatura de uma transação
-já sabida como condenada. Mata a classe inteira do sintoma "gás
-absurdo/MetaMask não consegue estimar", não só a causa específica já
-corrigida (allowance obsoleta). 🔴 **Ainda não testada no navegador** —
-adicionada e compilando (`tsc`/`lint`/`build` limpos), mas sem
-confirmação de que de fato intercepta o caso das ofertas do orquestrador
-antes de pedir assinatura.
-
 A `simulateContract` acima rodou de verdade e capturou um revert real — mas a
 mensagem traduzida mentiu sobre a causa (ver "`describeOnChainError` nunca mais
 classifica revert como RPC fora do ar" logo abaixo): o revert real era
@@ -1673,26 +1656,87 @@ naquele ABI) e o viem cai pro selector cru como `errorName`; a entrada
 decodificação É contra `mockBrlAbi` diretamente (ex.: um `approve`
 revertendo).
 
-🔴 **Pendência aberta, ainda não resolvida**: com a mensagem agora honesta,
-ficou claro que o allowance real da oferta testada era mesmo zero — mas
-`investir()` não pediu `approve` antes de tentar `aportar`, o que deveria ter
-acontecido (`allowanceAtual < valor` deveria ter sido `true`). Hipótese
-descartada por leitura direta do código: `simulateContract` **não** roda antes
-da checagem de allowance — o bloco `verificando-allowance`/`assinando-approve`
-(que sempre retorna cedo se o `approve` reverter) vem inteiramente antes do
-bloco `simulando-aportar` no arquivo (`useOnChainActions.ts`, linhas ~105–141);
-não há caminho de código onde a ordem esteja invertida. A causa real continua
-desconhecida — candidatos mais prováveis: (a) build/servidor desatualizado no
-momento do teste (não confirmado se houve reinício depois dos últimos
-commits), ou (b) o `publicClient.readContract` da allowance consultou um
-endereço de `ofertaCaptacao` diferente do que `simulateContract`/`aportar`
-de fato usaram (reabriria a suspeita, nunca confirmada, de resolução de
-endereço vinda do Supabase/seleção da oferta — ver incidente anterior).
-Instrumentado com `console.log("[useInvestirOnChain] decisão de approve:",
-...)` logo após a leitura de allowance (endereço da oferta, carteira,
-allowance lida, valor necessário, decisão) — remover quando o incidente for
-fechado. Próximo teste deve mostrar esse log e dizer qual das duas hipóteses
-bate.
+### 🔴 Incidente real, causa de fundo encontrada: MockBRL resolvido como constante global, mas cada oferta tem o seu próprio
+
+Depois dos dois incidentes acima (allowance obsoleta e revert mal
+classificado), o sintoma persistia só nas ofertas self-service — e só nelas:
+"o aporte funciona nas 10 ofertas legadas (approve e aportar na sequência
+certa, 'Aporte confirmado on-chain') mas continua falhando nas ofertas criadas
+via `OfertaOrquestrador`", com `useInvestirOnChain.investir()` sendo
+**exatamente o mesmo código** para as duas origens — nenhuma ramificação por
+proveniência depois que `enderecos` é resolvido (ver "Fase 4" acima). A
+suspeita inicial (ordem invertida entre `simulateContract` e o check de
+allowance) foi descartada por leitura direta do código — os dois blocos já
+estavam na ordem certa.
+
+**Causa raiz, encontrada pelo usuário via Etherscan + `cast call`, não por
+log**: `cast call <oferta-self-service> "moeda()"` retornou
+`0xEC377e00e022675B67Da6ab1966Bc0764bF792A4` — mas a transação de `approve`
+que a tela disparou (conferida no Etherscan) tinha `to =
+0xb99dda4e4d89f40324A7831970b8f37dBc35668F`, um MockBRL **diferente**. A tela
+aprovava e consultava allowance contra um token; `aportar()` gastava de
+outro. O `approve` minerava com `Success` (o endereço errado existe e aceita
+a chamada normalmente); o allowance na oferta de verdade continuava zero;
+`aportar` revertia com `ERC20InsufficientAllowance` — o mesmo sintoma dos dois
+incidentes anteriores, mas por uma causa que nenhum dos dois fixes tocava.
+
+A raiz: `getMockBrlContract()` (introduzido no refactor da sub-etapa 5.2, ver
+"Fase 4" acima) resolvia o MockBRL como **constante global**
+(`NEXT_PUBLIC_MOCKBRL_ADDRESS`) — um comentário da época chegou a afirmar
+("confirmado por leitura on-chain antes de codar") que `OfertaCaptacao.moeda()`
+de uma oferta self-service "retornou exatamente" o mesmo MockBRL das legadas.
+Essa verificação **nunca foi feita linha a linha contra uma transação de
+verdade** — só assumida a partir de uma leitura isolada que, por coincidência
+ou engano, pareceu confirmar a premissa errada. `moeda()` **não é** uma
+constante do sistema: é um valor próprio de cada `OfertaCaptacao`, fixado na
+hora em que ela foi criada. Confirmado depois, por `cast call` em 3 ofertas
+legadas amostradas (`0xd4AC69a4c7Bfdc5E85c0e0da76ce12a1552b2704`,
+`0xa60119428905fDf66BF967DE90A2F892985d99b2`,
+`0x7EA155F38ACb1B7C119769A21988feEb21388e57`): todas retornam
+`0xb99dda4e4d89f40324A7831970b8f37dBc35668F`, batendo com
+`NEXT_PUBLIC_MOCKBRL_ADDRESS` — as 10 ofertas legadas de fato compartilham um
+MockBRL (todas criadas pelo mesmo script administrativo, que sempre usa o
+mesmo endereço fixo), e é só por isso que o código antigo "funcionava" ali.
+Ofertas self-service, criadas via `OfertaOrquestrador.criarOfertaCompleta`,
+recebem o MockBRL próprio do orquestrador — diferente do env var — e por isso
+sempre quebravam.
+
+**Correção**: nenhum código deste projeto lê mais MockBRL de uma constante —
+`getMockBrlContract()`/`contracts.mockBrl` foram removidos de
+`src/lib/web3/contracts.ts`, substituídos por `getMockBrlContractAt(address)`
+(só pareia um endereço JÁ resolvido com o ABI — não faz leitura nenhuma) e
+`OnChainContracts` não tem mais o campo `mockBrl`. Todo consumidor passou a
+ler `OfertaCaptacao.moeda()` **on-chain, da própria oferta selecionada**,
+antes de decidir qualquer coisa sobre MockBRL:
+- `useOfertaOnChainTermos`/`useMinhaPosicaoOnChain` (`useOfertaOnChain.ts`)
+  viraram leituras em DOIS ESTÁGIOS: o 1º `useReadContracts` lê tudo que não
+  depende do MockBRL, incluindo `moeda()`; o 2º (`enabled` só depois do 1º
+  resolver) lê decimals/symbol/saldo/allowance do endereço retornado por
+  `moeda()`. `pronto` exige os dois estágios com sucesso — mesmo gate rígido
+  já existente, agora cobrindo também a resolução do próprio MockBRL.
+- `useInvestirOnChain.investir()` lê `moeda()` fresh (`publicClient.
+  readContract`) logo no início, antes de ler allowance — a mesma leitura
+  "direto da chain, agora" que já valia para allowance desde o incidente
+  anterior passou a valer para o endereço do MockBRL também.
+- `useMintMockBrl` ganhou um parâmetro `enderecos` (antes não recebia
+  nenhum) e resolve `moeda()` da oferta antes de mintar — sem isso, o faucet
+  mintaria saldo no MockBRL errado para qualquer oferta self-service.
+
+Cada hook resolve `moeda()` de forma **independente** — nenhum recebe o
+endereço de outro hook como prop/estado compartilhado, mesmo princípio já
+aplicado ao allowance ("nunca decidir com uma leitura que não é a sua
+própria"): um valor resolvido por `useOfertaOnChainTermos` nunca é repassado
+para `useInvestirOnChain`, por exemplo.
+
+🔴 **Comentários e textos antigos que afirmavam um MockBRL único/compartilhado
+entre as duas origens foram corrigidos** (`contracts.ts`,
+`OnChainInvestPage.tsx`) — a afirmação "mesmo MockBRL das 10 legadas" era a
+raiz deste incidente, não um detalhe cosmético; deixá-la no código ou na
+documentação teria feito alguém reintroduzir o mesmo bug mais tarde.
+
+O diagnóstico temporário (`console.log("[useInvestirOnChain] decisão de
+approve:", ...)`) adicionado para investigar este incidente foi removido —
+a causa está identificada e corrigida.
 
 ---
 
@@ -2147,10 +2191,14 @@ src/
                        formato/comprimento, sem dígito verificador
     web3/config.ts     config wagmi (chain Sepolia, connector injected) da
                        conexão real de carteira — ver "Tela /perfil"
-    web3/addresses.ts  endereços dos 3 contratos da oferta on-chain real
-                       (env vars NEXT_PUBLIC_*, nunca hardcoded), ver
-                       "Tela /investir/onchain"
-    web3/contracts.ts  pareia addresses.ts com os ABIs de web3/abis/
+    web3/addresses.ts  endereços das ofertas LEGADAS (env vars
+                       NEXT_PUBLIC_*, nunca hardcoded), ver "Tela
+                       /investir/onchain"
+    web3/contracts.ts  pareia um par {token, oferta} já resolvido com os
+                       ABIs de web3/abis/; MockBRL nunca é constante —
+                       sempre lido de OfertaCaptacao.moeda() por oferta
+                       (getMockBrlContractAt), ver incidente em "Tela
+                       /investir/onchain"
     web3/abis/         ABIs de MockBRL/OfertaCaptacao/ParticipacaoToken,
                        extraídas de niara-contracts-PMEs/out/ (forge build)
     web3/errors.ts     describeOnChainError() — reverts/erros wagmi -> pt-BR
