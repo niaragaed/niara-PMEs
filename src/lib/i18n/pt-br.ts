@@ -799,6 +799,13 @@ export const ptBr = {
       precoPorCota: "Preço por cota",
       cotas: "Cotas",
       verOferta: "Negociar →",
+      // Mesmo selo/verOferta acima, usado também pela oferta self-service — só a linha de
+      // proveniência muda (dado real do emissor, não empresa fictícia). Sem meta/preço/cotas na
+      // vitrine self-service de propósito: os termos reais variam por oferta e só são confiáveis
+      // lidos ao vivo da chain (RealOnChainInvestPanel, na página de detalhe) — mostrar aqui
+      // obrigaria usar as mesmas constantes fixas das legadas, que não valem para ofertas com
+      // termos próprios.
+      dadosDoEmissor: "Dados informados pelo próprio emissor (demonstração)",
     },
     categorias: {
       pmes: {
@@ -879,6 +886,10 @@ export const ptBr = {
         "Empresa fictícia de demonstração — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
       avisoMisto:
         "Esta empresa é fictícia (dados de demonstração) — mas o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
+      demoBannerSelfService:
+        "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
+      avisoSelfService:
+        "Os dados desta empresa foram informados pelo próprio emissor (demonstração) — e o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
       voltarCategoria: "‹ Voltar para a categoria",
       dadosPublicos: {
         title: "Dados públicos da empresa",

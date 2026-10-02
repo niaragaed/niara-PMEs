@@ -2,31 +2,51 @@
 
 import { useMemo, useState } from "react";
 import { PmesOnChainCard } from "./PmesOnChainCard";
+import { SelfServicePmesCard } from "./SelfServicePmesCard";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { Oferta } from "@/lib/mock/ofertas";
 
-export type PmesCardData = { oferta: Oferta; bannerUrl: string | null; logoUrl: string | null };
+// Duas origens na mesma vitrine (ver CLAUDE.md "Fase 4" → unificação da vitrine PMEs): as 10
+// legadas (empresa fictícia, PmesOnChainCard) e as self-service já confirmadas on-chain (dados
+// reais do emissor, SelfServicePmesCard). União discriminada por `origin` em vez de forçar os
+// dois formatos num tipo só — os dados self-service não têm (nem deveriam ganhar) os campos
+// fictícios do mock `Oferta` (financeiro, indicadores fundamentalistas etc.).
+export type PmesCardData =
+  | { origin: "legado"; oferta: Oferta; bannerUrl: string | null; logoUrl: string | null }
+  | {
+      origin: "selfService";
+      id: string;
+      nome: string;
+      setor: string | null;
+      bannerUrl: string | null;
+      logoUrl: string | null;
+    };
 
-// Filtro por setor da vitrine de Token PMEs (as 10 ofertas reais em
-// Sepolia — ver CategoryPage.tsx). `bannerUrl`/`logoUrl` já vêm resolvidos
-// do servidor (getOfertaAssetPaths é server-only, fs-based) — este
-// componente só filtra a lista já pronta, client-side (10 itens, não
-// justifica nova consulta). As opções vêm sempre dos setores que já existem
-// em `items`, nunca uma lista fixa — evita desalinhar do dado real se uma
-// oferta trocar de setor no futuro.
+function getSetor(item: PmesCardData): string | null {
+  return item.origin === "legado" ? item.oferta.empresa.setor : item.setor;
+}
+
+function getKey(item: PmesCardData): string {
+  return item.origin === "legado" ? item.oferta.slug : item.id;
+}
+
+// Filtro por setor da vitrine de Token PMEs (legadas + self-service — ver CategoryPage.tsx).
+// `bannerUrl`/`logoUrl` já vêm resolvidos do servidor — este componente só filtra a lista já
+// pronta, client-side (poucos itens, não justifica nova consulta). As opções vêm sempre dos
+// setores que já existem em `items`, nunca uma lista fixa — evita desalinhar do dado real se uma
+// oferta trocar de setor no futuro. Itens sem setor (self-service que não preencheu) nunca geram
+// um botão de filtro vazio, mas continuam aparecendo na vitrine sem filtro nenhum selecionado.
 export function PmesSectorFilter({ items }: { items: PmesCardData[] }) {
   const t = ptBr.negociar.categoriaTemplate.filtroSetor;
 
   const setores = useMemo(() => {
-    const unicos = new Set(items.map((item) => item.oferta.empresa.setor));
+    const unicos = new Set(items.map(getSetor).filter((setor): setor is string => Boolean(setor)));
     return Array.from(unicos).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [items]);
 
   const [setorSelecionado, setSetorSelecionado] = useState<string | null>(null);
 
-  const itensFiltrados = setorSelecionado
-    ? items.filter((item) => item.oferta.empresa.setor === setorSelecionado)
-    : items;
+  const itensFiltrados = setorSelecionado ? items.filter((item) => getSetor(item) === setorSelecionado) : items;
 
   return (
     <div>
@@ -61,9 +81,20 @@ export function PmesSectorFilter({ items }: { items: PmesCardData[] }) {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {itensFiltrados.map(({ oferta, bannerUrl, logoUrl }) => (
-          <PmesOnChainCard key={oferta.slug} oferta={oferta} bannerUrl={bannerUrl} logoUrl={logoUrl} />
-        ))}
+        {itensFiltrados.map((item) =>
+          item.origin === "legado" ? (
+            <PmesOnChainCard key={getKey(item)} oferta={item.oferta} bannerUrl={item.bannerUrl} logoUrl={item.logoUrl} />
+          ) : (
+            <SelfServicePmesCard
+              key={getKey(item)}
+              id={item.id}
+              nome={item.nome}
+              setor={item.setor}
+              bannerUrl={item.bannerUrl}
+              logoUrl={item.logoUrl}
+            />
+          ),
+        )}
       </div>
     </div>
   );

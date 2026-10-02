@@ -11,6 +11,7 @@ import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { loadActiveOfferingsByCategory } from "@/lib/investments";
+import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 
 // Template reutilizado pelas 5 rotas de categoria (/negociar/token-pmes,
@@ -49,15 +50,35 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
   // getOnChainIndexBySlug/getOfertaAssetPaths precisam rodar aqui (server —
   // o último é fs-based) mesmo com o filtro de setor sendo client-side
   // (PmesSectorFilter.tsx): resolve tudo antes e passa a lista já pronta.
-  const pmesCards: PmesCardData[] =
+  const pmesCardsLegado: PmesCardData[] =
     categoria === "pmes"
       ? ofertas.flatMap((oferta) => {
           const onChainIndex = getOnChainIndexBySlug(oferta.slug);
           if (onChainIndex === null) return [];
           const assets = getOfertaAssetPaths(oferta.slug);
-          return [{ oferta, bannerUrl: assets.bannerUrl, logoUrl: assets.logoUrl }];
+          return [{ origin: "legado" as const, oferta, bannerUrl: assets.bannerUrl, logoUrl: assets.logoUrl }];
         })
       : [];
+
+  // Ofertas PME self-service (emissor publicou a própria oferta on-chain — ver CLAUDE.md "Fase
+  // 4", unificação da vitrine). loadConfirmedOnChainOfferings() não filtra por categoria (é
+  // reaproveitado por /investir/onchain, que lista todas) — o filtro é feito aqui, só quando esta
+  // página é a de PMEs.
+  const pmesCardsSelfService: PmesCardData[] =
+    categoria === "pmes"
+      ? (await loadConfirmedOnChainOfferings())
+          .filter((oferta) => oferta.category === "pmes")
+          .map((oferta) => ({
+            origin: "selfService" as const,
+            id: oferta.id,
+            nome: oferta.issuerTradeName ?? oferta.issuerLegalName,
+            setor: oferta.issuerSector,
+            bannerUrl: oferta.bannerUrl,
+            logoUrl: oferta.logoUrl,
+          }))
+      : [];
+
+  const pmesCards: PmesCardData[] = [...pmesCardsLegado, ...pmesCardsSelfService];
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">

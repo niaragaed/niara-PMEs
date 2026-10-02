@@ -1533,7 +1533,10 @@ contra a lista LEGADA exatamente como antes (`RealPositionCard` sempre no
 convertendo para o par de endereços antes de chamar. **`/negociar/token-
 pmes` e `/socios` ficam de fora desta fase** — nenhuma oferta self-service
 ganha a vitrine com foto/logo nem aparece nos eventos do painel interno;
-só `/investir/onchain` enxerga as duas origens.
+só `/investir/onchain` enxerga as duas origens. 🔴 **Atualização
+posterior**: `/negociar/token-pmes` passou a enxergar as duas origens
+também — ver "Vitrine `/negociar/token-pmes` unificada com self-service"
+mais abaixo. `/socios` continua de fora (não pedido).
 
 ### 🔴 Incidente real: aporte pulou o `approve` porque uma leitura não confiável foi tratada como dado
 
@@ -1737,6 +1740,98 @@ documentação teria feito alguém reintroduzir o mesmo bug mais tarde.
 O diagnóstico temporário (`console.log("[useInvestirOnChain] decisão de
 approve:", ...)`) adicionado para investigar este incidente foi removido —
 a causa está identificada e corrigida.
+
+### Vitrine `/negociar/token-pmes` unificada com self-service
+
+A vitrine de Token PMEs, até aqui só com as 10 ofertas legadas (empresa
+fictícia + oferta real em Sepolia, ver "Unificação com empresas fictícias
+de PME" acima), passou a mostrar também as ofertas self-service já
+confirmadas on-chain (`sync_status='confirmada'`, publicadas pelo próprio
+emissor via `OfertaOrquestrador` — ver "Tela `/empresa/ofertas`" → Fase
+3) lado a lado, na mesma grade com filtro por setor.
+
+🔴 **Nenhum upload novo foi criado** — logo e banner do emissor já existiam
+desde antes (migrations `0010`/`0011`, `LogoUpload.tsx`/`BannerUpload.tsx`
+em "Dados de cadastro" de `/perfil`, bucket público `issuer-logos`/
+`issuer-banners`) e já eram lidos por `loadActiveOfferingsByCategory()`
+(`src/lib/investments.ts`, usado por `RealOfferCard`/`MyOfferCard` na
+mesma página). Esta mudança só estende `loadConfirmedOnChainOfferings()`
+(`src/lib/web3/confirmedOfferings.ts`) — até aqui usada só por
+`/investir/onchain` e sem nenhum desses campos — para também selecionar
+`category` e `issuers(sector, business_summary, logo_path, banner_path)`
+e resolver `logoUrl`/`bannerUrl` com a mesma técnica de cache-busting
+(`issuerLogoUrl`/`issuerBannerUrl` + `getIssuer*Version`) já usada ali.
+`category` também já existia (`offerings.category`, migration `0009`,
+mesmo enum de 5 valores do resto do projeto) e já é exigido no formulário
+de criação da oferta (`createOfferingSchema`, `empresa/ofertas/actions.ts`)
+— nada disso precisou de migration nova.
+
+**Sem foto enviada pelo emissor**: tratamento idêntico ao que já existia
+para uma PME legada sem arquivo em `public/negociar/pmes/<slug>/` —
+`OfertaBanner.tsx` já mostra, em silêncio, o ícone da categoria sobre o
+chip colorido, sem nenhum texto de "faltando". Decisão deliberada (não
+um esquecimento): um aviso textual de "foto não enviada" criaria uma
+inconsistência visual com as legadas e soaria como erro numa vitrine
+pública — o ícone genérico já comunica "sem foto" sem precisar de texto.
+
+**Slug**: ofertas self-service não têm coluna de slug legível (só
+`offerings.id`, um uuid) — a URL usa o próprio uuid como segmento:
+`/negociar/oferta/<uuid>`. `loadConfirmedOnChainOfferingById()` (novo, no
+mesmo módulo) valida o formato uuid antes de consultar (`z.string().uuid()`,
+mesmo padrão de `loadPublicOffering`), nunca lança para um slug que não é
+um uuid válido — só devolve `null`, tratado como "não encontrada" pela
+rota. `src/app/negociar/oferta/[slug]/page.tsx` tenta a lista mock
+primeiro (síncrona, como antes); só consulta o Supabase quando o slug não
+bate com nenhuma oferta fictícia.
+
+🔴 **Página de detalhe é um componente novo e separado
+(`SelfServiceOfertaDetailPage.tsx`), não uma generalização de
+`OfertaDetailPage.tsx` com condicionais** — decisão deliberada, central
+para a regra "nada simulado pode parecer real" do topo deste arquivo.
+`OfertaDetailPage.tsx` é construída inteira em torno do tipo mock
+`Oferta`: financeiro simulado (`FinanceiroChart`), indicadores
+fundamentalistas fictícios (`FundamentalIndicators`, `INDICADORES_
+DEMONSTRACAO`) e termos fixos. Uma oferta self-service é uma empresa
+REAL — forçá-la a caber no tipo `Oferta` exigiria fabricar indicadores/
+financeiro fictícios para uma empresa de verdade, o inverso exato do que
+a regra proíbe (normalmente a preocupação é "não fingir que o fictício é
+real"; aqui seria o oposto, "não inventar dado fictício sobre algo
+real"). `SelfServiceOfertaDetailPage.tsx` por isso só mostra: banner/logo
+reais (`OfertaBanner`), termos + investimento ao vivo da chain
+(`RealOnChainInvestPanel`, já 100% real, reaproveitado sem nenhuma
+mudança), setor/resumo do negócio reais (quando o emissor preencheu),
+documentos placeholder genéricos (mesma lista `DOCUMENTOS_PADRAO` "Em
+breve" de todas as ofertas — não fabrica nem omite nada específico de
+empresa) e os riscos genéricos da Res. CVM 88 (texto idêntico ao de
+`OfertaDetailPage.tsx`, nunca específico de nenhuma empresa).
+
+**Proveniência**: mesma distinção já usada no seletor de
+`/investir/onchain` (`ptBr.investirOnChain.seletorOferta.proveniencia`) —
+"Empresa fictícia de demonstração" (legado) vs. "Dados informados pelo
+próprio emissor (demonstração)" (self-service), repetida como
+`ptBr.negociar.pmesOnChain.dadosDoEmissor` no card da vitrine e
+`ptBr.negociar.oferta.avisoSelfService`/`.demoBannerSelfService` na
+página de detalhe — strings próprias desta área por simplicidade (duas
+linhas de texto, não justifica importar entre áreas do dicionário i18n).
+
+**Card da vitrine**: `SelfServicePmesCard.tsx` (novo), irmão de
+`PmesOnChainCard.tsx` (legado) em vez de generalizá-lo — nunca mostra
+meta/preço/cotas fixos de demonstração (`ONCHAIN_PMES_*` só vale para o
+clone das 10 legadas; os termos de uma oferta self-service variam e só
+são confiáveis lidos ao vivo da chain, o que já acontece na página de
+detalhe). `PmesSectorFilter.tsx` passou a aceitar uma união discriminada
+(`PmesCardData`, campo `origin: "legado" | "selfService"`) em vez de só o
+tipo mock `Oferta`, e escolhe o card certo por item; o filtro de setor
+(client-side, poucos itens) extrai o setor de qualquer uma das duas
+origens via um helper pequeno, ignorando itens self-service sem setor
+preenchido (não geram botão de filtro vazio, mas continuam aparecendo
+sem filtro nenhum selecionado).
+
+`CategoryPage.tsx` só busca as ofertas self-service quando
+`categoria === "pmes"` — `loadConfirmedOnChainOfferings()` não filtra por
+categoria na query (é reaproveitada por `/investir/onchain`, que lista
+todas as categorias), o filtro `category === "pmes"` é feito depois de
+ler, no próprio `CategoryPage.tsx`.
 
 ---
 
@@ -2133,13 +2228,22 @@ src/
                        inclui RealOfferCard ao lado do catálogo
                        fictício), CategoryChip (CategoryChip +
                        CategoryBadge), CategoryCard, ShowcaseCard,
-                       PmesOnChainCard (as 10 ofertas PMEs unificadas —
+                       PmesOnChainCard (as 10 ofertas PMEs legadas —
                        real em Sepolia + empresa fictícia, ver "Tela
                        /investir/onchain" → "Unificação com empresas
-                       fictícias de PME"), OfertaBanner (foto + logo,
-                       com placeholder), OfertaDetailPage, FinanceiroChart
-                       (recharts), FundamentalIndicators + IndicatorHelp
-                       (indicadores fundamentalistas + popover "?"),
+                       fictícias de PME") + SelfServicePmesCard (irmã
+                       para ofertas PME self-service confirmadas
+                       on-chain, ver "Vitrine /negociar/token-pmes
+                       unificada com self-service"), PmesSectorFilter
+                       (une as duas origens, união discriminada
+                       PmesCardData), OfertaBanner (foto + logo, com
+                       placeholder — reaproveitado pelas duas origens),
+                       OfertaDetailPage (+ FinanceiroChart (recharts) +
+                       FundamentalIndicators + IndicatorHelp, indicadores
+                       fundamentalistas + popover "?", só para ofertas
+                       legadas/fictícias) + SelfServiceOfertaDetailPage
+                       (irmã enxuta, sem seções fictícias, para ofertas
+                       self-service — ver seção própria acima),
                        OrderTicket (boleta simulada, só para ofertas sem
                        oferta real por trás) — ver "Telas /negociar"
                        abaixo
