@@ -23,9 +23,14 @@ import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 export function SelfServiceOfertaDetailPage({
   oferta,
   isSocio = false,
+  isEmissor = false,
 }: {
   oferta: ConfirmedOnChainOffering & { category: NonNullable<ConfirmedOnChainOffering["category"]> };
   isSocio?: boolean;
+  /** `true` só quando o emissor logado (resolveAccount()) é o dono desta oferta específica — ver
+   * [slug]/page.tsx. Libera o botão "Encerrar oferta" pra empresa, além dos sócios (ver
+   * RealOnChainInvestPanel.tsx). */
+  isEmissor?: boolean;
 }) {
   const t = ptBr.negociar.oferta;
   const nome = oferta.issuerTradeName ?? oferta.issuerLegalName;
@@ -60,7 +65,12 @@ export function SelfServiceOfertaDetailPage({
             {t.avisoSelfService}
           </p>
 
-          <RealOnChainInvestPanel tokenAddress={oferta.tokenAddress} ofertaAddress={oferta.contractAddress} isSocio={isSocio} />
+          <RealOnChainInvestPanel
+            tokenAddress={oferta.tokenAddress}
+            ofertaAddress={oferta.contractAddress}
+            isSocio={isSocio}
+            isEmissor={isEmissor}
+          />
 
           {(oferta.issuerSector || oferta.issuerBusinessSummary) && (
             <section className="rounded-lg bg-surface p-6 shadow-soft">

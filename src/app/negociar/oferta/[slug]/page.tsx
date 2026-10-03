@@ -8,7 +8,7 @@ import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
 import { resolveSocio } from "@/lib/auth/resolveSocio";
-import { requireLogin } from "@/lib/auth/resolveInvestor";
+import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -72,8 +72,16 @@ export default async function Page({ params }: PageProps) {
   }
 
   const { autorizado: isSocio } = await resolveSocio();
+  // isEmissor só é possível pra ofertas self-service (têm issuer_id no Supabase) — as 10 legadas
+  // nunca têm conta de emissor neste app, então nem chegam a este ramo.
+  const { role, accountId } = await resolveAccount();
+  const isEmissor = role === "issuer" && accountId === confirmedOffering.issuerAccountId;
 
   return (
-    <SelfServiceOfertaDetailPage oferta={{ ...confirmedOffering, category: confirmedOffering.category }} isSocio={isSocio} />
+    <SelfServiceOfertaDetailPage
+      oferta={{ ...confirmedOffering, category: confirmedOffering.category }}
+      isSocio={isSocio}
+      isEmissor={isEmissor}
+    />
   );
 }
