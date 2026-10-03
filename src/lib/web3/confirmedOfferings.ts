@@ -22,6 +22,11 @@ import { getIssuerBannerVersion, issuerBannerUrl } from "@/lib/storage/issuer-ba
 
 export type ConfirmedOnChainOffering = {
   id: string;
+  /** `offerings.issuer_id` — mesmo id de `issuers.id` (accountId, ver resolveAccount()). Usado
+   * só pra decidir "esta é a oferta DESTA empresa logada?" (ex.: liberar o botão "Encerrar
+   * oferta" pra empresa emissora, não só sócios) — nunca exposto como dado de contato nem usado
+   * pra autorizar nada sozinho (a decisão de role ainda vem de resolveAccount(), no servidor). */
+  issuerAccountId: string;
   contractAddress: `0x${string}`;
   tokenAddress: `0x${string}`;
   /** `offerings.category` — nullable na coluna, mas createOffering() sempre exige um valor para
@@ -36,6 +41,8 @@ export type ConfirmedOnChainOffering = {
    * src/lib/storage/issuer-logo.ts / issuer-banner.ts. `null` quando o emissor não enviou. */
   logoUrl: string | null;
   bannerUrl: string | null;
+  /** Meta mínima em centavos — mesma garantia/unidade de `hardCapCents` abaixo. */
+  targetMinCents: number;
   /**
    * Meta máxima (hard cap) em centavos — mesma unidade/coluna que `confirmarPublicacao()`/
    * `verificarConsistencia()` (onchain-actions.ts) usam para conferir contra o `metaMaxima` já
@@ -50,10 +57,16 @@ export type ConfirmedOnChainOffering = {
   /** Derivado de hardCapCents/sharePriceCents (mesma derivação de ActiveOfferingSummary,
    * src/lib/investments.ts) — `null` só se por algum motivo sharePriceCents também for `null`. */
   sharesCount: number | null;
+  /** Prazo da janela de captação (congelado em registrarTentativa(), ver CLAUDE.md). */
+  opensAt: string;
+  closesAt: string;
+  /** Quando a confirmação on-chain aconteceu — usado pra ordenar/datar esta oferta em listagens
+   * cronológicas (ex.: timeline de /socios), não é a data de criação da linha no Supabase. */
+  onchainConfirmedAt: string | null;
 };
 
 const SELECT_COLUMNS =
-  "id, contract_address, token_address, category, hard_cap_cents, share_price_cents, issuers(legal_name, trade_name, sector, business_summary, logo_path, banner_path)";
+  "id, issuer_id, contract_address, token_address, category, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, onchain_confirmed_at, issuers(legal_name, trade_name, sector, business_summary, logo_path, banner_path)";
 
 type ConfirmedOfferingIssuerRow = {
   legal_name: string;
@@ -66,11 +79,16 @@ type ConfirmedOfferingIssuerRow = {
 
 type ConfirmedOfferingRow = {
   id: string;
+  issuer_id: string;
   contract_address: string | null;
   token_address: string | null;
   category: string | null;
+  target_min_cents: number;
   hard_cap_cents: number;
   share_price_cents: number | null;
+  opens_at: string;
+  closes_at: string;
+  onchain_confirmed_at: string | null;
   issuers: ConfirmedOfferingIssuerRow | ConfirmedOfferingIssuerRow[] | null;
 };
 
@@ -104,6 +122,7 @@ async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise
 
   return {
     id: row.id,
+    issuerAccountId: row.issuer_id,
     contractAddress: row.contract_address as `0x${string}`,
     tokenAddress: row.token_address as `0x${string}`,
     category: row.category as TokenCategory | null,
@@ -113,9 +132,13 @@ async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise
     issuerBusinessSummary: issuerRow.business_summary,
     logoUrl,
     bannerUrl,
+    targetMinCents: Number(row.target_min_cents),
     hardCapCents: Number(row.hard_cap_cents),
     sharePriceCents: row.share_price_cents === null ? null : Number(row.share_price_cents),
     sharesCount,
+    opensAt: row.opens_at,
+    closesAt: row.closes_at,
+    onchainConfirmedAt: row.onchain_confirmed_at,
   };
 }
 

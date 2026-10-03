@@ -16,6 +16,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
 import { getEventosOnChain, getResumoOnChain, type EventoOnChain, type ResumoOnChain } from "@/lib/web3/events";
+import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export type OrigemMovimentacao = "onchain" | "offchain";
@@ -173,6 +174,43 @@ async function listarOfertasCriadas(): Promise<Movimentacao[]> {
   }));
 }
 
+const prazoFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
+// cents -> mBRL (número, sem símbolo de moeda real) — mesma conversão de verificarConsistencia()
+// (UNIDADE_ON_CHAIN, src/lib/web3/gates.ts: "1 unidade MockBRL = 1 real equivalente"), mas
+// rotulada mBRL aqui, nunca R$: mesmo princípio já aplicado em SelfServicePmesCard.tsx — este é
+// MockBRL sem lastro, e as outras linhas desta MESMA tabela (aportes/eventos on-chain reais, ver
+// eventoOnChainParaMovimentacao acima) já usam mBRL pro "Valor" de eventos on-chain, então usar
+// R$ aqui destoaria dentro da própria coluna.
+function formatMbrl(cents: number): string {
+  return `${(cents / 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mBRL`;
+}
+
+/**
+ * Ofertas self-service (publicadas pelo próprio emissor via OfertaOrquestrador, ver CLAUDE.md
+ * "Tela /empresa/ofertas" → Fase 3) já confirmadas on-chain — aparecem na timeline no momento em
+ * que `sync_status` chega a 'confirmada', reaproveitando loadConfirmedOnChainOfferings() (mesma
+ * leitura já usada por /investir/onchain e pela vitrine de /negociar/token-pmes). Só exibição —
+ * nenhuma ação aqui; `origem: "onchain"` porque o referente (a oferta/contrato) é real em Sepolia,
+ * mesmo a leitura em si vindo do Supabase (espelho já confirmado contra a chain na hora da
+ * publicação e a cada reconciliação, não um valor inventado).
+ */
+async function listarOfertasSelfServiceConfirmadas(): Promise<Movimentacao[]> {
+  const ofertas = await loadConfirmedOnChainOfferings();
+
+  return ofertas.map((oferta) => ({
+    id: `self-service-offering-${oferta.id}`,
+    timestamp: oferta.onchainConfirmedAt ? epoch(oferta.onchainConfirmedAt) : 0,
+    origem: "onchain" as const,
+    tipo: "Oferta self-service confirmada",
+    ator: oferta.issuerTradeName ?? oferta.issuerLegalName,
+    valor: `Meta: ${formatMbrl(oferta.targetMinCents)}–${formatMbrl(oferta.hardCapCents)} · Preço/cota: ${
+      oferta.sharePriceCents === null ? "—" : formatMbrl(oferta.sharePriceCents)
+    } · Prazo: ${prazoFormatter.format(new Date(oferta.closesAt))}`,
+    link: `https://sepolia.etherscan.io/address/${oferta.contractAddress}`,
+  }));
+}
+
 async function listarAportes(): Promise<InvestmentRow[]> {
   const admin = createAdminClient();
   const { data } = await admin
@@ -253,6 +291,7 @@ export async function getMovimentacoesEResumo(): Promise<{ movimentacoes: Movime
     listarCadastrosEmissores(),
     listarOfertasCriadas(),
     listarEventosPagamento(),
+    listarOfertasSelfServiceConfirmadas(),
   ]);
 
   const movimentacoes: Movimentacao[] = [];

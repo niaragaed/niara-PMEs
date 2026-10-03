@@ -1904,6 +1904,65 @@ Se um dia uma oferta tiver `taxaBps > 0`, o painel mostra o percentual
 real lido do contrato, nunca um valor simulado/projetado apresentado
 como se fosse cobrança de verdade.
 
+**Ofertas self-service confirmadas na timeline**: quando uma oferta chega a
+`sync_status='confirmada'`, ela passa a aparecer como mais uma linha na
+timeline única (`MovimentacoesTable`, não uma seção nova — reaproveitada de
+propósito, ver pedido original) — `listarOfertasSelfServiceConfirmadas()`
+(`src/lib/socios/movimentacoes.ts`) reaproveita `loadConfirmedOnChainOfferings()`
+sem nenhuma leitura nova (mesma função já usada por `/investir/onchain` e pela
+vitrine de `/negociar/token-pmes`). Só exibição, nenhuma ação: nome do emissor
+(`ator`), meta mínima–máxima + preço por cota + prazo condensados numa única
+string (`valor` — a tabela só tem uma coluna de valor, mesmo padrão de
+qualquer outra linha da timeline), link para o contrato no Etherscan.
+`origem: "onchain"` (badge "Real — Sepolia") mesmo a leitura em si vindo do
+Supabase — o referente (a oferta/contrato) é real em Sepolia, só espelhado
+no banco, e esse espelho já é conferido contra a chain na confirmação e a
+cada reconciliação (ver "Reconciliação contínua" acima), nunca um valor
+inventado. Valores em **mBRL, nunca R$** — mesma regra já aplicada em
+`SelfServicePmesCard.tsx`, e consistente com as OUTRAS linhas desta mesma
+tabela (eventos on-chain reais já usam `mockBrlSymbol`/mBRL na coluna
+"Valor" — misturar R$ ali destoaria dentro da própria coluna).
+`loadConfirmedOnChainOfferings()` ganhou `issuerAccountId`/`targetMinCents`/
+`opensAt`/`closesAt`/`onchainConfirmedAt` nesta mudança (antes só tinha
+`hardCapCents`/`sharePriceCents`) — `issuerAccountId` também passou a ser
+usado em `/negociar/oferta/[slug]` para decidir `isEmissor` (ver "Encerrar
+oferta" liberado para a empresa emissora, logo abaixo).
+
+### 🔴 "Encerrar oferta" liberado também para a empresa emissora, não só sócios
+
+Até aqui, `RealOnChainInvestPanel.tsx` só liberava o botão "Encerrar oferta"
+para `isSocio` (equipe Niara). Passou a liberar também para `isEmissor` —
+`true` só quando o emissor logado (`resolveAccount()`) é o dono da oferta
+self-service sendo exibida (`accountId === offerings.issuer_id`, resolvido em
+`/negociar/oferta/[slug]/page.tsx` e repassado por `SelfServiceOfertaDetailPage.tsx`).
+🔴 **Só se aplica a ofertas self-service** — as 10 legadas não têm `issuer_id`
+nenhum neste app (foram criadas por script administrativo, empresa fictícia em
+`mock/ofertas.ts`, sem conta de emissor de verdade por trás), então `isEmissor`
+nunca é computável pra elas e o botão continua restrito a `isSocio` ali
+(`OfertaDetailPage.tsx` não ganhou essa prop). `/investir/onchain`
+(`OnChainInvestPage.tsx`, a ferramenta multi-oferta do apresentador) também
+ficou de fora de propósito — não exige login, então não há conta de emissor
+pra comparar, e seu uso real é demonstração presencial, não gestão da própria
+oferta pela empresa (que já tem `/negociar/oferta/<id>` para isso, ver link
+abaixo).
+
+🔴 **Texto do botão mantém a direção certa da explicação**: `encerrar()` já
+era permissionless no contrato antes desta mudança (qualquer carteira pode
+chamar diretamente na rede assim que elegível) — isso não mudou agora, e o
+texto (`ptBr.investirOnChain.encerrar.descricao`/`.restrito`) foi reforçado
+pra deixar isso ainda mais explícito: o permissionless do contrato é
+proposital, para nenhum investidor ficar refém da plataforma ou da empresa
+emissora pra recuperar o aporte numa captação que não fechou. O botão nesta
+UI nunca controla quem PODE encerrar on-chain — só decide quem vê um atalho
+conveniente pra isso.
+
+**Descoberta**: `OfertasPage.tsx` (`/empresa/ofertas`) ganhou um link "Ver
+oferta pública →" no bloco de status `confirmada`, apontando para
+`/negociar/oferta/<id>` — sem ele, o emissor não tinha como achar a própria
+página de detalhe (e portanto o botão "Encerrar oferta") depois de publicar;
+o bloco `confirmada` antes só mostrava os endereços de contrato/token com
+link pro Etherscan, nenhum link de volta pro próprio app.
+
 ---
 
 ## Tela `/empresa/ofertas` (criação e gestão de oferta pelo emissor)

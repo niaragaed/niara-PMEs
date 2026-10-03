@@ -1370,6 +1370,7 @@ export const ptBr = {
         titulo: "Publicada on-chain",
         contrato: "Contrato da oferta",
         token: "Contrato do token",
+        verOferta: "Ver oferta pública →",
       },
       divergente: {
         titulo: "Divergência encontrada na publicação",
@@ -1694,8 +1695,9 @@ export const ptBr = {
     encerrar: {
       title: "4. Encerrar a oferta",
       descricao:
-        "O contrato em si é permissionless — qualquer carteira poderia encerrar diretamente na rede assim que o prazo terminar ou o total arrecadado atingir a meta máxima exatamente. Nesta interface, por enquanto, o botão abaixo fica disponível só para a equipe Niara.",
-      restrito: "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara.",
+        "O contrato em si é permissionless — qualquer carteira poderia encerrar diretamente na rede assim que o prazo terminar ou o total arrecadado atingir a meta máxima exatamente. Essa regra é proposital: nenhum investidor fica refém da plataforma ou da empresa emissora para recuperar o aporte numa captação que não fechou. Nesta interface, por enquanto, o botão abaixo fica disponível para a equipe Niara e para a própria empresa emissora desta oferta.",
+      restrito:
+        "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara e para a empresa emissora desta oferta. Qualquer outra carteira pode encerrar do mesmo jeito, diretamente na rede.",
       botao: "Encerrar oferta",
       assinando: "Aguardando assinatura…",
       confirmando: "Confirmando na rede…",

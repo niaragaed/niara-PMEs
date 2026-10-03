@@ -14,11 +14,17 @@
 // (`key={...}`, único por oferta) — isso reseta de graça todo o estado local (quantidade, status
 // de invest/encerrar/resgatar, campo do faucet), sem precisar de resets manuais.
 //
-// `isSocio` (resolvido no servidor via resolveSocio(), repassado pelas duas páginas host —
-// OnChainInvestPage.tsx e OfertaDetailPage.tsx) só bloqueia o BOTÃO "Encerrar oferta" nesta
-// interface — o contrato OfertaCaptacao.encerrar() continua permissionless de verdade (qualquer
-// carteira poderia chamar via Etherscan/outro dApp); é uma restrição de produto, não uma
-// mudança na regra on-chain. Nunca usar isso para decidir mostrar/esconder o resto do painel.
+// `isSocio` (resolvido no servidor via resolveSocio()) e `isEmissor` (resolvido no servidor
+// comparando resolveAccount() contra o issuer_id da oferta — só possível pra ofertas self-service,
+// que têm esse vínculo no Supabase; sempre `false` pras 10 legadas, que não têm conta de emissor
+// nenhuma neste app) juntos só decidem o BOTÃO "Encerrar oferta" nesta interface — o contrato
+// OfertaCaptacao.encerrar() continua permissionless de verdade (qualquer carteira poderia chamar
+// via Etherscan/outro dApp, a qualquer momento que a oferta for elegível); é uma restrição de
+// PRODUTO, não uma mudança na regra on-chain, e proposital na direção oposta: o permissionless do
+// contrato existe justamente para nenhum investidor ficar refém da plataforma ou da empresa pra
+// recuperar o aporte numa captação que não fechou — esta tela só decide quem vê um atalho
+// conveniente pra isso, nunca quem PODE. Nenhuma das duas props deve ser usada pra decidir
+// mostrar/esconder o resto do painel.
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
@@ -128,10 +134,12 @@ export function RealOnChainInvestPanel({
   tokenAddress,
   ofertaAddress,
   isSocio = false,
+  isEmissor = false,
 }: {
   tokenAddress: `0x${string}`;
   ofertaAddress: `0x${string}`;
   isSocio?: boolean;
+  isEmissor?: boolean;
 }) {
   const t = ptBr.investirOnChain;
   const connection = useConnection();
@@ -435,7 +443,7 @@ export function RealOnChainInvestPanel({
           <p className="text-sm text-on-military-muted">{t.encerrar.descricao}</p>
           <button
             type="button"
-            disabled={!isSocio || encerrar.status === "assinando" || encerrar.status === "confirmando"}
+            disabled={!(isSocio || isEmissor) || encerrar.status === "assinando" || encerrar.status === "confirmando"}
             onClick={handleEncerrar}
             className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -445,7 +453,7 @@ export function RealOnChainInvestPanel({
                 ? t.encerrar.confirmando
                 : t.encerrar.botao}
           </button>
-          {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.encerrar.restrito}</p>}
+          {!(isSocio || isEmissor) && <p className="mt-3 text-xs text-on-military-muted">{t.encerrar.restrito}</p>}
           {encerrar.status === "sucesso" && (
             <p role="status" className="mt-3 text-sm text-value-positive">
               {t.encerrar.sucesso}

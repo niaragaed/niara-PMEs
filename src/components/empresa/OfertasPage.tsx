@@ -295,6 +295,12 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                           </a>
                         </p>
                       )}
+                      <a
+                        href={`/negociar/oferta/${offering.id}`}
+                        className="mt-2 inline-block text-xs font-medium text-salmon hover:text-salmon-600"
+                      >
+                        {t.onchainStatus.confirmada.verOferta}
+                      </a>
                     </div>
                   )}
 
