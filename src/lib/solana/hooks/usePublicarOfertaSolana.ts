@@ -68,7 +68,12 @@ export function usePublicarOfertaSolana() {
 
       const sig = assinada.assinatura;
       setState({ ...IDLE, status: "registrando", txHash: sig });
-      const reg = await registrarTentativaSolana({ offeringId: args.offeringId, assinatura: sig, prazoUnixSeconds: prazoUnix });
+      const reg = await registrarTentativaSolana({
+        offeringId: args.offeringId,
+        assinatura: sig,
+        prazoUnixSeconds: prazoUnix,
+        ultimoBlocoValido: assinada.lastValidBlockHeight,
+      });
       if (reg.status === "error") {
         // Nada foi enviado à rede — a assinatura simplesmente não é usada.
         setState({ ...IDLE, status: "erro", errorMessage: reg.message });

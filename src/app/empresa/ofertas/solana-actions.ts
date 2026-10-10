@@ -21,18 +21,22 @@ import { z } from "zod";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BASE58_ASSINATURA, REDE_SOLANA, UNIDADE_ON_CHAIN_SOLANA } from "@/lib/solana/config";
-import { lerContaOfertaVerificada, lerTxPublicacao } from "@/lib/solana/servidor";
+import { keccak256, toHex } from "viem";
+import { alturaDeBlocoAtual, lerContaOfertaVerificada, lerTxPublicacao } from "@/lib/solana/servidor";
 import { descreverErroSolana } from "@/lib/solana/errors";
 import { formatBRL } from "@/lib/format";
 import type { ConfirmarPublicacaoState, RegistrarTentativaState, VerificarConsistenciaState } from "./onchain-actions";
 
-/** Depois disso sem nenhum sinal da transação na rede, o blockhash já venceu com folga. */
+/** Fallback (linha sem lastValidBlockHeight): depois disso sem sinal na rede, o blockhash venceu. */
 const EXPIRACAO_TENTATIVA_MS = 3 * 60 * 1000;
+const FOLGA_RELOGIO_S = 120;
 
 const registrarSchema = z.object({
   offeringId: z.string().uuid(),
   assinatura: z.string().regex(BASE58_ASSINATURA, "Assinatura de transação inválida."),
   prazoUnixSeconds: z.number().int().positive(),
+  /** lastValidBlockHeight do blockhash da transação assinada (só decide quando ela expirou). */
+  ultimoBlocoValido: z.number().int().positive(),
 });
 
 /**
@@ -51,7 +55,7 @@ export async function registrarTentativaSolana(input: unknown): Promise<Registra
   if (!parsed.success) {
     return { status: "error", message: "Dados inválidos para registrar a publicação." };
   }
-  const { offeringId, assinatura, prazoUnixSeconds } = parsed.data;
+  const { offeringId, assinatura, prazoUnixSeconds, ultimoBlocoValido } = parsed.data;
 
   const admin = createAdminClient();
   const { data: issuer, error: issuerError } = await admin
@@ -78,6 +82,7 @@ export async function registrarTentativaSolana(input: unknown): Promise<Registra
       opens_at: new Date().toISOString(),
       closes_at: new Date(prazoUnixSeconds * 1000).toISOString(),
       expected_emissor_wallet: walletVinculada,
+      solana_ultimo_bloco_valido: ultimoBlocoValido,
       onchain_last_error: null,
     })
     .eq("id", offeringId)
@@ -112,7 +117,13 @@ async function voltarParaNaoOnchain(admin: ReturnType<typeof createAdminClient>,
   // a null juntos, para uma nova tentativa recongelar os dois do zero.
   await admin
     .from("offerings")
-    .update({ sync_status: "nao_onchain", tx_hash: null, expected_emissor_wallet: null, onchain_last_error: motivo })
+    .update({
+      sync_status: "nao_onchain",
+      tx_hash: null,
+      expected_emissor_wallet: null,
+      solana_ultimo_bloco_valido: null,
+      onchain_last_error: motivo,
+    })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
     .in("sync_status", ["pendente", "divergente"]);
@@ -141,7 +152,7 @@ export async function confirmarPublicacaoSolana(offeringId: string): Promise<Con
   const { data: offering, error: fetchError } = await admin
     .from("offerings")
     .select(
-      "id, rede, tx_hash, sync_status, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, contract_address, token_address, expected_emissor_wallet",
+      "id, rede, tx_hash, sync_status, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, contract_address, token_address, expected_emissor_wallet, solana_ultimo_bloco_valido",
     )
     .eq("id", parsedId.data)
     .eq("issuer_id", accountId)
@@ -170,8 +181,20 @@ export async function confirmarPublicacaoSolana(offeringId: string): Promise<Con
   }
 
   if (leitura.status === "nao-encontrada") {
+    // Só descarta quando é CERTO que a transação não entra mais: sem nenhum sinal dela na rede E
+    // com a rede já além do lastValidBlockHeight do blockhash que ela usou. (Linha sem esse valor:
+    // fallback de tempo, folgado.)
     const desde = Date.now() - new Date(offering.opens_at as string).getTime();
-    if (leitura.jaExpirou && desde > EXPIRACAO_TENTATIVA_MS) {
+    const ultimoValido = offering.solana_ultimo_bloco_valido === null ? null : Number(offering.solana_ultimo_bloco_valido);
+    let venceu = desde > EXPIRACAO_TENTATIVA_MS;
+    if (ultimoValido !== null) {
+      try {
+        venceu = (await alturaDeBlocoAtual()) > ultimoValido;
+      } catch (e) {
+        return { status: "error", message: descreverErroSolana(e) };
+      }
+    }
+    if (leitura.jaExpirou && venceu) {
       const motivo = "A transação não chegou à rede antes de expirar (nada foi gravado on-chain) — pode publicar de novo.";
       await voltarParaNaoOnchain(admin, parsedId.data, accountId, motivo);
       return { status: "revertida", motivo };
@@ -193,6 +216,24 @@ export async function confirmarPublicacaoSolana(offeringId: string): Promise<Con
     return { status: "divergente", motivo };
   }
   const ev = leitura.eventos[0];
+
+  // A transação tem que ser DESTA tentativa: confirmada depois de registrada (o registro acontece
+  // antes do envio, com folga para relógios) — uma assinatura antiga de outra oferta não serve.
+  const registradaEm = Math.floor(new Date(offering.opens_at as string).getTime() / 1000);
+  if (leitura.blockTime !== null && leitura.blockTime < registradaEm - FOLGA_RELOGIO_S) {
+    const motivo = "A transação é anterior a esta tentativa de publicação — não pertence a esta oferta.";
+    await marcarDivergente(admin, parsedId.data, accountId, motivo);
+    return { status: "divergente", motivo };
+  }
+
+  // E da empresa DESTA conta: o cnpjRef do evento é keccak256 do CNPJ cadastrado (mesmo cálculo
+  // de publicar/page.tsx).
+  const { data: issuer } = await admin.from("issuers").select("tax_id").eq("id", accountId).maybeSingle();
+  if (ev.cnpjRefHex.toLowerCase() !== keccak256(toHex((issuer?.tax_id as string | null) ?? "")).toLowerCase()) {
+    const motivo = "O CNPJ (hash) gravado na oferta on-chain não é o desta empresa.";
+    await marcarDivergente(admin, parsedId.data, accountId, motivo);
+    return { status: "divergente", motivo };
+  }
 
   const esperado = {
     metaMinima: BigInt(offering.target_min_cents) * UNIDADE_ON_CHAIN_SOLANA,

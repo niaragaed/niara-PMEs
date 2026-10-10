@@ -96,7 +96,10 @@ begin
   if old.onchain_emissor_wallet is not null and new.onchain_emissor_wallet is distinct from old.onchain_emissor_wallet then
     raise exception 'offerings.onchain_emissor_wallet e imutavel apos gravado' using errcode = '23514';
   end if;
-  if old.chain_id is not null and new.chain_id is distinct from old.chain_id then
+  -- chain_id passa a travar so com endereco gravado (antes: assim que preenchido). Uma
+  -- tentativa revertida na Sepolia deixava chain_id preenchido e impedia publicar depois
+  -- na Solana (onde chain_id e NULL). As reversoes agora limpam chain_id junto com tx_hash.
+  if old.contract_address is not null and old.chain_id is not null and new.chain_id is distinct from old.chain_id then
     raise exception 'offerings.chain_id e imutavel apos gravado' using errcode = '23514';
   end if;
   if new.rede is distinct from old.rede
@@ -105,6 +108,23 @@ begin
   end if;
   return new;
 end $fn$;
+
+-- Linhas antigas revertidas na Sepolia ficaram com chain_id preenchido sem endereco: limpa,
+-- para poderem tentar de novo em qualquer rede (a trigger acima ja permite).
+update offerings set chain_id = null
+where sync_status = 'nao_onchain' and contract_address is null and chain_id is not null;
+
+-- Uma transacao/conta on-chain so pode confirmar UMA oferta (por rede): impede que duas
+-- linhas do Supabase apontem para o mesmo escrow.
+create unique index offerings_rede_contract_address_unique
+  on offerings (rede, contract_address) where contract_address is not null;
+create unique index offerings_rede_tx_hash_unique
+  on offerings (rede, tx_hash) where tx_hash is not null;
+
+-- Solana: ultima altura de bloco em que a transacao assinada ainda pode entrar na rede
+-- (lastValidBlockHeight do blockhash usado). So serve para decidir, com certeza, que uma
+-- tentativa que nao apareceu nunca mais vai aparecer.
+alter table offerings add column solana_ultimo_bloco_valido bigint;
 
 -- 5. carteira Solana vinculada ----------------------------------------------------
 alter table issuers   add column solana_wallet_address text;
