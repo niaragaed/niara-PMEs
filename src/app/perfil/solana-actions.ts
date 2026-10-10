@@ -10,6 +10,7 @@
 import { createPublicKey, verify } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { PublicKey } from "@solana/web3.js";
 import { utils } from "@anchor-lang/core";
@@ -34,9 +35,14 @@ async function contaAtual() {
   return { role, accountId };
 }
 
-function mensagemDeVinculo(endereco: string, accountId: string, emitidoEm: string) {
+/** Domínio que pediu a assinatura — um site de phishing não consegue emitir a mesma mensagem. */
+async function dominio(): Promise<string> {
+  return (await headers()).get("host") ?? "niara-pmes";
+}
+
+function mensagemDeVinculo(dominioAtual: string, endereco: string, accountId: string, emitidoEm: string) {
   return [
-    "Niara PMEs — vincular carteira Solana",
+    `${dominioAtual} quer vincular sua carteira Solana à sua conta na Niara PMEs.`,
     `Carteira: ${endereco}`,
     `Conta: ${accountId}`,
     `Emitido em: ${emitidoEm}`,
@@ -49,7 +55,7 @@ export async function prepararVinculoSolana(enderecoInput: unknown): Promise<{ s
   const { accountId } = await contaAtual();
   const endereco = z.string().trim().regex(BASE58_PUBKEY).safeParse(enderecoInput);
   if (!endereco.success) return { status: "error", message: "Endereço de carteira Solana inválido." };
-  return { status: "success", mensagem: mensagemDeVinculo(endereco.data, accountId, new Date().toISOString()) };
+  return { status: "success", mensagem: mensagemDeVinculo(await dominio(), endereco.data, accountId, new Date().toISOString()) };
 }
 
 const vinculoSchema = z.object({
@@ -68,7 +74,7 @@ export async function saveSolanaWallet(input: unknown): Promise<UpdateProfileSta
   // endereço, e ainda estar no prazo — o horário vem de dentro da própria mensagem assinada.
   const emitidoEm = /^Emitido em: (.+)$/m.exec(mensagem)?.[1] ?? "";
   const quando = Date.parse(emitidoEm);
-  if (mensagem !== mensagemDeVinculo(endereco, accountId, emitidoEm) || !Number.isFinite(quando)) {
+  if (mensagem !== mensagemDeVinculo(await dominio(), endereco, accountId, emitidoEm) || !Number.isFinite(quando)) {
     return { status: "error", message: "Mensagem de vínculo inválida — tente vincular de novo." };
   }
   if (Date.now() - quando > VALIDADE_MS || quando - Date.now() > 60_000) {

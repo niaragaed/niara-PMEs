@@ -250,6 +250,9 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
       .update({
         sync_status: "nao_onchain",
         tx_hash: null,
+        // Limpa junto (migration 0017): sem endereço gravado, chain_id ainda não é definitivo — e
+        // preenchido impediria uma nova tentativa na Solana.
+        chain_id: null,
         expected_emissor_wallet: null,
         onchain_last_error: motivo,
       })

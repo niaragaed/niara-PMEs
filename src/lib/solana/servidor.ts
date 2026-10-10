@@ -32,7 +32,7 @@ export type OfertaCriadaEvento = {
 export type LeituraTxPublicacao =
   | { status: "nao-encontrada"; jaExpirou: boolean }
   | { status: "falhou"; motivo: string }
-  | { status: "ok"; eventos: OfertaCriadaEvento[] };
+  | { status: "ok"; eventos: OfertaCriadaEvento[]; blockTime: number | null };
 
 /** "Program data:" emitidos pelo NOSSO programa (topo da pilha de invoke no momento do log). */
 function dadosDoPrograma(logs: string[]): string[] {
@@ -45,7 +45,8 @@ function dadosDoPrograma(logs: string[]): string[] {
       pilha.push(invoke[1]);
       continue;
     }
-    if (/^Program \S+ (success|failed)/.test(linha)) {
+    // Ancorado num endereço base58: "Program log: success…" não pode desempilhar.
+    if (/^Program [1-9A-HJ-NP-Za-km-z]{32,44} (success|failed)/.test(linha)) {
       pilha.pop();
       continue;
     }
@@ -100,7 +101,12 @@ export async function lerTxPublicacao(assinatura: string): Promise<LeituraTxPubl
       taxaBps: Number(d.taxaBps),
     });
   }
-  return { status: "ok", eventos };
+  return { status: "ok", eventos, blockTime: tx.blockTime ?? null };
+}
+
+/** Altura de bloco atual da rede — compara com o lastValidBlockHeight de uma tentativa. */
+export async function alturaDeBlocoAtual(): Promise<number> {
+  return conexaoSolana().getBlockHeight("confirmed");
 }
 
 /** Conta da oferta lida da rede, só se o dono for o programa niara-pmes-solana. */
