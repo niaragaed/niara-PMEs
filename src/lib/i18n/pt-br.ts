@@ -794,6 +794,7 @@ export const ptBr = {
     },
     pmesOnChain: {
       selo: "Real — Sepolia",
+      seloSolana: "Real — Solana Devnet",
       empresaFicticia: "Empresa fictícia de demonstração",
       metaCaptacao: "Meta de captação",
       precoPorCota: "Preço por cota",
@@ -890,6 +891,10 @@ export const ptBr = {
         "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
       avisoSelfService:
         "Os dados desta empresa foram informados pelo próprio emissor (demonstração) — e o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
+      demoBannerSelfServiceSolana:
+        "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na Solana Devnet.",
+      avisoSelfServiceSolana:
+        "Os dados desta empresa foram informados pelo próprio emissor (demonstração) — e o investimento abaixo é real: transações assinadas e confirmadas de verdade na Solana Devnet, não uma simulação de produto.",
       voltarCategoria: "‹ Voltar para a categoria",
       dadosPublicos: {
         title: "Dados públicos da empresa",
@@ -1603,8 +1608,8 @@ export const ptBr = {
   },
   investirOnChain: {
     meta: {
-      title: "Investir — Sepolia real",
-      description: "Fluxo de investimento com transações reais assinadas na testnet Sepolia.",
+      title: "Investir — on-chain real (Sepolia e Solana)",
+      description: "Fluxo de investimento com transações reais assinadas na testnet Sepolia e na Solana Devnet.",
     },
     titulo: "Investimento real — testnet Sepolia",
     subtitulo:
@@ -1623,7 +1628,7 @@ export const ptBr = {
       "Esta oferta ainda não foi configurada neste ambiente (endereços de contrato ausentes). É preciso rodar o script administrativo que cria a oferta em Sepolia e preencher o .env.local com os endereços gerados.",
     semCarteira: "Conecte sua carteira para ver seu saldo, sua posição e investir nesta oferta.",
     seletorOferta: {
-      label: "Oferta de demonstração (várias disponíveis — escolha uma antes de investir)",
+      label: "Oferta de demonstração (várias disponíveis, em Sepolia e na Solana Devnet — escolha uma antes de investir)",
       opcao: "Oferta",
       proveniencia: {
         legado: "Empresa fictícia de demonstração",
@@ -1726,6 +1731,196 @@ export const ptBr = {
     },
     erros: {
       redeErrada: "Troque para a rede Sepolia para continuar.",
+    },
+  },
+  solana: {
+    redeNome: "Solana Devnet",
+    redeSepolia: "Ethereum Sepolia",
+    carteira: {
+      naoDetectada: "Nenhuma carteira Solana detectada neste navegador.",
+      instalarPhantom: "Instalar a Phantom",
+      conectar: "Conectar Phantom",
+      conectando: "Conectando…",
+      conexaoRejeitada: "Conexão recusada na carteira.",
+      copiarEndereco: "Copiar endereço",
+      desconectar: "Desconectar",
+      rede: "Solana Devnet",
+      saldoSol: (sol: string) => `Saldo de SOL de teste (taxas da rede): ${sol} SOL.`,
+      faucetSol: "Obter SOL de teste (faucet.solana.com)",
+      notaRede:
+        "A carteira só assina: o site envia a transação pela devnet da Solana, independentemente da rede selecionada na Phantom.",
+    },
+    investir: {
+      avisoReal:
+        "Real na Solana Devnet. Nenhum valor de mercado está envolvido (MockBRL é um token de teste, sem lastro), mas cada transação abaixo é assinada e confirmada de verdade na rede, pelo programa niara-pmes-solana — não é uma simulação de produto.",
+      requisitos: [
+        "Phantom (ou outra carteira Solana compatível) instalada e conectada.",
+        "Um pouco de SOL de teste para as taxas da rede e o aluguel das contas — obtenha em faucet.solana.com (devnet).",
+        "MockBRL de teste — pode ser obtido abaixo, direto pela carteira conectada.",
+      ],
+      termosTitulo: "2. Termos da oferta (lidos direto do programa)",
+      ofertaInexistente:
+        "Esta oferta não existe no programa niara-pmes-solana desta rede — confira se o programa já foi publicado na devnet.",
+      semCarteira: "Conecte sua carteira Solana para ver seu saldo, sua posição e investir nesta oferta.",
+      contaOferta: "Conta da oferta (programa niara-pmes-solana)",
+      semTaxa: "Sem taxa nesta oferta (taxa_bps = 0, lido direto do programa).",
+      pausada: "pausada pela plataforma",
+      pausadaTexto: "Esta oferta está pausada pela plataforma — aportes bloqueados por enquanto.",
+      faucet: {
+        titulo: "1. Obter MockBRL de teste",
+        descricao:
+          "MockBRL na Solana é um token SPL de teste, sem lastro e sem valor. O faucet do próprio programa cunha até 1.000.000 mBRL por chamada para a carteira que assina.",
+      },
+      semApprove:
+        "Na Solana não existe aprovação (approve) separada: o aporte é uma única transação, assinada por você, que transfere o MockBRL direto para o escrow da oferta.",
+      quantidadeInvalida: "Informe uma quantidade de cotas válida.",
+      excedeCapacidade: (restante: string) => `Esse valor ultrapassa a capacidade restante da oferta (${restante}).`,
+      excedeTeto: (restante: string) =>
+        `Esse valor ultrapassa o teto por investidor (${restante} restantes) — só passa se esta carteira estiver marcada como investidor qualificado no programa.`,
+      saldoInsuficiente: "Saldo de MockBRL insuficiente — use o faucet acima.",
+      prazoEncerrado: "O prazo desta oferta já terminou — não aceita mais aportes. Ela pode ser encerrada.",
+      ofertaEncerradaFalha:
+        "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir. Se você aportou, peça o reembolso abaixo.",
+      reembolsadoLabel: "Aporte reembolsado",
+      cotasCongeladas:
+        "Suas cotas ficam numa conta de token congelada pelo programa: aparecem na sua carteira, mas não podem ser transferidas (ainda não há mercado secundário).",
+      encerrarDescricao:
+        "No programa, encerrar é permissionless: qualquer carteira pode encerrar assim que o prazo terminar ou o total arrecadado atingir exatamente a meta máxima — nenhum investidor fica refém da plataforma. Nesta interface, por enquanto, o botão fica disponível para a equipe Niara e para a própria empresa emissora.",
+      encerrarAindaNao: "Ainda não é possível encerrar: o prazo não terminou e a meta máxima não foi atingida.",
+      resgatarDescricao: (cotas: string, simbolo: string) =>
+        `A captação fechou com sucesso. Resgate (uma vez) as ${cotas} cotas ${simbolo} correspondentes ao seu aporte.`,
+      reembolso: {
+        titulo: "Reembolso",
+        descricao: (valor: string) =>
+          `A captação não atingiu a meta mínima. O escrow devolve exatamente o que você aportou: ${valor}.`,
+        botao: "Pedir reembolso",
+        sucesso: "Reembolso confirmado on-chain.",
+      },
+      liberarDescricao:
+        "Transfere (uma vez, permissionless no programa) o valor arrecadado ao emissor, menos a taxa da plataforma, que vai para a carteira do protocolo. Sem esta instrução o dinheiro fica retido no escrow. Nesta interface, por enquanto, o botão fica disponível só para a equipe Niara.",
+      liberarSucesso: "Recursos liberados on-chain.",
+      assinando: "Aguardando assinatura na Phantom…",
+      confirmando: "Confirmando na rede…",
+      verNoExplorer: "ver no Solana Explorer",
+    },
+    publicar: {
+      escolhaRede: {
+        titulo: "Em qual rede publicar?",
+        texto:
+          "A mesma oferta pode ser publicada na Ethereum Sepolia (MetaMask) ou na Solana Devnet (Phantom) — as regras da Res. CVM 88 são conferidas de novo pelo contrato/programa nas duas. Escolha uma: depois de publicada, a rede da oferta não muda.",
+        sepolia: "Ethereum Sepolia",
+        solana: "Solana Devnet",
+      },
+      subtitulo:
+        "Confira o checklist, revise os dados que vão para a Solana Devnet e assine com a sua própria carteira Phantom.",
+      banner: "publicação real na Solana Devnet. Rede de teste sem valor real; leia o termo antes de assinar.",
+      semCarteiraVinculada: {
+        titulo: "Nenhuma carteira Solana vinculada à sua conta",
+        texto: "Antes de publicar, vá em Perfil e vincule a carteira Phantom que vai assinar por esta empresa.",
+        link: "Ir para Perfil →",
+      },
+      gates: {
+        provider: {
+          label: "Carteira Phantom detectada",
+          reprovado: "Nenhuma carteira Solana foi detectada neste navegador — instale a Phantom para continuar.",
+        },
+        conexao: {
+          label: "Phantom conectada",
+          reprovado: "Conecte a Phantom acima.",
+        },
+        saldo: {
+          label: "Saldo de SOL suficiente para o aluguel das contas e a taxa",
+          carregando: "Consultando saldo e custo na Solana Devnet…",
+          erro: "Não foi possível consultar o saldo agora — tente de novo em instantes.",
+          reprovado: (saldo: string, custo: string) =>
+            `Saldo de ${saldo} SOL é insuficiente para o custo estimado de ${custo} SOL (aluguel da conta da oferta, do mint de cotas e do escrow, mais a taxa, com margem). Obtenha SOL de teste em faucet.solana.com.`,
+          ok: (saldo: string, custo: string) => `Saldo de ${saldo} SOL — custo estimado: ${custo} SOL (aluguel das contas + taxa).`,
+        },
+        autorizado: {
+          label: "Carteira autorizada pela Niara no programa niara-pmes-solana",
+          naoConectado: "Conecte a Phantom para checar a autorização.",
+          reprovado: "Esta carteira ainda não foi autorizada pela Niara a publicar ofertas na Solana — fale com a equipe.",
+          ofertaAberta: "Esta carteira já tem uma oferta aberta no programa — encerre-a antes de publicar outra.",
+          erro: "Não foi possível consultar a autorização on-chain agora — tente de novo em instantes.",
+        },
+        titularidade: {
+          label: "Carteira conectada é a carteira Solana vinculada à sua conta",
+          semCarteiraVinculada: "Nenhuma carteira Solana vinculada — veja o aviso acima.",
+          naoConectado: "Conecte a Phantom para comparar.",
+          diferente: (vinculada: string, conectada: string) =>
+            `A carteira Solana vinculada à sua conta (${vinculada}) é diferente da conectada agora (${conectada}). Troque de conta na Phantom ou vincule a atual em Perfil.`,
+        },
+        termo: {
+          label: "Termo de publicação aceito",
+          reprovado: "Preencha os dados do token e marque a caixa do termo abaixo antes de publicar.",
+          limites: "Nome até 64 bytes, símbolo até 10 e série até 16 (limites do programa).",
+        },
+      },
+      formulario: {
+        titulo: "Dados que vão para a blockchain",
+        aviso:
+          "Estes três campos ficam gravados para sempre na conta da oferta criada pelo programa niara-pmes-solana — revise antes de assinar.",
+        nome: "Nome da oferta",
+        simbolo: "Símbolo das cotas",
+        serie: "Série",
+      },
+      termoTexto: {
+        titulo: "Antes de publicar, leia com atenção",
+        intro:
+          "Você está prestes a assinar uma transação real na Solana Devnet, rede de teste, usando a sua própria carteira Phantom e pagando com SOL de teste o aluguel das contas criadas. Esta ação grava dados permanentes numa blockchain pública — a Niara não assina por você e não pode desfazer isso depois.",
+        itens: [
+          "É uma rede de teste, sem valor real. SOL de devnet e o MockBRL usado nesta demonstração não têm lastro nem valor financeiro nenhum. Nenhum dinheiro real muda de mãos aqui.",
+          "O registro é público e permanente. O nome da sua empresa e os termos desta oferta (meta, prazo, valor por cota) ficarão gravados numa blockchain pública, visíveis a qualquer pessoa no Solana Explorer — inclusive depois de você excluir sua conta na Niara PMEs. Seu CNPJ não é gravado em texto — só um hash dele, que não pode ser revertido para o número original.",
+          "Você paga o próprio custo. A transação usa SOL de teste da sua carteira para o aluguel das contas e a taxa — a Niara não cobre nem reembolsa.",
+          "Isto não é uma oferta pública de valores mobiliários. A Niara PMEs não é uma plataforma autorizada pela Comissão de Valores Mobiliários (CVM). Nada aqui constitui oferta real de investimento, e o registro on-chain não substitui os livros societários da Lei 6.404/76 nem o registro em cartório.",
+          "Depois de publicada, sua oferta poderá receber aportes reais de teste de outras carteiras — revise os termos com cuidado antes de confirmar.",
+        ],
+        checkbox: "Li e entendi os pontos acima, e quero prosseguir com a publicação na Solana Devnet.",
+      },
+      publicacao: {
+        assinando: "Aguardando sua assinatura na Phantom…",
+        registrando: "Assinatura recebida — registrando a tentativa antes de enviar…",
+        confirmando: "Transação enviada — aguardando confirmação na Solana Devnet…",
+        pendenteTexto:
+          "A transação foi assinada e registrada, mas ainda não confirmou. Isto NÃO significa que a oferta já está publicada — volte aqui em instantes para conferir. Se ela não chegar à rede em alguns minutos, a tentativa é descartada sozinha e você pode publicar de novo.",
+        verNoExplorer: "Ver no Solana Explorer →",
+        confirmadaTitulo: "Publicada na Solana Devnet",
+        confirmadaTexto: "Sua oferta foi confirmada on-chain. Contas criadas pelo programa:",
+        contractLabel: "Oferta (conta do programa, com escrow)",
+        tokenLabel: "Mint das cotas (SPL)",
+        verificarConsistenciaNota:
+          "Relê a conta da oferta (meta mínima, meta máxima, preço por cota e prazo) e compara com esta oferta no Supabase agora — não corrige nenhum dos lados, só sinaliza.",
+        verOferta: "Ver a oferta na vitrine →",
+      },
+    },
+    perfil: {
+      title: "Carteira Solana",
+      subtitle:
+        "Conexão real com a Phantom na Solana Devnet. Vincular a carteira permite publicar ofertas na Solana em nome da sua empresa.",
+      vinculoTitulo: "Vínculo com o perfil",
+      explicacao:
+        "Para vincular, a Phantom pede a assinatura de uma mensagem (sem transação e sem custo) que prova que a carteira é sua. O endereço fica gravado na sua conta, separado da carteira MetaMask.",
+      vinculadaLabel: "Vinculada ao perfil",
+      conectadaAgoraLabel: "Conectada agora",
+      nenhuma: "Nenhuma",
+      vincularBotao: "Vincular esta carteira",
+      trocarBotao: "Trocar para esta carteira",
+      desvincularBotao: "Desvincular",
+      assinando: "Aguardando assinatura…",
+      assinaturaRecusada: "Assinatura recusada na carteira — nada foi salvo.",
+      semSignMessage: "Esta carteira não permite assinar mensagens — use a Phantom.",
+      sucessoVinculada: "Carteira Solana vinculada à sua conta.",
+      sucessoDesvinculada: "Carteira Solana desvinculada.",
+      conecteParaVincular: "Conecte a Phantom acima para vincular.",
+    },
+    paginaInvestir: {
+      titulo: "Investimento real — Solana Devnet",
+      subtitulo:
+        "Esta oferta vive no programa niara-pmes-solana, na devnet da Solana: MockBRL não tem valor nenhum, mas as assinaturas, as transações e o estado do programa são reais on-chain — diferente do restante da plataforma, que é demonstração/mock.",
+    },
+    seletor: {
+      provenienciaDemo: "Empresa fictícia de demonstração",
+      provenienciaSelfService: "Dados informados pelo próprio emissor (demonstração)",
     },
   },
   socios: {

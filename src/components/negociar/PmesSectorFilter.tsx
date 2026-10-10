@@ -23,6 +23,7 @@ export type PmesCardData =
       hardCapCents: number;
       sharePriceCents: number | null;
       sharesCount: number | null;
+      rede: "sepolia" | "solana-devnet";
     };
 
 function getSetor(item: PmesCardData): string | null {
@@ -98,6 +99,7 @@ export function PmesSectorFilter({ items }: { items: PmesCardData[] }) {
               hardCapCents={item.hardCapCents}
               sharePriceCents={item.sharePriceCents}
               sharesCount={item.sharesCount}
+              rede={item.rede}
             />
           ),
         )}

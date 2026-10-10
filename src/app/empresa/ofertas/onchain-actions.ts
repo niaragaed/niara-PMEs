@@ -99,6 +99,9 @@ export async function registrarTentativa(input: unknown): Promise<RegistrarTenta
   const { data, error } = await admin
     .from("offerings")
     .update({
+      // rede explícita (migration 0017): uma tentativa anterior revertida na Solana pode ter
+      // deixado a linha com rede='solana-devnet' — esta tentativa é na Sepolia.
+      rede: "sepolia",
       tx_hash: txHash,
       chain_id: ORQUESTRADOR_CHAIN_ID,
       sync_status: "pendente",
@@ -165,7 +168,7 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   const { data: offering, error: fetchError } = await admin
     .from("offerings")
     .select(
-      "id, tx_hash, sync_status, target_min_cents, hard_cap_cents, share_price_cents, closes_at, contract_address, token_address, expected_emissor_wallet",
+      "id, rede, tx_hash, sync_status, target_min_cents, hard_cap_cents, share_price_cents, closes_at, contract_address, token_address, expected_emissor_wallet",
     )
     .eq("id", parsedId.data)
     .eq("issuer_id", accountId)
@@ -173,6 +176,11 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
 
   if (fetchError || !offering) {
     return { status: "error", message: "Oferta não encontrada." };
+  }
+  // Publicação na Solana é conferida por solana-actions.ts — nunca ler uma assinatura base58 como
+  // hash EVM.
+  if (offering.rede !== "sepolia") {
+    return { status: "error", message: "Esta oferta foi publicada na Solana Devnet, não na Sepolia." };
   }
 
   if (offering.sync_status === "confirmada") {
@@ -429,7 +437,7 @@ export async function verificarConsistencia(offeringId: string): Promise<Verific
   const admin = createAdminClient();
   const { data: offering, error: fetchError } = await admin
     .from("offerings")
-    .select("id, sync_status, contract_address, target_min_cents, hard_cap_cents, share_price_cents, closes_at")
+    .select("id, rede, sync_status, contract_address, target_min_cents, hard_cap_cents, share_price_cents, closes_at")
     .eq("id", parsedId.data)
     .eq("issuer_id", accountId)
     .maybeSingle();
@@ -438,6 +446,9 @@ export async function verificarConsistencia(offeringId: string): Promise<Verific
     return { status: "error", message: "Oferta não encontrada." };
   }
 
+  if (offering.rede !== "sepolia") {
+    return { status: "error", message: "Esta oferta foi publicada na Solana Devnet, não na Sepolia." };
+  }
   if (!["confirmada", "divergente"].includes(offering.sync_status as string) || !offering.contract_address) {
     return { status: "error", message: "Esta oferta ainda não tem uma publicação confirmada para verificar." };
   }

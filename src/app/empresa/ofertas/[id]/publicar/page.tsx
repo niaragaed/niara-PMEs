@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { keccak256, toHex } from "viem";
 import { PublicarOnChainPage } from "@/components/empresa/publicar/PublicarOnChainPage";
+import { PublicarSolanaPage } from "@/components/empresa/publicar/PublicarSolanaPage";
+import { EscolhaRedePublicacao } from "@/components/empresa/publicar/EscolhaRedePublicacao";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,8 +30,15 @@ export const metadata: Metadata = {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ rede?: string }>;
+}) {
   const { id } = await params;
+  const { rede: redeEscolhida } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -53,7 +62,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { data: offering } = await admin
     .from("offerings")
     .select(
-      "id, status, base_cap_cents, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, sync_status, tx_hash, contract_address, token_address, onchain_last_error",
+      "id, status, rede, base_cap_cents, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, sync_status, tx_hash, contract_address, token_address, onchain_last_error",
     )
     .eq("id", id)
     .eq("issuer_id", accountId)
@@ -65,7 +74,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   const { data: issuer } = await admin
     .from("issuers")
-    .select("wallet_address, tax_id, trade_name, legal_name")
+    .select("wallet_address, solana_wallet_address, tax_id, trade_name, legal_name")
     .eq("id", accountId)
     .maybeSingle();
 
@@ -150,8 +159,39 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   const empresa = (issuer?.trade_name as string | null) ?? (issuer?.legal_name as string) ?? "";
 
+  // Rede (migration 0017): com tentativa registrada ou publicação gravada, a rede é a da linha e não
+  // muda mais. Sem nenhuma ('nao_onchain'), o emissor escolhe — `?rede=solana` abre a Solana.
+  const temPublicacao = offering.sync_status !== "nao_onchain";
+  const naSolana = temPublicacao ? offering.rede === "solana-devnet" : redeEscolhida === "solana";
+
+  const propsComuns = {
+    offeringId: offering.id as string,
+    empresaNome: empresa,
+    cnpjRef,
+    windowDays: windowDays > 0 ? windowDays : 1,
+    targetMinCents: offering.target_min_cents as number,
+    hardCapCents: offering.hard_cap_cents as number,
+    sharePriceCents: offering.share_price_cents as number,
+    syncStatus: offering.sync_status as string,
+    txHash: (offering.tx_hash as string | null) ?? null,
+    contractAddress: (offering.contract_address as string | null) ?? null,
+    tokenAddress: (offering.token_address as string | null) ?? null,
+    onchainLastError: (offering.onchain_last_error as string | null) ?? null,
+  };
+
+  if (naSolana) {
+    return (
+      <>
+        {!temPublicacao && <EscolhaRedePublicacao offeringId={offering.id as string} atual="solana" />}
+        <PublicarSolanaPage {...propsComuns} walletVinculada={(issuer?.solana_wallet_address as string | null) ?? null} />
+      </>
+    );
+  }
+
   return (
-    <PublicarOnChainPage
+    <>
+      {!temPublicacao && <EscolhaRedePublicacao offeringId={offering.id as string} atual="sepolia" />}
+      <PublicarOnChainPage
       offeringId={offering.id as string}
       walletVinculada={walletVinculada}
       empresaNome={empresa}
@@ -165,6 +205,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       contractAddress={(offering.contract_address as string | null) ?? null}
       tokenAddress={(offering.token_address as string | null) ?? null}
       onchainLastError={(offering.onchain_last_error as string | null) ?? null}
-    />
+      />
+    </>
   );
 }

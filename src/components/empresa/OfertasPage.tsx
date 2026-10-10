@@ -4,6 +4,8 @@ import { useState, useTransition, type ChangeEvent, type FormEvent } from "react
 import { closeOffering, createOffering, type OfferingActionState } from "@/app/empresa/ofertas/actions";
 import { SelectField, TextField } from "@/components/perfil/FormField";
 import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
+import { RedeBadge } from "@/components/solana/RedeBadge";
+import { linkExplorerSolanaConta } from "@/lib/solana/config";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
@@ -25,6 +27,8 @@ export type OfferingRow = {
   sync_status: "nao_onchain" | "pendente" | "confirmada" | "divergente";
   contract_address: string | null;
   token_address: string | null;
+  /** Rede da publicação on-chain (migration 0017). */
+  rede: "sepolia" | "solana-devnet";
   /** Soma de investments pagos/liquidados desta oferta — derivado, não vem da tabela offerings. */
   paidCents: number;
   /** Refs (MOCK-TX-...) dos eventos tokens_issued já gravados para esta oferta. */
@@ -73,7 +77,8 @@ function computeQuotasPreview(
 
 // Mesmo padrão de PublicarOnChainPage.tsx — helper pequeno, duplicado em vez de extraído
 // para um módulo compartilhado (só 2 usos, ver convenção de não abstrair sem necessidade).
-function etherscanAddress(address: string) {
+function explorerAddress(rede: OfferingRow["rede"], address: string) {
+  if (rede === "solana-devnet") return linkExplorerSolanaConta(address);
   return `https://sepolia.etherscan.io/address/${address}`;
 }
 
@@ -268,12 +273,15 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
 
                   {offering.status === "draft" && offering.sync_status === "confirmada" && (
                     <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
-                      <SyncStatusBadge status={offering.sync_status} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SyncStatusBadge status={offering.sync_status} />
+                        <RedeBadge rede={offering.rede} />
+                      </div>
                       {offering.contract_address && (
                         <p className="mt-1 text-xs text-on-military-muted">
                           {t.onchainStatus.confirmada.contrato}:{" "}
                           <a
-                            href={etherscanAddress(offering.contract_address)}
+                            href={explorerAddress(offering.rede, offering.contract_address)}
                             target="_blank"
                             rel="noreferrer"
                             className="font-mono text-salmon hover:text-salmon-600"
@@ -286,7 +294,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                         <p className="mt-1 text-xs text-on-military-muted">
                           {t.onchainStatus.confirmada.token}:{" "}
                           <a
-                            href={etherscanAddress(offering.token_address)}
+                            href={explorerAddress(offering.rede, offering.token_address)}
                             target="_blank"
                             rel="noreferrer"
                             className="font-mono text-salmon hover:text-salmon-600"
