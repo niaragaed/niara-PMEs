@@ -47,6 +47,8 @@ type SharedFields = {
   cidade: string;
   estado: string;
   walletAddress: string | null;
+  /** Carteira Solana vinculada (migration 0017) — separada da EVM. */
+  solanaWalletAddress: string | null;
 };
 
 export type LoadedProfile =
@@ -103,7 +105,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
     const { data, error } = await admin
       .from("investors")
       .select(
-        "full_name, tax_id, birth_date, phone, wallet_address, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
+        "full_name, tax_id, birth_date, phone, wallet_address, solana_wallet_address, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
       )
       .eq("id", accountId)
       .single();
@@ -121,6 +123,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
       birthDate: isoToBrDate(data.birth_date),
       phone: data.phone ?? "",
       walletAddress: data.wallet_address,
+    solanaWalletAddress: data.solana_wallet_address ?? null,
       cep: data.addr_cep ?? "",
       logradouro: data.addr_street ?? "",
       numero: data.addr_number ?? "",
@@ -134,7 +137,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
   const { data, error } = await admin
     .from("issuers")
     .select(
-      "legal_name, trade_name, tax_id, annual_revenue_cents, sector, business_summary, publish_cnpj, phone, wallet_address, logo_path, banner_path, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
+      "legal_name, trade_name, tax_id, annual_revenue_cents, sector, business_summary, publish_cnpj, phone, wallet_address, solana_wallet_address, logo_path, banner_path, addr_cep, addr_street, addr_number, addr_complement, addr_neighborhood, addr_city, addr_state",
     )
     .eq("id", accountId)
     .single();
@@ -166,6 +169,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
     bannerUrl,
     phone: data.phone ?? "",
     walletAddress: data.wallet_address,
+    solanaWalletAddress: data.solana_wallet_address ?? null,
     cep: data.addr_cep ?? "",
     logradouro: data.addr_street ?? "",
     numero: data.addr_number ?? "",

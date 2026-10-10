@@ -2216,6 +2216,40 @@ que a oferta precisa ser **recriada** em "Minhas ofertas", não republicada.
 
 ---
 
+## Solana Devnet (multichain, out/2026)
+
+O ciclo on-chain do PMEs também roda na **Solana Devnet**, pelo programa Anchor
+`niara-pmes-solana` (repositório `niaragaed/niara-pmes-solana`, program ID
+`FKefGFhUmgXBM1xCtSFBWpoNnp3wuPJs6Yddpsp67J2y`) — port das mesmas regras do
+`OfertaOrquestrador`/`OfertaCaptacao` (limites da Res. CVM 88, escrow, taxa de 1%,
+uma oferta aberta por emissor). Feito durante o hackathon Colosseum (Crypto World's Fair).
+
+- **Cliente** em `src/lib/solana/`: `config.ts` (program ID, RPC, unidades — MockBRL SPL
+  tem **6 casas**, então centavos × 10^4, nunca `UNIDADE_ON_CHAIN` da Sepolia), `program.ts`
+  (PDAs e leituras pelo coder do Anchor a partir do IDL copiado em `idl/`), `instrucoes.ts`,
+  `phantom.ts` (a carteira só assina; o envio vai sempre pelo RPC da devnet), `errors.ts`
+  (mensagens do próprio IDL) e `servidor.ts` (server-only: evento `OfertaCriada` aceito só
+  quando emitido pelo nosso programa + conta da oferta com dono = programa).
+- **Investidor**: `/investir/onchain` lista também as ofertas do programa (`?rede=solana` abre
+  direto nelas) e `SolanaInvestPanel` faz faucet → aportar → encerrar → resgatar (cotas numa
+  conta SPL **congelada**, intransferível) / reembolsar → liberar. Sem `approve`.
+- **Emissor**: `/empresa/ofertas/[id]/publicar` deixa escolher a rede enquanto
+  `sync_status='nao_onchain'`; `PublicarSolanaPage` + `solana-actions.ts` seguem as mesmas
+  regras de ouro da Sepolia. Diferença: a assinatura da transação é conhecida antes do envio,
+  então a tentativa é registrada **antes** de ir para a rede; tentativa que não chega à rede
+  volta sozinha para `nao_onchain` (blockhash vencido).
+- **Banco** (migration 0017): `offerings.rede` (`sepolia`/`solana-devnet`), CHECKs de formato
+  por rede (base58 na Solana), `chain_id` só na Sepolia, `rede` imutável com tentativa ou
+  endereço gravado, e `solana_wallet_address` em `issuers`/`investors`.
+- **Vínculo da carteira Solana** (`/perfil`, `src/app/perfil/solana-actions.ts`) exige prova
+  de posse: a Phantom assina (signMessage, sem custo) uma mensagem emitida pelo servidor com a
+  conta e o horário; o servidor confere a assinatura ed25519 antes de gravar.
+- `ConfirmedOnChainOffering` virou união discriminada por `rede`: código que usa viem/wagmi
+  precisa checar `rede === "sepolia"` antes de usar `contractAddress` como `0x${string}`.
+- Admin (autorizar emissor, ofertas de demonstração, pausar/cancelar) é feito pelo script
+  `scripts/admin.ts` do repositório `niara-pmes-solana`, com a carteira que é autoridade de
+  upgrade do programa.
+
 ## Organização
 
 ```

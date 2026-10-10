@@ -17,6 +17,7 @@ import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
 import { getEventosOnChain, getResumoOnChain, type EventoOnChain, type ResumoOnChain } from "@/lib/web3/events";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
+import { linkExplorerSolanaConta } from "@/lib/solana/config";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export type OrigemMovimentacao = "onchain" | "offchain";
@@ -202,12 +203,15 @@ async function listarOfertasSelfServiceConfirmadas(): Promise<Movimentacao[]> {
     id: `self-service-offering-${oferta.id}`,
     timestamp: oferta.onchainConfirmedAt ? epoch(oferta.onchainConfirmedAt) : 0,
     origem: "onchain" as const,
-    tipo: "Oferta self-service confirmada",
+    tipo: oferta.rede === "sepolia" ? "Oferta self-service confirmada" : "Oferta self-service confirmada (Solana Devnet)",
     ator: oferta.issuerTradeName ?? oferta.issuerLegalName,
     valor: `Meta: ${formatMbrl(oferta.targetMinCents)}–${formatMbrl(oferta.hardCapCents)} · Preço/cota: ${
       oferta.sharePriceCents === null ? "—" : formatMbrl(oferta.sharePriceCents)
     } · Prazo: ${prazoFormatter.format(new Date(oferta.closesAt))}`,
-    link: `https://sepolia.etherscan.io/address/${oferta.contractAddress}`,
+    link:
+      oferta.rede === "sepolia"
+        ? `https://sepolia.etherscan.io/address/${oferta.contractAddress}`
+        : linkExplorerSolanaConta(oferta.contractAddress),
   }));
 }
 

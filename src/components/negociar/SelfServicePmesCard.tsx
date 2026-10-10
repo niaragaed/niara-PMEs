@@ -32,6 +32,7 @@ export function SelfServicePmesCard({
   hardCapCents,
   sharePriceCents,
   sharesCount,
+  rede = "sepolia",
 }: {
   id: string;
   nome: string;
@@ -41,6 +42,7 @@ export function SelfServicePmesCard({
   hardCapCents: number;
   sharePriceCents: number | null;
   sharesCount: number | null;
+  rede?: "sepolia" | "solana-devnet";
 }) {
   const t = ptBr.negociar.pmesOnChain;
 
@@ -51,7 +53,7 @@ export function SelfServicePmesCard({
       <div className="flex flex-1 flex-col gap-3 p-5">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-3 py-1 text-xs font-semibold text-on-salmon">
           <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          {t.selo}
+          {rede === "solana-devnet" ? t.seloSolana : t.selo}
         </span>
 
         <div>

@@ -78,6 +78,7 @@ export async function CategoryPage({ categoria }: { categoria: TokenCategory }) 
             hardCapCents: oferta.hardCapCents,
             sharePriceCents: oferta.sharePriceCents,
             sharesCount: oferta.sharesCount,
+            rede: oferta.rede,
           }))
       : [];
 

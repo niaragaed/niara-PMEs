@@ -11,7 +11,14 @@ import { ptBr } from "@/lib/i18n/pt-br";
 
 export type DadosToken = { nome: string; simbolo: string; serie: string };
 
+/** Textos do formulário e do termo — os da Sepolia por padrão; a Solana passa os seus. */
+export type TextosTermo = {
+  formulario: { titulo: string; aviso: string; nome: string; simbolo: string; serie: string };
+  termoTexto: { titulo: string; intro: string; itens: readonly string[]; checkbox: string };
+};
+
 type Props = {
+  textos?: TextosTermo;
   dados: DadosToken;
   onDadosChange: (dados: DadosToken) => void;
   aceito: boolean;
@@ -19,8 +26,8 @@ type Props = {
   desabilitado: boolean;
 };
 
-export function TermoPublicacao({ dados, onDadosChange, aceito, onAceitoChange, desabilitado }: Props) {
-  const t = ptBr.empresaOfertas.publicarOnChain;
+export function TermoPublicacao({ textos, dados, onDadosChange, aceito, onAceitoChange, desabilitado }: Props) {
+  const t = textos ?? ptBr.empresaOfertas.publicarOnChain;
   const tf = t.formulario;
   const tt = t.termoTexto;
 

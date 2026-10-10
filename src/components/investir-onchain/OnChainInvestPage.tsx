@@ -3,17 +3,18 @@
 import { useState, type ChangeEvent } from "react";
 import { AlertTriangle } from "lucide-react";
 import { RealOnChainInvestPanel } from "./RealOnChainInvestPanel";
+import { SolanaInvestPanel } from "./SolanaInvestPanel";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-type OpcaoOferta = {
-  key: string;
-  tokenAddress: `0x${string}`;
-  ofertaAddress: `0x${string}`;
-  label: string;
-  proveniencia: string;
-};
+type OpcaoOferta = { key: string; label: string; proveniencia: string } & (
+  | { rede: "sepolia"; tokenAddress: `0x${string}`; ofertaAddress: `0x${string}` }
+  | { rede: "solana-devnet"; ofertaEndereco: string }
+);
+
+/** Oferta do programa niara-pmes-solana, já lida no servidor (page.tsx). */
+export type OpcaoSolanaServidor = { endereco: string; empresa: string; aberta: boolean; abertura: number };
 
 // Fase 4, sub-etapa 5.2 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md): o seletor passa a unir DUAS
 // origens de oferta — a lista legada (NEXT_PUBLIC_OFERTAS_ONCHAIN, 10 ofertas de reserva criadas
@@ -29,11 +30,13 @@ type OpcaoOferta = {
 // global — a única diferença que ESTE seletor precisa expor é a linha de proveniência do
 // conteúdo (empresa inventada à mão vs. dados que o próprio emissor preencheu), não uma
 // separação estrutural.
-function montarOpcoes(confirmedOfferings: ConfirmedOnChainOffering[]): OpcaoOferta[] {
+function montarOpcoes(confirmedOfferings: ConfirmedOnChainOffering[], ofertasSolana: OpcaoSolanaServidor[]): OpcaoOferta[] {
   const t = ptBr.investirOnChain.seletorOferta;
+  const ts = ptBr.solana;
   const legado = getOnChainAddresses()?.ofertas ?? [];
 
   const opcoesLegado: OpcaoOferta[] = legado.map((par, index) => ({
+    rede: "sepolia" as const,
     key: `legado-${index}`,
     tokenAddress: par.token,
     ofertaAddress: par.oferta,
@@ -41,28 +44,59 @@ function montarOpcoes(confirmedOfferings: ConfirmedOnChainOffering[]): OpcaoOfer
     proveniencia: t.proveniencia.legado,
   }));
 
-  const opcoesSelfService: OpcaoOferta[] = confirmedOfferings.map((oferta) => ({
-    key: oferta.id,
-    tokenAddress: oferta.tokenAddress,
-    ofertaAddress: oferta.contractAddress,
-    label: oferta.issuerTradeName ?? oferta.issuerLegalName,
-    proveniencia: t.proveniencia.selfService,
-  }));
+  const opcoesSelfService: OpcaoOferta[] = confirmedOfferings.flatMap((oferta) =>
+    oferta.rede === "sepolia"
+      ? [
+          {
+            rede: "sepolia" as const,
+            key: oferta.id,
+            tokenAddress: oferta.tokenAddress,
+            ofertaAddress: oferta.contractAddress,
+            label: oferta.issuerTradeName ?? oferta.issuerLegalName,
+            proveniencia: t.proveniencia.selfService,
+          },
+        ]
+      : [],
+  );
 
-  return [...opcoesLegado, ...opcoesSelfService];
+  // Solana: a lista vem do próprio programa; as que têm linha confirmada no Supabase (publicadas
+  // pelo emissor no site) ganham o nome da empresa cadastrada, as demais (criadas pelo script de
+  // administração do niara-pmes-solana) são as empresas fictícias de demonstração, com o nome
+  // gravado on-chain.
+  const selfServiceSolana = new Map(
+    confirmedOfferings.filter((o) => o.rede === "solana-devnet").map((o) => [o.contractAddress, o]),
+  );
+  const opcoesSolana: OpcaoOferta[] = ofertasSolana.map((o) => {
+    const cadastrada = selfServiceSolana.get(o.endereco);
+    return {
+      rede: "solana-devnet" as const,
+      key: `solana-${o.endereco}`,
+      ofertaEndereco: o.endereco,
+      label: cadastrada ? (cadastrada.issuerTradeName ?? cadastrada.issuerLegalName) : o.empresa,
+      proveniencia: cadastrada ? ts.seletor.provenienciaSelfService : ts.seletor.provenienciaDemo,
+    };
+  });
+
+  return [...opcoesLegado, ...opcoesSelfService, ...opcoesSolana];
 }
 
 export function OnChainInvestPage({
   isSocio = false,
   confirmedOfferings,
+  ofertasSolana = [],
+  preferirSolana = false,
 }: {
   isSocio?: boolean;
   confirmedOfferings: ConfirmedOnChainOffering[];
+  ofertasSolana?: OpcaoSolanaServidor[];
+  preferirSolana?: boolean;
 }) {
   const t = ptBr.investirOnChain;
-  const opcoes = montarOpcoes(confirmedOfferings);
+  const ts = ptBr.solana;
+  const opcoes = montarOpcoes(confirmedOfferings, ofertasSolana);
+  const inicial = (preferirSolana ? opcoes.find((o) => o.rede === "solana-devnet") : undefined) ?? opcoes[0];
 
-  const [selectedKey, setSelectedKey] = useState(opcoes[0]?.key ?? "");
+  const [selectedKey, setSelectedKey] = useState(inicial?.key ?? "");
   const selecionada = opcoes.find((opcao) => opcao.key === selectedKey) ?? opcoes[0] ?? null;
 
   function handleTrocarOferta(event: ChangeEvent<HTMLSelectElement>) {
@@ -90,8 +124,12 @@ export function OnChainInvestPage({
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.titulo}</h1>
-        <p className="mt-2 text-sm text-on-military-muted">{t.subtitulo}</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-on-military">
+          {selecionada.rede === "solana-devnet" ? ts.paginaInvestir.titulo : t.titulo}
+        </h1>
+        <p className="mt-2 text-sm text-on-military-muted">
+          {selecionada.rede === "solana-devnet" ? ts.paginaInvestir.subtitulo : t.subtitulo}
+        </p>
 
         <div className="mt-6 flex flex-col gap-6">
           {opcoes.length > 1 && (
@@ -104,19 +142,23 @@ export function OnChainInvestPage({
               >
                 {opcoes.map((opcao) => (
                   <option key={opcao.key} value={opcao.key}>
-                    {opcao.label} — {opcao.proveniencia}
+                    [{opcao.rede === "solana-devnet" ? ts.redeNome : ts.redeSepolia}] {opcao.label} — {opcao.proveniencia}
                   </option>
                 ))}
               </select>
             </label>
           )}
 
-          <RealOnChainInvestPanel
-            key={selecionada.key}
-            tokenAddress={selecionada.tokenAddress}
-            ofertaAddress={selecionada.ofertaAddress}
-            isSocio={isSocio}
-          />
+          {selecionada.rede === "sepolia" ? (
+            <RealOnChainInvestPanel
+              key={selecionada.key}
+              tokenAddress={selecionada.tokenAddress}
+              ofertaAddress={selecionada.ofertaAddress}
+              isSocio={isSocio}
+            />
+          ) : (
+            <SolanaInvestPanel key={selecionada.key} ofertaEndereco={selecionada.ofertaEndereco} isSocio={isSocio} />
+          )}
         </div>
       </div>
     </main>

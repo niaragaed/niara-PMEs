@@ -20,15 +20,30 @@ import type { TokenCategory } from "@/lib/mock/ativos";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
 import { getIssuerBannerVersion, issuerBannerUrl } from "@/lib/storage/issuer-banner";
 
-export type ConfirmedOnChainOffering = {
+/** Rede em que a oferta foi publicada (migration 0017, `offerings.rede`). */
+export type RedeOferta = "sepolia" | "solana-devnet";
+
+/**
+ * Endereços por rede — união discriminada por `rede` para que nenhum consumidor EVM (viem/wagmi)
+ * receba por engano um endereço base58 da Solana: quem precisa de `0x${string}` tem que checar
+ * `rede === "sepolia"` antes, e o compilador cobra isso.
+ *   - Sepolia: `contractAddress` = OfertaCaptacao, `tokenAddress` = ParticipacaoToken.
+ *   - Solana:  `contractAddress` = conta da oferta (PDA do programa niara-pmes-solana),
+ *              `tokenAddress` = mint SPL das cotas.
+ */
+export type EnderecosOfertaPorRede =
+  | { rede: "sepolia"; contractAddress: `0x${string}`; tokenAddress: `0x${string}` }
+  | { rede: "solana-devnet"; contractAddress: string; tokenAddress: string };
+
+export type ConfirmedOnChainOffering = EnderecosOfertaPorRede & ConfirmedOnChainOfferingBase;
+
+type ConfirmedOnChainOfferingBase = {
   id: string;
   /** `offerings.issuer_id` — mesmo id de `issuers.id` (accountId, ver resolveAccount()). Usado
    * só pra decidir "esta é a oferta DESTA empresa logada?" (ex.: liberar o botão "Encerrar
    * oferta" pra empresa emissora, não só sócios) — nunca exposto como dado de contato nem usado
    * pra autorizar nada sozinho (a decisão de role ainda vem de resolveAccount(), no servidor). */
   issuerAccountId: string;
-  contractAddress: `0x${string}`;
-  tokenAddress: `0x${string}`;
   /** `offerings.category` — nullable na coluna, mas createOffering() sempre exige um valor para
    * ofertas self-service; `null` aqui só é possível pra uma linha fora do fluxo normal. */
   category: TokenCategory | null;
@@ -66,7 +81,7 @@ export type ConfirmedOnChainOffering = {
 };
 
 const SELECT_COLUMNS =
-  "id, issuer_id, contract_address, token_address, category, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, onchain_confirmed_at, issuers(legal_name, trade_name, sector, business_summary, logo_path, banner_path)";
+  "id, issuer_id, rede, contract_address, token_address, category, target_min_cents, hard_cap_cents, share_price_cents, opens_at, closes_at, onchain_confirmed_at, issuers(legal_name, trade_name, sector, business_summary, logo_path, banner_path)";
 
 type ConfirmedOfferingIssuerRow = {
   legal_name: string;
@@ -80,6 +95,7 @@ type ConfirmedOfferingIssuerRow = {
 type ConfirmedOfferingRow = {
   id: string;
   issuer_id: string;
+  rede: string;
   contract_address: string | null;
   token_address: string | null;
   category: string | null;
@@ -101,6 +117,21 @@ function firstIssuer(issuers: ConfirmedOfferingRow["issuers"]): ConfirmedOfferin
   return Array.isArray(issuers) ? (issuers[0] ?? null) : issuers;
 }
 
+const HEX_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const BASE58_PUBKEY = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/** Formato conferido de novo aqui (além dos CHECKs da 0017) — nunca entrega endereço de uma rede
+ * com o tipo da outra. Linha com rede desconhecida ou formato inválido é ignorada. */
+function enderecosPorRede(rede: string, contrato: string, token: string): EnderecosOfertaPorRede | null {
+  if (rede === "sepolia" && HEX_ADDRESS.test(contrato) && HEX_ADDRESS.test(token)) {
+    return { rede, contractAddress: contrato as `0x${string}`, tokenAddress: token as `0x${string}` };
+  }
+  if (rede === "solana-devnet" && BASE58_PUBKEY.test(contrato) && BASE58_PUBKEY.test(token)) {
+    return { rede, contractAddress: contrato, tokenAddress: token };
+  }
+  return null;
+}
+
 async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise<ConfirmedOnChainOffering | null> {
   const issuerRow = firstIssuer(row.issuers);
   if (!issuerRow || !row.contract_address || !row.token_address) return null;
@@ -120,11 +151,13 @@ async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise
       ? Math.round(Number(row.hard_cap_cents) / Number(row.share_price_cents))
       : null;
 
+  const enderecos = enderecosPorRede(row.rede, row.contract_address, row.token_address);
+  if (!enderecos) return null;
+
   return {
+    ...enderecos,
     id: row.id,
     issuerAccountId: row.issuer_id,
-    contractAddress: row.contract_address as `0x${string}`,
-    tokenAddress: row.token_address as `0x${string}`,
     category: row.category as TokenCategory | null,
     issuerLegalName: issuerRow.legal_name,
     issuerTradeName: issuerRow.trade_name,

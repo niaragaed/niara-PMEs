@@ -7,6 +7,7 @@ import { PersonalDataSection } from "./PersonalDataSection";
 import { MyOffersSection } from "./MyOffersSection";
 import { InvestorProfileSection } from "./InvestorProfileSection";
 import { WalletSection } from "./WalletSection";
+import { SolanaWalletSection } from "./SolanaWalletSection";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { LoadedProfile, OfferingSummary } from "@/app/perfil/actions";
@@ -64,6 +65,7 @@ export function PerfilPage({ profile, offerings, aviso, abrirTesteInvestidor }: 
               {profile.role === "issuer" && <MyOffersSection offerings={offerings} />}
               <InvestorProfileSection abrirAutomaticamente={abrirTesteInvestidor} />
               <WalletSection walletAddress={profile.walletAddress} />
+              <SolanaWalletSection solanaWalletAddress={profile.solanaWalletAddress} />
             </div>
           </div>
         </div>

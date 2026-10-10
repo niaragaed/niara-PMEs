@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { RealOnChainInvestPanel } from "@/components/investir-onchain/RealOnChainInvestPanel";
+import { SolanaInvestPanel } from "@/components/investir-onchain/SolanaInvestPanel";
+import { RedeBadge } from "@/components/solana/RedeBadge";
 import { CategoryBadge } from "./CategoryChip";
 import { OfertaBanner } from "./OfertaBanner";
 import { SectionGlow } from "@/components/ui/SectionGlow";
@@ -39,7 +41,7 @@ export function SelfServiceOfertaDetailPage({
     <main className="isolate flex flex-1 flex-col bg-military">
       <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.common.demonstracao}</span> — {t.demoBannerSelfService}
+        <span className="font-semibold text-salmon">{ptBr.common.demonstracao}</span> — {oferta.rede === "solana-devnet" ? t.demoBannerSelfServiceSolana : t.demoBannerSelfService}
       </div>
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
@@ -55,22 +57,29 @@ export function SelfServiceOfertaDetailPage({
         </div>
 
         <div className="mt-6">
-          <CategoryBadge categoria={oferta.category} />
+          <div className="flex flex-wrap items-center gap-2">
+            <CategoryBadge categoria={oferta.category} />
+            <RedeBadge rede={oferta.rede} />
+          </div>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-on-military">{nome}</h1>
         </div>
 
         <div className="mt-8 flex flex-col gap-6">
           <p className="flex items-start gap-2 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
-            {t.avisoSelfService}
+            {oferta.rede === "solana-devnet" ? t.avisoSelfServiceSolana : t.avisoSelfService}
           </p>
 
-          <RealOnChainInvestPanel
-            tokenAddress={oferta.tokenAddress}
-            ofertaAddress={oferta.contractAddress}
-            isSocio={isSocio}
-            isEmissor={isEmissor}
-          />
+          {oferta.rede === "sepolia" ? (
+            <RealOnChainInvestPanel
+              tokenAddress={oferta.tokenAddress}
+              ofertaAddress={oferta.contractAddress}
+              isSocio={isSocio}
+              isEmissor={isEmissor}
+            />
+          ) : (
+            <SolanaInvestPanel ofertaEndereco={oferta.contractAddress} isSocio={isSocio} isEmissor={isEmissor} />
+          )}
 
           {(oferta.issuerSector || oferta.issuerBusinessSummary) && (
             <section className="rounded-lg bg-surface p-6 shadow-soft">
