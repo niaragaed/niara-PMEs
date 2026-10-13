@@ -1,5 +1,5 @@
 import { CATEGORY_META } from "@/lib/categories";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
 
 type ChipSize = "sm" | "md" | "lg";
@@ -51,7 +51,7 @@ export function CategoryBadge({ category, size = "sm" }: { category: TokenCatego
       >
         <Icon className={iconDims} style={{ color: meta.iconVar }} />
       </span>
-      {ptBr.assets.categories[category]}
+      {pt.assets.categories[category]}
     </span>
   );
 }

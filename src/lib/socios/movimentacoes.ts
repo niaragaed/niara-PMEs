@@ -18,7 +18,7 @@ import { formatBRL } from "@/lib/format";
 import { getEventsOnChain, getSummaryOnChain, type EventoOnChain, type OnChainSummary } from "@/lib/web3/events";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { solanaExplorerAccountLink } from "@/lib/solana/config";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export type TransactionOrigin = "onchain" | "offchain";
 
@@ -47,7 +47,7 @@ function centsToBRL(cents: number): string {
 }
 
 function onChainEventToTransaction(evento: EventoOnChain, summary: OnChainSummary | null): Transaction {
-  const t = ptBr.partners.realTable;
+  const t = pt.partners.realTable;
   const decimals = summary?.mockBrlDecimals ?? 18;
   const symbol = summary?.mockBrlSymbol ?? "mBRL";
 

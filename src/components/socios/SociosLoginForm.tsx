@@ -9,15 +9,15 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
-function mapAuthError(error: AuthError, t: typeof ptBr.partners.login.errors): string {
+function mapAuthError(error: AuthError, t: typeof pt.partners.login.errors): string {
   if (error.code === "invalid_credentials") return t.invalidCredentials;
   return t.generic;
 }
 
 export function PartnersLoginForm() {
-  const t = ptBr.partners.login;
+  const t = pt.partners.login;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
   const [email, setEmail] = useState("");

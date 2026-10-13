@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import { OfferingBanner } from "./OfertaBanner";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { Offering } from "@/lib/mock/ofertas";
 import {
   ONCHAIN_SMES_AUTHORIZED_SHARES,
@@ -27,7 +27,7 @@ export function SmesOnChainCard({
   bannerUrl: string | null;
   logoUrl: string | null;
 }) {
-  const t = ptBr.trade.smesOnChain;
+  const t = pt.trade.smesOnChain;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-2 ring-salmon">

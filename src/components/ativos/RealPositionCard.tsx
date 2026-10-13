@@ -24,10 +24,10 @@ import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { useMyOnChainPosition, useOnChainOfferingTerms } from "@/lib/web3/hooks/useOfertaOnChain";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { formatToken } from "@/lib/web3/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export function RealPositionCard() {
-  const t = ptBr.assets.realPosition;
+  const t = pt.assets.realPosition;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 
@@ -89,7 +89,7 @@ export function RealPositionCard() {
           <div>
             <dt className="text-xs text-on-military-muted">{t.stateLabel}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
-              {terms.state ? ptBr.investOnChain.terms.states[terms.state] : "—"}
+              {terms.state ? pt.investOnChain.terms.states[terms.state] : "—"}
             </dd>
           </div>
         </dl>

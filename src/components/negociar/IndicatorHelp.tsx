@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { HelpCircle } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 type IndicatorHelpProps = {
   name: string;
@@ -39,7 +39,7 @@ export function IndicatorHelp({ name: nome, explanation, isOpen, onOpenChange }:
     <div ref={containerRef} className="relative inline-flex">
       <button
         type="button"
-        aria-label={ptBr.trade.offering.indicators.helpAria(nome)}
+        aria-label={pt.trade.offering.indicators.helpAria(nome)}
         aria-expanded={isOpen}
         aria-controls={popoverId}
         onClick={() => onOpenChange(!isOpen)}

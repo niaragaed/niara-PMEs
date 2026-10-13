@@ -1,9 +1,9 @@
 import { DocsNav } from "./DocumentacaoNav";
 import { FaqAccordion } from "./FaqAccordion";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export function DocsPage() {
-  const t = ptBr.docs;
+  const t = pt.docs;
 
   return (
     <main className="flex flex-1 flex-col bg-military">

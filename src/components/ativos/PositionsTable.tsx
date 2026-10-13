@@ -1,6 +1,6 @@
 import { CATEGORY_COLOR_VAR } from "@/lib/ativos/derive";
 import { formatBRL, formatSignedPercent } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS, type Position } from "@/lib/mock/ativos";
 
 function changePercent(position: Position): number {
@@ -12,26 +12,26 @@ export function PositionsTable() {
   return (
     <div className="overflow-x-auto rounded-lg border border-panel-border bg-panel">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <caption className="sr-only">{ptBr.assets.table.title}</caption>
+        <caption className="sr-only">{pt.assets.table.title}</caption>
         <thead>
           <tr className="border-b border-panel-border text-xs uppercase tracking-wide text-on-military-muted">
             <th scope="col" className="px-4 py-3 font-medium">
-              {ptBr.assets.table.colAsset}
+              {pt.assets.table.colAsset}
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              {ptBr.assets.table.colCategory}
+              {pt.assets.table.colCategory}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.assets.table.colShares}
+              {pt.assets.table.colShares}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.assets.table.colAveragePrice}
+              {pt.assets.table.colAveragePrice}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.assets.table.colCurrentValue}
+              {pt.assets.table.colCurrentValue}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.assets.table.colChange}
+              {pt.assets.table.colChange}
             </th>
           </tr>
         </thead>
@@ -50,7 +50,7 @@ export function PositionsTable() {
                       style={{ backgroundColor: CATEGORY_COLOR_VAR[position.category] }}
                       aria-hidden="true"
                     />
-                    {ptBr.assets.categories[position.category]}
+                    {pt.assets.categories[position.category]}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right text-on-military">{position.shares}</td>

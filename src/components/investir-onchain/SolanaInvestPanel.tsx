@@ -25,7 +25,7 @@ import { useSolanaAction, type SolanaActionStatus } from "@/lib/solana/hooks/use
 import { txInvest, txClose, txFaucet, txRelease, txRefund, txRedeem } from "@/lib/solana/instrucoes";
 import { DECIMALS_MBRL_SOLANA, FAUCET_MAX_MBRL_SOLANA, UNIT_MBRL_SOLANA, solanaExplorerAccountLink, linkExplorerSolanaTx } from "@/lib/solana/config";
 import { formatDeadline, formatToken } from "@/lib/web3/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 const MBRL = "mBRL";
 
@@ -55,7 +55,7 @@ function fmt(value: bigint) {
 }
 
 function Return({ status, errorMessage, signature, success }: { status: SolanaActionStatus; errorMessage: string | null; signature: string | null; success: string }) {
-  const t = ptBr.solana.invest;
+  const t = pt.solana.invest;
   return (
     <>
       {status === "sucesso" && (
@@ -80,7 +80,7 @@ function Return({ status, errorMessage, signature, success }: { status: SolanaAc
 }
 
 function buttonLabel(status: SolanaActionStatus, defaultLabel: string) {
-  const t = ptBr.solana.invest;
+  const t = pt.solana.invest;
   if (status === "assinando") return t.signing;
   if (status === "confirmando") return t.confirming;
   return defaultLabel;
@@ -95,8 +95,8 @@ export function SolanaInvestPanel({
   isPartner?: boolean;
   isEmissor?: boolean;
 }) {
-  const t = ptBr.investOnChain;
-  const ts = ptBr.solana.invest;
+  const t = pt.investOnChain;
+  const ts = pt.solana.invest;
   const carteira = useSolanaWallet();
   const investidor = carteira.address;
   const leitura = useSolanaOffering(offeringAddress, investidor);

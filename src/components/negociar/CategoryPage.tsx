@@ -4,7 +4,7 @@ import { ShowcaseCard } from "./ShowcaseCard";
 import { SmesSectorFilter, type SmesCardData } from "./PmesSectorFilter";
 import { RealOfferCard } from "./RealOfferCard";
 import { MyOfferCard } from "./MyOfferCard";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { getOfferingsByCategory } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
@@ -31,8 +31,8 @@ import { SectionGlow } from "@/components/ui/SectionGlow";
 // de outras empresas. As duas listas (ofertasReais/ofertasProprias) nunca
 // têm conteúdo ao mesmo tempo, já que role é ou "investor" ou "issuer".
 export async function CategoryPage({ category }: { category: TokenCategory }) {
-  const t = ptBr.trade.categories[category];
-  const tt = ptBr.trade.categoryTemplate;
+  const t = pt.trade.categories[category];
+  const tt = pt.trade.categoryTemplate;
   const offerings = getOfferingsByCategory(category);
 
   const { role, accountId } = await resolveAccount();
@@ -88,8 +88,8 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
     <main className="isolate flex flex-1 flex-col bg-military">
       <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.trade.demoBanner.label}</span> —{" "}
-        {ptBr.trade.demoBanner.text}
+        <span className="font-semibold text-salmon">{pt.trade.demoBanner.label}</span> —{" "}
+        {pt.trade.demoBanner.text}
       </div>
 
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
@@ -104,7 +104,7 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
           <CategoryChip category={category} size="lg" />
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-on-military">
-              {ptBr.assets.categories[category]}
+              {pt.assets.categories[category]}
             </h1>
             <p className="mt-1 max-w-2xl text-on-military-muted">{t.shortDescription}</p>
           </div>

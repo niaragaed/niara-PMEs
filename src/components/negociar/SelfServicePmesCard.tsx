@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import { OfferingBanner } from "./OfertaBanner";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 // Card de vitrine para uma oferta PME self-service (publicada pelo próprio emissor via
 // OfertaOrquestrador, ver CLAUDE.md "Tela /empresa/ofertas" → Fase 3) já confirmada on-chain —
@@ -44,7 +44,7 @@ export function SelfServiceSmesCard({
   sharesCount: number | null;
   rede?: "sepolia" | "solana-devnet";
 }) {
-  const t = ptBr.trade.smesOnChain;
+  const t = pt.trade.smesOnChain;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-2 ring-salmon">

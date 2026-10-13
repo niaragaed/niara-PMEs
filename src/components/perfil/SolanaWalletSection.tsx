@@ -9,14 +9,14 @@ import { utils } from "@anchor-lang/core";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
 import { providerPhantom, useSolanaWallet } from "@/lib/solana/phantom";
 import { prepareSolanaLink, saveSolanaWallet, unlinkSolanaWallet } from "@/app/perfil/solana-actions";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 function truncate(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddress: string | null }) {
-  const t = ptBr.solana.profile;
+  const t = pt.solana.profile;
   const wallet = useSolanaWallet();
   const [linked, setLinked] = useState(solanaWalletAddress);
   const [error, setError] = useState<string | null>(null);

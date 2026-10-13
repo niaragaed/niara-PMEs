@@ -4,7 +4,7 @@
 // conteúdo das perguntas vive em ptBr.perfil.investidor.quiz (dicionário de
 // i18n), este arquivo só deriva a pontuação e a categoria a partir dele.
 
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export type InvestorCategory = "conservador" | "moderado" | "arrojado";
 
@@ -14,7 +14,7 @@ export type InvestorProfileResult = {
   completedAt: string; // ISO date
 };
 
-const QUESTIONS = ptBr.profile.investor.quiz.questions;
+const QUESTIONS = pt.profile.investor.quiz.questions;
 
 export const SCORE_MIN = QUESTIONS.reduce(
   (sum, q) => sum + Math.min(...q.options.map((o) => o.weight)),

@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export type SyncStatus = "nao_onchain" | "pendente" | "confirmada" | "divergente";
 
@@ -20,7 +20,7 @@ export function SyncStatusBadge({ status }: { status: SyncStatus }) {
   if (status === "nao_onchain") return null;
 
   const Icon = ICONS[status];
-  const label = ptBr.companyOfferings.onchainStatus[status].title;
+  const label = pt.companyOfferings.onchainStatus[status].title;
 
   return (
     <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${STYLES[status]}`}>

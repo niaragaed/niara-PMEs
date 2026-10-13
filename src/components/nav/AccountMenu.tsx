@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRightLeft, Building2, LogOut, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { HeaderAccount } from "@/lib/nav/headerAccount";
 
 function AccountAvatar({ account }: { account: HeaderAccount }) {
@@ -31,7 +31,7 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const router = useRouter();
-  const t = ptBr.nav.accountMenu;
+  const t = pt.nav.accountMenu;
 
   const closeNow = useCallback(() => setOpen(false), []);
 

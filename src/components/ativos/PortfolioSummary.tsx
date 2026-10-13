@@ -1,6 +1,6 @@
 import { computeTotals } from "@/lib/ativos/derive";
 import { formatBRL, formatSignedBRL, formatSignedPercent } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
 
 export function PortfolioSummary() {
@@ -8,14 +8,14 @@ export function PortfolioSummary() {
   const valueClassName = profitLoss >= 0 ? "text-value-positive" : "text-value-negative";
 
   const cards: { label: string; value: string; valueClassName?: string; note?: string }[] = [
-    { label: ptBr.assets.kpis.totalEquity, value: formatBRL(totalEquity) },
-    { label: ptBr.assets.kpis.investedValue, value: formatBRL(investedValue) },
-    { label: ptBr.assets.kpis.profitLoss, value: formatSignedBRL(profitLoss), valueClassName },
+    { label: pt.assets.kpis.totalEquity, value: formatBRL(totalEquity) },
+    { label: pt.assets.kpis.investedValue, value: formatBRL(investedValue) },
+    { label: pt.assets.kpis.profitLoss, value: formatSignedBRL(profitLoss), valueClassName },
     {
-      label: ptBr.assets.kpis.periodReturn,
+      label: pt.assets.kpis.periodReturn,
       value: formatSignedPercent(returnPercent),
       valueClassName,
-      note: ptBr.assets.kpis.returnNote,
+      note: pt.assets.kpis.returnNote,
     },
   ];
 

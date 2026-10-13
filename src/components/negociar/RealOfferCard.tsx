@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BadgeCheck, Building2 } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { formatBRL } from "@/lib/format";
 import type { ActiveOfferingSummary } from "@/lib/investments";
 
@@ -18,7 +18,7 @@ function formatDate(iso: string): string {
 // HONESTIDADE). A própria oferta do issuer logado usa um card à parte
 // (MyOfferCard.tsx), com selo neutro de demonstração — nunca este.
 export function RealOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
-  const t = ptBr.trade.realOffering;
+  const t = pt.trade.realOffering;
   const nome = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (

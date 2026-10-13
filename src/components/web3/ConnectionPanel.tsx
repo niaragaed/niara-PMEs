@@ -3,10 +3,10 @@
 import { useBalance, useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { formatUnits } from "viem";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export function ConnectionPanel() {
-  const t = ptBr.profile.wallet.panel;
+  const t = pt.profile.wallet.panel;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { HeroParallaxLayers } from "./HeroParallaxLayers";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 // Hero centrado no texto, sem elemento central 3D: o astronauta foi
 // removido (ver CLAUDE.md). No lugar, HeroParallaxLayers desenha um motivo
@@ -17,32 +17,32 @@ export function Hero() {
 
       <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-7">
         <span className="rounded-full bg-military-100 px-4 py-1 text-sm font-medium text-military">
-          {ptBr.hero.badge}
+          {pt.hero.badge}
         </span>
 
         <h1 className="text-focus-in text-5xl font-semibold leading-tight tracking-tight text-on-military sm:text-6xl">
-          {ptBr.hero.title}
+          {pt.hero.title}
         </h1>
 
-        <p className="max-w-lg text-lg text-on-military/80">{ptBr.hero.subtitle}</p>
+        <p className="max-w-lg text-lg text-on-military/80">{pt.hero.subtitle}</p>
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href="/entrar?intent=captacao"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-salmon px-6 py-3 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
           >
-            {ptBr.hero.ctaPrimary}
+            {pt.hero.ctaPrimary}
           </Link>
 
           <Link
             href="/sobre/documentos"
             className="inline-flex items-center justify-center rounded-full border border-on-military px-6 py-3 text-sm font-medium text-on-military transition-colors hover:bg-on-military/10"
           >
-            {ptBr.hero.ctaSecondary}
+            {pt.hero.ctaSecondary}
           </Link>
         </div>
 
-        <p className="max-w-md text-sm text-on-military/80">{ptBr.common.demoNotice}</p>
+        <p className="max-w-md text-sm text-on-military/80">{pt.common.demoNotice}</p>
       </div>
     </section>
   );

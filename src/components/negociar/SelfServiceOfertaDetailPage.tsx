@@ -7,7 +7,7 @@ import { CategoryBadge } from "./CategoryChip";
 import { OfferingBanner } from "./OfertaBanner";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { DEFAULT_DOCUMENTS } from "@/lib/mock/ofertas";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 
@@ -34,14 +34,14 @@ export function SelfServiceOfferingDetailPage({
    * RealOnChainInvestPanel.tsx). */
   isIssuer?: boolean;
 }) {
-  const t = ptBr.trade.offering;
+  const t = pt.trade.offering;
   const nome = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">
       <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.common.demo}</span> — {offering.rede === "solana-devnet" ? t.demoBannerSelfServiceSolana : t.demoBannerSelfService}
+        <span className="font-semibold text-salmon">{pt.common.demo}</span> — {offering.rede === "solana-devnet" ? t.demoBannerSelfServiceSolana : t.demoBannerSelfService}
       </div>
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">

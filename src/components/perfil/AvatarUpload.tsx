@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Camera, Trash2, User } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
 
@@ -10,7 +10,7 @@ export function AvatarUpload() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const t = ptBr.profile.registrationData.avatar;
+  const t = pt.profile.registrationData.avatar;
 
   // a foto nunca sai do navegador — só criamos um object URL local, que
   // precisa ser revogado ao trocar de imagem ou desmontar o componente

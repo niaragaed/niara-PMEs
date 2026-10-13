@@ -2,12 +2,12 @@
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { SelectField, TextField, TextareaField } from "@/components/perfil/FormField";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { isValidEmail } from "@/lib/masks";
 
 const CONTACT_EMAIL = "niaragaed@gmail.com";
 
-type SubjectKey = keyof typeof ptBr.contact.form.subjectOptions;
+type SubjectKey = keyof typeof pt.contact.form.subjectOptions;
 
 const SUBJECTS: SubjectKey[] = ["company", "investor", "partnerships", "press", "support", "other"];
 
@@ -32,7 +32,7 @@ export function ContactForm() {
   // nunca são persistidos nem enviados a servidor.
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
-  const t = ptBr.contact.form;
+  const t = pt.contact.form;
 
   function handleChange(field: "nome" | "email" | "mensagem") {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

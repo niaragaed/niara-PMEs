@@ -1,5 +1,5 @@
 import { Building2, Car, Home, Landmark, Wheat, type LucideIcon } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_CATALOG, type TokenCategory } from "@/lib/mock/ativos";
 
 const CATEGORY_ICON: Record<TokenCategory, LucideIcon> = {
@@ -14,8 +14,8 @@ export function AssetCatalog() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold text-on-military">{ptBr.assets.catalog.title}</h2>
-        <p className="mt-1 text-sm text-on-military-muted">{ptBr.assets.catalog.subtitle}</p>
+        <h2 className="text-lg font-semibold text-on-military">{pt.assets.catalog.title}</h2>
+        <p className="mt-1 text-sm text-on-military-muted">{pt.assets.catalog.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -31,7 +31,7 @@ export function AssetCatalog() {
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                  {ptBr.assets.categories[asset.category]}
+                  {pt.assets.categories[asset.category]}
                 </span>
               </div>
 
@@ -42,11 +42,11 @@ export function AssetCatalog() {
                 type="button"
                 disabled
                 aria-disabled="true"
-                title={ptBr.common.comingSoon}
+                title={pt.common.comingSoon}
                 className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/90 px-4 py-2 text-sm font-medium text-on-salmon"
               >
-                {ptBr.assets.catalog.invest}
-                <span className="text-xs font-normal">({ptBr.common.comingSoon})</span>
+                {pt.assets.catalog.invest}
+                <span className="text-xs font-normal">({pt.common.comingSoon})</span>
               </button>
             </div>
           );

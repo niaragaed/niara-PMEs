@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { OnChainInvestPage, type ServerSolanaOption } from "@/components/investir-onchain/OnChainInvestPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { resolvePartner } from "@/lib/auth/resolveSocio";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { solanaConnection, listSolanaOfferings } from "@/lib/solana/program";
 
 export const metadata: Metadata = {
-  title: `${ptBr.investOnChain.meta.title} · Niara PMEs`,
-  description: ptBr.investOnChain.meta.description,
+  title: `${pt.investOnChain.meta.title} · Niara PMEs`,
+  description: pt.investOnChain.meta.description,
   robots: { index: false, follow: false },
 };
 

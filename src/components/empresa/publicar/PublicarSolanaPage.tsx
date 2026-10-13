@@ -32,7 +32,7 @@ import {
   verifyConsistencySolana,
 } from "@/app/empresa/ofertas/solana-actions";
 import type { ConfirmPublicationState, VerificarConsistenciaState } from "@/app/empresa/ofertas/onchain-actions";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 type Props = {
   offeringId: string;
@@ -91,8 +91,8 @@ export function PublishSolanaPage({
   tokenAddress,
   onchainLastError,
 }: Props) {
-  const t = ptBr.companyOfferings.publishOnChain;
-  const ts = ptBr.solana.publish;
+  const t = pt.companyOfferings.publishOnChain;
+  const ts = pt.solana.publish;
   const tg = ts.gates;
   const tp = t.publication;
   const tsp = ts.publication;
@@ -273,7 +273,7 @@ export function PublishSolanaPage({
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.common.demo}</span> — {ts.banner}
+        <span className="font-semibold text-salmon">{pt.common.demo}</span> — {ts.banner}
       </div>
 
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">
@@ -282,7 +282,7 @@ export function PublishSolanaPage({
         </Link>
 
         <h1 className="mt-4 text-2xl font-semibold tracking-tight text-on-military">
-          {t.title} <span className="text-base font-normal text-on-military-muted">· {ptBr.solana.networkName}</span>
+          {t.title} <span className="text-base font-normal text-on-military-muted">· {pt.solana.networkName}</span>
         </h1>
         <p className="mt-1 text-sm text-on-military-muted">{ts.subtitle}</p>
 
@@ -445,7 +445,7 @@ export function PublishSolanaPage({
                     : "cursor-not-allowed rounded-md bg-salmon px-6 py-3 text-sm font-semibold text-on-salmon opacity-60"
                 }
               >
-                {t.button.label} · {ptBr.solana.networkName}
+                {t.button.label} · {pt.solana.networkName}
               </button>
               {!canEnable && pendingItems.length > 0 && (
                 <div className="text-xs text-on-military-muted">

@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { loadPublicOffering } from "@/app/investir/actions";
 import { OfferingDetailPage } from "@/components/investir/OfferingDetailPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { isOfferingOwner } from "@/lib/investments";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,14 +17,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!offering) {
     return {
-      title: `${ptBr.invest.detail.notFound.title} · Niara PMEs`,
+      title: `${pt.invest.detail.notFound.title} · Niara PMEs`,
       robots: { index: false, follow: false },
     };
   }
 
   return {
     title: `${offering.issuer.legalName} · Niara PMEs`,
-    description: offering.issuer.businessSummary ?? ptBr.invest.meta.description,
+    description: offering.issuer.businessSummary ?? pt.invest.meta.description,
     robots: { index: false, follow: false },
   };
 }

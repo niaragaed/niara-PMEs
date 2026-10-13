@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createAccount, type CreateAccountState } from "@/app/cadastro/actions";
 import { VideoCover } from "@/components/entrar/VideoCover";
 import { ReadField, SelectField, TextField } from "@/components/perfil/FormField";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import {
   isValidCEP,
   isValidBirthDate,
@@ -38,7 +38,7 @@ type AccountErrors = { email?: string; password?: string };
 // EntrarPage.tsx (ptBr.entrar.erros), reaproveitado aqui em vez de duplicar
 // as strings (o signUp em si só existe nesta tela agora, ver EntrarPage.tsx).
 function mapSignUpError(error: AuthError): string {
-  const t = ptBr.signIn.errors;
+  const t = pt.signIn.errors;
   switch (error.code) {
     case "user_already_exists":
       return t.emailAlreadyRegistered;
@@ -87,7 +87,7 @@ const EMPTY_FORM: FormData = {
 
 function validate(data: FormData, personType: PersonType): FormErrors {
   const errors: FormErrors = {};
-  const t = ptBr.signUp.errors;
+  const t = pt.signUp.errors;
 
   if (personType === "pf") {
     if (!data.fullName.trim()) errors.fullName = t.required;
@@ -117,7 +117,7 @@ function validate(data: FormData, personType: PersonType): FormErrors {
 // O vídeo à esquerda é o mesmo componente/conteúdo de /entrar (VideoCover),
 // persistente entre os três passos.
 export function SignUpPage({ initialStep, email }: { initialStep: Step; email: string }) {
-  const t = ptBr.signUp;
+  const t = pt.signUp;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
@@ -139,8 +139,8 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
 
   function validateAccount(): boolean {
     const nextErrors: AccountErrors = {};
-    if (!isValidEmail(accountEmail)) nextErrors.email = ptBr.signIn.errors.invalidEmail;
-    if (accountPassword.length < 6) nextErrors.password = ptBr.signIn.errors.shortPassword;
+    if (!isValidEmail(accountEmail)) nextErrors.email = pt.signIn.errors.invalidEmail;
+    if (accountPassword.length < 6) nextErrors.password = pt.signIn.errors.shortPassword;
     setAccountErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }

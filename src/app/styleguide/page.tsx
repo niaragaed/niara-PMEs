@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
-export const metadata: Metadata = { title: `${ptBr.styleguide.title} · Niara PMEs` };
+export const metadata: Metadata = { title: `${pt.styleguide.title} · Niara PMEs` };
 
 type Swatch = { label: string; hex: string; className: string };
 
@@ -60,46 +60,46 @@ export default function StyleguidePage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-16 px-6 py-16">
       <header className="flex flex-col gap-2 border-b border-border pb-8">
-        <h1 className="text-3xl font-semibold text-ink">{ptBr.styleguide.title}</h1>
-        <p className="text-ink-muted">{ptBr.styleguide.subtitle}</p>
+        <h1 className="text-3xl font-semibold text-ink">{pt.styleguide.title}</h1>
+        <p className="text-ink-muted">{pt.styleguide.subtitle}</p>
       </header>
 
-      <Section title={ptBr.styleguide.colorsBase}>
+      <Section title={pt.styleguide.colorsBase}>
         <SwatchGrid swatches={baseSwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.militaryGreen}>
+      <Section title={pt.styleguide.militaryGreen}>
         <SwatchGrid swatches={militarySwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.salmon}>
+      <Section title={pt.styleguide.salmon}>
         <SwatchGrid swatches={salmonSwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.accents}>
+      <Section title={pt.styleguide.accents}>
         <SwatchGrid swatches={accentSwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.alternatingBackgrounds}>
+      <Section title={pt.styleguide.alternatingBackgrounds}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg bg-military-100 p-6">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.sageBackground}</p>
+            <p className="text-lg font-semibold text-ink">{pt.styleguide.sageBackground}</p>
           </div>
           <div className="rounded-lg bg-salmon-100 p-6">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.peachBackground}</p>
-            <p className="mt-2 text-sm text-ink-peach">{ptBr.styleguide.peachBackgroundSubtitle}</p>
+            <p className="text-lg font-semibold text-ink">{pt.styleguide.peachBackground}</p>
+            <p className="mt-2 text-sm text-ink-peach">{pt.styleguide.peachBackgroundSubtitle}</p>
           </div>
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.typography}>
+      <Section title={pt.styleguide.typography}>
         <div className="flex flex-col gap-4">
           <h1 className="text-4xl font-semibold tracking-tight text-ink">Niara PMEs</h1>
-          <p className="max-w-2xl text-base text-ink-muted">{ptBr.styleguide.typographySample}</p>
+          <p className="max-w-2xl text-base text-ink-muted">{pt.styleguide.typographySample}</p>
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.radiiAndShadows}>
+      <Section title={pt.styleguide.radiiAndShadows}>
         <div className="flex flex-wrap items-end gap-6">
           <div className="flex flex-col items-center gap-2">
             <div className="h-16 w-16 rounded-sm border border-border bg-surface shadow-soft" />
@@ -120,19 +120,19 @@ export default function StyleguidePage() {
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.buttons}>
+      <Section title={pt.styleguide.buttons}>
         <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-full bg-salmon px-6 py-3 text-sm font-medium text-ink transition-colors hover:bg-salmon-600"
           >
-            {ptBr.styleguide.primaryButton}
+            {pt.styleguide.primaryButton}
           </button>
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-full border border-military px-6 py-3 text-sm font-medium text-military transition-colors hover:bg-military-100"
           >
-            {ptBr.styleguide.secondaryButton}
+            {pt.styleguide.secondaryButton}
           </button>
           <button
             type="button"
@@ -140,20 +140,20 @@ export default function StyleguidePage() {
             aria-disabled="true"
             className="inline-flex cursor-not-allowed items-center justify-center rounded-full bg-salmon/50 px-6 py-3 text-sm font-medium text-ink/60"
           >
-            {ptBr.styleguide.disabledButton}
+            {pt.styleguide.disabledButton}
           </button>
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.cards}>
+      <Section title={pt.styleguide.cards}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-border bg-surface p-6 shadow-soft">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.cardTitle}</p>
-            <p className="mt-2 text-sm text-ink-muted">{ptBr.styleguide.cardText}</p>
+            <p className="text-lg font-semibold text-ink">{pt.styleguide.cardTitle}</p>
+            <p className="mt-2 text-sm text-ink-muted">{pt.styleguide.cardText}</p>
           </div>
           <div className="rounded-lg border border-border bg-surface-alt p-6">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.cardTitle}</p>
-            <p className="mt-2 text-sm text-ink-muted">{ptBr.styleguide.cardText}</p>
+            <p className="text-lg font-semibold text-ink">{pt.styleguide.cardTitle}</p>
+            <p className="mt-2 text-sm text-ink-muted">{pt.styleguide.cardText}</p>
           </div>
         </div>
       </Section>
