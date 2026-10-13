@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 // só por quem souber a URL. Remover (ou substituir pela tela de publicação real) quando a
 // Fase 3 avançar para as próximas sub-etapas.
 export const metadata: Metadata = {
-  title: "Diagnóstico on-chain · Niara PMEs",
+  title: "On-chain diagnostic · Niara PMEs",
   robots: { index: false, follow: false },
 };
 

@@ -684,10 +684,10 @@ if (process.env.NODE_ENV !== "production") {
   for (const slug of ONCHAIN_SMES_SLUGS_IN_ORDER) {
     const offering = OFFERINGS.find((item) => item.slug === slug);
     if (!offering) {
-      throw new Error(`ONCHAIN_PMES_SLUGS_EM_ORDEM referencia o slug "${slug}", que não existe em OFERTAS.`);
+      throw new Error(`ONCHAIN_SMES_SLUGS_IN_ORDER references the slug "${slug}", which doesn't exist in OFFERINGS.`);
     }
     if (offering.category !== "pmes") {
-      throw new Error(`Oferta "${slug}" está ligada a uma oferta on-chain real, mas categoria não é "pmes".`);
+      throw new Error(`Offering "${slug}" is linked to a real on-chain offering, but its category isn't "pmes".`);
     }
   }
 }

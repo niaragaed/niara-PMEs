@@ -98,7 +98,7 @@ export async function txCreateOffering(
   p: CreateOfferingParams,
 ): Promise<{ tx: Transaction; oferta: string }> {
   const clean = p.cnpjRefHex.replace(/^0x/, "");
-  if (!/^[0-9a-fA-F]{64}$/.test(clean)) throw new Error("cnpjRef inválido.");
+  if (!/^[0-9a-fA-F]{64}$/.test(clean)) throw new Error("Invalid cnpjRef.");
   const cnpjRef = Array.from({ length: 32 }, (_, i) => parseInt(clean.slice(i * 2, i * 2 + 2), 16));
   const wallet = pk(issuerWallet);
   const offering = offeringPda(wallet, offeringIndex);

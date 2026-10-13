@@ -35,7 +35,7 @@ export async function findDeployBlock(
   if (await hasCode(lo)) return lo;
   if (!(await hasCode(hi))) {
     throw new Error(
-      `encontrarBlocoDeploy: endereço ${address} não tem código no bloco atual (${hi}) — endereço errado ou RPC sem acesso a estado histórico (archive node)?`,
+      `findDeployBlock: address ${address} has no code at the current block (${hi}) — wrong address, or an RPC without access to historical state (archive node)?`,
     );
   }
 
@@ -93,9 +93,9 @@ export function publicClient() {
 
 // Todos os 6 eventos, uma única vez — usados juntos num só filtro `events` (não `event`) por
 // chamada getLogs, em vez de 1 chamada RPC por tipo.
-const ABI_EVENTS: AbiEvent[] = EVENT_NAMES.map((nome) => {
-  const item = ofertaCaptacaoAbi.find((entry) => entry.type === "event" && entry.name === nome);
-  if (!item) throw new Error(`Evento ${nome} não encontrado no ABI de OfertaCaptacao`);
+const ABI_EVENTS: AbiEvent[] = EVENT_NAMES.map((eventName) => {
+  const item = ofertaCaptacaoAbi.find((entry) => entry.type === "event" && entry.name === eventName);
+  if (!item) throw new Error(`Event ${eventName} not found in the OfertaCaptacao ABI`);
   return item as AbiEvent;
 });
 

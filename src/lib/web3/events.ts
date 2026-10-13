@@ -174,7 +174,7 @@ export async function getEventsOnChain(): Promise<OnChainEvent[]> {
     const deployBlock = await findDeployBlock(client, addresses.mockBrl);
     if (redeployDetected) {
       console.warn(
-        `[socios] Endereço de MockBRL mudou (era ${syncState?.mockBrlAddress}, agora ${addresses.mockBrl}) — infra parece ter sido redeployada. Bloco de deploy recalculado automaticamente: ${deployBlock}. Eventos de contratos anteriores seguem no banco mas não entram mais na leitura (filtrados por endereço vigente).`,
+        `[socios] MockBRL address changed (was ${syncState?.mockBrlAddress}, now ${addresses.mockBrl}) — the infra seems to have been redeployed. Deploy block recomputed automatically: ${deployBlock}. Events from previous contracts stay in the database but are no longer read (filtered by the current address).`,
       );
     }
     syncedAte = deployBlock - BigInt(1);
@@ -202,7 +202,7 @@ export async function getEventsOnChain(): Promise<OnChainEvent[]> {
   try {
     await Promise.all([saveNewEvents(newEvents), updateSyncState(targetBlock, addresses.mockBrl)]);
   } catch (error) {
-    console.error("[socios] falha ao gravar cache on-chain (resposta atual não é afetada):", error);
+    console.error("[socios] failed to write the on-chain cache (the current response isn't affected):", error);
   }
 
   const allEvents = [...cachedEvents, ...newEvents];
