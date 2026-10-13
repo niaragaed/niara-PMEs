@@ -11,7 +11,7 @@ type IndicatorHelpProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function IndicatorHelp({ name: nome, explanation, isOpen, onOpenChange }: IndicatorHelpProps) {
+export function IndicatorHelp({ name, explanation, isOpen, onOpenChange }: IndicatorHelpProps) {
   const dict = useDictionary();
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverId = useId();
@@ -40,7 +40,7 @@ export function IndicatorHelp({ name: nome, explanation, isOpen, onOpenChange }:
     <div ref={containerRef} className="relative inline-flex">
       <button
         type="button"
-        aria-label={dict.trade.offering.indicators.helpAria(nome)}
+        aria-label={dict.trade.offering.indicators.helpAria(name)}
         aria-expanded={isOpen}
         aria-controls={popoverId}
         onClick={() => onOpenChange(!isOpen)}

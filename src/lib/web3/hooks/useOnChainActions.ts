@@ -2,14 +2,14 @@
 
 // Ações de escrita on-chain (Sepolia) — mint de MockBRL (faucet auto-serviço), investir
 // (approve -> aportar), encerrar oferta e resgatar cotas. Cada hook expõe seu próprio status
-// explícito (nunca mostra "sucesso" antes da confirmação on-chain, ver CLAUDE.md deste
+// explícito (nunca mostra "success" antes da confirmação on-chain, ver CLAUDE.md deste
 // projeto) e traduz qualquer erro via describeOnChainError antes de devolvê-lo à UI.
 import { useCallback, useState } from "react";
 import { useConnection, usePublicClient, useWriteContract } from "wagmi";
 import { getMockBrlContractAt, getOnChainContracts, type OnChainOfferingAddresses } from "../contracts";
 import { describeOnChainError } from "../errors";
 
-export type SimpleTxStatus = "idle" | "assinando" | "confirmando" | "sucesso" | "erro";
+export type SimpleTxStatus = "idle" | "signing" | "confirming" | "success" | "error";
 
 export type SimpleTxState = {
   status: SimpleTxStatus;
@@ -38,7 +38,7 @@ export function useMintMockBrl(addresses: OnChainOfferingAddresses | null) {
       const contracts = getOnChainContracts(addresses);
       if (!contracts || !address || !publicClient) return;
 
-      setState({ status: "assinando", errorMessage: null });
+      setState({ status: "signing", errorMessage: null });
       try {
         const currencyAddress = (await publicClient.readContract({
           ...contracts.ofertaCaptacao,
@@ -51,11 +51,11 @@ export function useMintMockBrl(addresses: OnChainOfferingAddresses | null) {
           functionName: "mint",
           args: [address, amount],
         });
-        setState({ status: "confirmando", errorMessage: null });
+        setState({ status: "confirming", errorMessage: null });
         await publicClient.waitForTransactionReceipt({ hash });
-        setState({ status: "sucesso", errorMessage: null });
+        setState({ status: "success", errorMessage: null });
       } catch (error) {
-        setState({ status: "erro", errorMessage: describeOnChainError(error) });
+        setState({ status: "error", errorMessage: describeOnChainError(error) });
       }
     },
     [address, publicClient, writeContractAsync, addresses],
@@ -68,14 +68,14 @@ export function useMintMockBrl(addresses: OnChainOfferingAddresses | null) {
 
 export type InvestStatus =
   | "idle"
-  | "verificando-allowance"
-  | "assinando-approve"
-  | "confirmando-approve"
-  | "simulando-aportar"
-  | "assinando-aportar"
-  | "confirmando-aportar"
-  | "sucesso"
-  | "erro";
+  | "checking-allowance"
+  | "signing-approve"
+  | "confirming-approve"
+  | "simulating-invest"
+  | "signing-invest"
+  | "confirming-invest"
+  | "success"
+  | "error";
 
 export type InvestState = {
   status: InvestStatus;
@@ -123,7 +123,7 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
       if (!contracts || !publicClient || !address) return;
 
       try {
-        setState({ status: "verificando-allowance", errorMessage: null });
+        setState({ status: "checking-allowance", errorMessage: null });
         const currencyAddress = (await publicClient.readContract({
           ...contracts.ofertaCaptacao,
           functionName: "moeda",
@@ -137,20 +137,20 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
         })) as bigint;
 
         if (currentAllowance < value) {
-          setState({ status: "assinando-approve", errorMessage: null });
+          setState({ status: "signing-approve", errorMessage: null });
           const approveHash = await writeContractAsync({
             ...mockBrl,
             functionName: "approve",
             args: [contracts.ofertaCaptacao.address, value],
           });
-          setState({ status: "confirmando-approve", errorMessage: null });
+          setState({ status: "confirming-approve", errorMessage: null });
           const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash });
           // A aprovação foi MINERADA (não lançou exceção), mas pode ter revertido — checar o
           // status é obrigatório aqui, pelo mesmo motivo que confirmarPublicacao() checa
           // receipt.status do lado do servidor: um recibo existir não significa que deu certo.
           if (approveReceipt.status === "reverted") {
             setState({
-              status: "erro",
+              status: "error",
               errorMessage: "A aprovação (approve) de MockBRL reverteu on-chain — o aporte não foi tentado.",
             });
             return;
@@ -165,7 +165,7 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
         // corrigida acima (allowance obsoleta) — vale mesmo que a causa desta vez seja outra
         // (ver CLAUDE.md: aporte nas ofertas do OfertaOrquestrador ainda falha por motivo não
         // identificado, mesmo código de approve/aportar das 10 ofertas legadas que funcionam).
-        setState({ status: "simulando-aportar", errorMessage: null });
+        setState({ status: "simulating-invest", errorMessage: null });
         try {
           await publicClient.simulateContract({
             ...contracts.ofertaCaptacao,
@@ -174,22 +174,22 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
             account: address,
           });
         } catch (simError) {
-          setState({ status: "erro", errorMessage: describeOnChainError(simError) });
+          setState({ status: "error", errorMessage: describeOnChainError(simError) });
           return;
         }
 
-        setState({ status: "assinando-aportar", errorMessage: null });
+        setState({ status: "signing-invest", errorMessage: null });
         const investHash = await writeContractAsync({
           ...contracts.ofertaCaptacao,
           functionName: "aportar",
           args: [value],
         });
-        setState({ status: "confirmando-aportar", errorMessage: null });
+        setState({ status: "confirming-invest", errorMessage: null });
         await publicClient.waitForTransactionReceipt({ hash: investHash });
 
-        setState({ status: "sucesso", errorMessage: null });
+        setState({ status: "success", errorMessage: null });
       } catch (error) {
-        setState({ status: "erro", errorMessage: describeOnChainError(error) });
+        setState({ status: "error", errorMessage: describeOnChainError(error) });
       }
     },
     [address, publicClient, writeContractAsync, addresses],
@@ -214,14 +214,14 @@ export function useCloseOffering(addresses: OnChainOfferingAddresses | null) {
     const contracts = getOnChainContracts(addresses);
     if (!contracts || !publicClient) return;
 
-    setState({ status: "assinando", errorMessage: null });
+    setState({ status: "signing", errorMessage: null });
     try {
       const hash = await writeContractAsync({ ...contracts.ofertaCaptacao, functionName: "encerrar" });
-      setState({ status: "confirmando", errorMessage: null });
+      setState({ status: "confirming", errorMessage: null });
       await publicClient.waitForTransactionReceipt({ hash });
-      setState({ status: "sucesso", errorMessage: null });
+      setState({ status: "success", errorMessage: null });
     } catch (error) {
-      setState({ status: "erro", errorMessage: describeOnChainError(error) });
+      setState({ status: "error", errorMessage: describeOnChainError(error) });
     }
   }, [publicClient, writeContractAsync, addresses]);
 
@@ -244,14 +244,14 @@ export function useRedeemShares(addresses: OnChainOfferingAddresses | null) {
     const contracts = getOnChainContracts(addresses);
     if (!contracts || !publicClient) return;
 
-    setState({ status: "assinando", errorMessage: null });
+    setState({ status: "signing", errorMessage: null });
     try {
       const hash = await writeContractAsync({ ...contracts.ofertaCaptacao, functionName: "resgatarCotas" });
-      setState({ status: "confirmando", errorMessage: null });
+      setState({ status: "confirming", errorMessage: null });
       await publicClient.waitForTransactionReceipt({ hash });
-      setState({ status: "sucesso", errorMessage: null });
+      setState({ status: "success", errorMessage: null });
     } catch (error) {
-      setState({ status: "erro", errorMessage: describeOnChainError(error) });
+      setState({ status: "error", errorMessage: describeOnChainError(error) });
     }
   }, [publicClient, writeContractAsync, addresses]);
 
@@ -276,14 +276,14 @@ export function useReleaseToIssuer(addresses: OnChainOfferingAddresses | null) {
     const contracts = getOnChainContracts(addresses);
     if (!contracts || !publicClient) return;
 
-    setState({ status: "assinando", errorMessage: null });
+    setState({ status: "signing", errorMessage: null });
     try {
       const hash = await writeContractAsync({ ...contracts.ofertaCaptacao, functionName: "liberarParaEmissor" });
-      setState({ status: "confirmando", errorMessage: null });
+      setState({ status: "confirming", errorMessage: null });
       await publicClient.waitForTransactionReceipt({ hash });
-      setState({ status: "sucesso", errorMessage: null });
+      setState({ status: "success", errorMessage: null });
     } catch (error) {
-      setState({ status: "erro", errorMessage: describeOnChainError(error) });
+      setState({ status: "error", errorMessage: describeOnChainError(error) });
     }
   }, [publicClient, writeContractAsync, addresses]);
 

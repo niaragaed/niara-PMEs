@@ -21,10 +21,10 @@ export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] })
   const t = dict.profile.myOfferings;
 
   return (
-    <section id="minhas-ofertas" aria-labelledby="minhas-ofertas-heading" className="scroll-mt-24">
+    <section id="my-offerings" aria-labelledby="my-offerings-heading" className="scroll-mt-24">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="minhas-ofertas-heading" className="text-xl font-semibold text-on-military">
+          <h2 id="my-offerings-heading" className="text-xl font-semibold text-on-military">
             {t.title}
           </h2>
           <p className="mt-1 text-sm text-on-military-muted">{t.subtitle}</p>

@@ -13,12 +13,12 @@ import {
   ONCHAIN_SMES_PRICE_PER_SHARE_MBRL,
 } from "@/lib/web3/demoConstants";
 
-export type TokenType = "participacao" | "recebivel" | "divida";
+export type TokenType = "equity" | "receivable" | "debt";
 
 export type MonthlyFinancials = {
-  mes: string;
-  receita: number;
-  caixa: number;
+  month: string;
+  revenue: number;
+  cash: number;
 };
 
 // Indicadores fundamentalistas (demonstração — ver `INDICADORES_DEMONSTRACAO`
@@ -156,9 +156,9 @@ const DEMO_INDICATORS: FundamentalIndicatorValues = {
 function buildMonthlySeries(baseRevenue: number, baseCash: number, growth: number): MonthlyFinancials[] {
   const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
   return months.map((month, index) => ({
-    mes: month,
-    receita: Math.round(baseRevenue * (1 + growth * index)),
-    caixa: Math.round(baseCash * (1 + growth * 0.6 * index)),
+    month,
+    revenue: Math.round(baseRevenue * (1 + growth * index)),
+    cash: Math.round(baseCash * (1 + growth * 0.6 * index)),
   }));
 }
 
@@ -170,7 +170,7 @@ function buildMonthlySeries(baseRevenue: number, baseCash: number, growth: numbe
 // exato) nunca vêm daqui — sempre de useOfertaOnChainTermos(), direto da chain.
 function buildFixedOnChainTerms(): Offering["terms"] {
   return {
-    tokenType: "participacao",
+    tokenType: "equity",
     fundraisingTarget: ONCHAIN_SMES_MAX_TARGET_MBRL,
     valuePerToken: ONCHAIN_SMES_PRICE_PER_SHARE_MBRL,
     quantityTokens: ONCHAIN_SMES_AUTHORIZED_SHARES,
@@ -428,7 +428,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "recebivel",
+      tokenType: "receivable",
       fundraisingTarget: 800_000,
       valuePerToken: 200,
       quantityTokens: 4_000,
@@ -456,7 +456,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "participacao",
+      tokenType: "equity",
       fundraisingTarget: 250_000,
       valuePerToken: 80,
       quantityTokens: 3_125,
@@ -484,7 +484,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "recebivel",
+      tokenType: "receivable",
       fundraisingTarget: 1_200_000,
       valuePerToken: 500,
       quantityTokens: 2_400,
@@ -512,7 +512,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "recebivel",
+      tokenType: "receivable",
       fundraisingTarget: 600_000,
       valuePerToken: 300,
       quantityTokens: 2_000,
@@ -540,7 +540,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "participacao",
+      tokenType: "equity",
       fundraisingTarget: 900_000,
       valuePerToken: 450,
       quantityTokens: 2_000,
@@ -568,7 +568,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "participacao",
+      tokenType: "equity",
       fundraisingTarget: 400_000,
       valuePerToken: 100,
       quantityTokens: 4_000,
@@ -596,7 +596,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "divida",
+      tokenType: "debt",
       fundraisingTarget: 300_000,
       valuePerToken: 1_000,
       quantityTokens: 300,
@@ -624,7 +624,7 @@ export const OFFERINGS: Offering[] = [
     },
     indicators: DEMO_INDICATORS,
     terms: {
-      tokenType: "divida",
+      tokenType: "debt",
       fundraisingTarget: 450_000,
       valuePerToken: 1_000,
       quantityTokens: 450,

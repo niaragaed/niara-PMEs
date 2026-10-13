@@ -68,7 +68,7 @@ export async function saveSolanaWallet(input: unknown): Promise<UpdateProfileSta
   const { role, accountId } = await currentAccount();
   const parsed = linkSchema.safeParse(input);
   if (!parsed.success) return { status: "error", message: "Dados de vínculo inválidos." };
-  const { address: address, message: message, signature: signature } = parsed.data;
+  const { address, message, signature } = parsed.data;
 
   // A mensagem tem que ser exatamente a que este servidor emitiria para esta conta e este
   // endereço, e ainda estar no prazo — o horário vem de dentro da própria mensagem assinada.

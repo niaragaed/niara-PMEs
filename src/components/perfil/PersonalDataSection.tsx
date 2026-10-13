@@ -238,8 +238,8 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
   }
 
   return (
-    <section id="dados-cadastro" aria-labelledby="dados-cadastro-heading" className="scroll-mt-24">
-      <h2 id="dados-cadastro-heading" className="text-xl font-semibold text-on-military">
+    <section id="registration-data" aria-labelledby="registration-data-heading" className="scroll-mt-24">
+      <h2 id="registration-data-heading" className="text-xl font-semibold text-on-military">
         {t.title}
       </h2>
 
@@ -365,7 +365,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               <ReadField label={t.fields.country} value={t.fields.brazil} />
               {personType === "pf" ? (
                 <TextField
-                  id="pd-nome"
+                  id="pd-name"
                   label={t.fields.fullName}
                   value={draft.fullName}
                   onChange={handleFieldChange("fullName")}
@@ -375,14 +375,14 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               ) : (
                 <>
                   <TextField
-                    id="pd-razao-social"
+                    id="pd-legal-name"
                     label={t.fields.legalName}
                     value={draft.legalName}
                     onChange={handleFieldChange("legalName")}
                     error={errors.legalName}
                   />
                   <TextField
-                    id="pd-nome-fantasia"
+                    id="pd-trade-name"
                     label={t.fields.tradeName}
                     value={draft.tradeName}
                     onChange={handleFieldChange("tradeName")}
@@ -390,7 +390,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                 </>
               )}
               <TextField
-                id="pd-documento"
+                id="pd-document"
                 label={documentLabel}
                 value={draft.document}
                 onChange={handleFieldChange("document")}
@@ -400,7 +400,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               />
               {personType === "pf" && (
                 <TextField
-                  id="pd-nascimento"
+                  id="pd-birth-date"
                   label={t.fields.birthDate}
                   value={draft.birthDate}
                   onChange={handleFieldChange("birthDate")}
@@ -411,7 +411,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               )}
               {personType === "pj" && (
                 <TextField
-                  id="pd-receita"
+                  id="pd-revenue"
                   label={t.fields.grossAnnualRevenue}
                   value={draft.annualRevenueReais}
                   onChange={handleFieldChange("annualRevenueReais")}
@@ -422,7 +422,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               )}
               <ReadField label={t.fields.email} value={profile.email} />
               <TextField
-                id="pd-telefone"
+                id="pd-phone"
                 label={t.fields.phone}
                 value={draft.phone}
                 onChange={handleFieldChange("phone")}
@@ -443,14 +443,14 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               <p className="-mt-2 text-[11px] text-on-military-muted">{t.publicSectionNote}</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <TextField
-                  id="pd-setor"
+                  id="pd-sector"
                   label={t.fields.sector}
                   value={draft.sector}
                   onChange={handleFieldChange("sector")}
                 />
               </div>
               <TextareaField
-                id="pd-resumo-negocio"
+                id="pd-business-summary"
                 label={t.fields.businessSummary}
                 value={draft.businessSummary}
                 onChange={(event) => setDraft((current) => ({ ...current, businessSummary: event.target.value }))}
@@ -487,7 +487,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                 placeholder="00000-000"
               />
               <TextField
-                id="pd-logradouro"
+                id="pd-street"
                 label={t.fields.street}
                 value={draft.street}
                 onChange={handleFieldChange("street")}
@@ -495,27 +495,27 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                 autoComplete="address-line1"
               />
               <TextField
-                id="pd-numero"
+                id="pd-number"
                 label={t.fields.number}
                 value={draft.number}
                 onChange={handleFieldChange("number")}
                 error={errors.number}
               />
               <TextField
-                id="pd-complemento"
+                id="pd-complement"
                 label={t.fields.complement}
                 value={draft.complement}
                 onChange={handleFieldChange("complement")}
               />
               <TextField
-                id="pd-bairro"
+                id="pd-district"
                 label={t.fields.district}
                 value={draft.district}
                 onChange={handleFieldChange("district")}
                 error={errors.district}
               />
               <TextField
-                id="pd-cidade"
+                id="pd-city"
                 label={t.fields.city}
                 value={draft.city}
                 onChange={handleFieldChange("city")}
@@ -523,7 +523,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                 autoComplete="address-level2"
               />
               <SelectField
-                id="pd-estado"
+                id="pd-state"
                 label={t.fields.state}
                 value={draft.state}
                 onChange={handleFieldChange("state")}

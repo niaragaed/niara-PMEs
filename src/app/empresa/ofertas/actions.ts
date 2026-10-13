@@ -322,9 +322,9 @@ export async function closeOffering(offeringIdInput: unknown): Promise<CloseOffe
     const idempotencyKey = `tokens-${investment.id}`;
 
     const issuance = await chain.issueTokens({
-      ofertaId: offeringId,
-      investidorId: investment.investor_id as string,
-      quantidade: Number(investment.amount_cents),
+      offeringId,
+      investorId: investment.investor_id as string,
+      quantity: Number(investment.amount_cents),
     });
 
     const { error: insertError } = await admin.from("payment_events").insert({

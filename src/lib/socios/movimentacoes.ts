@@ -46,26 +46,26 @@ function centsToBRL(cents: number): string {
   return formatBRL(cents / 100);
 }
 
-function onChainEventToTransaction(evento: EventoOnChain, summary: OnChainSummary | null, dict: Dictionary): Transaction {
+function onChainEventToTransaction(event: EventoOnChain, summary: OnChainSummary | null, dict: Dictionary): Transaction {
   const t = dict.partners.realTable;
   const decimals = summary?.mockBrlDecimals ?? 18;
   const symbol = summary?.mockBrlSymbol ?? "mBRL";
 
   const value =
-    evento.valorWei !== null
-      ? `${Number(formatUnits(evento.valorWei, decimals)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} ${symbol}`
-      : evento.cotas !== null
-        ? dict.partners.activity.shares(formatUnits(evento.cotas, 18))
+    event.amountWei !== null
+      ? `${Number(formatUnits(event.amountWei, decimals)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} ${symbol}`
+      : event.shares !== null
+        ? dict.partners.activity.shares(formatUnits(event.shares, 18))
         : null;
 
   return {
-    id: `onchain-${evento.txHash}-${evento.tipo}`,
-    timestamp: evento.timestamp ?? 0,
+    id: `onchain-${event.txHash}-${event.type}`,
+    timestamp: event.timestamp ?? 0,
     origin: "onchain",
-    type: t.types[evento.tipo],
-    actor: evento.investidor ? `${evento.investidor.slice(0, 6)}…${evento.investidor.slice(-4)}` : null,
+    type: t.types[event.type],
+    actor: event.investor ? `${event.investor.slice(0, 6)}…${event.investor.slice(-4)}` : null,
     value,
-    link: `https://sepolia.etherscan.io/tx/${evento.txHash}`,
+    link: `https://sepolia.etherscan.io/tx/${event.txHash}`,
   };
 }
 
@@ -277,7 +277,7 @@ export async function getTransactionsAndSummary(): Promise<{ transactions: Trans
     (async () => {
       const onChainEvents = await getEventsOnChain();
       const onChainSummary = await getSummaryOnChain(onChainEvents);
-      return { eventosOnChain: onChainEvents, resumoOnChain: onChainSummary };
+      return { onChainEvents, resumoOnChain: onChainSummary };
     })(),
     listInvestments(),
     listInvestorRegistrations(dict),
@@ -291,9 +291,9 @@ export async function getTransactionsAndSummary(): Promise<{ transactions: Trans
   let onChainSummary: OnChainSummary | null = null;
 
   if (onChainResult.status === "fulfilled") {
-    const { eventosOnChain, resumoOnChain: summary } = onChainResult.value;
+    const { onChainEvents, resumoOnChain: summary } = onChainResult.value;
     onChainSummary = summary;
-    transactions.push(...eventosOnChain.map((evento) => onChainEventToTransaction(evento, summary, dict)));
+    transactions.push(...onChainEvents.map((event) => onChainEventToTransaction(event, summary, dict)));
   } else {
     console.error("[socios] failed to read on-chain events (the other sources carry on normally):", onChainResult.reason);
   }

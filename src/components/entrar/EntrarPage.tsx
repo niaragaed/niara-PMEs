@@ -150,7 +150,7 @@ export function SignInPage({
 
           <form onSubmit={handleSignIn} noValidate className="mt-8 flex flex-col gap-3">
             <TextField
-              id="entrar-email"
+              id="signin-email"
               label={t.email.label}
               type="email"
               value={email}
@@ -161,7 +161,7 @@ export function SignInPage({
             />
 
             <TextField
-              id="entrar-senha"
+              id="signin-password"
               label={t.password.label}
               type="password"
               value={password}

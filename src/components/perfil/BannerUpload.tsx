@@ -27,7 +27,7 @@ export function BannerUpload({
   const dict = useDictionary();
   const [bannerUrl, setBannerUrl] = useState(initialBannerUrl);
   const [error, setError] = useState<string | null>(null);
-  const [justDid, setJustDid] = useState<"enviada" | "removida" | null>(null);
+  const [justDid, setJustDid] = useState<"uploaded" | "removed" | null>(null);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const t = dict.profile.registrationData.companyBanner;
@@ -59,7 +59,7 @@ export function BannerUpload({
       }
       setBannerUrl(result.bannerUrl);
       onUrlChange?.(result.bannerUrl);
-      setJustDid("enviada");
+      setJustDid("uploaded");
     });
   }
 
@@ -74,7 +74,7 @@ export function BannerUpload({
       }
       setBannerUrl(null);
       onUrlChange?.(null);
-      setJustDid("removida");
+      setJustDid("removed");
     });
   }
 
@@ -134,8 +134,8 @@ export function BannerUpload({
             {error}
           </p>
         )}
-        {justDid === "enviada" && !error && <p className="text-xs text-value-positive">{t.successSent}</p>}
-        {justDid === "removida" && !error && <p className="text-xs text-value-positive">{t.successRemoved}</p>}
+        {justDid === "uploaded" && !error && <p className="text-xs text-value-positive">{t.successSent}</p>}
+        {justDid === "removed" && !error && <p className="text-xs text-value-positive">{t.successRemoved}</p>}
       </div>
     </div>
   );

@@ -60,13 +60,13 @@ export function PortfolioEvolutionChart() {
             <Tooltip content={(props) => <ChartTooltip {...props} />} cursor={{ fill: "var(--color-panel-border)" }} />
             <Legend formatter={(value: string) => <span className="text-on-military-muted">{value}</span>} />
             <Bar
-              dataKey="investido"
+              dataKey="invested"
               name={dict.assets.evolution.investedSeries}
               stackId="portfolio"
               fill="var(--color-chart-pmes)"
             />
             <Bar
-              dataKey="ganho"
+              dataKey="gain"
               name={dict.assets.evolution.gainSeries}
               stackId="portfolio"
               fill="var(--color-value-positive)"

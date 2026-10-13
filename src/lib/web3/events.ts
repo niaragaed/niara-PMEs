@@ -49,31 +49,31 @@ type OnchainEventCacheRow = {
 
 function rowToEvent(row: OnchainEventCacheRow): OnChainEvent {
   return {
-    tipo: row.tipo as OnChainEventType,
-    ofertaAddress: row.oferta_address as `0x${string}`,
-    ofertaIndex: row.oferta_index,
-    investidor: (row.investidor as `0x${string}` | null) ?? null,
-    valorWei: row.valor_wei !== null ? BigInt(row.valor_wei) : null,
-    cotas: row.cotas !== null ? BigInt(row.cotas) : null,
-    taxaWei: row.taxa_wei !== null ? BigInt(row.taxa_wei) : null,
+    type: row.tipo as OnChainEventType,
+    offeringAddress: row.oferta_address as `0x${string}`,
+    offeringIndex: row.oferta_index,
+    investor: (row.investidor as `0x${string}` | null) ?? null,
+    amountWei: row.valor_wei !== null ? BigInt(row.valor_wei) : null,
+    shares: row.cotas !== null ? BigInt(row.cotas) : null,
+    feeWei: row.taxa_wei !== null ? BigInt(row.taxa_wei) : null,
     txHash: row.tx_hash as `0x${string}`,
     blockNumber: BigInt(row.block_number),
     timestamp: row.block_timestamp !== null ? Number(row.block_timestamp) : null,
   };
 }
 
-function eventToRow(evento: OnChainEvent): OnchainEventCacheRow {
+function eventToRow(event: OnChainEvent): OnchainEventCacheRow {
   return {
-    tipo: evento.tipo,
-    oferta_address: evento.ofertaAddress,
-    oferta_index: evento.ofertaIndex,
-    investidor: evento.investidor,
-    valor_wei: evento.valorWei !== null ? evento.valorWei.toString() : null,
-    cotas: evento.cotas !== null ? evento.cotas.toString() : null,
-    taxa_wei: evento.taxaWei !== null ? evento.taxaWei.toString() : null,
-    tx_hash: evento.txHash,
-    block_number: evento.blockNumber.toString(),
-    block_timestamp: evento.timestamp,
+    tipo: event.type,
+    oferta_address: event.offeringAddress,
+    oferta_index: event.offeringIndex,
+    investidor: event.investor,
+    valor_wei: event.amountWei !== null ? event.amountWei.toString() : null,
+    cotas: event.shares !== null ? event.shares.toString() : null,
+    taxa_wei: event.feeWei !== null ? event.feeWei.toString() : null,
+    tx_hash: event.txHash,
+    block_number: event.blockNumber.toString(),
+    block_timestamp: event.timestamp,
   };
 }
 
@@ -213,13 +213,13 @@ export async function getEventsOnChain(): Promise<OnChainEvent[]> {
 export type OnChainSummary = {
   mockBrlDecimals: number;
   mockBrlSymbol: string;
-  totalArrecadadoWei: bigint;
-  carteirasUnicas: number;
-  taxaBpsPorOferta: number[];
+  totalRaisedWei: bigint;
+  uniqueWallets: number;
+  feeBpsByOffering: number[];
   // Soma real de `RecursosLiberados.taxa` (mBRL efetivamente transferidos ao protocoloWallet),
   // não um valor projetado/derivado de taxaBps × arrecadado — só conta o que já foi de fato
   // liberado on-chain via `liberarParaEmissor()`.
-  taxaRecebidaWei: bigint;
+  feeReceivedWei: bigint;
 };
 
 /**
@@ -247,19 +247,19 @@ export async function getSummaryOnChain(events: OnChainEvent[]): Promise<OnChain
     client.readContract({ address: offering.offering, abi: ofertaCaptacaoAbi, functionName: "taxaBps" }),
   );
 
-  const investments = events.filter((evento) => evento.tipo === "Aporte");
-  const totalRaisedWei = investments.reduce((total, evento) => total + (evento.valorWei ?? BigInt(0)), BigInt(0));
-  const uniqueWallets = new Set(investments.map((evento) => evento.investidor).filter(Boolean)).size;
+  const investments = events.filter((event) => event.type === "Aporte");
+  const totalRaisedWei = investments.reduce((total, event) => total + (event.amountWei ?? BigInt(0)), BigInt(0));
+  const uniqueWallets = new Set(investments.map((event) => event.investor).filter(Boolean)).size;
 
-  const fundsReleased = events.filter((evento) => evento.tipo === "RecursosLiberados");
-  const receivedFeeWei = fundsReleased.reduce((total, evento) => total + (evento.taxaWei ?? BigInt(0)), BigInt(0));
+  const fundsReleased = events.filter((event) => event.type === "RecursosLiberados");
+  const receivedFeeWei = fundsReleased.reduce((total, event) => total + (event.feeWei ?? BigInt(0)), BigInt(0));
 
   return {
     mockBrlDecimals,
     mockBrlSymbol,
-    totalArrecadadoWei: totalRaisedWei,
-    carteirasUnicas: uniqueWallets,
-    taxaBpsPorOferta: feeBpsByOffering.map(Number),
-    taxaRecebidaWei: receivedFeeWei,
+    totalRaisedWei,
+    uniqueWallets,
+    feeBpsByOffering: feeBpsByOffering.map(Number),
+    feeReceivedWei: receivedFeeWei,
   };
 }

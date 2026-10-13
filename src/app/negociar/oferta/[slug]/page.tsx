@@ -51,7 +51,7 @@ export default async function Page({ params }: PageProps) {
     const onChainIndex = offering.category === "pmes" ? getOnChainIndexBySlug(offering.slug) : null;
     // Só importa quando onChainIndex !== null (decide o botão "Encerrar oferta" do painel
     // on-chain) — resolver sempre é mais simples que condicionar, e resolveSocio() não redireciona.
-    const { autorizado: isPartner } = await resolvePartner();
+    const { authorized: isPartner } = await resolvePartner();
 
     return (
       <OfferingDetailPage
@@ -72,7 +72,7 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  const { autorizado: isPartner } = await resolvePartner();
+  const { authorized: isPartner } = await resolvePartner();
   // isEmissor só é possível pra ofertas self-service (têm issuer_id no Supabase) — as 10 legadas
   // nunca têm conta de emissor neste app, então nem chegam a este ramo.
   const { role, accountId } = await resolveAccount();

@@ -8,9 +8,9 @@ import { MOCK_POSITIONS } from "@/lib/mock/ativos";
 import { useDictionary } from "@/lib/i18n/client";
 
 const VIEWS: { key: AllocationView; labelKey: "viewClass" | "viewAsset" | "viewSector" }[] = [
-  { key: "classe", labelKey: "viewClass" },
-  { key: "ativo", labelKey: "viewAsset" },
-  { key: "setor", labelKey: "viewSector" },
+  { key: "class", labelKey: "viewClass" },
+  { key: "asset", labelKey: "viewAsset" },
+  { key: "sector", labelKey: "viewSector" },
 ];
 
 type DonutTooltipProps = {
@@ -34,7 +34,7 @@ function DonutTooltip({ active, payload }: DonutTooltipProps) {
 
 export function AllocationDonut() {
   const dict = useDictionary();
-  const [view, setView] = useState<AllocationView>("classe");
+  const [view, setView] = useState<AllocationView>("class");
   const slices = computeAllocation(MOCK_POSITIONS, view, dict.assets.categories, dict.assets.regions);
 
   return (

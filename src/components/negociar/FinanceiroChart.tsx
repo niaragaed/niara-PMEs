@@ -41,7 +41,7 @@ export function FinancialChart({ series }: { series: MonthlyFinancials[] }) {
           <LineChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
             <XAxis
-              dataKey="mes"
+              dataKey="month"
               tick={{ fill: "var(--color-ink-muted)", fontSize: 12 }}
               axisLine={{ stroke: "var(--color-border)" }}
               tickLine={false}
@@ -57,7 +57,7 @@ export function FinancialChart({ series }: { series: MonthlyFinancials[] }) {
             <Legend formatter={(value: string) => <span className="text-ink-muted">{value}</span>} />
             <Line
               type="monotone"
-              dataKey="receita"
+              dataKey="revenue"
               name={t.revenueSeries}
               stroke="var(--color-salmon)"
               strokeWidth={2}
@@ -65,7 +65,7 @@ export function FinancialChart({ series }: { series: MonthlyFinancials[] }) {
             />
             <Line
               type="monotone"
-              dataKey="caixa"
+              dataKey="cash"
               name={t.cashSeries}
               stroke="var(--color-military)"
               strokeWidth={2}

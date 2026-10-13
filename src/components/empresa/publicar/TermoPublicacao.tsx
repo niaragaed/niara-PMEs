@@ -42,9 +42,9 @@ export function PublicationTerms({ texts, data, onDataChange, accepted, onAccept
         <h3 className="text-sm font-semibold text-on-military">{tf.title}</h3>
         <p className="mt-1 text-xs text-on-military-muted">{tf.notice}</p>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <TextField id="token-nome" label={tf.name} value={data.name} onChange={field("name")} disabled={disabled} />
-          <TextField id="token-simbolo" label={tf.symbol} value={data.symbol} onChange={field("symbol")} disabled={disabled} />
-          <TextField id="token-serie" label={tf.series} value={data.series} onChange={field("series")} disabled={disabled} />
+          <TextField id="token-name" label={tf.name} value={data.name} onChange={field("name")} disabled={disabled} />
+          <TextField id="token-symbol" label={tf.symbol} value={data.symbol} onChange={field("symbol")} disabled={disabled} />
+          <TextField id="token-series" label={tf.series} value={data.series} onChange={field("series")} disabled={disabled} />
         </div>
       </section>
 

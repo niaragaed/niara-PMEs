@@ -20,7 +20,7 @@ import { useDictionary } from "@/lib/i18n/client";
 // delas só para consistência de tipo) e é rotulada em mBRL — nunca "R$", já que MockBRL é moeda
 // de teste sem lastro.
 export function SmesOnChainCard({
-  offering: oferta,
+  offering,
   bannerUrl,
   logoUrl,
 }: {
@@ -36,8 +36,8 @@ export function SmesOnChainCard({
       <OfferingBanner
         bannerUrl={bannerUrl}
         logoUrl={logoUrl}
-        tradeName={oferta.company.tradeName}
-        category={oferta.category}
+        tradeName={offering.company.tradeName}
+        category={offering.category}
         size="card"
       />
 
@@ -48,8 +48,8 @@ export function SmesOnChainCard({
         </span>
 
         <div>
-          <h3 className="text-sm font-semibold text-ink">{oferta.company.tradeName}</h3>
-          <p className="text-xs text-ink-muted">{oferta.company.sector}</p>
+          <h3 className="text-sm font-semibold text-ink">{offering.company.tradeName}</h3>
+          <p className="text-xs text-ink-muted">{offering.company.sector}</p>
         </div>
 
         <p className="text-xs font-medium italic text-ink-muted">{t.fictitiousCompany}</p>
@@ -70,7 +70,7 @@ export function SmesOnChainCard({
         </dl>
 
         <Link
-          href={`/negociar/oferta/${oferta.slug}`}
+          href={`/negociar/oferta/${offering.slug}`}
           className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-military px-4 py-2 text-sm font-medium text-on-military transition-colors hover:bg-military-600"
         >
           {t.viewOffering}

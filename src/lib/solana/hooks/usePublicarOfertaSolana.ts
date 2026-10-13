@@ -27,7 +27,7 @@ export type PublishSolanaState = {
 
 const IDLE: PublishSolanaState = { status: "idle", txHash: null, errorMessage: null, contractAddress: null, tokenAddress: null };
 
-export type PublishSolanaArgs = Omit<CreateOfferingParams, "prazoUnix"> & { offeringId: string; windowDays: number };
+export type PublishSolanaArgs = Omit<CreateOfferingParams, "deadlineUnix"> & { offeringId: string; windowDays: number };
 
 export function usePublishSolanaOffering() {
   const [state, setState] = useState<PublishSolanaState>(IDLE);
@@ -38,11 +38,11 @@ export function usePublishSolanaOffering() {
     async (args: PublishSolanaArgs) => {
       const issuerWallet = wallet.address;
       if (!issuerWallet) {
-        setState({ ...IDLE, status: "erro", errorMessage: "Conecte a carteira Solana (Phantom) para publicar." });
+        setState({ ...IDLE, status: "error", errorMessage: "Conecte a carteira Solana (Phantom) para publicar." });
         return;
       }
 
-      setState({ ...IDLE, status: "assinando" });
+      setState({ ...IDLE, status: "signing" });
       const deadlineUnix = Math.floor(Date.now() / 1000) + args.windowDays * 24 * 60 * 60;
 
       let signed;
@@ -58,11 +58,11 @@ export function usePublishSolanaOffering() {
           minTarget: args.minTarget,
           maxTarget: args.maxTarget,
           pricePerShare: args.pricePerShare,
-          prazoUnix: deadlineUnix,
+          deadlineUnix,
         });
         signed = await simulateAndSign(connection, tx);
       } catch (error) {
-        setState({ ...IDLE, status: "erro", errorMessage: error instanceof Error ? error.message : String(error) });
+        setState({ ...IDLE, status: "error", errorMessage: error instanceof Error ? error.message : String(error) });
         return;
       }
 
@@ -76,11 +76,11 @@ export function usePublishSolanaOffering() {
       });
       if (reg.status === "error") {
         // Nada foi enviado à rede — a assinatura simplesmente não é usada.
-        setState({ ...IDLE, status: "erro", errorMessage: reg.message });
+        setState({ ...IDLE, status: "error", errorMessage: reg.message });
         return;
       }
 
-      setState({ ...IDLE, status: "confirmando", txHash: sig });
+      setState({ ...IDLE, status: "confirming", txHash: sig });
       try {
         await sendAndConfirm(connection, signed);
       } catch (error) {
@@ -97,11 +97,11 @@ export function usePublishSolanaOffering() {
       } else if (conf.status === "pendente") {
         setState({ ...base, status: "pendente" });
       } else if (conf.status === "revertida") {
-        setState({ ...base, status: "revertida", errorMessage: conf.motivo });
+        setState({ ...base, status: "revertida", errorMessage: conf.reason });
       } else if (conf.status === "divergente") {
-        setState({ ...base, status: "divergente", errorMessage: conf.motivo });
+        setState({ ...base, status: "divergente", errorMessage: conf.reason });
       } else {
-        setState({ ...base, status: "erro", errorMessage: conf.message });
+        setState({ ...base, status: "error", errorMessage: conf.message });
       }
     },
     [wallet.address, connection],

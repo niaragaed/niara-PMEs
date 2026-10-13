@@ -31,7 +31,7 @@ export const maxDuration = 60;
 // redirect (fica na própria página, mensagem clara).
 export default async function Page() {
   const dict = await getDictionary();
-  const { userId, email, autorizado } = await resolvePartner();
+  const { userId, email, authorized } = await resolvePartner();
 
   if (!userId) {
     return (
@@ -45,7 +45,7 @@ export default async function Page() {
     );
   }
 
-  if (!autorizado) {
+  if (!authorized) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-military px-4 py-16">
         <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg border border-panel-border bg-panel p-6 text-center">

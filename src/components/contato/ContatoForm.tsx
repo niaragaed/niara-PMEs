@@ -19,7 +19,7 @@ type FormData = {
   message: string;
 };
 
-type FormErrors = Partial<Record<"nome" | "email" | "mensagem", string>>;
+type FormErrors = Partial<Record<"name" | "email" | "message", string>>;
 
 const EMPTY_FORM: FormData = {
   name: "",
@@ -36,7 +36,7 @@ export function ContactForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const t = dict.contact.form;
 
-  function handleChange(field: "nome" | "email" | "mensagem") {
+  function handleChange(field: "name" | "email" | "message") {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setForm((current) => ({ ...current, [field]: event.target.value }));
     };
@@ -50,9 +50,9 @@ export function ContactForm() {
     event.preventDefault();
 
     const nextErrors: FormErrors = {};
-    if (!form.name.trim()) nextErrors.nome = t.errors.name;
+    if (!form.name.trim()) nextErrors.name = t.errors.name;
     if (!form.email.trim() || !isValidEmail(form.email)) nextErrors.email = t.errors.email;
-    if (!form.message.trim()) nextErrors.mensagem = t.errors.message;
+    if (!form.message.trim()) nextErrors.message = t.errors.message;
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -72,16 +72,16 @@ export function ContactForm() {
       className="flex flex-col gap-4 rounded-lg border border-panel-border bg-panel p-6"
     >
       <TextField
-        id="contato-nome"
+        id="contact-name"
         label={t.name}
         value={form.name}
-        onChange={handleChange("nome")}
-        error={errors.nome}
+        onChange={handleChange("name")}
+        error={errors.name}
         autoComplete="name"
       />
 
       <TextField
-        id="contato-email"
+        id="contact-email"
         label={t.email}
         type="email"
         value={form.email}
@@ -91,7 +91,7 @@ export function ContactForm() {
       />
 
       <SelectField
-        id="contato-assunto"
+        id="contact-subject"
         label={t.subject}
         value={form.subject}
         onChange={handleSubjectChange}
@@ -104,11 +104,11 @@ export function ContactForm() {
       </SelectField>
 
       <TextareaField
-        id="contato-mensagem"
+        id="contact-message"
         label={t.message}
         value={form.message}
-        onChange={handleChange("mensagem")}
-        error={errors.mensagem}
+        onChange={handleChange("message")}
+        error={errors.message}
       />
 
       <p className="text-[11px] text-on-military-muted">{t.note(CONTACT_EMAIL)}</p>

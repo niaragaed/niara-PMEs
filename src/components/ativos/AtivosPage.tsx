@@ -10,11 +10,11 @@ import { RealPositionCard } from "./RealPositionCard";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { useDictionary } from "@/lib/i18n/client";
 
-type Tab = "carteira" | "disponiveis";
+type Tab = "portfolio" | "available";
 
 export function AssetsPage() {
   const dict = useDictionary();
-  const [tab, setTab] = useState<Tab>("carteira");
+  const [tab, setTab] = useState<Tab>("portfolio");
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">
@@ -36,12 +36,12 @@ export function AssetsPage() {
           <button
             type="button"
             role="tab"
-            id="ativos-tab-carteira"
-            aria-selected={tab === "carteira"}
-            aria-controls="ativos-panel-carteira"
-            onClick={() => setTab("carteira")}
+            id="assets-tab-portfolio"
+            aria-selected={tab === "portfolio"}
+            aria-controls="assets-panel-portfolio"
+            onClick={() => setTab("portfolio")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "carteira" ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
+              tab === "portfolio" ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
             }`}
           >
             {dict.assets.tabs.wallet}
@@ -49,23 +49,23 @@ export function AssetsPage() {
           <button
             type="button"
             role="tab"
-            id="ativos-tab-disponiveis"
-            aria-selected={tab === "disponiveis"}
-            aria-controls="ativos-panel-disponiveis"
-            onClick={() => setTab("disponiveis")}
+            id="assets-tab-available"
+            aria-selected={tab === "available"}
+            aria-controls="assets-panel-available"
+            onClick={() => setTab("available")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "disponiveis" ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
+              tab === "available" ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
             }`}
           >
             {dict.assets.tabs.available}
           </button>
         </div>
 
-        {tab === "carteira" ? (
+        {tab === "portfolio" ? (
           <div
-            id="ativos-panel-carteira"
+            id="assets-panel-portfolio"
             role="tabpanel"
-            aria-labelledby="ativos-tab-carteira"
+            aria-labelledby="assets-tab-portfolio"
             className="mt-8 flex flex-col gap-6"
           >
             <RealPositionCard />
@@ -82,9 +82,9 @@ export function AssetsPage() {
           </div>
         ) : (
           <div
-            id="ativos-panel-disponiveis"
+            id="assets-panel-available"
             role="tabpanel"
-            aria-labelledby="ativos-tab-disponiveis"
+            aria-labelledby="assets-tab-available"
             className="mt-8"
           >
             <AssetCatalog />

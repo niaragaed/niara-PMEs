@@ -27,9 +27,9 @@ export interface EscrowIntent {
  */
 export interface PaymentGateway {
   createEscrowIntent(params: {
-    ofertaId: string;
-    investidorId: string;
-    valorCentavos: number;
+    offeringId: string;
+    investorId: string;
+    amountCents: number;
   }): Promise<EscrowIntent>;
 
   confirmPayment(ref: string): Promise<EscrowIntent>;
@@ -56,8 +56,8 @@ export interface KycSubmissionResult {
  */
 export interface KycProvider {
   submit(params: {
-    usuarioId: string;
-    documento: string;
+    userId: string;
+    document: string;
   }): Promise<KycSubmissionResult>;
 
   status(ref: string): Promise<KycSubmissionResult>;
@@ -81,8 +81,8 @@ export interface ChainIssuanceResult {
  */
 export interface ChainRegistry {
   issueTokens(params: {
-    ofertaId: string;
-    investidorId: string;
-    quantidade: number;
+    offeringId: string;
+    investorId: string;
+    quantity: number;
   }): Promise<ChainIssuanceResult>;
 }

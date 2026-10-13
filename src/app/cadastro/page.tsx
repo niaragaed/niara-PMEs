@@ -24,7 +24,7 @@ export default async function Page() {
   // email/senha novos, ver CadastroPage.tsx) — não redireciona mais pra
   // /entrar, que virou só login.
   if (!user) {
-    return <SignUpPage initialStep="conta" email="" />;
+    return <SignUpPage initialStep="account" email="" />;
   }
 
   const { role } = await resolveAccount();
@@ -35,5 +35,5 @@ export default async function Page() {
   // Já tem sessão (voltou pra completar um cadastro que ficou pela metade,
   // ou entrou via /entrar) — pula direto pro passo de tipo, sem pedir
   // email/senha de novo.
-  return <SignUpPage initialStep="tipo" email={user.email ?? ""} />;
+  return <SignUpPage initialStep="type" email={user.email ?? ""} />;
 }

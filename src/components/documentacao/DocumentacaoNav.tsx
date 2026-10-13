@@ -3,11 +3,11 @@ import { getDictionary } from "@/lib/i18n/server";
 export async function DocsNav() {
   const dict = await getDictionary();
   const SECTIONS = [
-    { id: "o-que-e", label: dict.docs.nav.whatIs },
-    { id: "como-funciona", label: dict.docs.nav.howItWorks },
-    { id: "enquadramento", label: dict.docs.nav.framework },
-    { id: "modelo-receita", label: dict.docs.nav.revenueModel },
-    { id: "tecnologia", label: dict.docs.nav.technology },
+    { id: "what-is", label: dict.docs.nav.whatIs },
+    { id: "how-tokenization-works", label: dict.docs.nav.howItWorks },
+    { id: "framework", label: dict.docs.nav.framework },
+    { id: "revenue-model", label: dict.docs.nav.revenueModel },
+    { id: "technology", label: dict.docs.nav.technology },
     { id: "faq", label: dict.docs.nav.faq },
   ];
   return (

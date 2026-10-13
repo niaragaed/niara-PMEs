@@ -84,7 +84,7 @@ export type CreateOfferingParams = {
   minTarget: bigint;
   maxTarget: bigint;
   pricePerShare: bigint;
-  prazoUnix: number;
+  deadlineUnix: number;
 };
 
 /**
@@ -113,7 +113,7 @@ export async function txCreateOffering(
       metaMinima: bn(p.minTarget),
       metaMaxima: bn(p.maxTarget),
       precoPorCota: bn(p.pricePerShare),
-      prazo: new BN(p.prazoUnix),
+      prazo: new BN(p.deadlineUnix),
     })
     .accountsPartial({ emissorWallet: wallet, emissor: issuerPda(wallet), oferta: offering, mintMoeda: pdaMintMbrl() })
     .transaction();

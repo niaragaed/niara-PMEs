@@ -18,8 +18,8 @@ export type Position = {
 
 export type MonthlyEvolution = {
   month: string;
-  investido: number;
-  ganho: number;
+  invested: number;
+  gain: number;
 };
 
 export type CatalogAsset = {
@@ -78,23 +78,23 @@ export const MOCK_POSITIONS: Position[] = [
 ];
 
 export const MOCK_EVOLUTION: MonthlyEvolution[] = [
-  { month: "Jan", investido: 8000, ganho: 120 },
-  { month: "Fev", investido: 14000, ganho: 280 },
-  { month: "Mar", investido: 19000, ganho: 410 },
-  { month: "Abr", investido: 23500, ganho: 300 },
-  { month: "Mai", investido: 28000, ganho: 560 },
-  { month: "Jun", investido: 32000, ganho: 890 },
-  { month: "Jul", investido: 35500, ganho: 750 },
-  { month: "Ago", investido: 39000, ganho: 1200 },
-  { month: "Set", investido: 42500, ganho: 1450 },
-  { month: "Out", investido: 45500, ganho: 1980 },
-  { month: "Nov", investido: 47800, ganho: 2400 },
-  { month: "Dez", investido: 49040, ganho: 2962 },
+  { month: "Jan", invested: 8000, gain: 120 },
+  { month: "Fev", invested: 14000, gain: 280 },
+  { month: "Mar", invested: 19000, gain: 410 },
+  { month: "Abr", invested: 23500, gain: 300 },
+  { month: "Mai", invested: 28000, gain: 560 },
+  { month: "Jun", invested: 32000, gain: 890 },
+  { month: "Jul", invested: 35500, gain: 750 },
+  { month: "Ago", invested: 39000, gain: 1200 },
+  { month: "Set", invested: 42500, gain: 1450 },
+  { month: "Out", invested: 45500, gain: 1980 },
+  { month: "Nov", invested: 47800, gain: 2400 },
+  { month: "Dez", invested: 49040, gain: 2962 },
 ];
 
 export const MOCK_CATALOG: CatalogAsset[] = [
   {
-    id: "cat-pme-padaria",
+    id: "cat-sme-bakery",
     name: "Token PME Padaria Bela Vista",
     category: "pmes",
     description: "Participação tokenizada de uma rede de padarias em expansão.",
@@ -106,25 +106,25 @@ export const MOCK_CATALOG: CatalogAsset[] = [
     description: "Token lastreado em uma operação de grãos no Centro-Oeste.",
   },
   {
-    id: "cat-imo-aurora",
+    id: "cat-realestate-aurora",
     name: "Token Imobiliário Residencial Aurora",
     category: "imobiliario",
     description: "Cotas tokenizadas de um empreendimento residencial.",
   },
   {
-    id: "cat-auto-frota",
+    id: "cat-auto-fleet",
     name: "Token Auto Frota Sul",
     category: "auto",
     description: "Token vinculado a uma frota de veículos para locação.",
   },
   {
-    id: "cat-divida-confeccoes",
+    id: "cat-debt-apparel",
     name: "Título de Dívida Confecções Ipê",
     category: "divida",
     description: "Antecipação de recebíveis de uma confecção têxtil.",
   },
   {
-    id: "cat-pme-clinica",
+    id: "cat-sme-clinic",
     name: "Token PME Clínica Vitalis",
     category: "pmes",
     description: "Participação tokenizada de uma clínica odontológica.",

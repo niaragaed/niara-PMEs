@@ -21,7 +21,7 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
   const wallet = useSolanaWallet();
   const [linked, setLinked] = useState(solanaWalletAddress);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<"vinculada" | "desvinculada" | null>(null);
+  const [done, setDone] = useState<"linked" | "unlinked" | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const connected = wallet.address;
@@ -57,7 +57,7 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
         return;
       }
       setLinked(connected);
-      setDone("vinculada");
+      setDone("linked");
     });
   }
 
@@ -71,7 +71,7 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
         return;
       }
       setLinked(null);
-      setDone("desvinculada");
+      setDone("unlinked");
     });
   }
 
@@ -79,8 +79,8 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
     "flex items-center gap-1.5 rounded-md bg-salmon px-3 py-1.5 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
-    <section id="carteira-solana" aria-labelledby="carteira-solana-heading" className="scroll-mt-24">
-      <h2 id="carteira-solana-heading" className="text-xl font-semibold text-on-military">
+    <section id="solana-wallet" aria-labelledby="solana-wallet-heading" className="scroll-mt-24">
+      <h2 id="solana-wallet-heading" className="text-xl font-semibold text-on-military">
         {t.title}
       </h2>
       <p className="mt-1 text-xs text-on-military-muted">{t.subtitle}</p>
@@ -113,7 +113,7 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
         )}
         {done && !error && (
           <p className="mt-4 rounded-md border border-value-positive/30 bg-value-positive/10 px-3 py-2 text-xs text-value-positive">
-            {done === "vinculada" ? t.successLinked : t.successUnlinked}
+            {done === "linked" ? t.successLinked : t.successUnlinked}
           </p>
         )}
 

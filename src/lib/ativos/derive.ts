@@ -1,6 +1,6 @@
 import type { Position, Region, TokenCategory } from "@/lib/mock/ativos";
 
-export type AllocationView = "classe" | "ativo" | "setor";
+export type AllocationView = "class" | "asset" | "sector";
 
 export type AllocationSlice = {
   key: string;
@@ -49,7 +49,7 @@ export function computeAllocation(
 ): AllocationSlice[] {
   const total = positions.reduce((sum, p) => sum + p.currentValue, 0);
 
-  if (view === "ativo") {
+  if (view === "asset") {
     return positions
       .map((p) => ({
         key: p.symbol,
@@ -61,7 +61,7 @@ export function computeAllocation(
       .sort((a, b) => b.value - a.value);
   }
 
-  const groupKey = view === "classe" ? "category" : "region";
+  const groupKey = view === "class" ? "category" : "region";
   const totalsByKey = new Map<string, number>();
 
   for (const position of positions) {
@@ -72,10 +72,10 @@ export function computeAllocation(
   return Array.from(totalsByKey.entries())
     .map(([key, value]) => ({
       key,
-      label: view === "classe" ? categoryLabels[key as TokenCategory] : regionLabels[key as Region],
+      label: view === "class" ? categoryLabels[key as TokenCategory] : regionLabels[key as Region],
       value,
       pct: total === 0 ? 0 : (value / total) * 100,
-      colorVar: view === "classe" ? CATEGORY_COLOR_VAR[key as TokenCategory] : REGION_COLOR_VAR[key as Region],
+      colorVar: view === "class" ? CATEGORY_COLOR_VAR[key as TokenCategory] : REGION_COLOR_VAR[key as Region],
     }))
     .sort((a, b) => b.value - a.value);
 }
