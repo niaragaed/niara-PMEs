@@ -72,7 +72,7 @@ function ReserveTicket({ offeringId, onClose }: { offeringId: string; onClose: (
 
       <form onSubmit={handleSubmit} noValidate className="mt-4 flex flex-col gap-4">
         <TextField
-          id="reserva-valor"
+          id="reservation-amount"
           label={t.fieldValue}
           value={amountReais}
           onChange={handleValueChange}
@@ -243,7 +243,7 @@ export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffe
                 </div>
                 <div>
                   <dt className="text-xs text-on-military-muted">{t.detail.terms.alreadyReserved}</dt>
-                  <dd className="mt-0.5 text-sm text-on-military">{formatBRL(offering.arrecadadoCents / 100)}</dd>
+                  <dd className="mt-0.5 text-sm text-on-military">{formatBRL(offering.raisedCents / 100)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-on-military-muted">{t.detail.terms.valuePerShare}</dt>
@@ -272,12 +272,12 @@ export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffe
             <section className="rounded-lg border border-panel-border bg-panel p-6">
               <h2 className="text-lg font-semibold text-on-military">{t.detail.documents.title}</h2>
               <ul className="mt-4 flex flex-col gap-2">
-                {DEFAULT_DOCUMENTS.map((documento) => (
+                {DEFAULT_DOCUMENTS.map((doc) => (
                   <li
-                    key={documento}
+                    key={doc}
                     className="flex items-center justify-between gap-3 rounded-md border border-panel-border px-4 py-2.5 text-sm text-on-military-muted"
                   >
-                    {documento}
+                    {doc}
                     <button
                       type="button"
                       disabled

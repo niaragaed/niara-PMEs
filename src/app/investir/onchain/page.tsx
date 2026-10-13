@@ -43,7 +43,7 @@ async function loadSolanaOfferings(): Promise<ServerSolanaOption[]> {
 // resto da página. `?rede=solana` abre direto na primeira oferta da Solana.
 export default async function Page({ searchParams }: { searchParams: Promise<{ rede?: string }> }) {
   const { rede: network } = await searchParams;
-  const [{ autorizado: isPartner }, confirmedOfferings, solanaOfferings] = await Promise.all([
+  const [{ authorized: isPartner }, confirmedOfferings, solanaOfferings] = await Promise.all([
     resolvePartner(),
     loadConfirmedOnChainOfferings(),
     loadSolanaOfferings(),

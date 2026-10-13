@@ -479,7 +479,7 @@ export const en = {
         viewResult: "See result",
         questions: [
           {
-            id: "objetivo",
+            id: "goal",
             prompt: "What is the main goal of your investment?",
             options: [
               { label: "Preserve the wealth I already have", weight: 1 },
@@ -489,7 +489,7 @@ export const en = {
             ],
           },
           {
-            id: "horizonte",
+            id: "horizon",
             prompt: "How long do you plan to keep this investment?",
             options: [
               { label: "Less than 1 year", weight: 1 },
@@ -499,7 +499,7 @@ export const en = {
             ],
           },
           {
-            id: "experiencia",
+            id: "experience",
             prompt: "What is your experience with stocks and tokenized assets?",
             options: [
               { label: "I have never invested in stocks or tokenized assets", weight: 1 },
@@ -509,7 +509,7 @@ export const en = {
             ],
           },
           {
-            id: "reacao-queda",
+            id: "drawdown-reaction",
             prompt: "If your portfolio dropped 20% in a month, what would you do?",
             options: [
               { label: "Sell everything to avoid further losses", weight: 1 },
@@ -927,64 +927,64 @@ export const en = {
             items: {
               pl: {
                 name: "P/E",
-                unit: "numero",
+                unit: "number",
                 explanation:
                   'Share price divided by earnings per share; shows how many years of earnings it would take to "pay back" the price.',
               },
               pvp: {
                 name: "P/B",
-                unit: "numero",
+                unit: "number",
                 explanation: "Price divided by book value per share; how much the market pays over the book equity.",
               },
               psr: {
                 name: "P/Sales (PSR)",
-                unit: "numero",
+                unit: "number",
                 explanation: "Market value divided by net revenue.",
               },
               evEbitda: {
                 name: "EV/EBITDA",
-                unit: "numero",
+                unit: "number",
                 explanation:
                   "Enterprise value (EV) divided by EBITDA; an operating multiple independent of the capital structure.",
               },
               evEbit: {
                 name: "EV/EBIT",
-                unit: "numero",
+                unit: "number",
                 explanation: "Enterprise value divided by EBIT (operating profit).",
               },
               pEbitda: {
                 name: "P/EBITDA",
-                unit: "numero",
+                unit: "number",
                 explanation: "Market value divided by EBITDA.",
               },
               pEbit: {
                 name: "P/EBIT",
-                unit: "numero",
+                unit: "number",
                 explanation: "Market value divided by EBIT.",
               },
               pAtivo: {
                 name: "P/Assets",
-                unit: "numero",
+                unit: "number",
                 explanation: "Market value divided by total assets.",
               },
               pAtivoCircLiq: {
                 name: "P/Net Current Assets",
-                unit: "numero",
+                unit: "number",
                 explanation: "Price divided by net current assets (current assets minus liabilities).",
               },
               pCapGiro: {
                 name: "P/Working Capital",
-                unit: "numero",
+                unit: "number",
                 explanation: "Price divided by working capital (current assets minus current liabilities).",
               },
               lpa: {
                 name: "EPS",
-                unit: "numero",
+                unit: "number",
                 explanation: "Earnings per share: net income divided by the number of shares.",
               },
               vpa: {
                 name: "BVPS",
-                unit: "numero",
+                unit: "number",
                 explanation: "Book value per share: shareholders' equity divided by the number of shares.",
               },
             },
@@ -994,27 +994,27 @@ export const en = {
             items: {
               margemBruta: {
                 name: "Gross margin",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Gross profit divided by net revenue.",
               },
               margemEbitda: {
                 name: "EBITDA margin",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "EBITDA divided by net revenue.",
               },
               margemEbit: {
                 name: "EBIT margin",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "EBIT (operating profit) divided by net revenue.",
               },
               margemLiquida: {
                 name: "Net margin",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Net income divided by net revenue.",
               },
               giroAtivos: {
                 name: "Asset turnover",
-                unit: "numero",
+                unit: "number",
                 explanation: "Revenue divided by total assets; how much revenue the assets generate.",
               },
             },
@@ -1024,17 +1024,17 @@ export const en = {
             items: {
               roe: {
                 name: "ROE",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Return on equity: net income divided by shareholders' equity.",
               },
               roa: {
                 name: "ROA",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Return on assets: net income divided by total assets.",
               },
               roic: {
                 name: "ROIC",
-                unit: "percentual",
+                unit: "percent",
                 explanation:
                   "Return on invested capital: after-tax operating result divided by invested capital.",
               },
@@ -1045,12 +1045,12 @@ export const en = {
             items: {
               dividendYield: {
                 name: "Dividend yield",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Dividends per share over the last 12 months divided by the share price.",
               },
               payout: {
                 name: "Payout",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "The percentage of earnings paid out as dividends.",
               },
             },
@@ -1060,38 +1060,38 @@ export const en = {
             items: {
               liquidezCorrente: {
                 name: "Current ratio",
-                unit: "numero",
+                unit: "number",
                 explanation:
                   "Current assets divided by current liabilities; the ability to meet short-term obligations.",
               },
               dividaLiquidaEbitda: {
                 name: "Net debt/EBITDA",
-                unit: "numero",
+                unit: "number",
                 explanation: "Net debt divided by EBITDA; how many years of EBITDA it takes to pay off the debt.",
               },
               dividaLiquidaEbit: {
                 name: "Net debt/EBIT",
-                unit: "numero",
+                unit: "number",
                 explanation: "Net debt divided by EBIT.",
               },
               dividaLiquidaPatrimonio: {
                 name: "Net debt/Equity",
-                unit: "numero",
+                unit: "number",
                 explanation: "Net debt divided by shareholders' equity.",
               },
               dividaBrutaPatrimonio: {
                 name: "Gross debt/Equity",
-                unit: "numero",
+                unit: "number",
                 explanation: "Gross debt divided by shareholders' equity.",
               },
               patrimonioAtivos: {
                 name: "Equity/Assets",
-                unit: "numero",
+                unit: "number",
                 explanation: "Shareholders' equity divided by total assets.",
               },
               passivosAtivos: {
                 name: "Liabilities/Assets",
-                unit: "numero",
+                unit: "number",
                 explanation: "Total liabilities divided by total assets.",
               },
             },
@@ -1101,7 +1101,7 @@ export const en = {
             items: {
               cagrReceitas5a: {
                 name: "5-year revenue CAGR",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Compound annual growth rate of revenue over the last 5 years.",
               },
             },
@@ -1112,9 +1112,9 @@ export const en = {
         title: "Offering terms",
         tokenType: "What the token represents",
         tokenTypeValues: {
-          participacao: "Ownership stake / shares",
-          recebivel: "Receivable",
-          divida: "Debt",
+          equity: "Ownership stake / shares",
+          receivable: "Receivable",
+          debt: "Debt",
         },
         fundraisingTarget: "Fundraising target",
         valuePerToken: "Value per token/share",
@@ -1677,12 +1677,12 @@ export const en = {
       button: "Invest",
       status: {
         idle: "",
-        "verificando-allowance": "Checking MockBRL allowance…",
-        "assinando-approve": "Waiting for the MockBRL approval (approve) signature…",
-        "confirmando-approve": "Confirming approval on the network…",
-        "simulando-aportar": "Checking whether the investment would be accepted before asking for your signature…",
-        "assinando-aportar": "Waiting for the investment signature…",
-        "confirmando-aportar": "Confirming investment on the network…",
+        "checking-allowance": "Checking MockBRL allowance…",
+        "signing-approve": "Waiting for the MockBRL approval (approve) signature…",
+        "confirming-approve": "Confirming approval on the network…",
+        "simulating-invest": "Checking whether the investment would be accepted before asking for your signature…",
+        "signing-invest": "Waiting for the investment signature…",
+        "confirming-invest": "Confirming investment on the network…",
         success: "Investment confirmed on-chain.",
         error: "Couldn't complete the investment.",
       },

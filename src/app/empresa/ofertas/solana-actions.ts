@@ -25,7 +25,7 @@ import { keccak256, toHex } from "viem";
 import { currentBlockHeight, readVerifiedOfferingAccount, readPublicationTx } from "@/lib/solana/servidor";
 import { describeSolanaError } from "@/lib/solana/errors";
 import { formatBRL } from "@/lib/format";
-import type { ConfirmPublicationState, RegisterAttemptState, VerificarConsistenciaState } from "./onchain-actions";
+import type { ConfirmPublicationState, RegisterAttemptState, CheckConsistencyState } from "./onchain-actions";
 
 /** Fallback (linha sem lastValidBlockHeight): depois disso sem sinal na rede, o blockhash venceu. */
 const ATTEMPT_EXPIRATION_MS = 3 * 60 * 1000;
@@ -194,28 +194,28 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
         return { status: "error", message: describeSolanaError(e) };
       }
     }
-    if (read.jaExpirou && expired) {
+    if (read.alreadyExpired && expired) {
       const reason = "A transação não chegou à rede antes de expirar (nada foi gravado on-chain) — pode publicar de novo.";
       await resetToNotOnchain(admin, parsedId.data, accountId, reason);
-      return { status: "revertida", motivo: reason };
+      return { status: "revertida", reason };
     }
     return { status: "pendente" };
   }
 
   if (read.status === "falhou") {
-    await resetToNotOnchain(admin, parsedId.data, accountId, read.motivo);
-    return { status: "revertida", motivo: read.motivo };
+    await resetToNotOnchain(admin, parsedId.data, accountId, read.reason);
+    return { status: "revertida", reason: read.reason };
   }
 
-  if (read.eventos.length !== 1) {
+  if (read.events.length !== 1) {
     const reason =
-      read.eventos.length === 0
+      read.events.length === 0
         ? "Nenhum evento OfertaCriada emitido pelo programa niara-pmes-solana foi encontrado nesta transação."
         : "Mais de um evento OfertaCriada nesta transação — esperado exatamente um.";
     await markDivergent(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    return { status: "divergente", reason };
   }
-  const ev = read.eventos[0];
+  const ev = read.events[0];
 
   // A transação tem que ser DESTA tentativa: confirmada depois de registrada (o registro acontece
   // antes do envio, com folga para relógios) — uma assinatura antiga de outra oferta não serve.
@@ -223,7 +223,7 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
   if (read.blockTime !== null && read.blockTime < registeredOn - CLOCK_SKEW_S) {
     const reason = "A transação é anterior a esta tentativa de publicação — não pertence a esta oferta.";
     await markDivergent(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    return { status: "divergente", reason };
   }
 
   // E da empresa DESTA conta: o cnpjRef do evento é keccak256 do CNPJ cadastrado (mesmo cálculo
@@ -232,7 +232,7 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
   if (ev.cnpjRefHex.toLowerCase() !== keccak256(toHex((issuer?.tax_id as string | null) ?? "")).toLowerCase()) {
     const reason = "O CNPJ (hash) gravado na oferta on-chain não é o desta empresa.";
     await markDivergent(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    return { status: "divergente", reason };
   }
 
   const expected = {
@@ -250,7 +250,7 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
   ) {
     const reason = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira Solana vinculada) no Supabase.";
     await markDivergent(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    return { status: "divergente", reason };
   }
 
   let account;
@@ -262,7 +262,7 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
   if (!account || account.issuer !== ev.emissor || account.shareMint !== ev.mintCota) {
     const reason = "A conta da oferta citada no evento não existe na rede, não pertence ao programa niara-pmes-solana ou não bate com o evento.";
     await markDivergent(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    return { status: "divergente", reason };
   }
 
   const { error: updateError } = await admin
@@ -294,7 +294,7 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
  * (meta mínima, meta máxima, preço por cota e prazo são gravados uma vez em criar_oferta e nunca
  * mudam) e compara com a linha do Supabase. Só sinaliza; nunca corrige nenhum dos lados.
  */
-export async function verifyConsistencySolana(offeringId: string): Promise<VerificarConsistenciaState> {
+export async function verifyConsistencySolana(offeringId: string): Promise<CheckConsistencyState> {
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
     return { status: "error", message: "Apenas empresas cadastradas podem verificar publicações." };
@@ -354,7 +354,7 @@ export async function verifyConsistencySolana(offeringId: string): Promise<Verif
       .in("sync_status", ["confirmada", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
     revalidatePath("/empresa/ofertas");
-    return { status: "divergente", motivo: reason };
+    return { status: "divergente", reason };
   }
 
   await admin

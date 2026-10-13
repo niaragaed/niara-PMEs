@@ -36,11 +36,11 @@ export function InvestorProfileSection({ openAutomatically }: InvestorProfileSec
   return (
     <section
       ref={sectionRef}
-      id="perfil-investidor"
-      aria-labelledby="perfil-investidor-heading"
+      id="investor-profile"
+      aria-labelledby="investor-profile-heading"
       className="scroll-mt-24"
     >
-      <h2 id="perfil-investidor-heading" className="text-xl font-semibold text-on-military">
+      <h2 id="investor-profile-heading" className="text-xl font-semibold text-on-military">
         {t.title}
       </h2>
       <p className="mt-1 text-xs text-on-military-muted">{t.subtitle}</p>

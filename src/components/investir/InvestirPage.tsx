@@ -37,8 +37,8 @@ function formatDate(iso: string): string {
 }
 
 export function InvestPage({
-  offerings: ofertas,
-  myReservations: minhasReservas,
+  offerings,
+  myReservations,
   kycStatus: initialKycStatus,
 }: {
   offerings: ActiveOfferingRow[];
@@ -102,13 +102,13 @@ export function InvestPage({
         </p>
 
         <section className="mt-8">
-          {ofertas.length === 0 ? (
+          {offerings.length === 0 ? (
             <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
               {t.empty}
             </p>
           ) : (
             <ul className="flex flex-col gap-3">
-              {ofertas.map((offering) => (
+              {offerings.map((offering) => (
                 <li key={offering.id}>
                   <Link
                     href={`/investir/${offering.id}`}
@@ -156,13 +156,13 @@ export function InvestPage({
           <h2 className="text-xl font-semibold text-on-military">{t.myReservations.title}</h2>
           <p className="mt-1 text-xs text-on-military-muted">{t.myReservations.simulatedNotice}</p>
 
-          {minhasReservas.length === 0 ? (
+          {myReservations.length === 0 ? (
             <p className="mt-4 rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
               {t.myReservations.empty}
             </p>
           ) : (
             <ul className="mt-4 flex flex-col gap-3">
-              {minhasReservas.map((reservation) => {
+              {myReservations.map((reservation) => {
                 const result = reservationResults[reservation.id];
                 const isThisPending =
                   confirmingId === reservation.id && (isConfirmPending || isKycPending);

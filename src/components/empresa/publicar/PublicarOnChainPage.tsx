@@ -16,9 +16,9 @@ import { UNIT_ON_CHAIN } from "@/lib/web3/gates";
 import { formatEth } from "@/lib/web3/format";
 import {
   confirmPublication,
-  verificarConsistencia,
+  checkConsistency,
   type ConfirmPublicationState,
-  type VerificarConsistenciaState,
+  type CheckConsistencyState,
 } from "@/app/empresa/ofertas/onchain-actions";
 import { useDictionary } from "@/lib/i18n/client";
 
@@ -65,7 +65,7 @@ export function PublishOnChainPage({
   const tg = t.gates;
   const tp = t.publication;
 
-  const { connection, gateProvider, gateNetwork: gateRede, gateBalance: gateSaldo, gateAuthorized: gateAutorizado, gateOwnership: gateTitularidade } =
+  const { connection, gateProvider, gateNetwork: networkGate, gateBalance: balanceGate, gateAuthorized: authorizedGate, gateOwnership: ownershipGate } =
     usePublishOnChainGates(linkedWallet);
   const hook = usePublishOfferingOnChain();
 
@@ -107,11 +107,11 @@ export function PublishOnChainPage({
   // esses não têm contrato nenhum ainda para ler, e continuam resolvidos por
   // confirmarPublicacao()/"Reprocessar" acima.
   const shouldVerifyConsistency = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
-  const [consistency, setConsistency] = useState<VerificarConsistenciaState | null>(null);
+  const [consistency, setConsistency] = useState<CheckConsistencyState | null>(null);
   const [verifyingConsistency, setVerifyingConsistency] = useState(shouldVerifyConsistency);
   useEffect(() => {
     if (shouldVerifyConsistency) {
-      verificarConsistencia(offeringId)
+      checkConsistency(offeringId)
         .then(setConsistency)
         .finally(() => setVerifyingConsistency(false));
     }
@@ -120,7 +120,7 @@ export function PublishOnChainPage({
 
   async function verifyConsistencyAgain() {
     setVerifyingConsistency(true);
-    const result = await verificarConsistencia(offeringId);
+    const result = await checkConsistency(offeringId);
     setConsistency(result);
     setVerifyingConsistency(false);
   }
@@ -133,11 +133,11 @@ export function PublishOnChainPage({
       ? hook.status
       : reconciled
         ? reconciled.status === "error"
-          ? "erro"
+          ? "error"
           : reconciled.status
         : consistency
           ? consistency.status === "error"
-            ? "erro"
+            ? "error"
             : consistency.status
           : syncStatus === "pendente"
             ? "pendente"
@@ -153,9 +153,9 @@ export function PublishOnChainPage({
   const displayError =
     hook.errorMessage ??
     onchainLastError ??
-    (reconciled && "motivo" in reconciled ? reconciled.motivo : null) ??
+    (reconciled && "reason" in reconciled ? reconciled.reason : null) ??
     (reconciled?.status === "error" ? reconciled.message : null) ??
-    (consistency && "motivo" in consistency ? consistency.motivo : null) ??
+    (consistency && "reason" in consistency ? consistency.reason : null) ??
     (consistency?.status === "error" ? consistency.message : null);
   // Distingue as duas causas possíveis de 'divergente' (ver onchain-actions.ts): com endereço já
   // gravado, é drift de consistência (recuperável por verificarConsistencia, sem tocar em
@@ -168,64 +168,64 @@ export function PublishOnChainPage({
     id: "provider",
     label: tg.provider.label,
     status: gateProvider.status,
-    detail: gateProvider.status === "reprovado" ? tg.provider.rejected : null,
+    detail: gateProvider.status === "rejected" ? tg.provider.rejected : null,
   };
 
   // ── Gate 2 — rede Sepolia ───────────────────────────────────────────────────────────────
   let networkDetail: string | null = null;
-  if (gateRede.status === "reprovado") {
-    networkDetail = gateRede.reason === "nao_conectado" ? tg.network.notConnected : tg.network.wrongNetwork(gateRede.connectedChainId);
+  if (networkGate.status === "rejected") {
+    networkDetail = networkGate.reason === "nao_conectado" ? tg.network.notConnected : tg.network.wrongNetwork(networkGate.connectedChainId);
   }
-  const rowNetwork: GateRow = { id: "rede", label: tg.network.label, status: gateRede.status, detail: networkDetail };
+  const rowNetwork: GateRow = { id: "network", label: tg.network.label, status: networkGate.status, detail: networkDetail };
 
   // ── Gate 3 — saldo de ETH suficiente ───────────────────────────────────────────────────
   let balanceDetail: string | null = null;
-  if (gateSaldo.status === "carregando") balanceDetail = tg.balance.loading;
-  else if (gateSaldo.status === "erro") balanceDetail = tg.balance.error;
-  else if (gateSaldo.status === "reprovado") {
-    balanceDetail = tg.balance.rejected(formatEth(gateSaldo.balanceWei), formatEth(gateSaldo.estimatedCostWei));
-  } else if (gateSaldo.status === "ok") {
-    balanceDetail = tg.balance.ok(formatEth(gateSaldo.balanceWei), formatEth(gateSaldo.estimatedCostWei));
+  if (balanceGate.status === "loading") balanceDetail = tg.balance.loading;
+  else if (balanceGate.status === "error") balanceDetail = tg.balance.error;
+  else if (balanceGate.status === "rejected") {
+    balanceDetail = tg.balance.rejected(formatEth(balanceGate.balanceWei), formatEth(balanceGate.estimatedCostWei));
+  } else if (balanceGate.status === "ok") {
+    balanceDetail = tg.balance.ok(formatEth(balanceGate.balanceWei), formatEth(balanceGate.estimatedCostWei));
   }
-  const rowBalance: GateRow = { id: "saldo", label: tg.balance.label, status: gateSaldo.status, detail: balanceDetail };
+  const rowBalance: GateRow = { id: "balance", label: tg.balance.label, status: balanceGate.status, detail: balanceDetail };
 
   // ── Gate 4 — emissoresAutorizados on-chain ─────────────────────────────────────────────
   let authorizedStatus: GateRow["status"];
   let authorizedDetail: string | null = null;
   if (!connection.address) {
-    authorizedStatus = "carregando";
+    authorizedStatus = "loading";
     authorizedDetail = tg.authorized.notConnected;
-  } else if (gateAutorizado.errorMessage) {
-    authorizedStatus = "erro";
-    authorizedDetail = gateAutorizado.errorMessage;
-  } else if (gateAutorizado.isLoading || gateAutorizado.authorized === null) {
-    authorizedStatus = "carregando";
-  } else if (gateAutorizado.authorized === false) {
-    authorizedStatus = "reprovado";
+  } else if (authorizedGate.errorMessage) {
+    authorizedStatus = "error";
+    authorizedDetail = authorizedGate.errorMessage;
+  } else if (authorizedGate.isLoading || authorizedGate.authorized === null) {
+    authorizedStatus = "loading";
+  } else if (authorizedGate.authorized === false) {
+    authorizedStatus = "rejected";
     authorizedDetail = tg.authorized.rejected;
   } else {
     authorizedStatus = "ok";
   }
-  const rowAuthorized: GateRow = { id: "autorizado", label: tg.authorized.label, status: authorizedStatus, detail: authorizedDetail };
+  const rowAuthorized: GateRow = { id: "authorized", label: tg.authorized.label, status: authorizedStatus, detail: authorizedDetail };
 
   // ── Gate 5 — carteira conectada == issuers.wallet_address ──────────────────────────────
   let ownershipDetail: string | null = null;
-  if (gateTitularidade.status === "reprovado") {
-    if (gateTitularidade.reason === "sem_carteira_vinculada") ownershipDetail = tg.ownership.noLinkedWallet;
-    else if (gateTitularidade.reason === "nao_conectado") ownershipDetail = tg.ownership.notConnected;
-    else ownershipDetail = tg.ownership.different(gateTitularidade.linkedWallet, gateTitularidade.connectedWallet);
+  if (ownershipGate.status === "rejected") {
+    if (ownershipGate.reason === "sem_carteira_vinculada") ownershipDetail = tg.ownership.noLinkedWallet;
+    else if (ownershipGate.reason === "nao_conectado") ownershipDetail = tg.ownership.notConnected;
+    else ownershipDetail = tg.ownership.different(ownershipGate.linkedWallet, ownershipGate.connectedWallet);
   }
   const rowOwnership: GateRow = {
-    id: "titularidade",
+    id: "ownership",
     label: tg.ownership.label,
-    status: gateTitularidade.status === "reprovado" && gateTitularidade.reason === "nao_conectado" ? "carregando" : gateTitularidade.status,
+    status: ownershipGate.status === "rejected" && ownershipGate.reason === "nao_conectado" ? "loading" : ownershipGate.status,
     detail: ownershipDetail,
   };
 
   // ── Gate 6 — termo de publicação (real a partir desta etapa) ───────────────────────────
   const validData = data.name.trim().length > 0 && data.symbol.trim().length > 0 && data.series.trim().length > 0;
   const gate6Ok = accepted && validData;
-  const rowTerm: GateRow = { id: "termo", label: tg.term.label, status: gate6Ok ? "ok" : "reprovado", detail: gate6Ok ? null : tg.term.rejected };
+  const rowTerm: GateRow = { id: "terms", label: tg.term.label, status: gate6Ok ? "ok" : "rejected", detail: gate6Ok ? null : tg.term.rejected };
 
   const rows: GateRow[] = [rowProvider, rowNetwork, rowBalance, rowAuthorized, rowOwnership, rowTerm];
   const pendingItems = rows.filter((r) => r.status !== "ok");
@@ -246,7 +246,7 @@ export function PublishOnChainPage({
     });
   }
 
-  const inProgress = displayStatus === "assinando" || displayStatus === "registrando" || displayStatus === "confirmando";
+  const inProgress = displayStatus === "signing" || displayStatus === "registrando" || displayStatus === "confirming";
 
   return (
     <main className="flex flex-1 flex-col bg-military">
@@ -332,7 +332,7 @@ export function PublishOnChainPage({
           </div>
         )}
 
-        {(displayStatus === "revertida" || displayStatus === "erro") && displayError && (
+        {(displayStatus === "revertida" || displayStatus === "error") && displayError && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
             {displayStatus === "revertida" && <p className="font-medium">{tp.revertedTitle}</p>}
             <p className="mt-1">{displayError}</p>
@@ -382,19 +382,19 @@ export function PublishOnChainPage({
         {inProgress && (
           <div className="mt-6 flex items-center gap-3 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            {displayStatus === "assinando" && tp.signing}
+            {displayStatus === "signing" && tp.signing}
             {displayStatus === "registrando" && tp.registering}
-            {displayStatus === "confirmando" && tp.confirming}
+            {displayStatus === "confirming" && tp.confirming}
           </div>
         )}
 
-        {(displayStatus === "idle" || displayStatus === "revertida" || displayStatus === "erro") && (
+        {(displayStatus === "idle" || displayStatus === "revertida" || displayStatus === "error") && (
           <>
             {!linkedWallet && (
               <div className="mt-6 rounded-lg border border-salmon/40 bg-salmon/10 p-4 text-sm text-on-military">
                 <p className="font-medium">{t.noLinkedWallet.title}</p>
                 <p className="mt-1 text-on-military-muted">{t.noLinkedWallet.text}</p>
-                <Link href="/perfil#carteira" className="mt-2 inline-block text-salmon hover:text-salmon-600">
+                <Link href="/perfil#wallet" className="mt-2 inline-block text-salmon hover:text-salmon-600">
                   {t.noLinkedWallet.link}
                 </Link>
               </div>

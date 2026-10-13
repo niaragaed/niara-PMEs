@@ -375,7 +375,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
           )}
         </section>
 
-        <section id="criar-oferta" className="mt-10 scroll-mt-24">
+        <section id="create-offering" className="mt-10 scroll-mt-24">
           <h2 className="text-xl font-semibold text-on-military">{t.createTitle}</h2>
 
           <form
@@ -385,7 +385,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TextField
-                id="oferta-valor"
+                id="offering-value"
                 label={t.fields.offeringValue}
                 value={draft.baseCapReais}
                 onChange={handleFieldChange("baseCapReais")}
@@ -394,7 +394,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                 placeholder="5.000.000,00"
               />
               <TextField
-                id="oferta-meta-minima"
+                id="offering-min-target"
                 label={t.fields.minTarget}
                 value={draft.targetMinReais}
                 onChange={handleFieldChange("targetMinReais")}
@@ -403,7 +403,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                 placeholder="1.000.000,00"
               />
               <TextField
-                id="oferta-lote"
+                id="offering-lot"
                 label={t.fields.additionalLot}
                 value={draft.additionalLotPct}
                 onChange={handleFieldChange("additionalLotPct")}
@@ -412,7 +412,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                 placeholder="0"
               />
               <TextField
-                id="oferta-prazo"
+                id="offering-deadline"
                 label={t.fields.deadlineDays}
                 value={draft.windowDays}
                 onChange={handleFieldChange("windowDays")}
@@ -421,7 +421,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                 placeholder="180"
               />
               <TextField
-                id="oferta-valor-cota"
+                id="offering-share-value"
                 label={t.fields.valuePerShare}
                 value={draft.sharePriceReais}
                 onChange={handleFieldChange("sharePriceReais")}
@@ -430,7 +430,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                 placeholder="100,00"
               />
               <SelectField
-                id="oferta-categoria"
+                id="offering-category"
                 label={t.fields.category}
                 value={draft.category}
                 onChange={handleFieldChange("category")}

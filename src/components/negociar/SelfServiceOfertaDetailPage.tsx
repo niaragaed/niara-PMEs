@@ -24,8 +24,8 @@ import { getDictionary } from "@/lib/i18n/server";
 // riscos genéricos da Res. CVM 88 (texto idêntico ao de OfertaDetailPage.tsx, não fictício).
 export async function SelfServiceOfferingDetailPage({
   offering,
-  isPartner: isSocio = false,
-  isIssuer: isEmissor = false,
+  isPartner = false,
+  isIssuer = false,
 }: {
   offering: ConfirmedOnChainOffering & { category: NonNullable<ConfirmedOnChainOffering["category"]> };
   isPartner?: boolean;
@@ -36,7 +36,7 @@ export async function SelfServiceOfferingDetailPage({
 }) {
   const dict = await getDictionary();
   const t = dict.trade.offering;
-  const nome = offering.issuerTradeName ?? offering.issuerLegalName;
+  const name = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">
@@ -54,7 +54,7 @@ export async function SelfServiceOfferingDetailPage({
         </Link>
 
         <div className="mt-6 overflow-hidden rounded-lg shadow-soft">
-          <OfferingBanner bannerUrl={offering.bannerUrl} logoUrl={offering.logoUrl} tradeName={nome} category={offering.category} size="hero" />
+          <OfferingBanner bannerUrl={offering.bannerUrl} logoUrl={offering.logoUrl} tradeName={name} category={offering.category} size="hero" />
         </div>
 
         <div className="mt-6">
@@ -62,7 +62,7 @@ export async function SelfServiceOfferingDetailPage({
             <CategoryBadge category={offering.category} />
             <NetworkBadge rede={offering.rede} />
           </div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-on-military">{nome}</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-on-military">{name}</h1>
         </div>
 
         <div className="mt-8 flex flex-col gap-6">
@@ -75,11 +75,11 @@ export async function SelfServiceOfferingDetailPage({
             <RealOnChainInvestPanel
               tokenAddress={offering.tokenAddress}
               offeringAddress={offering.contractAddress}
-              isPartner={isSocio}
-              isIssuer={isEmissor}
+              isPartner={isPartner}
+              isIssuer={isIssuer}
             />
           ) : (
-            <SolanaInvestPanel offeringAddress={offering.contractAddress} isPartner={isSocio} isEmissor={isEmissor} />
+            <SolanaInvestPanel offeringAddress={offering.contractAddress} isPartner={isPartner} isIssuer={isIssuer} />
           )}
 
           {(offering.issuerSector || offering.issuerBusinessSummary) && (
@@ -109,12 +109,12 @@ export async function SelfServiceOfferingDetailPage({
           <section className="rounded-lg bg-surface p-6 shadow-soft">
             <h2 className="text-lg font-semibold text-ink">{t.documents.title}</h2>
             <ul className="mt-4 flex flex-col gap-2">
-              {DEFAULT_DOCUMENTS.map((documento) => (
+              {DEFAULT_DOCUMENTS.map((doc) => (
                 <li
-                  key={documento}
+                  key={doc}
                   className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-2.5 text-sm text-ink-muted"
                 >
-                  {documento}
+                  {doc}
                   <button
                     type="button"
                     disabled

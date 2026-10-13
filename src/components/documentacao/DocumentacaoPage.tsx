@@ -26,8 +26,8 @@ export async function DocsPage() {
         <DocsNav />
 
         <div className="min-w-0 flex-1 space-y-16">
-          <section id="o-que-e" aria-labelledby="o-que-e-heading" className="scroll-mt-24">
-            <h2 id="o-que-e-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
+          <section id="what-is" aria-labelledby="what-is-heading" className="scroll-mt-24">
+            <h2 id="what-is-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
               {t.whatIs.title}
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-on-military-muted sm:text-base">
@@ -35,8 +35,8 @@ export async function DocsPage() {
             </p>
           </section>
 
-          <section id="como-funciona" aria-labelledby="como-funciona-heading" className="scroll-mt-24">
-            <h2 id="como-funciona-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
+          <section id="how-tokenization-works" aria-labelledby="how-tokenization-works-heading" className="scroll-mt-24">
+            <h2 id="how-tokenization-works-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
               {t.howItWorks.title}
             </h2>
             <ol className="mt-4 flex max-w-2xl flex-col gap-3">
@@ -54,8 +54,8 @@ export async function DocsPage() {
             </ol>
           </section>
 
-          <section id="enquadramento" aria-labelledby="enquadramento-heading" className="scroll-mt-24">
-            <h2 id="enquadramento-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
+          <section id="framework" aria-labelledby="framework-heading" className="scroll-mt-24">
+            <h2 id="framework-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
               {t.framework.title}
             </h2>
             <div className="mt-4 flex max-w-2xl flex-col gap-3">
@@ -67,8 +67,8 @@ export async function DocsPage() {
             </div>
           </section>
 
-          <section id="modelo-receita" aria-labelledby="modelo-receita-heading" className="scroll-mt-24">
-            <h2 id="modelo-receita-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
+          <section id="revenue-model" aria-labelledby="revenue-model-heading" className="scroll-mt-24">
+            <h2 id="revenue-model-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
               {t.revenueModel.title}
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-on-military-muted sm:text-base">
@@ -76,8 +76,8 @@ export async function DocsPage() {
             </p>
           </section>
 
-          <section id="tecnologia" aria-labelledby="tecnologia-heading" className="scroll-mt-24">
-            <h2 id="tecnologia-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
+          <section id="technology" aria-labelledby="technology-heading" className="scroll-mt-24">
+            <h2 id="technology-heading" className="text-xl font-semibold text-on-military sm:text-2xl">
               {t.technology.title}
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-on-military-muted sm:text-base">

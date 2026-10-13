@@ -476,7 +476,7 @@ export const pt = {
         viewResult: "Ver resultado",
         questions: [
           {
-            id: "objetivo",
+            id: "goal",
             prompt: "Qual é o principal objetivo do seu investimento?",
             options: [
               { label: "Preservar o patrimônio que já tenho", weight: 1 },
@@ -486,7 +486,7 @@ export const pt = {
             ],
           },
           {
-            id: "horizonte",
+            id: "horizon",
             prompt: "Por quanto tempo pretende manter esse investimento?",
             options: [
               { label: "Menos de 1 ano", weight: 1 },
@@ -496,7 +496,7 @@ export const pt = {
             ],
           },
           {
-            id: "experiencia",
+            id: "experience",
             prompt: "Qual sua experiência com ações e ativos tokenizados?",
             options: [
               { label: "Nunca investi em ações ou ativos tokenizados", weight: 1 },
@@ -506,7 +506,7 @@ export const pt = {
             ],
           },
           {
-            id: "reacao-queda",
+            id: "drawdown-reaction",
             prompt: "Se sua carteira caísse 20% em um mês, o que faria?",
             options: [
               { label: "Venderia tudo para evitar mais perdas", weight: 1 },
@@ -930,64 +930,64 @@ export const pt = {
             items: {
               pl: {
                 name: "P/L",
-                unit: "numero",
+                unit: "number",
                 explanation:
                   'Preço da ação dividido pelo lucro por ação; indica quantos anos de lucro seriam necessários para "pagar" o preço.',
               },
               pvp: {
                 name: "P/VP",
-                unit: "numero",
+                unit: "number",
                 explanation: "Preço dividido pelo valor patrimonial por ação; quanto o mercado paga sobre o patrimônio contábil.",
               },
               psr: {
                 name: "P/Receita (PSR)",
-                unit: "numero",
+                unit: "number",
                 explanation: "Valor de mercado dividido pela receita líquida.",
               },
               evEbitda: {
                 name: "EV/Ebitda",
-                unit: "numero",
+                unit: "number",
                 explanation:
                   "Valor da firma (EV) dividido pelo Ebitda; múltiplo operacional independente da estrutura de capital.",
               },
               evEbit: {
                 name: "EV/Ebit",
-                unit: "numero",
+                unit: "number",
                 explanation: "Valor da firma dividido pelo Ebit (lucro operacional).",
               },
               pEbitda: {
                 name: "P/Ebitda",
-                unit: "numero",
+                unit: "number",
                 explanation: "Valor de mercado dividido pelo Ebitda.",
               },
               pEbit: {
                 name: "P/Ebit",
-                unit: "numero",
+                unit: "number",
                 explanation: "Valor de mercado dividido pelo Ebit.",
               },
               pAtivo: {
                 name: "P/Ativo",
-                unit: "numero",
+                unit: "number",
                 explanation: "Valor de mercado dividido pelo ativo total.",
               },
               pAtivoCircLiq: {
                 name: "P/Ativo Circ. Liq.",
-                unit: "numero",
+                unit: "number",
                 explanation: "Preço dividido pelo ativo circulante líquido (circulante menos passivos).",
               },
               pCapGiro: {
                 name: "P/Cap. Giro",
-                unit: "numero",
+                unit: "number",
                 explanation: "Preço dividido pelo capital de giro (ativo circulante menos passivo circulante).",
               },
               lpa: {
                 name: "LPA",
-                unit: "numero",
+                unit: "number",
                 explanation: "Lucro por ação: lucro líquido dividido pelo número de ações.",
               },
               vpa: {
                 name: "VPA",
-                unit: "numero",
+                unit: "number",
                 explanation: "Valor patrimonial por ação: patrimônio líquido dividido pelo número de ações.",
               },
             },
@@ -997,27 +997,27 @@ export const pt = {
             items: {
               margemBruta: {
                 name: "Margem Bruta",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Lucro bruto dividido pela receita líquida.",
               },
               margemEbitda: {
                 name: "Margem Ebitda",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Ebitda dividido pela receita líquida.",
               },
               margemEbit: {
                 name: "Margem Ebit",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Ebit (lucro operacional) dividido pela receita líquida.",
               },
               margemLiquida: {
                 name: "Margem Líquida",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Lucro líquido dividido pela receita líquida.",
               },
               giroAtivos: {
                 name: "Giro Ativos",
-                unit: "numero",
+                unit: "number",
                 explanation: "Receita dividida pelo ativo total; quanto o ativo gera de receita.",
               },
             },
@@ -1027,17 +1027,17 @@ export const pt = {
             items: {
               roe: {
                 name: "ROE",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Retorno sobre o patrimônio líquido: lucro líquido dividido pelo patrimônio líquido.",
               },
               roa: {
                 name: "ROA",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Retorno sobre os ativos: lucro líquido dividido pelo ativo total.",
               },
               roic: {
                 name: "ROIC",
-                unit: "percentual",
+                unit: "percent",
                 explanation:
                   "Retorno sobre o capital investido: resultado operacional após impostos dividido pelo capital investido.",
               },
@@ -1048,12 +1048,12 @@ export const pt = {
             items: {
               dividendYield: {
                 name: "Dividend Yield",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Dividendos por ação nos últimos 12 meses dividido pelo preço da ação.",
               },
               payout: {
                 name: "Payout",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Percentual do lucro distribuído como dividendos.",
               },
             },
@@ -1063,38 +1063,38 @@ export const pt = {
             items: {
               liquidezCorrente: {
                 name: "Liquidez Corrente",
-                unit: "numero",
+                unit: "number",
                 explanation:
                   "Ativo circulante dividido pelo passivo circulante; capacidade de honrar obrigações de curto prazo.",
               },
               dividaLiquidaEbitda: {
                 name: "Dívida Líquida/Ebitda",
-                unit: "numero",
+                unit: "number",
                 explanation: "Dívida líquida dividida pelo Ebitda; quantos anos de Ebitda para quitar a dívida.",
               },
               dividaLiquidaEbit: {
                 name: "Dívida Líquida/Ebit",
-                unit: "numero",
+                unit: "number",
                 explanation: "Dívida líquida dividida pelo Ebit.",
               },
               dividaLiquidaPatrimonio: {
                 name: "Dívida Líquida/Patrimônio",
-                unit: "numero",
+                unit: "number",
                 explanation: "Dívida líquida dividida pelo patrimônio líquido.",
               },
               dividaBrutaPatrimonio: {
                 name: "Dívida Bruta/Patrimônio",
-                unit: "numero",
+                unit: "number",
                 explanation: "Dívida bruta dividida pelo patrimônio líquido.",
               },
               patrimonioAtivos: {
                 name: "Patrimônio/Ativos",
-                unit: "numero",
+                unit: "number",
                 explanation: "Patrimônio líquido dividido pelo ativo total.",
               },
               passivosAtivos: {
                 name: "Passivos/Ativos",
-                unit: "numero",
+                unit: "number",
                 explanation: "Passivo total dividido pelo ativo total.",
               },
             },
@@ -1104,7 +1104,7 @@ export const pt = {
             items: {
               cagrReceitas5a: {
                 name: "CAGR Receitas 5 anos",
-                unit: "percentual",
+                unit: "percent",
                 explanation: "Taxa de crescimento anual composta da receita nos últimos 5 anos.",
               },
             },
@@ -1115,9 +1115,9 @@ export const pt = {
         title: "Termos da oferta",
         tokenType: "O que o token representa",
         tokenTypeValues: {
-          participacao: "Participação societária / cotas",
-          recebivel: "Recebível",
-          divida: "Dívida",
+          equity: "Participação societária / cotas",
+          receivable: "Recebível",
+          debt: "Dívida",
         },
         fundraisingTarget: "Meta de captação",
         valuePerToken: "Valor por token/cota",
@@ -1680,12 +1680,12 @@ export const pt = {
       button: "Investir",
       status: {
         idle: "",
-        "verificando-allowance": "Verificando autorização de MockBRL…",
-        "assinando-approve": "Aguardando assinatura da aprovação (approve) de MockBRL…",
-        "confirmando-approve": "Confirmando aprovação na rede…",
-        "simulando-aportar": "Conferindo se o aporte seria aceito antes de pedir sua assinatura…",
-        "assinando-aportar": "Aguardando assinatura do aporte…",
-        "confirmando-aportar": "Confirmando aporte na rede…",
+        "checking-allowance": "Verificando autorização de MockBRL…",
+        "signing-approve": "Aguardando assinatura da aprovação (approve) de MockBRL…",
+        "confirming-approve": "Confirmando aprovação na rede…",
+        "simulating-invest": "Conferindo se o aporte seria aceito antes de pedir sua assinatura…",
+        "signing-invest": "Aguardando assinatura do aporte…",
+        "confirming-invest": "Confirmando aporte na rede…",
         success: "Aporte confirmado on-chain.",
         error: "Não foi possível concluir o aporte.",
       },

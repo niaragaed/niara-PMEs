@@ -9,9 +9,9 @@ const GROUPS = ["valuation", "eficiencia", "rentabilidade", "dividendos", "endiv
 
 const numberFormatter = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function formatIndicator(value: number, unit: "numero" | "percentual"): string {
+function formatIndicator(value: number, unit: "number" | "percent"): string {
   const formatted = numberFormatter.format(value);
-  return unit === "percentual" ? `${formatted}%` : formatted;
+  return unit === "percent" ? `${formatted}%` : formatted;
 }
 
 export function FundamentalIndicators({ indicators }: { indicators: FundamentalIndicatorValues }) {
@@ -29,7 +29,7 @@ export function FundamentalIndicators({ indicators }: { indicators: FundamentalI
         {GROUPS.map((groupId) => {
           const group = t.groups[groupId];
           const values = indicators[groupId] as Record<string, number>;
-          const items = Object.entries(group.items) as [string, { name: string; unit: "numero" | "percentual"; explanation: string }][];
+          const items = Object.entries(group.items) as [string, { name: string; unit: "number" | "percent"; explanation: string }][];
 
           return (
             <div key={groupId}>

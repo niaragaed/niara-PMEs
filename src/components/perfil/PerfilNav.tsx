@@ -4,10 +4,10 @@ import { useDictionary } from "@/lib/i18n/client";
 export function ProfileNav({ showMyOfferings }: { showMyOfferings: boolean }) {
   const dict = useDictionary();
   const SECTIONS = [
-    { id: "dados-cadastro", label: dict.profile.nav.registrationData },
-    ...(showMyOfferings ? [{ id: "minhas-ofertas", label: dict.profile.nav.myOfferings }] : []),
-    { id: "perfil-investidor", label: dict.profile.nav.investorProfile },
-    { id: "carteira", label: dict.profile.nav.wallet },
+    { id: "registration-data", label: dict.profile.nav.registrationData },
+    ...(showMyOfferings ? [{ id: "my-offerings", label: dict.profile.nav.myOfferings }] : []),
+    { id: "investor-profile", label: dict.profile.nav.investorProfile },
+    { id: "wallet", label: dict.profile.nav.wallet },
   ];
 
   return (

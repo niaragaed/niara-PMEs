@@ -16,8 +16,8 @@ export async function SummaryCards({ summary }: { summary: TransactionsSummary }
   const t = dict.partners;
   const onChain = summary.onChain;
   const singleFeeBps =
-    onChain && onChain.taxaBpsPorOferta.every((bps) => bps === onChain.taxaBpsPorOferta[0])
-      ? onChain.taxaBpsPorOferta[0]
+    onChain && onChain.feeBpsByOffering.every((bps) => bps === onChain.feeBpsByOffering[0])
+      ? onChain.feeBpsByOffering[0]
       : null;
 
   return (
@@ -28,10 +28,10 @@ export async function SummaryCards({ summary }: { summary: TransactionsSummary }
           <>
             <KpiCard
               label={t.realSummary.totalRaised}
-              value={formatToken(onChain.totalArrecadadoWei, onChain.mockBrlDecimals, onChain.mockBrlSymbol)}
+              value={formatToken(onChain.totalRaisedWei, onChain.mockBrlDecimals, onChain.mockBrlSymbol)}
               note={t.origin.real}
             />
-            <KpiCard label={t.realSummary.uniqueWallets} value={String(onChain.carteirasUnicas)} note={t.origin.real} />
+            <KpiCard label={t.realSummary.uniqueWallets} value={String(onChain.uniqueWallets)} note={t.origin.real} />
             <KpiCard
               label={t.realSummary.configuredRate}
               value={singleFeeBps === 0 ? "0%" : singleFeeBps === null ? t.realSummary.variableFee : `${(singleFeeBps / 100).toFixed(2)}%`}
@@ -39,7 +39,7 @@ export async function SummaryCards({ summary }: { summary: TransactionsSummary }
             />
             <KpiCard
               label={t.realSummary.feeRevenue}
-              value={formatToken(onChain.taxaRecebidaWei, onChain.mockBrlDecimals, onChain.mockBrlSymbol)}
+              value={formatToken(onChain.feeReceivedWei, onChain.mockBrlDecimals, onChain.mockBrlSymbol)}
               note={t.realSummary.feeRevenueNote}
             />
           </>

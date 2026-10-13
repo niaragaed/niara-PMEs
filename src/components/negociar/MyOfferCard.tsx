@@ -26,14 +26,14 @@ function formatDate(iso: string): string {
 export async function MyOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
   const dict = await getDictionary();
   const t = dict.trade.myOfferingCard;
-  const nome = offering.issuerTradeName ?? offering.issuerLegalName;
+  const name = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-soft">
       <OfferingBanner
         bannerUrl={offering.bannerUrl}
         logoUrl={offering.logoUrl}
-        tradeName={nome}
+        tradeName={name}
         category={offering.category}
         size="card"
       />
@@ -45,7 +45,7 @@ export async function MyOfferCard({ offering }: { offering: ActiveOfferingSummar
         </span>
 
         <div>
-          <h3 className="text-sm font-semibold text-ink">{nome}</h3>
+          <h3 className="text-sm font-semibold text-ink">{name}</h3>
           {offering.sector && <p className="text-xs text-ink-muted">{offering.sector}</p>}
         </div>
 

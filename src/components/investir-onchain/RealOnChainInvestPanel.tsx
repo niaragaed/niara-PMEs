@@ -75,7 +75,7 @@ function FaucetCard({
   const [quantity, setQuantity] = useState("100");
   const { status, errorMessage, mint } = useMintMockBrl(addresses);
 
-  const isBusy = status === "assinando" || status === "confirmando";
+  const isBusy = status === "signing" || status === "confirming";
 
   async function handleMint() {
     const parsed = Number(quantity.replace(",", "."));
@@ -113,16 +113,16 @@ function FaucetCard({
           className="flex items-center gap-2 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Coins className="h-4 w-4" aria-hidden="true" />
-          {status === "assinando" ? t.signing : status === "confirmando" ? t.confirming : t.button}
+          {status === "signing" ? t.signing : status === "confirming" ? t.confirming : t.button}
         </button>
       </div>
 
-      {status === "sucesso" && (
+      {status === "success" && (
         <p role="status" className="mt-3 text-sm text-value-positive">
           {t.success}
         </p>
       )}
-      {status === "erro" && errorMessage && (
+      {status === "error" && errorMessage && (
         <p role="alert" className="mt-3 text-sm text-value-negative">
           {errorMessage}
         </p>
@@ -134,7 +134,7 @@ function FaucetCard({
 export function RealOnChainInvestPanel({
   tokenAddress,
   offeringAddress,
-  isPartner: isSocio = false,
+  isPartner = false,
   isIssuer = false,
 }: {
   tokenAddress: `0x${string}`;
@@ -157,7 +157,7 @@ export function RealOnChainInvestPanel({
 
   const [shareQuantity, setShareQuantity] = useState("1");
   const invest = useInvestOnChain(addresses);
-  const encerrar = useCloseOffering(addresses);
+  const closeAction = useCloseOffering(addresses);
   const redeem = useRedeemShares(addresses);
   const release = useReleaseToIssuer(addresses);
 
@@ -195,7 +195,7 @@ export function RealOnChainInvestPanel({
     exceedsCapacity ||
     exceedsCap ||
     insufficientBalance ||
-    (invest.status !== "idle" && invest.status !== "sucesso" && invest.status !== "erro");
+    (invest.status !== "idle" && invest.status !== "success" && invest.status !== "error");
 
   async function handleInvest() {
     // invest.investir() não recebe mais allowance de fora — lê direto da chain no momento em que
@@ -206,7 +206,7 @@ export function RealOnChainInvestPanel({
   }
 
   async function handleClose() {
-    await encerrar.close();
+    await closeAction.close();
     terms.refetch();
   }
 
@@ -392,18 +392,18 @@ export function RealOnChainInvestPanel({
                 onClick={handleInvest}
                 className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {invest.status === "idle" || invest.status === "sucesso" || invest.status === "erro"
+                {invest.status === "idle" || invest.status === "success" || invest.status === "error"
                   ? t.invest.button
                   : t.invest.status[invest.status]}
               </button>
 
-              {invest.status === "sucesso" && (
+              {invest.status === "success" && (
                 <p role="status" className="mt-3 flex items-center gap-2 text-sm text-value-positive">
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   {t.invest.status.success}
                 </p>
               )}
-              {invest.status === "erro" && invest.errorMessage && (
+              {invest.status === "error" && invest.errorMessage && (
                 <p role="alert" className="mt-3 text-sm text-value-negative">
                   {invest.errorMessage}
                 </p>
@@ -445,25 +445,25 @@ export function RealOnChainInvestPanel({
           <p className="text-sm text-on-military-muted">{t.close.description}</p>
           <button
             type="button"
-            disabled={!(isSocio || isIssuer) || encerrar.status === "assinando" || encerrar.status === "confirmando"}
+            disabled={!(isPartner || isIssuer) || closeAction.status === "signing" || closeAction.status === "confirming"}
             onClick={handleClose}
             className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {encerrar.status === "assinando"
+            {closeAction.status === "signing"
               ? t.close.signing
-              : encerrar.status === "confirmando"
+              : closeAction.status === "confirming"
                 ? t.close.confirming
                 : t.close.button}
           </button>
-          {!(isSocio || isIssuer) && <p className="mt-3 text-xs text-on-military-muted">{t.close.restricted}</p>}
-          {encerrar.status === "sucesso" && (
+          {!(isPartner || isIssuer) && <p className="mt-3 text-xs text-on-military-muted">{t.close.restricted}</p>}
+          {closeAction.status === "success" && (
             <p role="status" className="mt-3 text-sm text-value-positive">
               {t.close.success}
             </p>
           )}
-          {encerrar.status === "erro" && encerrar.errorMessage && (
+          {closeAction.status === "error" && closeAction.errorMessage && (
             <p role="alert" className="mt-3 text-sm text-value-negative">
-              {encerrar.errorMessage}
+              {closeAction.errorMessage}
             </p>
           )}
         </Card>
@@ -477,22 +477,22 @@ export function RealOnChainInvestPanel({
           <p className="text-sm text-on-military-muted">{t.redeem.description}</p>
           <button
             type="button"
-            disabled={redeem.status === "assinando" || redeem.status === "confirmando"}
+            disabled={redeem.status === "signing" || redeem.status === "confirming"}
             onClick={handleRedeem}
             className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {redeem.status === "assinando"
+            {redeem.status === "signing"
               ? t.redeem.signing
-              : redeem.status === "confirmando"
+              : redeem.status === "confirming"
                 ? t.redeem.confirming
                 : t.redeem.button}
           </button>
-          {redeem.status === "sucesso" && (
+          {redeem.status === "success" && (
             <p role="status" className="mt-3 text-sm text-value-positive">
               {t.redeem.success}
             </p>
           )}
-          {redeem.status === "erro" && redeem.errorMessage && (
+          {redeem.status === "error" && redeem.errorMessage && (
             <p role="alert" className="mt-3 text-sm text-value-negative">
               {redeem.errorMessage}
             </p>
@@ -517,23 +517,23 @@ export function RealOnChainInvestPanel({
             <>
               <button
                 type="button"
-                disabled={!isSocio || release.status === "assinando" || release.status === "confirmando"}
+                disabled={!isPartner || release.status === "signing" || release.status === "confirming"}
                 onClick={handleRelease}
                 className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {release.status === "assinando"
+                {release.status === "signing"
                   ? t.release.signing
-                  : release.status === "confirmando"
+                  : release.status === "confirming"
                     ? t.release.confirming
                     : t.release.button}
               </button>
-              {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.release.restricted}</p>}
-              {release.status === "sucesso" && (
+              {!isPartner && <p className="mt-3 text-xs text-on-military-muted">{t.release.restricted}</p>}
+              {release.status === "success" && (
                 <p role="status" className="mt-3 text-sm text-value-positive">
                   {t.release.success}
                 </p>
               )}
-              {release.status === "erro" && release.errorMessage && (
+              {release.status === "error" && release.errorMessage && (
                 <p role="alert" className="mt-3 text-sm text-value-negative">
                   {release.errorMessage}
                 </p>

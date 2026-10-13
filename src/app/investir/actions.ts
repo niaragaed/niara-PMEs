@@ -195,9 +195,9 @@ export async function confirmInvestment(investmentIdInput: unknown): Promise<Con
   }
 
   const escrow = await payments.createEscrowIntent({
-    ofertaId: investment.offering_id as string,
-    investidorId: accountId,
-    valorCentavos: Number(investment.amount_cents),
+    offeringId: investment.offering_id as string,
+    investorId: accountId,
+    amountCents: Number(investment.amount_cents),
   });
   const confirmedEscrow = await payments.confirmPayment(escrow.ref);
 
@@ -246,7 +246,7 @@ export type PublicOffering = {
   category: TokenCategory | null;
   opensAt: string;
   closesAt: string;
-  arrecadadoCents: number;
+  raisedCents: number;
   issuer: PublicOfferingIssuer;
 };
 
@@ -341,7 +341,7 @@ export async function loadPublicOffering(offeringIdInput: unknown): Promise<Publ
     category: offering.category as TokenCategory | null,
     opensAt: offering.opens_at,
     closesAt: offering.closes_at,
-    arrecadadoCents: raisedCents,
+    raisedCents,
     issuer: {
       legalName: issuerRow.legal_name,
       tradeName: issuerRow.trade_name,

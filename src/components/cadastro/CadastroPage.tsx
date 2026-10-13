@@ -31,7 +31,7 @@ const UFS = [
   "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ];
 
-type Step = "conta" | "tipo" | "dados";
+type Step = "account" | "type" | "data";
 
 type AccountErrors = { email?: string; password?: string };
 
@@ -114,7 +114,7 @@ function validate(data: FormData, personType: PersonType, dict: Dictionary): For
 // X/Esc de fechar): não pode dar pra sair no meio e cair logado sem
 // cadastro. `initialStep`/`email` vêm do server component (page.tsx): quem
 // já tem sessão (voltou pra completar um cadastro pela metade, ou entrou
-// via /entrar) pula direto pro passo "tipo", sem repetir o passo "conta".
+// via /entrar) pula direto pro passo "type", sem repetir o passo "account".
 // O vídeo à esquerda é o mesmo componente/conteúdo de /entrar (VideoCover),
 // persistente entre os três passos.
 export function SignUpPage({ initialStep, email }: { initialStep: Step; email: string }) {
@@ -162,7 +162,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
     router.refresh();
     setResolvedEmail(accountEmail);
     setCreatingAccount(false);
-    setStep("tipo");
+    setStep("type");
   }
 
   function handlePersonTypeChange(next: PersonType) {
@@ -173,13 +173,13 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
   }
 
   function goToData() {
-    setStep("dados");
+    setStep("data");
   }
 
   function goToType() {
     setErrors({});
     setServerState(null);
-    setStep("tipo");
+    setStep("type");
   }
 
   function handleFieldChange(field: keyof FormData) {
@@ -248,7 +248,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
 
       <div className="flex w-full flex-1 items-center justify-center overflow-y-auto p-6 sm:p-10 lg:w-1/2 lg:p-16">
         <div className="w-full max-w-xl py-10">
-          {step === "conta" ? (
+          {step === "account" ? (
             <>
               <p className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
                 {t.accountStepCounter}
@@ -258,7 +258,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
 
               <form onSubmit={handleCreateAccount} noValidate className="mt-8 flex flex-col gap-3">
                 <TextField
-                  id="cadastro-conta-email"
+                  id="signup-account-email"
                   label={t.account.email.label}
                   type="email"
                   value={accountEmail}
@@ -268,7 +268,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                   autoComplete="email"
                 />
                 <TextField
-                  id="cadastro-conta-senha"
+                  id="signup-account-password"
                   label={t.account.password.label}
                   type="password"
                   value={accountPassword}
@@ -300,7 +300,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                 </Link>
               </form>
             </>
-          ) : step === "tipo" ? (
+          ) : step === "type" ? (
             <>
               <p className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
                 {t.typeStepCounter}
@@ -380,7 +380,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                   <ReadField label={t.fields.country} value={t.fields.brazil} />
                   {personType === "pf" ? (
                     <TextField
-                      id="cadastro-nome"
+                      id="signup-name"
                       label={t.fields.fullName}
                       value={draft.fullName}
                       onChange={handleFieldChange("fullName")}
@@ -390,14 +390,14 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                   ) : (
                     <>
                       <TextField
-                        id="cadastro-razao-social"
+                        id="signup-legal-name"
                         label={t.fields.legalName}
                         value={draft.legalName}
                         onChange={handleFieldChange("legalName")}
                         error={errors.legalName}
                       />
                       <TextField
-                        id="cadastro-nome-fantasia"
+                        id="signup-trade-name"
                         label={t.fields.tradeName}
                         value={draft.tradeName}
                         onChange={handleFieldChange("tradeName")}
@@ -405,7 +405,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                     </>
                   )}
                   <TextField
-                    id="cadastro-documento"
+                    id="signup-document"
                     label={documentLabel}
                     value={draft.taxId}
                     onChange={handleFieldChange("taxId")}
@@ -415,7 +415,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                   />
                   {personType === "pf" && (
                     <TextField
-                      id="cadastro-nascimento"
+                      id="signup-birth-date"
                       label={t.fields.birthDate}
                       value={draft.birthDate}
                       onChange={handleFieldChange("birthDate")}
@@ -426,7 +426,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                   )}
                   {personType === "pj" && (
                     <TextField
-                      id="cadastro-receita"
+                      id="signup-revenue"
                       label={t.fields.grossAnnualRevenue}
                       value={draft.annualRevenueReais}
                       onChange={handleFieldChange("annualRevenueReais")}
@@ -437,7 +437,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                   )}
                   <ReadField label={t.fields.email} value={resolvedEmail} />
                   <TextField
-                    id="cadastro-telefone"
+                    id="signup-phone"
                     label={t.fields.phone}
                     value={draft.phone}
                     onChange={handleFieldChange("phone")}
@@ -456,7 +456,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                 </legend>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <TextField
-                    id="cadastro-cep"
+                    id="signup-cep"
                     label={t.fields.cep}
                     value={draft.cep}
                     onChange={handleFieldChange("cep")}
@@ -465,7 +465,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                     placeholder="00000-000"
                   />
                   <TextField
-                    id="cadastro-logradouro"
+                    id="signup-street"
                     label={t.fields.street}
                     value={draft.street}
                     onChange={handleFieldChange("street")}
@@ -473,27 +473,27 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                     autoComplete="address-line1"
                   />
                   <TextField
-                    id="cadastro-numero"
+                    id="signup-number"
                     label={t.fields.number}
                     value={draft.number}
                     onChange={handleFieldChange("number")}
                     error={errors.number}
                   />
                   <TextField
-                    id="cadastro-complemento"
+                    id="signup-complement"
                     label={t.fields.complement}
                     value={draft.complement}
                     onChange={handleFieldChange("complement")}
                   />
                   <TextField
-                    id="cadastro-bairro"
+                    id="signup-district"
                     label={t.fields.district}
                     value={draft.district}
                     onChange={handleFieldChange("district")}
                     error={errors.district}
                   />
                   <TextField
-                    id="cadastro-cidade"
+                    id="signup-city"
                     label={t.fields.city}
                     value={draft.city}
                     onChange={handleFieldChange("city")}
@@ -501,7 +501,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                     autoComplete="address-level2"
                   />
                   <SelectField
-                    id="cadastro-estado"
+                    id="signup-state"
                     label={t.fields.state}
                     value={draft.state}
                     onChange={handleFieldChange("state")}

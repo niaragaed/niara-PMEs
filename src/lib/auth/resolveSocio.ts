@@ -11,7 +11,7 @@ import { createClient as createServerSupabaseClient } from "@/lib/supabase/serve
 export type ResolvedPartner = {
   userId: string | null;
   email: string | null;
-  autorizado: boolean;
+  authorized: boolean;
 };
 
 function readAllowlist(): string[] {
@@ -29,11 +29,11 @@ export async function resolvePartner(): Promise<ResolvedPartner> {
   } = await supabase.auth.getUser();
 
   if (!user || !user.email) {
-    return { userId: null, email: null, autorizado: false };
+    return { userId: null, email: null, authorized: false };
   }
 
   const allowlist = readAllowlist();
   const authorized = allowlist.includes(user.email.toLowerCase());
 
-  return { userId: user.id, email: user.email, autorizado: authorized };
+  return { userId: user.id, email: user.email, authorized };
 }

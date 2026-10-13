@@ -30,9 +30,9 @@ export type OfferingCreatedEvent = {
 };
 
 export type PublicationTxRead =
-  | { status: "nao-encontrada"; jaExpirou: boolean }
-  | { status: "falhou"; motivo: string }
-  | { status: "ok"; eventos: OfferingCreatedEvent[]; blockTime: number | null };
+  | { status: "nao-encontrada"; alreadyExpired: boolean }
+  | { status: "falhou"; reason: string }
+  | { status: "ok"; events: OfferingCreatedEvent[]; blockTime: number | null };
 
 /** "Program data:" emitidos pelo NOSSO programa (topo da pilha de invoke no momento do log). */
 function programData(logs: string[]): string[] {
@@ -68,20 +68,20 @@ export async function readPublicationTx(signature: string): Promise<PublicationT
     // transação já vencido, ela não entra mais na rede. Quem decide o que fazer com isso é o
     // chamador (ver confirmarPublicacaoSolana).
     const status = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
-    return { status: "nao-encontrada", jaExpirou: status.value === null };
+    return { status: "nao-encontrada", alreadyExpired: status.value === null };
   }
 
   const logs = tx.meta?.logMessages ?? [];
   if (tx.meta?.err) {
-    return { status: "falhou", motivo: describeSolanaError({ logs, err: tx.meta.err }) };
+    return { status: "falhou", reason: describeSolanaError({ logs, err: tx.meta.err }) };
   }
 
   const coder = smesProgram(connection).coder;
   const events: OfferingCreatedEvent[] = [];
   for (const base64 of programData(logs)) {
-    const evento = coder.events.decode(base64);
-    if (!evento || evento.name !== "ofertaCriada") continue;
-    const d = evento.data as Record<string, unknown> & {
+    const decoded = coder.events.decode(base64);
+    if (!decoded || decoded.name !== "ofertaCriada") continue;
+    const d = decoded.data as Record<string, unknown> & {
       oferta: PublicKey;
       emissor: PublicKey;
       mintCota: PublicKey;
@@ -101,7 +101,7 @@ export async function readPublicationTx(signature: string): Promise<PublicationT
       taxaBps: Number(d.taxaBps),
     });
   }
-  return { status: "ok", eventos: events, blockTime: tx.blockTime ?? null };
+  return { status: "ok", events, blockTime: tx.blockTime ?? null };
 }
 
 /** Altura de bloco atual da rede — compara com o lastValidBlockHeight de uma tentativa. */

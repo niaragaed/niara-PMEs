@@ -20,7 +20,7 @@ export function WalletSection({ walletAddress }: { walletAddress: string | null 
   const connection = useConnection();
   const [linked, setLinked] = useState(walletAddress);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [justDid, setJustDid] = useState<"vinculada" | "desvinculada" | null>(null);
+  const [justDid, setJustDid] = useState<"linked" | "unlinked" | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const connectedAddress = connection.isConnected ? connection.address : undefined;
@@ -38,7 +38,7 @@ export function WalletSection({ walletAddress }: { walletAddress: string | null 
         return;
       }
       setLinked(connectedAddress);
-      setJustDid("vinculada");
+      setJustDid("linked");
     });
   }
 
@@ -52,13 +52,13 @@ export function WalletSection({ walletAddress }: { walletAddress: string | null 
         return;
       }
       setLinked(null);
-      setJustDid("desvinculada");
+      setJustDid("unlinked");
     });
   }
 
   return (
-    <section id="carteira" aria-labelledby="carteira-heading" className="scroll-mt-24">
-      <h2 id="carteira-heading" className="text-xl font-semibold text-on-military">
+    <section id="wallet" aria-labelledby="wallet-heading" className="scroll-mt-24">
+      <h2 id="wallet-heading" className="text-xl font-semibold text-on-military">
         {t.title}
       </h2>
       <p className="mt-1 text-xs text-on-military-muted">{t.subtitle}</p>
@@ -97,12 +97,12 @@ export function WalletSection({ walletAddress }: { walletAddress: string | null 
             {serverError}
           </p>
         )}
-        {justDid === "vinculada" && !serverError && (
+        {justDid === "linked" && !serverError && (
           <p className="mt-4 rounded-md border border-value-positive/30 bg-value-positive/10 px-3 py-2 text-xs text-value-positive">
             {tv.successLinked}
           </p>
         )}
-        {justDid === "desvinculada" && !serverError && (
+        {justDid === "unlinked" && !serverError && (
           <p className="mt-4 rounded-md border border-value-positive/30 bg-value-positive/10 px-3 py-2 text-xs text-value-positive">
             {tv.successUnlinked}
           </p>

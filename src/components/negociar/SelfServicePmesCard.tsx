@@ -26,7 +26,7 @@ function formatMbrl(cents: number): string {
 
 export function SelfServiceSmesCard({
   id,
-  name: nome,
+  name,
   sector,
   bannerUrl,
   logoUrl,
@@ -50,7 +50,7 @@ export function SelfServiceSmesCard({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-2 ring-salmon">
-      <OfferingBanner bannerUrl={bannerUrl} logoUrl={logoUrl} tradeName={nome} category="pmes" size="card" />
+      <OfferingBanner bannerUrl={bannerUrl} logoUrl={logoUrl} tradeName={name} category="pmes" size="card" />
 
       <div className="flex flex-1 flex-col gap-3 p-5">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-3 py-1 text-xs font-semibold text-on-salmon">
@@ -59,7 +59,7 @@ export function SelfServiceSmesCard({
         </span>
 
         <div>
-          <h3 className="text-sm font-semibold text-ink">{nome}</h3>
+          <h3 className="text-sm font-semibold text-ink">{name}</h3>
           {sector && <p className="text-xs text-ink-muted">{sector}</p>}
         </div>
 

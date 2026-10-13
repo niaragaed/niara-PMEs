@@ -65,15 +65,15 @@ const EVENT_NAMES = [
 export type OnChainEventType = (typeof EVENT_NAMES)[number];
 
 export type OnChainEvent = {
-  tipo: OnChainEventType;
-  ofertaAddress: `0x${string}`;
-  ofertaIndex: number;
-  investidor: `0x${string}` | null;
-  valorWei: bigint | null;
-  cotas: bigint | null;
+  type: OnChainEventType;
+  offeringAddress: `0x${string}`;
+  offeringIndex: number;
+  investor: `0x${string}` | null;
+  amountWei: bigint | null;
+  shares: bigint | null;
   // Só preenchido para `RecursosLiberados` (args.taxa) — a taxa de fato transferida ao
   // protocoloWallet naquele evento. `null` para os demais 5 tipos de evento.
-  taxaWei: bigint | null;
+  feeWei: bigint | null;
   txHash: `0x${string}`;
   blockNumber: bigint;
   timestamp: number | null;
@@ -108,13 +108,13 @@ function parseLog(log: DecodedLog, offeringAddress: `0x${string}`, offeringIndex
   const args = log.args ?? {};
 
   return {
-    tipo: type,
-    ofertaAddress: offeringAddress,
-    ofertaIndex: offeringIndex,
-    investidor: (args.investidor as `0x${string}` | undefined) ?? null,
-    valorWei: (args.valor as bigint | undefined) ?? (args.valorEmissor as bigint | undefined) ?? null,
-    cotas: (args.cotas as bigint | undefined) ?? null,
-    taxaWei: (args.taxa as bigint | undefined) ?? null,
+    type,
+    offeringAddress,
+    offeringIndex,
+    investor: (args.investidor as `0x${string}` | undefined) ?? null,
+    amountWei: (args.valor as bigint | undefined) ?? (args.valorEmissor as bigint | undefined) ?? null,
+    shares: (args.cotas as bigint | undefined) ?? null,
+    feeWei: (args.taxa as bigint | undefined) ?? null,
     txHash: log.transactionHash as `0x${string}`,
     blockNumber: log.blockNumber as bigint,
     timestamp: null,
@@ -192,12 +192,12 @@ export async function fetchOnChainEventsRange(
   const indexByAddress = new Map(offerings.map((offering, index) => [offering.offering.toLowerCase(), index]));
   const windows = computeWindows(fromBlock, toBlock);
 
-  const byWindow = await mapWithConcurrency(windows, RPC_CONCURRENCY, async (janela) => {
+  const byWindow = await mapWithConcurrency(windows, RPC_CONCURRENCY, async (window) => {
     const logs = (await client.getLogs({
       address: offerings.map((offering) => offering.offering),
       events: ABI_EVENTS,
-      fromBlock: janela.from,
-      toBlock: janela.to,
+      fromBlock: window.from,
+      toBlock: window.to,
     })) as DecodedLog[];
 
     await sleep(RPC_THROTTLE_MS);
@@ -209,19 +209,19 @@ export async function fetchOnChainEventsRange(
         if (offeringIndex === undefined) return null;
         return parseLog(log, offeringAddress, offeringIndex);
       })
-      .filter((evento): evento is OnChainEvent => evento !== null);
+      .filter((event): event is OnChainEvent => event !== null);
   });
 
   const events = byWindow.flat();
 
   // Preenche timestamp (1 chamada por bloco único, não por evento), mesma limitação de concorrência.
-  const uniqueBlocks = [...new Set(events.map((evento) => evento.blockNumber))];
+  const uniqueBlocks = [...new Set(events.map((event) => event.blockNumber))];
   const blocks = await mapWithConcurrency(uniqueBlocks, RPC_CONCURRENCY, (number) =>
     client.getBlock({ blockNumber: number }),
   );
   const timestampByBlock = new Map(blocks.map((block) => [block.number, Number(block.timestamp)]));
-  for (const evento of events) {
-    evento.timestamp = timestampByBlock.get(evento.blockNumber) ?? null;
+  for (const event of events) {
+    event.timestamp = timestampByBlock.get(event.blockNumber) ?? null;
   }
 
   events.sort((a, b) => Number(b.blockNumber - a.blockNumber));

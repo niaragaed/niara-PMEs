@@ -6,29 +6,29 @@
 //
 // Cada gate distingue SEMPRE três coisas diferentes, nunca confundidas:
 //   "ok"        — a condição foi checada e está satisfeita.
-//   "reprovado" — a condição foi checada de verdade e NÃO está satisfeita (a chain/o dado
+//   "rejected" — a condição foi checada de verdade e NÃO está satisfeita (a chain/o dado
 //                 respondeu "não", ou a pré-condição para checar ainda não foi cumprida —
 //                 ex.: carteira não conectada).
-//   "erro"      — não foi possível checar (RPC fora do ar, leitura falhou). NUNCA vira
-//                 "reprovado" — um erro de leitura não é a chain dizendo não.
-//   "carregando"— a checagem está em andamento.
-export type GateStatus = "carregando" | "ok" | "reprovado" | "erro";
+//   "error"      — não foi possível checar (RPC fora do ar, leitura falhou). NUNCA vira
+//                 "rejected" — um erro de leitura não é a chain dizendo não.
+//   "loading"— a checagem está em andamento.
+export type GateStatus = "loading" | "ok" | "rejected" | "error";
 
-export type GateProviderResult = { status: Extract<GateStatus, "ok" | "reprovado"> };
+export type GateProviderResult = { status: Extract<GateStatus, "ok" | "rejected"> };
 
 export function evaluateGateProvider(hasProvider: boolean): GateProviderResult {
-  return { status: hasProvider ? "ok" : "reprovado" };
+  return { status: hasProvider ? "ok" : "rejected" };
 }
 
 export type GateNetworkResult =
-  | { status: "reprovado"; reason: "nao_conectado" }
-  | { status: "reprovado"; reason: "rede_errada"; connectedChainId: number }
+  | { status: "rejected"; reason: "nao_conectado" }
+  | { status: "rejected"; reason: "rede_errada"; connectedChainId: number }
   | { status: "ok" };
 
 export function evaluateGateNetwork(isConnected: boolean, connectedChainId: number | undefined, expectedChainId: number): GateNetworkResult {
-  if (!isConnected) return { status: "reprovado", reason: "nao_conectado" };
+  if (!isConnected) return { status: "rejected", reason: "nao_conectado" };
   if (connectedChainId !== expectedChainId) {
-    return { status: "reprovado", reason: "rede_errada", connectedChainId: connectedChainId ?? -1 };
+    return { status: "rejected", reason: "rede_errada", connectedChainId: connectedChainId ?? -1 };
   }
   return { status: "ok" };
 }
@@ -59,9 +59,9 @@ export function estimatePublicationCostWei(gasPriceWei: bigint): bigint {
 }
 
 export type GateBalanceResult =
-  | { status: "carregando" }
-  | { status: "erro" }
-  | { status: "reprovado"; balanceWei: bigint; estimatedCostWei: bigint }
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "rejected"; balanceWei: bigint; estimatedCostWei: bigint }
   | { status: "ok"; balanceWei: bigint; estimatedCostWei: bigint };
 
 export function evaluateGateBalance(params: {
@@ -73,30 +73,30 @@ export function evaluateGateBalance(params: {
   gasPriceLoading: boolean;
   gasPriceError: boolean;
 }): GateBalanceResult {
-  if (!params.isConnected) return { status: "carregando" };
-  if (params.balanceError || params.gasPriceError) return { status: "erro" };
+  if (!params.isConnected) return { status: "loading" };
+  if (params.balanceError || params.gasPriceError) return { status: "error" };
   if (params.balanceLoading || params.gasPriceLoading || params.balanceWei === undefined || params.gasPriceWei === undefined) {
-    return { status: "carregando" };
+    return { status: "loading" };
   }
   const estimatedCostWei = estimatePublicationCostWei(params.gasPriceWei);
-  if (params.balanceWei < estimatedCostWei) return { status: "reprovado", balanceWei: params.balanceWei, estimatedCostWei };
+  if (params.balanceWei < estimatedCostWei) return { status: "rejected", balanceWei: params.balanceWei, estimatedCostWei };
   return { status: "ok", balanceWei: params.balanceWei, estimatedCostWei };
 }
 
 export type GateOwnershipResult =
-  | { status: "reprovado"; reason: "sem_carteira_vinculada" }
-  | { status: "reprovado"; reason: "nao_conectado" }
-  | { status: "reprovado"; reason: "carteira_diferente"; connectedWallet: `0x${string}`; linkedWallet: string }
+  | { status: "rejected"; reason: "sem_carteira_vinculada" }
+  | { status: "rejected"; reason: "nao_conectado" }
+  | { status: "rejected"; reason: "carteira_diferente"; connectedWallet: `0x${string}`; linkedWallet: string }
   | { status: "ok" };
 
 export function evaluateGateOwnership(
   connectedWallet: `0x${string}` | undefined,
   linkedWallet: string | null,
 ): GateOwnershipResult {
-  if (!linkedWallet) return { status: "reprovado", reason: "sem_carteira_vinculada" };
-  if (!connectedWallet) return { status: "reprovado", reason: "nao_conectado" };
+  if (!linkedWallet) return { status: "rejected", reason: "sem_carteira_vinculada" };
+  if (!connectedWallet) return { status: "rejected", reason: "nao_conectado" };
   if (connectedWallet.toLowerCase() !== linkedWallet.toLowerCase()) {
-    return { status: "reprovado", reason: "carteira_diferente", connectedWallet, linkedWallet };
+    return { status: "rejected", reason: "carteira_diferente", connectedWallet, linkedWallet };
   }
   return { status: "ok" };
 }

@@ -20,11 +20,11 @@ function StatusIcon({ status }: { status: GateStatus }) {
   switch (status) {
     case "ok":
       return <Check className="h-4 w-4 shrink-0 text-value-positive" aria-hidden="true" />;
-    case "reprovado":
+    case "rejected":
       return <X className="h-4 w-4 shrink-0 text-value-negative" aria-hidden="true" />;
-    case "erro":
+    case "error":
       return <AlertTriangle className="h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />;
-    case "carregando":
+    case "loading":
       return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-on-military-muted" aria-hidden="true" />;
   }
 }
@@ -33,11 +33,11 @@ function statusLabel(status: GateStatus): string {
   switch (status) {
     case "ok":
       return "OK";
-    case "reprovado":
+    case "rejected":
       return "Reprovado";
-    case "erro":
+    case "error":
       return "Erro de leitura";
-    case "carregando":
+    case "loading":
       return "Verificando…";
   }
 }
@@ -56,9 +56,9 @@ export function GateChecklist({ rows }: { rows: GateRow[] }) {
                   className={
                     row.status === "ok"
                       ? "text-xs text-value-positive"
-                      : row.status === "reprovado"
+                      : row.status === "rejected"
                         ? "text-xs text-value-negative"
-                        : row.status === "erro"
+                        : row.status === "error"
                           ? "text-xs text-salmon"
                           : "text-xs text-on-military-muted"
                   }

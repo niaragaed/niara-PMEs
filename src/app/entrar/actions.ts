@@ -8,6 +8,6 @@
 import { resolvePartner } from "@/lib/auth/resolveSocio";
 
 export async function resolvePostLoginDestination(): Promise<"/socios" | "/perfil"> {
-  const { autorizado: authorized } = await resolvePartner();
+  const { authorized } = await resolvePartner();
   return authorized ? "/socios" : "/perfil";
 }

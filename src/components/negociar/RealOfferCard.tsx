@@ -20,7 +20,7 @@ function formatDate(iso: string): string {
 export async function RealOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
   const dict = await getDictionary();
   const t = dict.trade.realOffering;
-  const nome = offering.issuerTradeName ?? offering.issuerLegalName;
+  const name = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (
     <div className="flex h-full flex-col gap-3 rounded-lg bg-surface p-5 shadow-soft ring-2 ring-salmon">
@@ -39,7 +39,7 @@ export async function RealOfferCard({ offering }: { offering: ActiveOfferingSumm
           )}
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-ink">{nome}</h3>
+          <h3 className="text-sm font-semibold text-ink">{name}</h3>
           {offering.sector && <p className="text-xs text-ink-muted">{offering.sector}</p>}
         </div>
       </div>

@@ -7,7 +7,7 @@ import type { Offering } from "@/lib/mock/ofertas";
 import { useDictionary } from "@/lib/i18n/client";
 
 type OrderSide = "buy" | "sell";
-type Step = "form" | "resumo" | "confirmado";
+type Step = "form" | "review" | "confirmed";
 
 // Taxa estimada só para exibição na simulação — nunca cobrada de verdade,
 // rotulada "a definir" (ver ptBr.negociar.boleta.taxa).
@@ -18,14 +18,14 @@ const ESTIMATED_FEE = 0.005;
 // demais simulações do projeto (carteira em /perfil, dados de /ativos).
 const INITIAL_SIMULATED_BALANCE = 50_000;
 
-export function OrderTicket({ offering: oferta, onClose }: { offering: Offering; onClose: () => void }) {
+export function OrderTicket({ offering, onClose }: { offering: Offering; onClose: () => void }) {
   const dict = useDictionary();
   const t = dict.trade.orderTicket;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const [side, setSide] = useState<OrderSide>("buy");
   const [quantity, setQuantity] = useState("");
-  const [price, setPrice] = useState(String(oferta.simulatedPrice));
+  const [price, setPrice] = useState(String(offering.simulatedPrice));
   const [step, setStep] = useState<Step>("form");
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState(INITIAL_SIMULATED_BALANCE);
@@ -63,17 +63,17 @@ export function OrderTicket({ offering: oferta, onClose }: { offering: Offering;
       return;
     }
     setError(null);
-    setStep("resumo");
+    setStep("review");
   }
 
   function handleConfirm() {
     setBalance((current) => (side === "buy" ? current - (total + fee) : current + (total - fee)));
-    setStep("confirmado");
+    setStep("confirmed");
   }
 
   function handleNewOrder() {
     setQuantity("");
-    setPrice(String(oferta.simulatedPrice));
+    setPrice(String(offering.simulatedPrice));
     setError(null);
     setStep("form");
   }
@@ -129,11 +129,11 @@ export function OrderTicket({ offering: oferta, onClose }: { offering: Offering;
           </div>
 
           <div>
-            <label htmlFor="boleta-quantidade" className="mb-1 block text-xs text-ink-muted">
+            <label htmlFor="ticket-quantity" className="mb-1 block text-xs text-ink-muted">
               {t.quantity}
             </label>
             <input
-              id="boleta-quantidade"
+              id="ticket-quantity"
               type="number"
               min="0"
               step="1"
@@ -145,11 +145,11 @@ export function OrderTicket({ offering: oferta, onClose }: { offering: Offering;
           </div>
 
           <div>
-            <label htmlFor="boleta-preco" className="mb-1 block text-xs text-ink-muted">
+            <label htmlFor="ticket-price" className="mb-1 block text-xs text-ink-muted">
               {t.price}
             </label>
             <input
-              id="boleta-preco"
+              id="ticket-price"
               type="number"
               min="0"
               step="any"
@@ -189,7 +189,7 @@ export function OrderTicket({ offering: oferta, onClose }: { offering: Offering;
         </form>
       )}
 
-      {step === "resumo" && (
+      {step === "review" && (
         <div className="mt-4 flex flex-col gap-4">
           <h3 className="text-sm font-semibold text-ink">{t.summaryTitle}</h3>
           <dl className="space-y-2 rounded-md border border-border p-4 text-sm">
@@ -233,10 +233,10 @@ export function OrderTicket({ offering: oferta, onClose }: { offering: Offering;
         </div>
       )}
 
-      {step === "confirmado" && (
+      {step === "confirmed" && (
         <div className="mt-4 flex flex-col gap-4">
           <p role="status" className="rounded-md border border-value-positive/40 bg-value-positive/10 px-4 py-3 text-sm text-military">
-            {t.result(side, qtyNum, oferta.name)}
+            {t.result(side, qtyNum, offering.name)}
           </p>
           <button
             type="button"

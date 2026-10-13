@@ -37,13 +37,13 @@ function createAdminClient() {
 
 function eventToRow(evento: OnChainEvent) {
   return {
-    tipo: evento.tipo,
-    oferta_address: evento.ofertaAddress,
-    oferta_index: evento.ofertaIndex,
-    investidor: evento.investidor,
-    valor_wei: evento.valorWei !== null ? evento.valorWei.toString() : null,
-    cotas: evento.cotas !== null ? evento.cotas.toString() : null,
-    taxa_wei: evento.taxaWei !== null ? evento.taxaWei.toString() : null,
+    tipo: evento.type,
+    oferta_address: evento.offeringAddress,
+    oferta_index: evento.offeringIndex,
+    investidor: evento.investor,
+    valor_wei: evento.amountWei !== null ? evento.amountWei.toString() : null,
+    cotas: evento.shares !== null ? evento.shares.toString() : null,
+    taxa_wei: evento.feeWei !== null ? evento.feeWei.toString() : null,
     tx_hash: evento.txHash,
     block_number: evento.blockNumber.toString(),
     block_timestamp: evento.timestamp,

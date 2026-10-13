@@ -19,8 +19,8 @@ const ICON_DIMS: Record<ChipSize, string> = {
 
 // Ícone decorativo isolado, na cor da categoria — usado ao lado de um
 // título/heading visível (ex.: cabeçalho da categoria, card do hub).
-export function CategoryChip({ category: categoria, size = "md" }: { category: TokenCategory; size?: ChipSize }) {
-  const meta = CATEGORY_META[categoria];
+export function CategoryChip({ category: cat, size = "md" }: { category: TokenCategory; size?: ChipSize }) {
+  const meta = CATEGORY_META[cat];
   const Icon = meta.icon;
 
   return (

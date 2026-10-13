@@ -42,7 +42,7 @@ export async function submitKyc(): Promise<SubmitKycState> {
     return { status: "error", message: "Não foi possível enviar o KYC. Tente novamente em instantes." };
   }
 
-  const result = await kyc.submit({ usuarioId: accountId, documento: investor.tax_id as string });
+  const result = await kyc.submit({ userId: accountId, document: investor.tax_id as string });
 
   const { error: updateError } = await admin
     .from("investors")

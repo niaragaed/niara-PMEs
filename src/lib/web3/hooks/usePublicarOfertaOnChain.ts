@@ -3,7 +3,7 @@
 // Hook de escrita da Fase 3, sub-etapa 4 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — assina
 // criarOfertaCompleta, registra a tentativa (Server Action, ANTES de esperar confirmação — cobre
 // o caso "fecha a aba logo após assinar"), espera a confirmação e por fim pede ao servidor para
-// ler o evento minerado e gravar o resultado. Nunca mostra "sucesso" antes da confirmação real
+// ler o evento minerado e gravar o resultado. Nunca mostra "success" antes da confirmação real
 // on-chain E da gravação server-side ter voltado — "pendente" nunca é tratado como "publicada".
 import { useCallback, useState } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
@@ -14,14 +14,14 @@ import { registerAttempt, confirmPublication } from "@/app/empresa/ofertas/oncha
 
 export type PublishStatus =
   | "idle"
-  | "assinando"
+  | "signing"
   | "registrando"
-  | "confirmando"
+  | "confirming"
   | "confirmada"
   | "pendente"
   | "revertida"
   | "divergente"
-  | "erro";
+  | "error";
 
 export type PublishState = {
   status: PublishStatus;
@@ -55,13 +55,13 @@ export function usePublishOfferingOnChain() {
     async (args: PublishArgs) => {
       const orchestrator = getOrchestratorContract();
       if (!orchestrator || !publicClient) {
-        setState({ ...IDLE, status: "erro", errorMessage: "Contrato não configurado." });
+        setState({ ...IDLE, status: "error", errorMessage: "Contrato não configurado." });
         return;
       }
 
       const deadlineUnixSeconds = Math.floor(Date.now() / 1000) + args.windowDays * 24 * 60 * 60;
 
-      setState({ ...IDLE, status: "assinando" });
+      setState({ ...IDLE, status: "signing" });
       let hash: `0x${string}`;
       try {
         hash = await writeContractAsync({
@@ -85,7 +85,7 @@ export function usePublishOfferingOnChain() {
       } catch (error) {
         // Cobre rejeição na MetaMask e revert já na simulação/estimativa de gas (describeOnChainError
         // decodifica o erro customizado do OfertaOrquestrador se for o caso).
-        setState({ ...IDLE, status: "erro", errorMessage: describeOnChainError(error) });
+        setState({ ...IDLE, status: "error", errorMessage: describeOnChainError(error) });
         return;
       }
 
@@ -94,11 +94,11 @@ export function usePublishOfferingOnChain() {
       setState({ status: "registrando", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
       const reg = await registerAttempt({ offeringId: args.offeringId, txHash: hash, prazoUnixSeconds: deadlineUnixSeconds });
       if (reg.status === "error") {
-        setState({ status: "erro", txHash: hash, errorMessage: reg.message, contractAddress: null, tokenAddress: null });
+        setState({ status: "error", txHash: hash, errorMessage: reg.message, contractAddress: null, tokenAddress: null });
         return;
       }
 
-      setState({ status: "confirmando", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
+      setState({ status: "confirming", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
       try {
         await publicClient.waitForTransactionReceipt({ hash });
       } catch (error) {
@@ -114,11 +114,11 @@ export function usePublishOfferingOnChain() {
       } else if (conf.status === "pendente") {
         setState({ status: "pendente", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
       } else if (conf.status === "revertida") {
-        setState({ status: "revertida", txHash: hash, errorMessage: conf.motivo, contractAddress: null, tokenAddress: null });
+        setState({ status: "revertida", txHash: hash, errorMessage: conf.reason, contractAddress: null, tokenAddress: null });
       } else if (conf.status === "divergente") {
-        setState({ status: "divergente", txHash: hash, errorMessage: conf.motivo, contractAddress: null, tokenAddress: null });
+        setState({ status: "divergente", txHash: hash, errorMessage: conf.reason, contractAddress: null, tokenAddress: null });
       } else {
-        setState({ status: "erro", txHash: hash, errorMessage: conf.message, contractAddress: null, tokenAddress: null });
+        setState({ status: "error", txHash: hash, errorMessage: conf.message, contractAddress: null, tokenAddress: null });
       }
     },
     [publicClient, writeContractAsync],

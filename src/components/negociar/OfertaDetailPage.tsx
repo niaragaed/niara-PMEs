@@ -21,7 +21,7 @@ export function OfferingDetailPage({
   bannerUrl = null,
   logoUrl = null,
   onChainIndex = null,
-  isPartner: isSocio = false,
+  isPartner = false,
 }: {
   offering: Offering;
   bannerUrl?: string | null;
@@ -95,7 +95,7 @@ export function OfferingDetailPage({
                   <RealOnChainInvestPanel
                     tokenAddress={legacyAddresses.token}
                     offeringAddress={legacyAddresses.offering}
-                    isPartner={isSocio}
+                    isPartner={isPartner}
                   />
                 )}
               </>
@@ -189,12 +189,12 @@ export function OfferingDetailPage({
             <section className="rounded-lg bg-surface p-6 shadow-soft">
               <h2 className="text-lg font-semibold text-ink">{t.documents.title}</h2>
               <ul className="mt-4 flex flex-col gap-2">
-                {DEFAULT_DOCUMENTS.map((documento) => (
+                {DEFAULT_DOCUMENTS.map((doc) => (
                   <li
-                    key={documento}
+                    key={doc}
                     className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-2.5 text-sm text-ink-muted"
                   >
-                    {documento}
+                    {doc}
                     <button
                       type="button"
                       disabled

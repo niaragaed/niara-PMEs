@@ -21,8 +21,8 @@ export type ProviderPhantom = {
   disconnect: () => Promise<void>;
   signTransaction: (tx: Transaction) => Promise<Transaction>;
   signMessage?: (message: Uint8Array, encoding?: "utf8") => Promise<{ signature: Uint8Array; publicKey: PublicKey }>;
-  on?: (evento: PhantomEvent, cb: (arg?: unknown) => void) => void;
-  removeListener?: (evento: PhantomEvent, cb: (arg?: unknown) => void) => void;
+  on?: (event: PhantomEvent, cb: (arg?: unknown) => void) => void;
+  removeListener?: (event: PhantomEvent, cb: (arg?: unknown) => void) => void;
 };
 
 declare global {
@@ -60,8 +60,8 @@ function start() {
   p.on?.("connect", () => set({ address: p.publicKey?.toBase58() ?? null }));
   p.on?.("disconnect", () => set({ address: null }));
   p.on?.("accountChanged", (newKey) => {
-    const chave = newKey as PublicKey | null | undefined;
-    set({ address: chave ? chave.toBase58() : null });
+    const key = newKey as PublicKey | null | undefined;
+    set({ address: key ? key.toBase58() : null });
   });
   // Reconexão silenciosa: só funciona se o usuário já tiver autorizado este site antes — nunca abre
   // pop-up sozinho.

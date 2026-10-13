@@ -129,8 +129,8 @@ export async function registerAttempt(input: unknown): Promise<RegisterAttemptSt
 export type ConfirmPublicationState =
   | { status: "pendente" }
   | { status: "confirmada"; contractAddress: string; tokenAddress: string }
-  | { status: "revertida"; motivo: string }
-  | { status: "divergente"; motivo: string }
+  | { status: "revertida"; reason: string }
+  | { status: "divergente"; reason: string }
   | { status: "error"; message: string };
 
 /**
@@ -240,7 +240,7 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
     // O recibo não guarda o motivo do revert (a EVM não grava isso no receipt) — a única forma de
     // obter o motivo real é RESSIMULAR a MESMA calldata já minerada (nunca reconstruída a partir
     // do Supabase, que pode ter mudado desde a assinatura) contra o estado da chain de então.
-    const reason = await descreverMotivoDoRevert(client, orchestrator, offering.tx_hash as `0x${string}`, receipt.blockNumber);
+    const reason = await describeRevertReason(client, orchestrator, offering.tx_hash as `0x${string}`, receipt.blockNumber);
 
     // expected_emissor_wallet volta a null junto com tx_hash: os dois pertencem à MESMA
     // tentativa (a que reverteu) e uma nova, via registrarTentativa, precisa poder recongelar os
@@ -260,7 +260,7 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
       .eq("issuer_id", accountId)
       .in("sync_status", ["pendente", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
-    return { status: "revertida", motivo: reason };
+    return { status: "revertida", reason };
   }
 
   // Log do próprio OfertaOrquestrador — inforjável: só o contrato nesse endereço consegue
@@ -268,8 +268,8 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
   const log = receipt.logs.find((l) => l.address.toLowerCase() === orchestrator.address.toLowerCase());
   if (!log) {
     const reason = "Nenhum evento emitido pelo endereço do OfertaOrquestrador foi encontrado neste recibo.";
-    await marcarDivergente(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
   let decoded;
@@ -277,45 +277,45 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
     decoded = decodeEventLog({ abi: orchestrator.abi, data: log.data, topics: log.topics, eventName: "OfertaCompletaCriada" });
   } catch {
     const reason = "O evento emitido pelo OfertaOrquestrador neste recibo não é OfertaCompletaCriada.";
-    await marcarDivergente(admin, parsedId.data, accountId, reason);
-    return { status: "divergente", motivo: reason };
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
   const { emissor: issuer, token, oferta, metaMinima: minTarget, metaMaxima: maxTarget, precoPorCota: pricePerShare, prazo: deadline } = decoded.args;
 
-  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
-  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN;
-  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN;
-  const prazoEsperado = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
+  const expectedMinTarget = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
+  const expectedMaxTarget = BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN;
+  const expectedPricePerShare = BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN;
+  const expectedDeadline = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
 
   if (
     issuer.toLowerCase() !== linkedWallet.toLowerCase() ||
-    minTarget !== metaMinimaEsperada ||
-    maxTarget !== metaMaximaEsperada ||
-    pricePerShare !== precoPorCotaEsperado ||
-    deadline !== prazoEsperado
+    minTarget !== expectedMinTarget ||
+    maxTarget !== expectedMaxTarget ||
+    pricePerShare !== expectedPricePerShare ||
+    deadline !== expectedDeadline
   ) {
-    const motivo = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira vinculada) no Supabase.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+    const reason = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira vinculada) no Supabase.";
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
   // Procedência dos clones: confirma que token/oferta foram REALMENTE registrados pelas
   // factories do próprio orquestrador (lidas dele mesmo, nunca de env var solta) — não basta
   // "existir algum contrato nesse endereço".
-  const [tokenFactoryAddress, captacaoFactoryAddress] = await Promise.all([
+  const [tokenFactoryAddress, fundraisingFactoryAddress] = await Promise.all([
     client.readContract({ address: orchestrator.address, abi: orchestrator.abi, functionName: "tokenFactory" }),
     client.readContract({ address: orchestrator.address, abi: orchestrator.abi, functionName: "captacaoFactory" }),
   ]);
-  const [tokenRegistrado, ofertaRegistrada] = await Promise.all([
+  const [tokenRegistered, offeringRegistered] = await Promise.all([
     client.readContract({ address: tokenFactoryAddress, abi: participacaoTokenFactoryAbi, functionName: "isOferta", args: [token] }),
-    client.readContract({ address: captacaoFactoryAddress, abi: ofertaCaptacaoFactoryAbi, functionName: "isCaptacao", args: [oferta] }),
+    client.readContract({ address: fundraisingFactoryAddress, abi: ofertaCaptacaoFactoryAbi, functionName: "isCaptacao", args: [oferta] }),
   ]);
 
-  if (!tokenRegistrado || !ofertaRegistrada) {
-    const motivo = "O token/oferta do evento não está registrado nas factories do OfertaOrquestrador.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+  if (!tokenRegistered || !offeringRegistered) {
+    const reason = "O token/oferta do evento não está registrado nas factories do OfertaOrquestrador.";
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
   const { error: updateError } = await admin
@@ -340,15 +340,15 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
   return { status: "confirmada", contractAddress: oferta, tokenAddress: token };
 }
 
-async function marcarDivergente(
+async function markDivergent(
   admin: ReturnType<typeof createAdminClient>,
   offeringId: string,
   accountId: string,
-  motivo: string,
+  reason: string,
 ) {
   await admin
     .from("offerings")
-    .update({ sync_status: "divergente", onchain_last_error: motivo })
+    .update({ sync_status: "divergente", onchain_last_error: reason })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
     .in("sync_status", ["pendente", "divergente"]);
@@ -366,22 +366,22 @@ async function marcarDivergente(
  * lógica de tradução. Nunca lança — sempre devolve uma string, com um fallback só se a própria
  * decodificação falhar (ex.: a transação reverteu por um motivo que não se reproduz mais).
  */
-async function descreverMotivoDoRevert(
+async function describeRevertReason(
   client: ReturnType<typeof publicClient>,
-  orquestrador: OrchestratorContract,
+  orchestrator: OrchestratorContract,
   txHash: `0x${string}`,
   blockNumber: bigint,
 ): Promise<string> {
   try {
     const tx = await client.getTransaction({ hash: txHash });
-    const decoded = decodeFunctionData({ abi: orquestrador.abi, data: tx.input });
+    const decoded = decodeFunctionData({ abi: orchestrator.abi, data: tx.input });
     if (decoded.functionName !== "criarOfertaCompleta" || !decoded.args) {
       return "A transação reverteu on-chain, mas não foi possível decodificar o motivo (calldata inesperada).";
     }
 
     await client.simulateContract({
-      address: orquestrador.address,
-      abi: orquestrador.abi,
+      address: orchestrator.address,
+      abi: orchestrator.abi,
       functionName: "criarOfertaCompleta",
       args: decoded.args as readonly [string, string, string, `0x${string}`, string, bigint, bigint, bigint, bigint],
       account: tx.from,
@@ -398,9 +398,9 @@ async function descreverMotivoDoRevert(
   }
 }
 
-export type VerificarConsistenciaState =
+export type CheckConsistencyState =
   | { status: "confirmada" }
-  | { status: "divergente"; motivo: string }
+  | { status: "divergente"; reason: string }
   | { status: "error"; message: string };
 
 /**
@@ -426,7 +426,7 @@ export type VerificarConsistenciaState =
  * errado, clone não registrado — falha de `confirmarPublicacao`) não tem `contract_address`
  * nenhum para comparar; essa continua sendo resolvida por "Reprocessar", não por esta função.
  */
-export async function verificarConsistencia(offeringId: string): Promise<VerificarConsistenciaState> {
+export async function checkConsistency(offeringId: string): Promise<CheckConsistencyState> {
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
     return { status: "error", message: "Apenas empresas cadastradas podem verificar publicações." };
@@ -473,47 +473,47 @@ export async function verificarConsistencia(offeringId: string): Promise<Verific
     return { status: "error", message: describeOnChainError(e) };
   }
 
-  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
-  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN;
-  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN;
-  const prazoEsperado = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
+  const expectedMinTarget = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
+  const expectedMaxTarget = BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN;
+  const expectedPricePerShare = BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN;
+  const expectedDeadline = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
 
   const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
-  const centsFromChain = (valorWei: bigint) => Number(valorWei / UNIT_ON_CHAIN);
+  const centsFromChain = (amountWei: bigint) => Number(amountWei / UNIT_ON_CHAIN);
 
   const diffs: string[] = [];
-  if (onchain.metaMinima !== metaMinimaEsperada) {
+  if (onchain.metaMinima !== expectedMinTarget) {
     diffs.push(
       `meta mínima: Supabase ${formatBRL(offering.target_min_cents / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.metaMinima) / 100)}`,
     );
   }
-  if (onchain.metaMaxima !== metaMaximaEsperada) {
+  if (onchain.metaMaxima !== expectedMaxTarget) {
     diffs.push(
       `hard cap: Supabase ${formatBRL(offering.hard_cap_cents / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.metaMaxima) / 100)}`,
     );
   }
-  if (onchain.precoPorCota !== precoPorCotaEsperado) {
+  if (onchain.precoPorCota !== expectedPricePerShare) {
     diffs.push(
       `valor por cota: Supabase ${formatBRL((offering.share_price_cents as number) / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.precoPorCota) / 100)}`,
     );
   }
-  if (onchain.prazo !== prazoEsperado) {
+  if (onchain.prazo !== expectedDeadline) {
     diffs.push(
       `prazo: Supabase ${dateFormatter.format(new Date(offering.closes_at as string))} ≠ on-chain ${dateFormatter.format(new Date(Number(onchain.prazo) * 1000))}`,
     );
   }
 
   if (diffs.length > 0) {
-    const motivo = `Divergência de consistência (Supabase mudou depois da confirmação) — ${diffs.join("; ")}.`;
+    const reason = `Divergência de consistência (Supabase mudou depois da confirmação) — ${diffs.join("; ")}.`;
     await admin
       .from("offerings")
-      .update({ sync_status: "divergente", onchain_last_error: motivo })
+      .update({ sync_status: "divergente", onchain_last_error: reason })
       .eq("id", parsedId.data)
       .eq("issuer_id", accountId)
       .in("sync_status", ["confirmada", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
     revalidatePath("/empresa/ofertas");
-    return { status: "divergente", motivo };
+    return { status: "divergente", reason };
   }
 
   // Sem diferenças: garante 'confirmada' (pode estar vindo de 'divergente', se o drift

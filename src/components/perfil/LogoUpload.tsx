@@ -25,7 +25,7 @@ export function LogoUpload({
   const dict = useDictionary();
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [error, setError] = useState<string | null>(null);
-  const [justDid, setJustDid] = useState<"enviada" | "removida" | null>(null);
+  const [justDid, setJustDid] = useState<"uploaded" | "removed" | null>(null);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const t = dict.profile.registrationData.companyLogo;
@@ -57,7 +57,7 @@ export function LogoUpload({
       }
       setLogoUrl(result.logoUrl);
       onUrlChange?.(result.logoUrl);
-      setJustDid("enviada");
+      setJustDid("uploaded");
     });
   }
 
@@ -72,7 +72,7 @@ export function LogoUpload({
       }
       setLogoUrl(null);
       onUrlChange?.(null);
-      setJustDid("removida");
+      setJustDid("removed");
     });
   }
 
@@ -130,8 +130,8 @@ export function LogoUpload({
               {error}
             </p>
           )}
-          {justDid === "enviada" && !error && <p className="text-xs text-value-positive">{t.successSent}</p>}
-          {justDid === "removida" && !error && <p className="text-xs text-value-positive">{t.successRemoved}</p>}
+          {justDid === "uploaded" && !error && <p className="text-xs text-value-positive">{t.successSent}</p>}
+          {justDid === "removed" && !error && <p className="text-xs text-value-positive">{t.successRemoved}</p>}
         </div>
       </div>
     </div>
