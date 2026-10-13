@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CategoryChip } from "./CategoryChip";
 import { ShowcaseCard } from "./ShowcaseCard";
-import { SmesSectorFilter, type SmesCardData } from "./PmesSectorFilter";
+import { SmesSectorFilter, type SmesCardData } from "./SmesSectorFilter";
 import { RealOfferCard } from "./RealOfferCard";
 import { MyOfferCard } from "./MyOfferCard";
 import type { TokenCategory } from "@/lib/mock/assets";
@@ -50,14 +50,14 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
 
   // getOnChainIndexBySlug/getOfferingAssetPaths need to run here (server —
   // the latter is fs-based) even though the sector filter is client-side
-  // (PmesSectorFilter.tsx): everything is resolved first and the list is passed ready.
+  // (SmesSectorFilter.tsx): everything is resolved first and the list is passed ready.
   const smesCardsLegacy: SmesCardData[] =
     category === "pmes"
       ? offerings.flatMap((offering) => {
           const onChainIndex = getOnChainIndexBySlug(offering.slug);
           if (onChainIndex === null) return [];
           const assets = getOfferingAssetPaths(offering.slug);
-          return [{ origin: "legado" as const, offering, bannerUrl: assets.bannerUrl, logoUrl: assets.logoUrl }];
+          return [{ origin: "legacy" as const, offering, bannerUrl: assets.bannerUrl, logoUrl: assets.logoUrl }];
         })
       : [];
 

@@ -1,5 +1,5 @@
 import { CategoryCard } from "./CategoryCard";
-import { SmesOnChainCard } from "./PmesOnChainCard";
+import { SmesOnChainCard } from "./SmesOnChainCard";
 import { ShowcaseCard } from "./ShowcaseCard";
 import type { TokenCategory } from "@/lib/mock/assets";
 import { getOfferingBySlug, SHOWCASE_HUB_SLUGS, type Offering } from "@/lib/mock/offerings";

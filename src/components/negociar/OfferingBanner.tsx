@@ -39,7 +39,7 @@ const PLACEHOLDER_ICON_DIMS: Record<OfferingBannerSize, string> = {
 };
 
 // An offering's photo banner + overlapping round logo — used both in the SME grid card
-// (PmesOnChainCard.tsx, size="card") and at the top of any offering detail page
+// (SmesOnChainCard.tsx, size="card") and at the top of any offering detail page
 // (OfferingDetailPage.tsx, size="hero", all categories). `bannerUrl`/`logoUrl` come already
 // resolved on the server (see src/lib/trade/offeringAssets.ts) — they're `null` when there's no
 // real file (today only the 10 real SME offerings on Sepolia have photos generated with Gemini;

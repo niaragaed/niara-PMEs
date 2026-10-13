@@ -24,7 +24,7 @@ import { useSolanaWallet } from "@/lib/solana/phantom";
 import { useSolanaOffering } from "@/lib/solana/hooks/useSolanaOffering";
 import { useSolanaAction, type SolanaActionStatus } from "@/lib/solana/hooks/useSolanaAction";
 import { txInvest, txClose, txFaucet, txRelease, txRefund, txRedeem } from "@/lib/solana/instructions";
-import { DECIMALS_MBRL_SOLANA, FAUCET_MAX_MBRL_SOLANA, UNIT_MBRL_SOLANA, solanaExplorerAccountLink, linkExplorerSolanaTx } from "@/lib/solana/config";
+import { SOLANA_MBRL_DECIMALS, SOLANA_FAUCET_MAX_MBRL, SOLANA_MBRL_UNIT, solanaExplorerAccountLink, linkExplorerSolanaTx } from "@/lib/solana/config";
 import { formatDeadline, formatToken } from "@/lib/web3/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { useDictionary } from "@/lib/i18n/client";
@@ -53,7 +53,7 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function fmt(value: bigint) {
-  return formatToken(value, DECIMALS_MBRL_SOLANA, MBRL);
+  return formatToken(value, SOLANA_MBRL_DECIMALS, MBRL);
 }
 
 function Return({ status, errorMessage, signature, success }: { status: SolanaActionStatus; errorMessage: string | null; signature: string | null; success: string }) {
@@ -151,8 +151,8 @@ export function SolanaInvestPanel({
   async function handleFaucet() {
     if (!investor) return;
     const n = Number(faucetAmount.replace(",", "."));
-    if (!Number.isFinite(n) || n <= 0 || n > FAUCET_MAX_MBRL_SOLANA) return;
-    await faucet.execute((c) => txFaucet(c, investor, BigInt(Math.round(n)) * UNIT_MBRL_SOLANA));
+    if (!Number.isFinite(n) || n <= 0 || n > SOLANA_FAUCET_MAX_MBRL) return;
+    await faucet.execute((c) => txFaucet(c, investor, BigInt(Math.round(n)) * SOLANA_MBRL_UNIT));
     offeringRead.refetch();
   }
 

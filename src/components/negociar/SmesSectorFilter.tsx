@@ -1,19 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { SmesOnChainCard } from "./PmesOnChainCard";
-import { SelfServiceSmesCard } from "./SelfServicePmesCard";
+import { SmesOnChainCard } from "./SmesOnChainCard";
+import { SelfServiceSmesCard } from "./SelfServiceSmesCard";
 import type { Offering } from "@/lib/mock/offerings";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { intlLocale, localize, type Locale } from "@/lib/i18n/locale";
 
 // Two sources in the same showcase (see CLAUDE.md "Phase 4" → SME showcase unification): the 10
-// legacy ones (fictitious company, PmesOnChainCard) and the self-service ones already confirmed
-// on-chain (the issuer's real data, SelfServicePmesCard). A union discriminated by `origin`
+// legacy ones (fictitious company, SmesOnChainCard) and the self-service ones already confirmed
+// on-chain (the issuer's real data, SelfServiceSmesCard). A union discriminated by `origin`
 // instead of forcing both shapes into one type — the self-service data doesn't have (nor should
 // it get) the fictitious fields of the `Offering` mock (financials, fundamental indicators etc.).
 export type SmesCardData =
-  | { origin: "legado"; offering: Offering; bannerUrl: string | null; logoUrl: string | null }
+  | { origin: "legacy"; offering: Offering; bannerUrl: string | null; logoUrl: string | null }
   | {
       origin: "selfService";
       id: string;
@@ -28,11 +28,11 @@ export type SmesCardData =
     };
 
 function getSector(item: SmesCardData, locale: Locale): string | null {
-  return item.origin === "legado" ? localize(item.offering.company.sector, locale) : item.sector;
+  return item.origin === "legacy" ? localize(item.offering.company.sector, locale) : item.sector;
 }
 
 function getKey(item: SmesCardData): string {
-  return item.origin === "legado" ? item.offering.slug : item.id;
+  return item.origin === "legacy" ? item.offering.slug : item.id;
 }
 
 // Sector filter for the SME Token showcase (legacy + self-service — see CategoryPage.tsx).
@@ -92,7 +92,7 @@ export function SmesSectorFilter({ items }: { items: SmesCardData[] }) {
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredItems.map((item) =>
-          item.origin === "legado" ? (
+          item.origin === "legacy" ? (
             <SmesOnChainCard key={getKey(item)} offering={item.offering} bannerUrl={item.bannerUrl} logoUrl={item.logoUrl} />
           ) : (
             <SelfServiceSmesCard

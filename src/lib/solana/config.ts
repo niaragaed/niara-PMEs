@@ -10,7 +10,7 @@
 //   - Shares have 0 decimals: 1 token unit = 1 share.
 import { PublicKey } from "@solana/web3.js";
 
-export const NETWORK_SOLANA = "solana-devnet" as const;
+export const SOLANA_NETWORK = "solana-devnet" as const;
 
 export const SMES_SOLANA_PROGRAM_ID = new PublicKey(
   process.env.NEXT_PUBLIC_PMES_SOLANA_PROGRAM_ID ?? "FKefGFhUmgXBM1xCtSFBWpoNnp3wuPJs6Yddpsp67J2y",
@@ -21,21 +21,21 @@ export const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https:/
 /** Cluster used in the explorer links. "custom" only when pointing at a local validator. */
 const CLUSTER_EXPLORER = process.env.NEXT_PUBLIC_SOLANA_EXPLORER_CLUSTER ?? "devnet";
 
-export const DECIMALS_MBRL_SOLANA = 6;
+export const SOLANA_MBRL_DECIMALS = 6;
 // BigInt(...) instead of the `10n` literal: the project compiles to ES2017 (same convention as
 // src/lib/money.ts and src/lib/web3/gates.ts).
-export const UNIT_MBRL_SOLANA = BigInt(1_000_000);
+export const SOLANA_MBRL_UNIT = BigInt(1_000_000);
 /** R$ cents → on-chain unit of the SPL MockBRL (6 decimals). Single source, client and server. */
-export const UNIT_ON_CHAIN_SOLANA = BigInt(10_000);
+export const SOLANA_UNIT_ON_CHAIN = BigInt(10_000);
 
 /** Mesmos limites de bytes do programa (constants.rs). */
-export const MAX_NAME_SOLANA = 64;
-export const MAX_SYMBOL_SOLANA = 10;
-export const MAX_COMPANY_SOLANA = 64;
-export const MAX_SERIES_SOLANA = 16;
+export const SOLANA_MAX_NAME = 64;
+export const SOLANA_MAX_SYMBOL = 10;
+export const SOLANA_MAX_COMPANY = 64;
+export const SOLANA_MAX_SERIES = 16;
 
 /** The program's faucet: at most 1,000,000 mBRL per call (constants.rs). */
-export const FAUCET_MAX_MBRL_SOLANA = 1_000_000;
+export const SOLANA_FAUCET_MAX_MBRL = 1_000_000;
 
 /** Base58 of a public key (32 bytes) and of a transaction signature (64 bytes). */
 export const BASE58_PUBKEY = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;

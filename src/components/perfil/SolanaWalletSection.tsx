@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { Link2, Link2Off, RefreshCw } from "lucide-react";
 import { utils } from "@anchor-lang/core";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
-import { providerPhantom, useSolanaWallet } from "@/lib/solana/phantom";
+import { phantomProvider, useSolanaWallet } from "@/lib/solana/phantom";
 import { prepareSolanaLink, saveSolanaWallet, unlinkSolanaWallet } from "@/app/perfil/solana-actions";
 import { useDictionary } from "@/lib/i18n/client";
 import { describeSolanaError } from "@/lib/solana/errors";
@@ -38,7 +38,7 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
         setError(preparation.message);
         return;
       }
-      const p = providerPhantom();
+      const p = phantomProvider();
       if (!p?.signMessage) {
         setError(t.noSignMessage);
         return;

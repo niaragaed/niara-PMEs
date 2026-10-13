@@ -818,12 +818,12 @@ export const pt = {
       pricePerShare: "Preço por cota",
       shares: "Cotas",
       viewOffering: "Negociar →",
-      // Mesmo selo/verOferta acima, usado também pela oferta self-service — só a linha de
-      // proveniência muda (dado real do emissor, não empresa fictícia). Sem meta/preço/cotas na
-      // vitrine self-service de propósito: os termos reais variam por oferta e só são confiáveis
-      // lidos ao vivo da chain (RealOnChainInvestPanel, na página de detalhe) — mostrar aqui
-      // obrigaria usar as mesmas constantes fixas das legadas, que não valem para ofertas com
-      // termos próprios.
+      // Same badge/viewOffering as above, also used by the self-service offering — only the
+      // provenance line changes (real issuer data, not a fictitious company). No target/price/shares
+      // on the self-service showcase on purpose: the real terms vary per offering and are only
+      // reliable when read live from the chain (RealOnChainInvestPanel, on the detail page) —
+      // showing them here would mean using the same fixed constants as the legacy ones, which don't
+      // hold for offerings with their own terms.
       issuerData: "Dados informados pelo próprio emissor (demonstração)",
     },
     categories: {

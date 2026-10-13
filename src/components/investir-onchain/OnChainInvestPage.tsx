@@ -41,7 +41,7 @@ function buildOptions(
 
   const legacyOptions: OfferingOption[] = legacy.map((pair, index) => ({
     rede: "sepolia" as const,
-    key: `legado-${index}`,
+    key: `legacy-${index}`,
     tokenAddress: pair.token,
     offeringAddress: pair.offering,
     label: `${t.option} ${index + 1}`,

@@ -13,7 +13,7 @@ import { SolanaClientError } from "./errors";
 
 type PhantomEvent = "connect" | "disconnect" | "accountChanged";
 
-export type ProviderPhantom = {
+export type PhantomProvider = {
   isPhantom?: boolean;
   publicKey: PublicKey | null;
   isConnected?: boolean;
@@ -27,12 +27,12 @@ export type ProviderPhantom = {
 
 declare global {
   interface Window {
-    phantom?: { solana?: ProviderPhantom };
-    solana?: ProviderPhantom;
+    phantom?: { solana?: PhantomProvider };
+    solana?: PhantomProvider;
   }
 }
 
-export function providerPhantom(): ProviderPhantom | null {
+export function phantomProvider(): PhantomProvider | null {
   if (typeof window === "undefined") return null;
   return window.phantom?.solana ?? window.solana ?? null;
 }
@@ -54,7 +54,7 @@ function set(patch: Partial<WalletState>) {
 function start() {
   if (started || typeof window === "undefined") return;
   started = true;
-  const p = providerPhantom();
+  const p = phantomProvider();
   state = { available: Boolean(p), address: p?.publicKey?.toBase58() ?? null, started: true };
   if (!p) return;
   p.on?.("connect", () => set({ address: p.publicKey?.toBase58() ?? null }));
@@ -90,7 +90,7 @@ export function useSolanaWallet() {
   );
 
   async function connect(): Promise<string> {
-    const p = providerPhantom();
+    const p = phantomProvider();
     if (!p) throw new SolanaClientError("no-wallet");
     const r = await p.connect();
     const address = r.publicKey.toBase58();
@@ -99,7 +99,7 @@ export function useSolanaWallet() {
   }
 
   async function disconnect() {
-    await providerPhantom()?.disconnect();
+    await phantomProvider()?.disconnect();
     set({ address: null });
   }
 
@@ -123,7 +123,7 @@ export type SignedTransaction = {
  * BEFORE the wallet opens, never as a failed transaction paid for by the user.
  */
 export async function simulateAndSign(connection: Connection, tx: Transaction): Promise<SignedTransaction> {
-  const p = providerPhantom();
+  const p = phantomProvider();
   if (!p?.publicKey) throw new SolanaClientError("not-connected");
   try {
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
