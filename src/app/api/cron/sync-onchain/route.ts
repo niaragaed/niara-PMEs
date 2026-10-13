@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const events = await getEventsOnChain();
     return NextResponse.json({ ok: true, totalEventosNoCache: events.length });
   } catch (error) {
-    console.error("[cron/sync-onchain] falha ao sincronizar:", error);
+    console.error("[cron/sync-onchain] sync failed:", error);
     return NextResponse.json({ ok: false, error: String(error) }, { status: 500 });
   }
 }

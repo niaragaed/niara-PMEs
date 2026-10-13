@@ -53,7 +53,7 @@ function eventToRow(evento: OnChainEvent) {
 async function main() {
   const addresses = getOnChainAddresses();
   if (!addresses) {
-    console.error("NEXT_PUBLIC_MOCKBRL_ADDRESS / NEXT_PUBLIC_OFERTAS_ONCHAIN ausentes ou inválidos — nada a fazer.");
+    console.error("NEXT_PUBLIC_MOCKBRL_ADDRESS / NEXT_PUBLIC_OFERTAS_ONCHAIN missing or invalid — nothing to do.");
     process.exit(1);
   }
 
@@ -74,7 +74,7 @@ async function main() {
     fromBlock = await findDeployBlock(client, addresses.mockBrl);
     if (redeployDetected) {
       console.log(
-        `Endereço de MockBRL mudou (era ${syncState?.mock_brl_address}, agora ${addresses.mockBrl}) — recalculando bloco de deploy: ${fromBlock}.`,
+        `MockBRL address changed (was ${syncState?.mock_brl_address}, now ${addresses.mockBrl}) — recomputing the deploy block: ${fromBlock}.`,
       );
     }
   } else {
@@ -84,12 +84,12 @@ async function main() {
   const toBlock = await client.getBlockNumber();
 
   if (fromBlock > toBlock) {
-    console.log(`Já sincronizado até o bloco ${toBlock} — nada a fazer.`);
+    console.log(`Already synced up to block ${toBlock} — nothing to do.`);
     return;
   }
 
-  console.log(`Escaneando ${addresses.offerings.length} oferta(s) de ${fromBlock} até ${toBlock} (${toBlock - fromBlock + BigInt(1)} blocos)...`);
-  console.log("Pode demorar alguns minutos na primeira vez — sem pressa, este script não tem limite de 60s.");
+  console.log(`Scanning ${addresses.offerings.length} offering(s) from ${fromBlock} to ${toBlock} (${toBlock - fromBlock + BigInt(1)} blocks)...`);
+  console.log("It may take a few minutes the first time — no rush, this script has no 60s limit.");
 
   const events = await fetchOnChainEventsRange(client, addresses.offerings, fromBlock, toBlock);
   console.log(`${events.length} evento(s) encontrado(s).`);
@@ -106,7 +106,7 @@ async function main() {
     .upsert({ id: 1, last_synced_block: toBlock.toString(), mock_brl_address: addresses.mockBrl.toLowerCase() });
   if (upsertSyncError) throw upsertSyncError;
 
-  console.log(`Cache atualizado até o bloco ${toBlock}. Pronto.`);
+  console.log(`Cache updated up to block ${toBlock}. Done.`);
 }
 
 main().catch((error) => {

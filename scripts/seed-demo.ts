@@ -50,7 +50,7 @@ function createAdminClient() {
 
 if (process.env.NIARA_ENV !== "demo") {
   console.error(
-    `seed-demo: recusando rodar — NIARA_ENV precisa ser "demo" (está: ${JSON.stringify(
+    `seed-demo: refusing to run — NIARA_ENV must be "demo" (it is: ${JSON.stringify(
       process.env.NIARA_ENV,
     )}). Isso evita gravar dado fictício num ambiente que não devia.`,
   );
@@ -58,7 +58,7 @@ if (process.env.NIARA_ENV !== "demo") {
 }
 
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("seed-demo: faltam NEXT_PUBLIC_SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY — confira o .env.local.");
+  console.error("seed-demo: NEXT_PUBLIC_SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY missing — check .env.local.");
   process.exit(1);
 }
 
@@ -67,7 +67,7 @@ const DEMO_INVESTOR_EMAIL = "demo.investidor@niara-pmes.com";
 
 function centsOrThrow(reais: string, label: string): bigint {
   const cents = reaisToCents(reais);
-  if (cents === null) throw new Error(`seed-demo: valor inválido para ${label}: ${reais}`);
+  if (cents === null) throw new Error(`seed-demo: invalid value for ${label}: ${reais}`);
   return cents;
 }
 
@@ -83,13 +83,13 @@ async function getOrCreateAuthUser(
   // supabase-js não tem getUserByEmail no admin API — lista e procura
   // localmente. Só duas contas de demo, uma página já basta.
   const { data: list, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  if (listError) throw new Error(`seed-demo: falha ao listar usuários: ${listError.message}`);
+  if (listError) throw new Error(`seed-demo: failed to list users: ${listError.message}`);
 
   const existing = list.users.find((user) => user.email === email);
   if (existing) return existing;
 
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
-  if (error || !data.user) throw new Error(`seed-demo: falha ao criar usuário ${email}: ${error?.message}`);
+  if (error || !data.user) throw new Error(`seed-demo: failed to create user ${email}: ${error?.message}`);
   return data.user;
 }
 
@@ -120,7 +120,7 @@ async function main() {
         // nunca haver colisão entre uma oferta REAL do banco e uma
         // oferta fictícia mostrada ao lado dela.
         tax_id: "11.222.333/0001-44",
-        annual_revenue_cents: centsOrThrow("2.400.000,00", "faturamento do emissor demo").toString(),
+        annual_revenue_cents: centsOrThrow("2.400.000,00", "demo issuer revenue").toString(),
         sector: "Alimentação e bebidas",
         business_summary:
           "Rede de cafeterias de bairro em expansão, buscando capital para abrir duas novas unidades.",
@@ -136,15 +136,15 @@ async function main() {
       })
       .select("id")
       .single();
-    if (error || !issuer) throw new Error(`seed-demo: falha ao criar issuer: ${error?.message}`);
+    if (error || !issuer) throw new Error(`seed-demo: failed to create issuer: ${error?.message}`);
     issuerId = issuer.id;
   }
 
   // --- Oferta ativa (sempre nova, ver comentário de topo) ---------------
-  const baseCapCents = centsOrThrow("500.000,00", "cap base da oferta demo");
-  const hardCapCents = centsOrThrow("600.000,00", "hard cap da oferta demo"); // +20% do base, dentro do teto de 25%
-  const targetMinCents = centsOrThrow("300.000,00", "meta mínima da oferta demo");
-  const sharePriceCents = centsOrThrow("100,00", "valor por cota da oferta demo"); // 500.000,00 / 100,00 = 5.000 cotas
+  const baseCapCents = centsOrThrow("500.000,00", "demo offering base cap");
+  const hardCapCents = centsOrThrow("600.000,00", "demo offering hard cap"); // +20% do base, dentro do teto de 25%
+  const targetMinCents = centsOrThrow("300.000,00", "demo offering minimum target");
+  const sharePriceCents = centsOrThrow("100,00", "demo offering value per share"); // 500.000,00 / 100,00 = 5.000 cotas
 
   const opensAt = new Date();
   const closesAt = new Date(opensAt.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 dias, bem dentro do teto de 180
@@ -165,7 +165,7 @@ async function main() {
     })
     .select("id")
     .single();
-  if (offeringError || !offering) throw new Error(`seed-demo: falha ao criar oferta: ${offeringError?.message}`);
+  if (offeringError || !offering) throw new Error(`seed-demo: failed to create offering: ${offeringError?.message}`);
 
   // --- Investidor --------------------------------------------------------
   const investorUser = await getOrCreateAuthUser(admin, DEMO_INVESTOR_EMAIL, password);
@@ -200,19 +200,19 @@ async function main() {
       })
       .select("id")
       .single();
-    if (error || !investor) throw new Error(`seed-demo: falha ao criar investor: ${error?.message}`);
+    if (error || !investor) throw new Error(`seed-demo: failed to create investor: ${error?.message}`);
     investorId = investor.id;
   }
 
   console.log("");
-  console.log("seed-demo: pronto.");
+  console.log("seed-demo: done.");
   console.log("");
-  console.log(`  Emissor     ${DEMO_ISSUER_EMAIL} / ${password}  (issuer id: ${issuerId})`);
-  console.log(`  Investidor  ${DEMO_INVESTOR_EMAIL} / ${password}  (investor id: ${investorId})`);
-  console.log(`  Oferta ativa: ${offering.id}`);
+  console.log(`  Issuer      ${DEMO_ISSUER_EMAIL} / ${password}  (issuer id: ${issuerId})`);
+  console.log(`  Investor    ${DEMO_INVESTOR_EMAIL} / ${password}  (investor id: ${investorId})`);
+  console.log(`  Active offering: ${offering.id}`);
   console.log("");
-  console.log("  KYC do investidor fica 'pending' de propósito — aprove ao vivo em /investir");
-  console.log("  ('Fazer KYC (demonstração)') na hora de confirmar o pagamento do pitch.");
+  console.log("  The investor's KYC is left 'pending' on purpose — approve it live at /investir");
+  console.log("  ('Do KYC (demo)') when confirming the pitch payment.");
   console.log("");
 }
 

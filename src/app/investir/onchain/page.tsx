@@ -30,7 +30,7 @@ async function loadSolanaOfferings(): Promise<ServerSolanaOption[]> {
       .map((o) => ({ address: o.address, company: o.company, open: o.state === "Aberta", opening: o.opening }))
       .sort((a, b) => Number(b.open) - Number(a.open) || b.opening - a.opening);
   } catch (error) {
-    console.error("investir/onchain: falha ao listar ofertas da Solana", error);
+    console.error("invest/onchain: failed to list the Solana offerings", error);
     return [];
   }
 }

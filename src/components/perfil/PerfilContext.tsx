@@ -14,7 +14,7 @@ const ProfileContext = createContext<ProfileContextValue | null>(null);
 
 export function useProfile(): ProfileContextValue {
   const ctx = useContext(ProfileContext);
-  if (!ctx) throw new Error("usePerfil precisa estar dentro de <PerfilProvider>");
+  if (!ctx) throw new Error("useProfile must be used inside <ProfileProvider>");
   return ctx;
 }
 

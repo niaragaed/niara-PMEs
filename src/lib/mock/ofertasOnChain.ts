@@ -24,11 +24,11 @@ export function getOnChainIndexBySlug(slug: string): number | null {
 if (process.env.NODE_ENV !== "production") {
   const withoutDuplicates = new Set(ONCHAIN_SMES_SLUGS_IN_ORDER).size === ONCHAIN_SMES_SLUGS_IN_ORDER.length;
   if (!withoutDuplicates) {
-    throw new Error("ONCHAIN_PMES_SLUGS_EM_ORDEM tem slugs duplicados — cada posição deve ser única.");
+    throw new Error("ONCHAIN_SMES_SLUGS_IN_ORDER has duplicate slugs — each position must be unique.");
   }
   if (ONCHAIN_SMES_SLUGS_IN_ORDER.length !== 10) {
     throw new Error(
-      `ONCHAIN_PMES_SLUGS_EM_ORDEM deveria ter 10 entradas (uma por oferta real em Sepolia), tem ${ONCHAIN_SMES_SLUGS_IN_ORDER.length}.`,
+      `ONCHAIN_SMES_SLUGS_IN_ORDER should have 10 entries (one per real offering on Sepolia), it has ${ONCHAIN_SMES_SLUGS_IN_ORDER.length}.`,
     );
   }
 
