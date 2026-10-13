@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition, type ChangeEvent } from "react";
 import { Image as ImageIcon, Trash2, Upload } from "lucide-react";
 import { removeIssuerBanner, uploadIssuerBanner } from "@/app/perfil/actions";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 3 * 1024 * 1024;
@@ -24,12 +24,13 @@ export function BannerUpload({
   initialBannerUrl: string | null;
   onUrlChange?: (url: string | null) => void;
 }) {
+  const dict = useDictionary();
   const [bannerUrl, setBannerUrl] = useState(initialBannerUrl);
   const [error, setError] = useState<string | null>(null);
   const [justDid, setJustDid] = useState<"enviada" | "removida" | null>(null);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
-  const t = pt.profile.registrationData.companyBanner;
+  const t = dict.profile.registrationData.companyBanner;
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

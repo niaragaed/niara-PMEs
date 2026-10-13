@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { SignInPage } from "@/components/entrar/EntrarPage";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${pt.signIn.meta.title} · Niara PMEs`,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.signIn.meta.title} · Niara PMEs`,
 };
+}
 
 type PageProps = {
   searchParams: Promise<{ intent?: string; aviso?: string }>;

@@ -2,14 +2,14 @@ import { getTransactionsAndSummary } from "@/lib/socios/movimentacoes";
 import { TransactionsTable } from "./MovimentacoesTable";
 import { SummaryCards } from "./ResumoCards";
 
-// Componente assíncrono isolado só para ficar atrás do <Suspense> de page.tsx (mesmo motivo de
-// antes: a leitura on-chain, dentro de getMovimentacoesEResumo(), pode demorar sem uma RPC
-// dedicada). getMovimentacoesEResumo() nunca lança — cada fonte (on-chain, cadastros, ofertas,
-// aportes, payment_events) tem seu próprio catch interno (ver
-// src/lib/socios/movimentacoes.ts), então uma falha isolada só tira aquela fonte da timeline,
-// nunca derruba a página.
+// An async component isolated only so it sits behind page.tsx's <Suspense> (same reason as
+// before: the on-chain read, inside getTransactionsAndSummary(), can take a while without a
+// dedicated RPC). getTransactionsAndSummary() never throws — each source (on-chain, sign-ups,
+// offerings, investments, payment_events) has its own internal catch (see
+// src/lib/socios/movimentacoes.ts), so an isolated failure only drops that source from the
+// timeline, never the page.
 export async function TransactionsSection() {
-  const { movimentacoes: transactions, resumo: summary } = await getTransactionsAndSummary();
+  const { transactions, summary } = await getTransactionsAndSummary();
   return (
     <>
       <SummaryCards summary={summary} />

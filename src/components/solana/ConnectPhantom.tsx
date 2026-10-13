@@ -8,14 +8,15 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Loader2, LogOut, Wallet } from "lucide-react";
 import { useSolanaWallet } from "@/lib/solana/phantom";
 import { solanaConnection } from "@/lib/solana/program";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 function truncate(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 export function ConnectPhantom({ showSolBalance = true }: { showSolBalance?: boolean }) {
-  const t = pt.solana.wallet;
+  const dict = useDictionary();
+  const t = dict.solana.wallet;
   const wallet = useSolanaWallet();
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);

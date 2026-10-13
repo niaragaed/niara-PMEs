@@ -6,14 +6,15 @@ import { useConnection } from "wagmi";
 import { saveWallet, unlinkWallet } from "@/app/perfil/actions";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { ConnectionPanel } from "@/components/web3/ConnectionPanel";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 function truncateAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
 export function WalletSection({ walletAddress }: { walletAddress: string | null }) {
-  const t = pt.profile.wallet;
+  const dict = useDictionary();
+  const t = dict.profile.wallet;
   const tv = t.link;
 
   const connection = useConnection();

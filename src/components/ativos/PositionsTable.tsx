@@ -1,7 +1,8 @@
+"use client";
 import { CATEGORY_COLOR_VAR } from "@/lib/ativos/derive";
 import { formatBRL, formatSignedPercent } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS, type Position } from "@/lib/mock/ativos";
+import { useDictionary } from "@/lib/i18n/client";
 
 function changePercent(position: Position): number {
   const invested = position.shares * position.averagePrice;
@@ -9,29 +10,30 @@ function changePercent(position: Position): number {
 }
 
 export function PositionsTable() {
+  const dict = useDictionary();
   return (
     <div className="overflow-x-auto rounded-lg border border-panel-border bg-panel">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <caption className="sr-only">{pt.assets.table.title}</caption>
+        <caption className="sr-only">{dict.assets.table.title}</caption>
         <thead>
           <tr className="border-b border-panel-border text-xs uppercase tracking-wide text-on-military-muted">
             <th scope="col" className="px-4 py-3 font-medium">
-              {pt.assets.table.colAsset}
+              {dict.assets.table.colAsset}
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              {pt.assets.table.colCategory}
+              {dict.assets.table.colCategory}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {pt.assets.table.colShares}
+              {dict.assets.table.colShares}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {pt.assets.table.colAveragePrice}
+              {dict.assets.table.colAveragePrice}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {pt.assets.table.colCurrentValue}
+              {dict.assets.table.colCurrentValue}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {pt.assets.table.colChange}
+              {dict.assets.table.colChange}
             </th>
           </tr>
         </thead>
@@ -50,7 +52,7 @@ export function PositionsTable() {
                       style={{ backgroundColor: CATEGORY_COLOR_VAR[position.category] }}
                       aria-hidden="true"
                     />
-                    {pt.assets.categories[position.category]}
+                    {dict.assets.categories[position.category]}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right text-on-military">{position.shares}</td>

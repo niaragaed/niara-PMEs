@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-export default function NotFound() {
-  const t = pt.invest.detail.notFound;
+export default async function NotFound() {
+  const dict = await getDictionary();
+  const t = dict.invest.detail.notFound;
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">

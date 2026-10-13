@@ -7,9 +7,10 @@ import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
 import { NetworkBadge } from "@/components/solana/RedeBadge";
 import { solanaExplorerAccountLink } from "@/lib/solana/config";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type OfferingRow = {
   id: string;
@@ -88,9 +89,9 @@ function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso));
 }
 
-function validate(data: FormState): FormErrors {
+function validate(data: FormState, dict: Dictionary): FormErrors {
   const errors: FormErrors = {};
-  const t = pt.companyOfferings.errors;
+  const t = dict.companyOfferings.errors;
 
   if (!MONEY_FORMAT.test(data.baseCapReais.trim())) errors.baseCapReais = t.invalidValue;
   if (!MONEY_FORMAT.test(data.targetMinReais.trim())) errors.targetMinReais = t.invalidValue;
@@ -114,7 +115,8 @@ function validate(data: FormState): FormErrors {
 }
 
 export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
-  const t = pt.companyOfferings;
+  const dict = useDictionary();
+  const t = dict.companyOfferings;
   const [draft, setDraft] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [createState, setCreateState] = useState<OfferingActionState | null>(null);
@@ -133,7 +135,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validate(draft);
+    const nextErrors = validate(draft, dict);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -241,7 +243,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                     <div>
                       <dt className="text-xs text-on-military-muted">{t.card.category}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
-                        {offering.category === null ? t.card.notProvided : pt.assets.categories[offering.category]}
+                        {offering.category === null ? t.card.notProvided : dict.assets.categories[offering.category]}
                       </dd>
                     </div>
                   </dl>
@@ -437,7 +439,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
               >
                 {OFFERING_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
-                    {pt.assets.categories[category]}
+                    {dict.assets.categories[category]}
                   </option>
                 ))}
               </SelectField>

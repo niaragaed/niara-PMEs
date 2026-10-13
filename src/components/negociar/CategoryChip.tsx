@@ -1,6 +1,7 @@
+"use client";
 import { CATEGORY_META } from "@/lib/categories";
-import { pt } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
+import { useDictionary } from "@/lib/i18n/client";
 
 type ChipSize = "sm" | "md" | "lg";
 
@@ -37,6 +38,7 @@ export function CategoryChip({ category: categoria, size = "md" }: { category: T
 // de ofertas) — diferente de CategoryChip, o texto aqui é a única indicação
 // da categoria, então não pode ser decorativo/aria-hidden.
 export function CategoryBadge({ category, size = "sm" }: { category: TokenCategory; size?: "sm" | "md" }) {
+  const dict = useDictionary();
   const meta = CATEGORY_META[category];
   const Icon = meta.icon;
   const badgeDims = size === "md" ? "h-8 w-8" : "h-6 w-6";
@@ -51,7 +53,7 @@ export function CategoryBadge({ category, size = "sm" }: { category: TokenCatego
       >
         <Icon className={iconDims} style={{ color: meta.iconVar }} />
       </span>
-      {pt.assets.categories[category]}
+      {dict.assets.categories[category]}
     </span>
   );
 }

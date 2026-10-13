@@ -6,7 +6,8 @@ import { RealOnChainInvestPanel } from "./RealOnChainInvestPanel";
 import { SolanaInvestPanel } from "./SolanaInvestPanel";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useDictionary } from "@/lib/i18n/client";
 
 type OfferingOption = { key: string; label: string; proveniencia: string } & (
   | { rede: "sepolia"; tokenAddress: `0x${string}`; offeringAddress: `0x${string}` }
@@ -30,9 +31,13 @@ export type ServerSolanaOption = { address: string; company: string; open: boole
 // global — a única diferença que ESTE seletor precisa expor é a linha de proveniência do
 // conteúdo (empresa inventada à mão vs. dados que o próprio emissor preencheu), não uma
 // separação estrutural.
-function buildOptions(confirmedOfferings: ConfirmedOnChainOffering[], solanaOfferings: ServerSolanaOption[]): OfferingOption[] {
-  const t = pt.investOnChain.offeringSelector;
-  const ts = pt.solana;
+function buildOptions(
+  confirmedOfferings: ConfirmedOnChainOffering[],
+  solanaOfferings: ServerSolanaOption[],
+  dict: Dictionary,
+): OfferingOption[] {
+  const t = dict.investOnChain.offeringSelector;
+  const ts = dict.solana;
   const legacy = getOnChainAddresses()?.offerings ?? [];
 
   const legacyOptions: OfferingOption[] = legacy.map((pair, index) => ({
@@ -91,9 +96,10 @@ export function OnChainInvestPage({
   solanaOfferings?: ServerSolanaOption[];
   preferSolana?: boolean;
 }) {
-  const t = pt.investOnChain;
-  const ts = pt.solana;
-  const options = buildOptions(confirmedOfferings, solanaOfferings);
+  const dict = useDictionary();
+  const t = dict.investOnChain;
+  const ts = dict.solana;
+  const options = buildOptions(confirmedOfferings, solanaOfferings, dict);
   const initial = (preferSolana ? options.find((o) => o.rede === "solana-devnet") : undefined) ?? options[0];
 
   const [selectedKey, setSelectedKey] = useState(initial?.key ?? "");

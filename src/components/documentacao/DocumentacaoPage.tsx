@@ -1,9 +1,10 @@
 import { DocsNav } from "./DocumentacaoNav";
 import { FaqAccordion } from "./FaqAccordion";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-export function DocsPage() {
-  const t = pt.docs;
+export async function DocsPage() {
+  const dict = await getDictionary();
+  const t = dict.docs;
 
   return (
     <main className="flex flex-1 flex-col bg-military">

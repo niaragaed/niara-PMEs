@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { SmesOnChainCard } from "./PmesOnChainCard";
 import { SelfServiceSmesCard } from "./SelfServicePmesCard";
-import { pt } from "@/lib/i18n/pt-br";
 import type { Offering } from "@/lib/mock/ofertas";
+import { useDictionary } from "@/lib/i18n/client";
 
 // Duas origens na mesma vitrine (ver CLAUDE.md "Fase 4" → unificação da vitrine PMEs): as 10
 // legadas (empresa fictícia, PmesOnChainCard) e as self-service já confirmadas on-chain (dados
@@ -41,7 +41,8 @@ function getKey(item: SmesCardData): string {
 // oferta trocar de setor no futuro. Itens sem setor (self-service que não preencheu) nunca geram
 // um botão de filtro vazio, mas continuam aparecendo na vitrine sem filtro nenhum selecionado.
 export function SmesSectorFilter({ items }: { items: SmesCardData[] }) {
-  const t = pt.trade.categoryTemplate.sectorFilter;
+  const dict = useDictionary();
+  const t = dict.trade.categoryTemplate.sectorFilter;
 
   const sectors = useMemo(() => {
     const unique = new Set(items.map(getSector).filter((sector): sector is string => Boolean(sector)));

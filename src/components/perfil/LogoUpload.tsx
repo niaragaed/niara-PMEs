@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition, type ChangeEvent } from "react";
 import { Building2, Trash2, Upload } from "lucide-react";
 import { removeIssuerLogo, uploadIssuerLogo } from "@/app/perfil/actions";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
@@ -22,12 +22,13 @@ export function LogoUpload({
   initialLogoUrl: string | null;
   onUrlChange?: (url: string | null) => void;
 }) {
+  const dict = useDictionary();
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [error, setError] = useState<string | null>(null);
   const [justDid, setJustDid] = useState<"enviada" | "removida" | null>(null);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
-  const t = pt.profile.registrationData.companyLogo;
+  const t = dict.profile.registrationData.companyLogo;
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

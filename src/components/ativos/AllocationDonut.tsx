@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/ativos/derive";
 import { formatBRL, formatPercent } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
+import { useDictionary } from "@/lib/i18n/client";
 
-const VIEWS: { key: AllocationView; label: string }[] = [
-  { key: "classe", label: pt.assets.allocation.viewClass },
-  { key: "ativo", label: pt.assets.allocation.viewAsset },
-  { key: "setor", label: pt.assets.allocation.viewSector },
+const VIEWS: { key: AllocationView; labelKey: "viewClass" | "viewAsset" | "viewSector" }[] = [
+  { key: "classe", labelKey: "viewClass" },
+  { key: "ativo", labelKey: "viewAsset" },
+  { key: "setor", labelKey: "viewSector" },
 ];
 
 type DonutTooltipProps = {
@@ -33,14 +33,15 @@ function DonutTooltip({ active, payload }: DonutTooltipProps) {
 }
 
 export function AllocationDonut() {
+  const dict = useDictionary();
   const [view, setView] = useState<AllocationView>("classe");
-  const slices = computeAllocation(MOCK_POSITIONS, view, pt.assets.categories, pt.assets.regions);
+  const slices = computeAllocation(MOCK_POSITIONS, view, dict.assets.categories, dict.assets.regions);
 
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{pt.assets.allocation.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{dict.assets.allocation.title}</h3>
 
-      <div role="tablist" aria-label={pt.assets.allocation.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
+      <div role="tablist" aria-label={dict.assets.allocation.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
         {VIEWS.map((v) => (
           <button
             key={v.key}
@@ -52,7 +53,7 @@ export function AllocationDonut() {
               view === v.key ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
             }`}
           >
-            {v.label}
+            {dict.assets.allocation[v.labelKey]}
           </button>
         ))}
       </div>

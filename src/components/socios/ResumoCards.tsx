@@ -1,8 +1,8 @@
 import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import type { TransactionsSummary } from "@/lib/socios/movimentacoes";
 import { KpiCard } from "./SociosDashboard";
+import { getDictionary } from "@/lib/i18n/server";
 
 function formatToken(valueWei: bigint, decimals: number, symbol: string): string {
   return `${Number(formatUnits(valueWei, decimals)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} ${symbol}`;
@@ -11,8 +11,9 @@ function formatToken(valueWei: bigint, decimals: number, symbol: string): string
 // Resumo agregado acima da timeline única — os mesmos números que antes viviam em duas seções
 // separadas (resumo on-chain + resumo mock) agora ficam lado a lado, já que a tabela abaixo não
 // separa mais por origem.
-export function SummaryCards({ summary }: { summary: TransactionsSummary }) {
-  const t = pt.partners;
+export async function SummaryCards({ summary }: { summary: TransactionsSummary }) {
+  const dict = await getDictionary();
+  const t = dict.partners;
   const onChain = summary.onChain;
   const singleFeeBps =
     onChain && onChain.taxaBpsPorOferta.every((bps) => bps === onChain.taxaBpsPorOferta[0])
@@ -49,12 +50,12 @@ export function SummaryCards({ summary }: { summary: TransactionsSummary }) {
         )}
         <KpiCard
           label={t.mockSummary.totalPaid}
-          value={formatBRL(summary.totalAportesMockCents / 100)}
+          value={formatBRL(summary.totalMockInvestmentsCents / 100)}
           note={t.origin.mock}
         />
         <KpiCard
           label={t.mockSummary.uniqueInvestors}
-          value={String(summary.investidoresUnicosMock)}
+          value={String(summary.uniqueMockInvestors)}
           note={t.origin.mock}
         />
       </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { InvestorProfileQuiz } from "./InvestorProfileQuiz";
 import { InvestorProfileResultCard } from "./InvestorProfileResultCard";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 type InvestorProfileSectionProps = {
   // true só na primeira visita a /perfil logo após criar a conta
@@ -14,9 +14,10 @@ type InvestorProfileSectionProps = {
 };
 
 export function InvestorProfileSection({ openAutomatically }: InvestorProfileSectionProps) {
+  const dict = useDictionary();
   const [retaking, setRetaking] = useState(Boolean(openAutomatically));
   const sectionRef = useRef<HTMLElement>(null);
-  const t = pt.profile.investor;
+  const t = dict.profile.investor;
 
   useEffect(() => {
     if (openAutomatically) {

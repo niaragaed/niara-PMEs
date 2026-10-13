@@ -7,9 +7,9 @@ import { CategoryBadge } from "./CategoryChip";
 import { OfferingBanner } from "./OfertaBanner";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
-import { pt } from "@/lib/i18n/pt-br";
 import { DEFAULT_DOCUMENTS } from "@/lib/mock/ofertas";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
+import { getDictionary } from "@/lib/i18n/server";
 
 // Página de detalhe para uma oferta PME self-service (publicada pelo próprio emissor via
 // OfertaOrquestrador, já confirmada on-chain) — irmã enxuta de OfertaDetailPage.tsx, não uma
@@ -22,7 +22,7 @@ import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 // investimento ao vivo da chain (RealOnChainInvestPanel, 100% real), documentos placeholder
 // genéricos (mesma lista "Em breve" de todas as ofertas, não específica de nenhuma empresa) e os
 // riscos genéricos da Res. CVM 88 (texto idêntico ao de OfertaDetailPage.tsx, não fictício).
-export function SelfServiceOfferingDetailPage({
+export async function SelfServiceOfferingDetailPage({
   offering,
   isPartner: isSocio = false,
   isIssuer: isEmissor = false,
@@ -34,14 +34,15 @@ export function SelfServiceOfferingDetailPage({
    * RealOnChainInvestPanel.tsx). */
   isIssuer?: boolean;
 }) {
-  const t = pt.trade.offering;
+  const dict = await getDictionary();
+  const t = dict.trade.offering;
   const nome = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">
       <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{pt.common.demo}</span> — {offering.rede === "solana-devnet" ? t.demoBannerSelfServiceSolana : t.demoBannerSelfService}
+        <span className="font-semibold text-salmon">{dict.common.demo}</span> — {offering.rede === "solana-devnet" ? t.demoBannerSelfServiceSolana : t.demoBannerSelfService}
       </div>
 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">

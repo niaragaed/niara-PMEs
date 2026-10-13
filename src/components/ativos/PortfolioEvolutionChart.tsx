@@ -2,8 +2,8 @@
 
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_EVOLUTION } from "@/lib/mock/ativos";
+import { useDictionary } from "@/lib/i18n/client";
 
 type TooltipEntry = {
   value?: unknown;
@@ -35,9 +35,10 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
 }
 
 export function PortfolioEvolutionChart() {
+  const dict = useDictionary();
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{pt.assets.evolution.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{dict.assets.evolution.title}</h3>
 
       <div className="mt-4 h-72" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
@@ -60,13 +61,13 @@ export function PortfolioEvolutionChart() {
             <Legend formatter={(value: string) => <span className="text-on-military-muted">{value}</span>} />
             <Bar
               dataKey="investido"
-              name={pt.assets.evolution.investedSeries}
+              name={dict.assets.evolution.investedSeries}
               stackId="portfolio"
               fill="var(--color-chart-pmes)"
             />
             <Bar
               dataKey="ganho"
-              name={pt.assets.evolution.gainSeries}
+              name={dict.assets.evolution.gainSeries}
               stackId="portfolio"
               fill="var(--color-value-positive)"
               radius={[4, 4, 0, 0]}
@@ -75,7 +76,7 @@ export function PortfolioEvolutionChart() {
         </ResponsiveContainer>
       </div>
 
-      <p className="mt-3 text-xs text-on-military-muted">{pt.assets.evolution.description}</p>
+      <p className="mt-3 text-xs text-on-military-muted">{dict.assets.evolution.description}</p>
     </div>
   );
 }

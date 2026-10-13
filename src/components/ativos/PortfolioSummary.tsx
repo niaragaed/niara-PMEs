@@ -1,21 +1,23 @@
+"use client";
 import { computeTotals } from "@/lib/ativos/derive";
 import { formatBRL, formatSignedBRL, formatSignedPercent } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
+import { useDictionary } from "@/lib/i18n/client";
 
 export function PortfolioSummary() {
+  const dict = useDictionary();
   const { totalEquity, investedValue, profitLoss, returnPercent } = computeTotals(MOCK_POSITIONS);
   const valueClassName = profitLoss >= 0 ? "text-value-positive" : "text-value-negative";
 
   const cards: { label: string; value: string; valueClassName?: string; note?: string }[] = [
-    { label: pt.assets.kpis.totalEquity, value: formatBRL(totalEquity) },
-    { label: pt.assets.kpis.investedValue, value: formatBRL(investedValue) },
-    { label: pt.assets.kpis.profitLoss, value: formatSignedBRL(profitLoss), valueClassName },
+    { label: dict.assets.kpis.totalEquity, value: formatBRL(totalEquity) },
+    { label: dict.assets.kpis.investedValue, value: formatBRL(investedValue) },
+    { label: dict.assets.kpis.profitLoss, value: formatSignedBRL(profitLoss), valueClassName },
     {
-      label: pt.assets.kpis.periodReturn,
+      label: dict.assets.kpis.periodReturn,
       value: formatSignedPercent(returnPercent),
       valueClassName,
-      note: pt.assets.kpis.returnNote,
+      note: dict.assets.kpis.returnNote,
     },
   ];
 

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { FlaskConical } from "lucide-react";
 import { OfferingBanner } from "./OfertaBanner";
-import { pt } from "@/lib/i18n/pt-br";
 import { formatBRL } from "@/lib/format";
 import type { ActiveOfferingSummary } from "@/lib/investments";
+import { getDictionary } from "@/lib/i18n/server";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -23,8 +23,9 @@ function formatDate(iso: string): string {
 // nunca confunda esta pré-visualização com "Real — Sepolia" (REGRA DE
 // HONESTIDADE, aqui no sentido de não deixar dois conceitos reais
 // diferentes parecerem o mesmo tipo de "real").
-export function MyOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
-  const t = pt.trade.myOfferingCard;
+export async function MyOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
+  const dict = await getDictionary();
+  const t = dict.trade.myOfferingCard;
   const nome = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (

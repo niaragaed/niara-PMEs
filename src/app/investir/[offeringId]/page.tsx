@@ -3,28 +3,29 @@ import { notFound, redirect } from "next/navigation";
 import { loadPublicOffering } from "@/app/investir/actions";
 import { OfferingDetailPage } from "@/components/investir/OfferingDetailPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { pt } from "@/lib/i18n/pt-br";
 import { isOfferingOwner } from "@/lib/investments";
 import { createClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/server";
 
 type PageProps = {
   params: Promise<{ offeringId: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const dict = await getDictionary();
   const { offeringId } = await params;
   const offering = await loadPublicOffering(offeringId);
 
   if (!offering) {
     return {
-      title: `${pt.invest.detail.notFound.title} · Niara PMEs`,
+      title: `${dict.invest.detail.notFound.title} · Niara PMEs`,
       robots: { index: false, follow: false },
     };
   }
 
   return {
     title: `${offering.issuer.legalName} · Niara PMEs`,
-    description: offering.issuer.businessSummary ?? pt.invest.meta.description,
+    description: offering.issuer.businessSummary ?? dict.invest.meta.description,
     robots: { index: false, follow: false },
   };
 }

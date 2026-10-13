@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createAccount, type CreateAccountState } from "@/app/cadastro/actions";
 import { VideoCover } from "@/components/entrar/VideoCover";
 import { ReadField, SelectField, TextField } from "@/components/perfil/FormField";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import {
   isValidCEP,
   isValidBirthDate,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/masks";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthError } from "@supabase/supabase-js";
+import { useDictionary } from "@/lib/i18n/client";
 
 // Mesma lista de UFS de PersonalDataSection.tsx (/perfil) — duplicada aqui
 // deliberadamente por ora, sem extrair um módulo compartilhado, para não
@@ -37,8 +38,8 @@ type AccountErrors = { email?: string; password?: string };
 // Só cobre os erros que signUp pode retornar — mesmo léxico de erros de
 // EntrarPage.tsx (ptBr.entrar.erros), reaproveitado aqui em vez de duplicar
 // as strings (o signUp em si só existe nesta tela agora, ver EntrarPage.tsx).
-function mapSignUpError(error: AuthError): string {
-  const t = pt.signIn.errors;
+function mapSignUpError(error: AuthError, dict: Dictionary): string {
+  const t = dict.signIn.errors;
   switch (error.code) {
     case "user_already_exists":
       return t.emailAlreadyRegistered;
@@ -85,9 +86,9 @@ const EMPTY_FORM: FormData = {
   state: "",
 };
 
-function validate(data: FormData, personType: PersonType): FormErrors {
+function validate(data: FormData, personType: PersonType, dict: Dictionary): FormErrors {
   const errors: FormErrors = {};
-  const t = pt.signUp.errors;
+  const t = dict.signUp.errors;
 
   if (personType === "pf") {
     if (!data.fullName.trim()) errors.fullName = t.required;
@@ -117,7 +118,8 @@ function validate(data: FormData, personType: PersonType): FormErrors {
 // O vídeo à esquerda é o mesmo componente/conteúdo de /entrar (VideoCover),
 // persistente entre os três passos.
 export function SignUpPage({ initialStep, email }: { initialStep: Step; email: string }) {
-  const t = pt.signUp;
+  const dict = useDictionary();
+  const t = dict.signUp;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
@@ -139,8 +141,8 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
 
   function validateAccount(): boolean {
     const nextErrors: AccountErrors = {};
-    if (!isValidEmail(accountEmail)) nextErrors.email = pt.signIn.errors.invalidEmail;
-    if (accountPassword.length < 6) nextErrors.password = pt.signIn.errors.shortPassword;
+    if (!isValidEmail(accountEmail)) nextErrors.email = dict.signIn.errors.invalidEmail;
+    if (accountPassword.length < 6) nextErrors.password = dict.signIn.errors.shortPassword;
     setAccountErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -153,7 +155,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
     setCreatingAccount(true);
     const { error } = await supabase.auth.signUp({ email: accountEmail, password: accountPassword });
     if (error) {
-      setAccountFormError(mapSignUpError(error));
+      setAccountFormError(mapSignUpError(error, dict));
       setCreatingAccount(false);
       return;
     }
@@ -194,7 +196,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validate(draft, personType);
+    const nextErrors = validate(draft, personType, dict);
     setErrors(nextErrors);
     setServerState(null);
     if (Object.keys(nextErrors).length > 0) return;

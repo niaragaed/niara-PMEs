@@ -2,8 +2,8 @@
 
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import type { MonthlyFinancials } from "@/lib/mock/ofertas";
+import { useDictionary } from "@/lib/i18n/client";
 
 type TooltipEntry = { value?: unknown; name?: string | number };
 
@@ -31,7 +31,8 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
 }
 
 export function FinancialChart({ series }: { series: MonthlyFinancials[] }) {
-  const t = pt.trade.offering.financial;
+  const dict = useDictionary();
+  const t = dict.trade.offering.financial;
 
   return (
     <div>

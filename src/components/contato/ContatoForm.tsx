@@ -2,12 +2,13 @@
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { SelectField, TextField, TextareaField } from "@/components/perfil/FormField";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { isValidEmail } from "@/lib/masks";
+import { useDictionary } from "@/lib/i18n/client";
 
 const CONTACT_EMAIL = "niaragaed@gmail.com";
 
-type SubjectKey = keyof typeof pt.contact.form.subjectOptions;
+type SubjectKey = keyof Dictionary["contact"]["form"]["subjectOptions"];
 
 const SUBJECTS: SubjectKey[] = ["company", "investor", "partnerships", "press", "support", "other"];
 
@@ -28,11 +29,12 @@ const EMPTY_FORM: FormData = {
 };
 
 export function ContactForm() {
+  const dict = useDictionary();
   // Dados do formulário servem só para montar o mailto no navegador —
   // nunca são persistidos nem enviados a servidor.
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
-  const t = pt.contact.form;
+  const t = dict.contact.form;
 
   function handleChange(field: "nome" | "email" | "mensagem") {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

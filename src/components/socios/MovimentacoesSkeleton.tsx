@@ -1,10 +1,11 @@
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
 // Fallback do <Suspense> em page.tsx enquanto MovimentacoesSection busca a timeline (on-chain +
 // off-chain) — pode demorar sem uma RPC dedicada (NEXT_PUBLIC_SEPOLIA_RPC_URL), ver
 // src/lib/web3/events.ts.
-export function TransactionsSkeleton() {
-  const t = pt.partners;
+export async function TransactionsSkeleton() {
+  const dict = await getDictionary();
+  const t = dict.partners;
   return (
     <section className="mt-8" aria-live="polite">
       <h2 className="text-lg font-semibold text-on-military">{t.transactions.title}</h2>

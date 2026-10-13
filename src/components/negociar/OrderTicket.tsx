@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import type { Offering } from "@/lib/mock/ofertas";
+import { useDictionary } from "@/lib/i18n/client";
 
 type OrderSide = "buy" | "sell";
 type Step = "form" | "resumo" | "confirmado";
@@ -19,7 +19,8 @@ const ESTIMATED_FEE = 0.005;
 const INITIAL_SIMULATED_BALANCE = 50_000;
 
 export function OrderTicket({ offering: oferta, onClose }: { offering: Offering; onClose: () => void }) {
-  const t = pt.trade.orderTicket;
+  const dict = useDictionary();
+  const t = dict.trade.orderTicket;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const [side, setSide] = useState<OrderSide>("buy");

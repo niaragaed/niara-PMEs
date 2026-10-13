@@ -4,8 +4,8 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRightLeft, Building2, LogOut, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { pt } from "@/lib/i18n/pt-br";
 import type { HeaderAccount } from "@/lib/nav/headerAccount";
+import { useDictionary } from "@/lib/i18n/client";
 
 function AccountAvatar({ account }: { account: HeaderAccount }) {
   if (account.role === "issuer" && account.logoUrl) {
@@ -26,12 +26,13 @@ function AccountAvatar({ account }: { account: HeaderAccount }) {
 // fora fecham), mas abre só no clique — é uma ação de conta, não navegação,
 // não faz sentido abrir no hover.
 export function AccountMenu({ account }: { account: HeaderAccount }) {
+  const dict = useDictionary();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const router = useRouter();
-  const t = pt.nav.accountMenu;
+  const t = dict.nav.accountMenu;
 
   const closeNow = useCallback(() => setOpen(false), []);
 

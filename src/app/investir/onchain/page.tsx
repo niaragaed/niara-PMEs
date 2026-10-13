@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import { OnChainInvestPage, type ServerSolanaOption } from "@/components/investir-onchain/OnChainInvestPage";
-import { pt } from "@/lib/i18n/pt-br";
 import { resolvePartner } from "@/lib/auth/resolveSocio";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { solanaConnection, listSolanaOfferings } from "@/lib/solana/program";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${pt.investOnChain.meta.title} · Niara PMEs`,
-  description: pt.investOnChain.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.investOnChain.meta.title} · Niara PMEs`,
+  description: dict.investOnChain.meta.description,
   robots: { index: false, follow: false },
 };
+}
 
 // Lido a cada requisição: a lista de ofertas da Solana vem do próprio programa (getProgramAccounts),
 // não de uma env var — uma oferta nova publicada pelo emissor aparece sem redeploy.

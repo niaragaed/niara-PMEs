@@ -20,7 +20,7 @@ import {
   type ConfirmPublicationState,
   type VerificarConsistenciaState,
 } from "@/app/empresa/ofertas/onchain-actions";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 type Props = {
   offeringId: string;
@@ -60,7 +60,8 @@ export function PublishOnChainPage({
   tokenAddress,
   onchainLastError,
 }: Props) {
-  const t = pt.companyOfferings.publishOnChain;
+  const dict = useDictionary();
+  const t = dict.companyOfferings.publishOnChain;
   const tg = t.gates;
   const tp = t.publication;
 

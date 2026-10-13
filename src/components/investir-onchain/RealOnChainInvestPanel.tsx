@@ -44,7 +44,7 @@ import {
   useRedeemShares,
 } from "@/lib/web3/hooks/useOnChainActions";
 import { formatDeadline, formatToken } from "@/lib/web3/format";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -70,7 +70,8 @@ function FaucetCard({
   disabled: boolean;
   onMinted: () => void;
 }) {
-  const t = pt.investOnChain.faucet;
+  const dict = useDictionary();
+  const t = dict.investOnChain.faucet;
   const [quantity, setQuantity] = useState("100");
   const { status, errorMessage, mint } = useMintMockBrl(addresses);
 
@@ -141,7 +142,8 @@ export function RealOnChainInvestPanel({
   isPartner?: boolean;
   isIssuer?: boolean;
 }) {
-  const t = pt.investOnChain;
+  const dict = useDictionary();
+  const t = dict.investOnChain;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
   const canOperate = connection.isConnected && isOnSepolia;

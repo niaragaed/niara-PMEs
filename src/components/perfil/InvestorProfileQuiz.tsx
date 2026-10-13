@@ -4,11 +4,12 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useProfile } from "./PerfilContext";
 import { categorizeScore } from "@/lib/investor-profile";
-import { pt } from "@/lib/i18n/pt-br";
-
-const QUESTIONS = pt.profile.investor.quiz.questions;
+import { useDictionary } from "@/lib/i18n/client";
 
 export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
+  const dict = useDictionary();
+  const t = dict.profile.investor.quiz;
+  const QUESTIONS = t.questions;
   const { setInvestorProfile } = useProfile();
   const [step, setStep] = useState(0);
   // respostas ficam só neste estado em memória — nunca são persistidas
@@ -16,7 +17,6 @@ export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
   // memória, sem localStorage).
   const [answers, setAnswers] = useState<Array<number | null>>(() => QUESTIONS.map(() => null));
 
-  const t = pt.profile.investor.quiz;
   const question = QUESTIONS[step];
   const selected = answers[step];
   const isLast = step === QUESTIONS.length - 1;

@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 export function SignOutButton() {
+  const dict = useDictionary();
   const [supabase] = useState(() => createClient());
   const [pending, setPending] = useState(false);
   const router = useRouter();
@@ -24,7 +25,7 @@ export function SignOutButton() {
       disabled={pending}
       className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? pt.account.signOutPending : pt.account.signOutButton}
+      {pending ? dict.account.signOutPending : dict.account.signOutButton}
     </button>
   );
 }
