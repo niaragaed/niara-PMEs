@@ -1,6 +1,6 @@
 "use client";
 import { Building2, Car, Home, Landmark, Wheat, type LucideIcon } from "lucide-react";
-import { MOCK_CATALOG, type TokenCategory } from "@/lib/mock/ativos";
+import { MOCK_CATALOG, type TokenCategory } from "@/lib/mock/assets";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { localize } from "@/lib/i18n/locale";
 

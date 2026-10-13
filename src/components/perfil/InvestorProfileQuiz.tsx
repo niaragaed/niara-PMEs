@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useProfile } from "./PerfilContext";
+import { useProfile } from "./ProfileContext";
 import { categorizeScore } from "@/lib/investor-profile";
 import { useDictionary } from "@/lib/i18n/client";
 

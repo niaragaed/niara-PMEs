@@ -3,7 +3,7 @@
 // Sign-in for the /socios area — the usual mechanism (Supabase Auth,
 // signInWithPassword via the browser client), just its own form, separate from
 // /entrar (which is the investor/issuer sign-in). After authenticating, router.refresh() lets
-// the Server Component in src/app/socios/page.tsx re-evaluate resolveSocio() (allowlist) — it
+// the Server Component in src/app/socios/page.tsx re-evaluate resolvePartner() (allowlist) — it
 // doesn't redirect elsewhere, because "authenticated" and "authorized" are different things here.
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";

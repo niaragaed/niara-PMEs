@@ -4,10 +4,10 @@ import { ShowcaseCard } from "./ShowcaseCard";
 import { SmesSectorFilter, type SmesCardData } from "./PmesSectorFilter";
 import { RealOfferCard } from "./RealOfferCard";
 import { MyOfferCard } from "./MyOfferCard";
-import type { TokenCategory } from "@/lib/mock/ativos";
-import { getOfferingsByCategory } from "@/lib/mock/ofertas";
-import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
-import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
+import type { TokenCategory } from "@/lib/mock/assets";
+import { getOfferingsByCategory } from "@/lib/mock/offerings";
+import { getOnChainIndexBySlug } from "@/lib/mock/onChainOfferings";
+import { getOfferingAssetPaths } from "@/lib/trade/offeringAssets";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { loadActiveOfferingsByCategory } from "@/lib/investments";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
@@ -44,7 +44,7 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
   // "Publish offering" button (only in the pmes category, see the JSX below) — visible only to the
   // signed-in issuer (never an investor/visitor). Always leads to /empresa/ofertas ("My
   // offerings") — simplified on purpose: the list there already shows each offering's state and
-  // the right link per offering (see OfertasPage.tsx), so it's not worth this button trying to
+  // the right link per offering (see OfferingsPage.tsx), so it's not worth this button trying to
   // guess/jump straight to a specific offering.
   const publishOfferingHref = role === "issuer" && accountId ? "/empresa/ofertas" : null;
 

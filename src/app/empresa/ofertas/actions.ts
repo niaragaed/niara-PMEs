@@ -25,7 +25,7 @@ export type OfferingActionState =
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Same set of categories as the offerings.category CHECK (0009) and the TokenCategory type
-// (src/lib/mock/ativos.ts) — all selectable in this demo; the database CHECK remains the real
+// (src/lib/mock/assets.ts) — all selectable in this demo; the database CHECK remains the real
 // backstop. The values are database codes, not interface copy.
 const OFFERING_CATEGORIES = ["pmes", "agro", "imobiliario", "auto", "divida"] as const;
 

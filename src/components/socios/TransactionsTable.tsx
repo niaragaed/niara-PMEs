@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
-import type { Transaction } from "@/lib/socios/movimentacoes";
-import { OriginBadge } from "./SociosDashboard";
+import type { Transaction } from "@/lib/partners/transactions";
+import { OriginBadge } from "./PartnersDashboard";
 import { getDictionary } from "@/lib/i18n/server";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });

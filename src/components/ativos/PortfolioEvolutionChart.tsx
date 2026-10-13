@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
-import { MOCK_EVOLUTION } from "@/lib/mock/ativos";
+import { MOCK_EVOLUTION } from "@/lib/mock/assets";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { intlLocale } from "@/lib/i18n/locale";
 

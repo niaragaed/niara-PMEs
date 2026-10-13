@@ -8,7 +8,7 @@
 // "published". The "pendente" / "confirmada" / "divergente" statuses mirror offerings.sync_status.
 import { useCallback, useState } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
-import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orchestrator";
 import { PUBLICATION_GAS_LIMIT } from "../gates";
 import { describeOnChainError } from "../errors";
 import { registerAttempt, confirmPublication } from "@/app/empresa/ofertas/onchain-actions";

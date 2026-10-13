@@ -4,11 +4,11 @@ import { useState, useTransition, type ChangeEvent, type FormEvent } from "react
 import { closeOffering, createOffering, type OfferingActionState } from "@/app/empresa/ofertas/actions";
 import { SelectField, TextField } from "@/components/perfil/FormField";
 import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
-import { NetworkBadge } from "@/components/solana/RedeBadge";
+import { NetworkBadge } from "@/components/solana/NetworkBadge";
 import { solanaExplorerAccountLink } from "@/lib/solana/config";
 import { formatBRL } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
 import { useDictionary } from "@/lib/i18n/client";
 
@@ -76,7 +76,7 @@ function computeQuotasPreview(
   return { quotas: baseCapCents / sharePriceCents, exact: baseCapCents % sharePriceCents === BigInt(0) };
 }
 
-// Same pattern as PublicarOnChainPage.tsx — a small helper, duplicated instead of extracted
+// Same pattern as PublishOnChainPage.tsx — a small helper, duplicated instead of extracted
 // into a shared module (only 2 uses, see the convention of not abstracting without need).
 function explorerAddress(network: OfferingRow["rede"], address: string) {
   if (network === "solana-devnet") return solanaExplorerAccountLink(address);

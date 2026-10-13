@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CategoryBadge } from "./CategoryChip";
-import type { Offering } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/offerings";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { localize } from "@/lib/i18n/locale";
 

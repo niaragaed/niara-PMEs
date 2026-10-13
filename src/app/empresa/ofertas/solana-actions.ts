@@ -23,7 +23,7 @@ import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BASE58_SIGNATURE, NETWORK_SOLANA, UNIT_ON_CHAIN_SOLANA } from "@/lib/solana/config";
 import { keccak256, toHex } from "viem";
-import { currentBlockHeight, readVerifiedOfferingAccount, readPublicationTx } from "@/lib/solana/servidor";
+import { currentBlockHeight, readVerifiedOfferingAccount, readPublicationTx } from "@/lib/solana/server";
 import { describeSolanaError } from "@/lib/solana/errors";
 import { formatBRL } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n/server";

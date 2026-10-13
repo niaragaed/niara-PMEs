@@ -2,7 +2,7 @@
 
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
-import type { MonthlyFinancials } from "@/lib/mock/ofertas";
+import type { MonthlyFinancials } from "@/lib/mock/offerings";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { intlLocale } from "@/lib/i18n/locale";
 

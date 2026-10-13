@@ -36,8 +36,8 @@ type Step = "account" | "type" | "data";
 type AccountErrors = { email?: string; password?: string };
 
 // Only covers the errors signUp can return — the same error vocabulary as
-// EntrarPage.tsx (dict.signIn.errors), reused here instead of duplicating
-// the strings (signUp itself only exists on this screen now, see EntrarPage.tsx).
+// SignInPage.tsx (dict.signIn.errors), reused here instead of duplicating
+// the strings (signUp itself only exists on this screen now, see SignInPage.tsx).
 function mapSignUpError(error: AuthError, dict: Dictionary): string {
   const t = dict.signIn.errors;
   switch (error.code) {
@@ -109,7 +109,7 @@ function validate(data: FormData, personType: PersonType, dict: Dictionary): For
 }
 
 // Dedicated account creation + full registration screen — three steps:
-// (1) new email/password (signUp, only here — EntrarPage.tsx became sign-in only);
+// (1) new email/password (signUp, only here — SignInPage.tsx became sign-in only);
 // (2) registration type; (3) full data -> /perfil. A normal page (no
 // X/Esc to close): it must not be possible to leave midway and end up signed in
 // without a registration. `initialStep`/`email` come from the server component (page.tsx):

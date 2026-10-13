@@ -15,7 +15,7 @@ function formatDate(iso: string): string {
 // A summary, not CRUD: it only reads the signed-in company's REAL offerings (via
 // loadMyOfferingsSummary, filtered by accountId on the server) and links to
 // /empresa/ofertas, where creation/activation/closing actually happen.
-// Only rendered for issuers (see PerfilPage) — an investor has no offerings.
+// Only rendered for issuers (see ProfilePage) — an investor has no offerings.
 export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] }) {
   const dict = useDictionary();
   const t = dict.profile.myOfferings;

@@ -1,8 +1,8 @@
 "use client";
 
 import { ShieldAlert, TrendingUp } from "lucide-react";
-import { ProfileProvider, useProfile } from "./PerfilContext";
-import { ProfileNav } from "./PerfilNav";
+import { ProfileProvider, useProfile } from "./ProfileContext";
+import { ProfileNav } from "./ProfileNav";
 import { PersonalDataSection } from "./PersonalDataSection";
 import { MyOffersSection } from "./MyOffersSection";
 import { InvestorProfileSection } from "./InvestorProfileSection";

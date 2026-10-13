@@ -1,7 +1,7 @@
 "use client";
-import { computeTotals } from "@/lib/ativos/derive";
+import { computeTotals } from "@/lib/assets/derive";
 import { formatBRL, formatSignedBRL, formatSignedPercent } from "@/lib/format";
-import { MOCK_POSITIONS } from "@/lib/mock/ativos";
+import { MOCK_POSITIONS } from "@/lib/mock/assets";
 import { useDictionary } from "@/lib/i18n/client";
 
 export function PortfolioSummary() {

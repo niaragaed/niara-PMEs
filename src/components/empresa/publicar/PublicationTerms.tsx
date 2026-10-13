@@ -3,7 +3,7 @@
 // Phase 3, sub-step 4 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — data that becomes transaction
 // arguments (the token's name/symbol/series, never persisted in Supabase — the chain is their
 // source from here on) + the honesty terms (gate 6). A controlled component: all state lives in
-// the parent (PublicarOnChainPage), this file only receives/edits values and never decides on its
+// the parent (PublishOnChainPage), this file only receives/edits values and never decides on its
 // own whether the gate passes.
 import type { ChangeEvent } from "react";
 import { TextField } from "@/components/perfil/FormField";

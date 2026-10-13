@@ -2,7 +2,7 @@
 // the index used in NEXT_PUBLIC_OFERTAS_ONCHAIN (see src/lib/web3/addresses.ts). Never reorder this
 // list without also reordering that environment variable (and vice versa) — there's no automatic
 // check between the two sides, only this list as the single source of truth on the frontend. Each
-// slug must exist in `OFFERINGS` (src/lib/mock/ofertas.ts) with `category === "pmes"`.
+// slug must exist in `OFFERINGS` (src/lib/mock/offerings.ts) with `category === "pmes"`.
 export const ONCHAIN_SMES_SLUGS_IN_ORDER: readonly string[] = [
   "pme-padaria-bela-vista",
   "pme-clinica-vitalis",
@@ -32,7 +32,7 @@ if (process.env.NODE_ENV !== "production") {
     );
   }
 
-  // The check against OFFERINGS (category === "pmes" for each slug) lives in ofertas.ts, not
-  // here — importing OFFERINGS in this module would create a cycle (ofertas.ts uses
+  // The check against OFFERINGS (category === "pmes" for each slug) lives in offerings.ts, not
+  // here — importing OFFERINGS in this module would create a cycle (offerings.ts uses
   // getOnChainIndexBySlug indirectly via the UI, it doesn't need this file to validate itself).
 }

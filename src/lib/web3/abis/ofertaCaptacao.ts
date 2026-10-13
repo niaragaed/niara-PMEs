@@ -1,9 +1,9 @@
-// ABI de OfertaCaptacao (niara-contracts-PMEs/src/captacao/OfertaCaptacao.sol) — escrow de uma
-// captação primária (Resolução CVM 88): aportar/encerrar/resgatarCotas/reembolsar/
-// liberarParaEmissor, ver CLAUDE.md ("Backend (Supabase)" documenta o fluxo Supabase mock; este
-// fluxo é o real, on-chain, em Sepolia). Extraída diretamente de
-// niara-contracts-PMEs/out/OfertaCaptacao.sol/OfertaCaptacao.json (forge build), não escrita à
-// mão — nomes de função/erro conferidos contra o .sol fonte antes de fixar qualquer parâmetro.
+// OfertaCaptacao ABI (niara-contracts-PMEs/src/captacao/OfertaCaptacao.sol) — escrow of a primary
+// fundraise (CVM Resolution 88): aportar/encerrar/resgatarCotas/reembolsar/liberarParaEmissor,
+// see CLAUDE.md ("Backend (Supabase)" documents the mock Supabase flow; this flow is the real,
+// on-chain one, on Sepolia). Extracted straight from
+// niara-contracts-PMEs/out/OfertaCaptacao.sol/OfertaCaptacao.json (forge build), not hand-written —
+// function/error names checked against the .sol source before pinning any parameter.
 export const ofertaCaptacaoAbi = [
   { type: "constructor", inputs: [], stateMutability: "nonpayable" },
   {

@@ -16,7 +16,7 @@ import "server-only";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
 import { getIssuerBannerVersion, issuerBannerUrl } from "@/lib/storage/issuer-banner";
 
@@ -111,7 +111,7 @@ type ConfirmedOfferingRow = {
 // Postgrest embedding (`issuers(...)`) returns an object or an array depending on the version/config —
 // the same ambiguity already handled in investments.ts (firstIssuer), duplicated here as a small
 // helper instead of imported (the same pattern of not abstracting just 2 uses, see etherscanAddress in
-// OfertasPage.tsx).
+// OfferingsPage.tsx).
 function firstIssuer(issuers: ConfirmedOfferingRow["issuers"]): ConfirmedOfferingIssuerRow | null {
   if (!issuers) return null;
   return Array.isArray(issuers) ? (issuers[0] ?? null) : issuers;

@@ -1,5 +1,5 @@
 import { localize, type Locale } from "@/lib/i18n/locale";
-import type { Position, Region, TokenCategory } from "@/lib/mock/ativos";
+import type { Position, Region, TokenCategory } from "@/lib/mock/assets";
 
 export type AllocationView = "class" | "asset" | "sector";
 

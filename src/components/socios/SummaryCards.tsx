@@ -1,7 +1,7 @@
 import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
-import type { TransactionsSummary } from "@/lib/socios/movimentacoes";
-import { KpiCard } from "./SociosDashboard";
+import type { TransactionsSummary } from "@/lib/partners/transactions";
+import { KpiCard } from "./PartnersDashboard";
 import { getDictionary } from "@/lib/i18n/server";
 
 function formatToken(valueWei: bigint, decimals: number, symbol: string): string {

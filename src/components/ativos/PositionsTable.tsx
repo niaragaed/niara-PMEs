@@ -1,7 +1,7 @@
 "use client";
-import { CATEGORY_COLOR_VAR } from "@/lib/ativos/derive";
+import { CATEGORY_COLOR_VAR } from "@/lib/assets/derive";
 import { formatBRL, formatSignedPercent } from "@/lib/format";
-import { MOCK_POSITIONS, type Position } from "@/lib/mock/ativos";
+import { MOCK_POSITIONS, type Position } from "@/lib/mock/assets";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { localize } from "@/lib/i18n/locale";
 

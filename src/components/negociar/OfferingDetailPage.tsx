@@ -6,14 +6,14 @@ import { AlertTriangle } from "lucide-react";
 import { RealOnChainInvestPanel } from "@/components/investir-onchain/RealOnChainInvestPanel";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { CategoryBadge } from "./CategoryChip";
-import { FinancialChart } from "./FinanceiroChart";
+import { FinancialChart } from "./FinancialChart";
 import { FundamentalIndicators } from "./FundamentalIndicators";
-import { OfferingBanner } from "./OfertaBanner";
+import { OfferingBanner } from "./OfferingBanner";
 import { OrderTicket } from "./OrderTicket";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
 import { formatBRL } from "@/lib/format";
-import type { Offering } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/offerings";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { localize } from "@/lib/i18n/locale";
 

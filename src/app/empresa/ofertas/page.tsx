@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { OfferingsPage, type OfferingRow } from "@/components/empresa/OfertasPage";
+import { OfferingsPage, type OfferingRow } from "@/components/empresa/OfferingsPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";

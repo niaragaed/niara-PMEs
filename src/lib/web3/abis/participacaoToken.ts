@@ -1,7 +1,7 @@
-// ABI de ParticipacaoToken (niara-contracts-PMEs/src/token/ParticipacaoToken.sol) — cota de
-// participação (ERC-20, 18 casas). O frontend só LÊ este contrato (saldo/metadados) — mint e
-// transferência ficam a cargo do fluxo de captação (ver hooks de OfertaCaptacao), então este ABI
-// traz só as funções de leitura + eventos/erros relevantes para decodificar reverts, extraídas de
+// ParticipacaoToken ABI (niara-contracts-PMEs/src/token/ParticipacaoToken.sol) — an equity share
+// (ERC-20, 18 decimals). The frontend only READS this contract (balance/metadata) — mint and
+// transfer are handled by the fundraising flow (see the OfertaCaptacao hooks), so this ABI only
+// carries the read functions + the events/errors relevant to decoding reverts, extracted from
 // niara-contracts-PMEs/out/ParticipacaoToken.sol/ParticipacaoToken.json (forge build).
 export const participacaoTokenAbi = [
   {

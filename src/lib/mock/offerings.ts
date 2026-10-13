@@ -5,9 +5,9 @@
 // No promise of return is made: there's no yield/projection field. Display text is written in
 // both languages next to the data (LocalizedText); company names are proper names and stay as they are.
 
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import type { LocalizedText } from "@/lib/i18n/locale";
-import { ONCHAIN_SMES_SLUGS_IN_ORDER } from "@/lib/mock/ofertasOnChain";
+import { ONCHAIN_SMES_SLUGS_IN_ORDER } from "@/lib/mock/onChainOfferings";
 import {
   ONCHAIN_SMES_AUTHORIZED_SHARES,
   ONCHAIN_SMES_MAX_TARGET_MBRL,
@@ -165,7 +165,7 @@ function buildMonthlySeries(baseRevenue: number, baseCash: number, growth: numbe
 }
 
 // Terms of the 10 SME offerings that have a real, active offering on Sepolia behind them (see
-// src/lib/mock/ofertasOnChain.ts) — the numbers here are mirrored from
+// src/lib/mock/onChainOfferings.ts) — the numbers here are mirrored from
 // src/lib/web3/demoConstants.ts, the same fixed values as the 10 real offerings, so that the
 // static preview never disagrees with the live read of the contract (see
 // RealOnChainInvestPanel.tsx). Fields that change over time (state, total raised, exact

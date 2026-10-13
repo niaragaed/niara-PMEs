@@ -2,16 +2,16 @@
 
 // Phase 3, sub-step 4 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — the 6 gates actually computed
 // (the terms are real now, no longer a stub), the button enabled when all of them pass, real
-// signing via usePublicarOfertaOnChain. Never fakes success: "pendente" is always shown as "not
+// signing via usePublishOfferingOnChain. Never fakes success: "pendente" is always shown as "not
 // published yet", with a link to Etherscan, until confirmPublication() comes back "confirmada".
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { GateChecklist, type GateRow } from "./GateChecklist";
-import { PublicationTerms, type DataToken } from "./TermoPublicacao";
-import { usePublishOnChainGates } from "@/lib/web3/hooks/usePublicarOnChainGates";
-import { usePublishOfferingOnChain } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
+import { PublicationTerms, type DataToken } from "./PublicationTerms";
+import { usePublishOnChainGates } from "@/lib/web3/hooks/usePublishOnChainGates";
+import { usePublishOfferingOnChain } from "@/lib/web3/hooks/usePublishOfferingOnChain";
 import { UNIT_ON_CHAIN } from "@/lib/web3/gates";
 import { formatEth } from "@/lib/web3/format";
 import {

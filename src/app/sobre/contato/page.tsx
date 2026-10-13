@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContactPage } from "@/components/contato/ContatoPage";
+import { ContactPage } from "@/components/contato/ContactPage";
 import { getDictionary } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {

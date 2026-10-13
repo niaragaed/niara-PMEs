@@ -11,7 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export const ISSUER_BANNER_BUCKET = "issuer-banners";
 // Slightly bigger than ISSUER_LOGO_MAX_BYTES (2MB, issuer-logo.ts) — the
 // banner tends to be a wider photo than the logo, but the limit stays
-// low on purpose: OfertaBanner.tsx renders Storage images via a
+// low on purpose: OfferingBanner.tsx renders Storage images via a
 // plain <img> (never next/image, see the comment there), with no automatic
 // optimization, so the file's weight lands straight on the loading of
 // /negociar and /perfil.

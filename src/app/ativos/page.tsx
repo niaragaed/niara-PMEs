@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AssetsPage } from "@/components/ativos/AtivosPage";
+import { AssetsPage } from "@/components/ativos/AssetsPage";
 import { requireLogin } from "@/lib/auth/resolveInvestor";
 import { getDictionary } from "@/lib/i18n/server";
 

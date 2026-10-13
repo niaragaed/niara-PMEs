@@ -2,17 +2,17 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { RealOnChainInvestPanel } from "@/components/investir-onchain/RealOnChainInvestPanel";
 import { SolanaInvestPanel } from "@/components/investir-onchain/SolanaInvestPanel";
-import { NetworkBadge } from "@/components/solana/RedeBadge";
+import { NetworkBadge } from "@/components/solana/NetworkBadge";
 import { CategoryBadge } from "./CategoryChip";
-import { OfferingBanner } from "./OfertaBanner";
+import { OfferingBanner } from "./OfferingBanner";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 import { getDictionary } from "@/lib/i18n/server";
 
 // Detail page for a self-service SME offering (published by the issuer itself via
-// OfertaOrquestrador, already confirmed on-chain) — a lean sibling of OfertaDetailPage.tsx, not a
-// generalization of it with conditionals. OfertaDetailPage.tsx is built entirely around the
+// OfertaOrquestrador, already confirmed on-chain) — a lean sibling of OfferingDetailPage.tsx, not a
+// generalization of it with conditionals. OfferingDetailPage.tsx is built entirely around the
 // `Offering` mock type (simulated financials, fictitious fundamental indicators, fixed terms) — a
 // self-service offering is a REAL company (data the issuer itself filled in on /perfil), with none
 // of that. Forcing those fields here would require making up fictitious indicators/financials
@@ -20,7 +20,7 @@ import { getDictionary } from "@/lib/i18n/server";
 // That's why this component only shows: the real banner/logo, the issuer's real public data, the
 // terms + live investment from the chain (RealOnChainInvestPanel, 100% real), generic placeholder
 // documents (the same "Coming soon" list for every offering, not specific to any company) and the
-// generic CVM Res. 88 risks (text identical to OfertaDetailPage.tsx's, not fictitious).
+// generic CVM Res. 88 risks (text identical to OfferingDetailPage.tsx's, not fictitious).
 export async function SelfServiceOfferingDetailPage({
   offering,
   isPartner = false,

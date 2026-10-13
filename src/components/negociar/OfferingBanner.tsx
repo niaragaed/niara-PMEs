@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { CATEGORY_META } from "@/lib/categories";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 
 // `bannerUrl`/`logoUrl` come from two different sources: the 10 on-chain SMEs
-// (getOfferingAssetPaths, src/lib/negociar/ofertaAssets.ts) always resolve a
+// (getOfferingAssetPaths, src/lib/trade/offeringAssets.ts) always resolve a
 // LOCAL path in public/negociar/pmes/<slug>/, which next/image optimizes with no
 // extra configuration; the registered issuer's banner/logo (0010/
 // 0011, issuerLogoUrl/issuerBannerUrl), on the other hand, is a REMOTE URL from the public
@@ -40,8 +40,8 @@ const PLACEHOLDER_ICON_DIMS: Record<OfferingBannerSize, string> = {
 
 // An offering's photo banner + overlapping round logo — used both in the SME grid card
 // (PmesOnChainCard.tsx, size="card") and at the top of any offering detail page
-// (OfertaDetailPage.tsx, size="hero", all categories). `bannerUrl`/`logoUrl` come already
-// resolved on the server (see src/lib/negociar/ofertaAssets.ts) — they're `null` when there's no
+// (OfferingDetailPage.tsx, size="hero", all categories). `bannerUrl`/`logoUrl` come already
+// resolved on the server (see src/lib/trade/offeringAssets.ts) — they're `null` when there's no
 // real file (today only the 10 real SME offerings on Sepolia have photos generated with Gemini;
 // the other categories never do), in which case it shows a placeholder with the same color/icon
 // tokens already used by CategoryChip/CategoryBadge for the offering's own category.

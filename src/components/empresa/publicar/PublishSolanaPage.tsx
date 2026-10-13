@@ -1,7 +1,7 @@
 "use client";
 
 // Self-service publication of the offering on Solana Devnet — the counterpart of
-// PublicarOnChainPage.tsx (Sepolia), same design: 6 real gates (Phantom detected, connected, SOL
+// PublishOnChainPage.tsx (Sepolia), same design: 6 real gates (Phantom detected, connected, SOL
 // balance, issuer authorized in the program, ownership, terms), the button only enabled when all
 // are ok, and never "published" before the server's confirmation (confirmPublicationSolana)
 // against the network itself.
@@ -15,10 +15,10 @@ import { useQuery } from "@tanstack/react-query";
 import { PublicKey } from "@solana/web3.js";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
 import { GateChecklist, type GateRow } from "./GateChecklist";
-import { PublicationTerms, type DataToken } from "./TermoPublicacao";
+import { PublicationTerms, type DataToken } from "./PublicationTerms";
 import { useSolanaWallet } from "@/lib/solana/phantom";
 import { solanaConnection, readSolanaIssuer } from "@/lib/solana/program";
-import { usePublishSolanaOffering } from "@/lib/solana/hooks/usePublicarOfertaSolana";
+import { usePublishSolanaOffering } from "@/lib/solana/hooks/usePublishSolanaOffering";
 import {
   MAX_COMPANY_SOLANA,
   MAX_NAME_SOLANA,

@@ -14,7 +14,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
-import { getEventsOnChain, getSummaryOnChain, type EventoOnChain, type OnChainSummary } from "@/lib/web3/events";
+import { getEventsOnChain, getSummaryOnChain, type OnChainEvent, type OnChainSummary } from "@/lib/web3/events";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { solanaExplorerAccountLink } from "@/lib/solana/config";
 import { getDictionary } from "@/lib/i18n/server";
@@ -46,7 +46,7 @@ function centsToBRL(cents: number): string {
   return formatBRL(cents / 100);
 }
 
-function onChainEventToTransaction(event: EventoOnChain, summary: OnChainSummary | null, dict: Dictionary): Transaction {
+function onChainEventToTransaction(event: OnChainEvent, summary: OnChainSummary | null, dict: Dictionary): Transaction {
   const t = dict.partners.realTable;
   const decimals = summary?.mockBrlDecimals ?? 18;
   const symbol = summary?.mockBrlSymbol ?? "mBRL";
@@ -162,7 +162,7 @@ async function listCreatedOfferings(dict: Dictionary): Promise<Transaction[]> {
 const deadlineFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
 // cents -> mBRL (a number, without a real currency symbol) — the same conversion as
-// verificarConsistencia() (UNIDADE_ON_CHAIN, src/lib/web3/gates.ts: "1 MockBRL unit = 1 real
+// checkConsistency() (UNIT_ON_CHAIN, src/lib/web3/gates.ts: "1 MockBRL unit = 1 real
 // equivalent"), but labeled mBRL here, never R$: the same principle already applied in
 // SelfServicePmesCard.tsx — this is MockBRL with no backing, and the other rows of this SAME
 // table (real on-chain investments/events, see onChainEventToTransaction above) already use mBRL

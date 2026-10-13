@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { SmesOnChainCard } from "./PmesOnChainCard";
 import { SelfServiceSmesCard } from "./SelfServicePmesCard";
-import type { Offering } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/offerings";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { intlLocale, localize, type Locale } from "@/lib/i18n/locale";
 

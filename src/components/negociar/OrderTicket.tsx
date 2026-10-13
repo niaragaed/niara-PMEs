@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { formatBRL } from "@/lib/format";
-import type { Offering } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/offerings";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { localize } from "@/lib/i18n/locale";
 

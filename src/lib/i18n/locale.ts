@@ -54,7 +54,7 @@ export function intlLocale(locale: Locale): string {
 
 /**
  * Demo content written in both languages next to the data itself (fictitious companies in the
- * mock catalog) instead of in the dictionaries — see src/lib/mock/ofertas.ts.
+ * mock catalog) instead of in the dictionaries — see src/lib/mock/offerings.ts.
  */
 export type LocalizedText = Record<Locale, string>;
 

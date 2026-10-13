@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SignUpPage } from "@/components/cadastro/CadastroPage";
+import { SignUpPage } from "@/components/cadastro/SignUpPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n/server";
@@ -21,7 +21,7 @@ export default async function Page() {
   } = await supabase.auth.getUser();
 
   // No session: this is now the account creation screen itself (step 1 —
-  // new email/password, see CadastroPage.tsx) — it no longer redirects to
+  // new email/password, see SignUpPage.tsx) — it no longer redirects to
   // /entrar, which became sign-in only.
   if (!user) {
     return <SignUpPage initialStep="account" email="" />;
