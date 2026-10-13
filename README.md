@@ -6,15 +6,15 @@ tokenization.
 
 Current stage: an institutional site with a **real backend (Supabase)** for the
 fundraising cycle (sign-up, sign-in, offering, investment) and **real investment
-on the Sepolia testnet and on Solana Devnet** (`/invest/onchain`, transactions
+on the Sepolia testnet and on Solana Devnet** (`/investir/onchain`, transactions
 actually signed with MetaMask or Phantom against the contracts deployed from
 `niara-contracts-PMEs` and the `niara-pmes-solana` program). This includes the
-`/trade` showcase, where the 10 real offerings in the SME Token category appear
+`/negociar` showcase, where the 10 real offerings in the SME Token category appear
 with the identity of fictitious demo companies (name, photo, logo): the
-transaction is real, the company behind it is not. The other `/trade`
+transaction is real, the company behind it is not. The other `/negociar`
 categories keep a simulated order ticket, and the portfolio dashboard
-(`/assets`) is still 100% mock. There is also an internal dashboard restricted to
-the partners (`/partners`, email allowlist) that combines real on-chain data
+(`/ativos`) is still 100% mock. There is also an internal dashboard restricted to
+the partners (`/socios`, email allowlist) that combines real on-chain data
 with Supabase demo data, always in separate sections.
 
 The interface is available in **Portuguese and English** (language switcher in

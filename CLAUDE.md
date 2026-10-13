@@ -1,2654 +1,2543 @@
 # CLAUDE.md — niara-PMEs
 
-Instruções permanentes para o Claude Code neste repositório.
-Leia este arquivo antes de escrever qualquer código.
+Standing instructions for Claude Code in this repository.
+Read this file before writing any code.
 
 ---
 
-## O projeto
+## The project
 
-**Niara PMEs** — plataforma que ajuda pequenas e médias empresas a estruturar
-captação de investimento e dividir capital via tokenização (o "produto de
-receita" do grupo Niara; a exchange global — repositório irmão `niara-site`
-— é a "visão" de longo prazo).
+**Niara PMEs**: a platform that helps small and medium-sized enterprises (SMEs,
+*PMEs* in Portuguese) structure investment fundraising and split their capital
+through tokenization (the Niara group's "revenue product"; the global exchange,
+sibling repository `niara-site`, is the long-term "vision").
 
-**Estágio atual: site institucional com backend real (Supabase) para o
-ciclo de captação, mais protótipo de interface para o resto.** Desde a
-fundação do backend (ver "Backend (Supabase)" abaixo), cadastro de conta
-(`/cadastro`), login (`/entrar`), dados de perfil, cadastro/publicação de
-oferta pelo emissor (`/empresa/ofertas`) e reserva/pagamento de aporte
-pelo investidor (`/investir`) **gravam de verdade** num Postgres, com as
-invariantes da Res. CVM 88 impostas no próprio banco (teto anual do
-investidor, hard cap da oferta, gate de KYC, fechamento all-or-nothing) —
-não é mais só UI. Ainda assim, nada disso é uma operação regulatória real:
-a Niara PMEs não é uma plataforma autorizada pela CVM, o pagamento
-(escrow) e a emissão de token são **mocks explícitos** (todo ref grava
-prefixado `MOCK-`), e o "KYC (demonstração)" é um botão que sempre aprova
-— ver "Backend (Supabase)" para o mapa completo do que é real vs.
-simulado. A carteira MetaMask (rede Sepolia/testnet) na seção Carteira de
-`/perfil` continua sendo a única conexão real com blockchain — ver "Tela
-`/perfil`" abaixo — e agora também pode ser **vinculada** (persistida) à
-conta no banco. O restante das telas de exploração (`/ativos`, boleta
-simulada de `/negociar`, indicadores fundamentalistas etc.) segue 100%
-demonstração/mock, sem nenhuma transação real.
-
----
-
-## ⚠️ Next.js 16 (preservar)
-
-Este projeto usa **Next.js 16**, que tem breaking changes em relação a
-versões anteriores.
-
-- `params`, `searchParams`, `cookies` e `headers` são **assíncronos** —
-  sempre com `await`.
-- Defaults do `next/image` mudaram.
-- React 19 em dev roda efeitos duas vezes (StrictMode) — todo `useEffect`
-  com canvas, WebGL ou listener precisa de cleanup correto.
+**Current stage: an institutional site with a real backend (Supabase) for the
+fundraising cycle, plus an interface prototype for the rest.** Since the
+backend foundation (see "Backend (Supabase)" below), account sign-up
+(`/cadastro`), sign-in (`/entrar`), profile data, offering registration and
+publication by the issuer (`/empresa/ofertas`) and investment
+reservation/payment by the investor (`/investir`) **are actually written** to a
+Postgres database, with the Res. CVM 88 invariants enforced in the database itself
+(investor annual cap, offering hard cap, KYC gate, all-or-nothing closing); it
+is no longer only UI. Even so, none of this is a real regulated operation: Niara
+PMEs is not a CVM-authorized platform, payment (escrow) and token issuance are
+**explicit mocks** (every ref is written with a `MOCK-` prefix), and "KYC (demo)"
+is a button that always approves; see "Backend (Supabase)" for the full map of
+what is real vs. simulated. The MetaMask wallet (Sepolia testnet) in the Wallet
+section of `/perfil` is still the only real blockchain connection (see "`/perfil`
+screen" below), and it can now also be **linked** (persisted) to the account in
+the database. The rest of the exploration screens (`/ativos`, the simulated order
+ticket in `/negociar`, fundamental indicators, etc.) remain 100% demo/mock,
+without any real transaction.
 
 ---
 
-## 🔴 Regra principal: nada simulado pode parecer real
+## ⚠️ Next.js 16 (keep this)
 
-- Não ofereça valores mobiliários reais, não prometa retorno/rentabilidade,
-  não invente empresas, ofertas, parcerias, licenças, auditorias, logos de
-  instituições ou número de usuários.
-- Onde houver dado fictício, rotule como demonstração.
-- **Nunca** prometer isenção fiscal (nada de "sem IR/IOF"). Ganho de capital
-  é tributável.
-- Botões sem backend ficam **desabilitados e rotulados** (ex.: "Em breve"),
-  nunca fingem sucesso.
-- Registro on-chain (quando existir) não substitui cartório nem os livros
-  societários da Lei 6.404 — nunca sugerir o contrário.
-- Nunca rotular nada como "ao vivo" ou "tempo real".
+This project uses **Next.js 16**, which has breaking changes compared to earlier
+versions.
 
-## 🔴 Dados sensíveis (LGPD)
+- `params`, `searchParams`, `cookies` and `headers` are **async**: always
+  `await` them.
+- `next/image` defaults changed.
+- React 19 runs effects twice in dev (StrictMode), so every `useEffect` with a
+  canvas, WebGL or listener needs a correct cleanup.
 
-- **Nunca** persistir CPF, documento, data de nascimento ou endereço em
-  `localStorage`/`sessionStorage`/cookies (client-side) — vale para
-  qualquer estado de UI puramente local. Isso não significa que esses
-  dados nunca são persistidos: desde o backend Supabase (ver "Backend
-  (Supabase)" abaixo), CPF/CNPJ, data de nascimento, telefone e endereço
-  do fluxo real de cadastro/perfil **são** gravados de verdade num
-  Postgres, só que sempre via Server Action no servidor, nunca por um
-  `fetch` direto do navegador nem por storage do browser. São dados
-  fictícios de demonstração por ora, mas já tratados como PII real de
-  verdade quanto a onde e como trafegam.
-- Nunca commitar `.env`, chaves de API ou segredos. O repositório é
-  **público**.
+---
+
+## 🔴 Main rule: nothing simulated may look real
+
+- Don't offer real securities, don't promise return/yield, don't make up
+  companies, offerings, partnerships, licenses, audits, institutions' logos or
+  user counts.
+- Wherever there is fictitious data, label it as a demo.
+- **Never** promise a tax exemption (no "no income tax/IOF"). Capital gains are
+  taxable.
+- Buttons without a backend stay **disabled and labeled** (e.g. "Coming soon"),
+  they never fake success.
+- An on-chain record (when it exists) does not replace a notary (cartório) or
+  the corporate books of Law 6.404; never suggest otherwise.
+- Never label anything as "live" or "real time".
+
+## 🔴 Sensitive data (LGPD)
+
+- **Never** persist CPF, document, date of birth or address in
+  `localStorage`/`sessionStorage`/cookies (client-side); this applies to any
+  purely local UI state. That doesn't mean this data is never persisted: since
+  the Supabase backend (see "Backend (Supabase)" below), CPF/CNPJ, date of birth,
+  phone and address from the real sign-up/profile flow **are** actually written
+  to Postgres, but always through a Server Action on the server, never through a
+  direct `fetch` from the browser nor browser storage. It is fictitious demo
+  data for now, but it is already treated as real PII as to where and how it
+  travels.
+- Never commit `.env`, API keys or secrets. The repository is **public**.
 
 ---
 
 ## Stack
 
 - Next.js 16 (App Router) + TypeScript + Tailwind **v4**
-- Tailwind v4 é **CSS-first**: não há `tailwind.config.js`; tokens ficam em
-  `@theme` dentro de `src/app/globals.css`
-- `next/font/google` (não CDN) para as fontes
-- Animação de scroll: `gsap` + `ScrollTrigger` (seções pinned, parallax leve)
-  e `lenis` (smooth scroll, integrado ao ScrollTrigger)
-- Micro-reveals (fade/slide/stagger simples): `framer-motion`
-- Ícones: `lucide-react`
-- Gráficos (dashboard `/ativos`): `recharts` (`BarChart` empilhado da
-  evolução do portfólio, `PieChart`/donut da alocação) — ver "Tela /ativos"
-  abaixo
-- Estado: React (`useState`, Context). Sem libs de estado externas.
-- Carteira real (seção Carteira de `/perfil`, testnet Sepolia): `wagmi` v3 +
-  `viem` v2 + `@tanstack/react-query` v5 — mesma stack e estrutura do
-  `ConnectWallet`/`ConnectionPanel` do `niara-site` (repositório irmão,
-  originalmente da rota `/pilot` dele), reaproveitada aqui. Ver "Tela
-  `/perfil`" abaixo, seção "4. Carteira".
-- Backend real: `@supabase/supabase-js` v2 + `@supabase/ssr` v0.12
-  (Postgres + Auth + Storage) e `zod` v4 para validação de formato nos
-  Server Actions — as regras de negócio de verdade ficam travadas no
-  banco. Ver "Backend (Supabase)" abaixo.
+- Tailwind v4 is **CSS-first**: there is no `tailwind.config.js`; tokens live in
+  `@theme` inside `src/app/globals.css`
+- `next/font/google` (not a CDN) for fonts
+- Scroll animation: `gsap` + `ScrollTrigger` (pinned sections, light parallax)
+  and `lenis` (smooth scroll, integrated with ScrollTrigger)
+- Micro-reveals (simple fade/slide/stagger): `framer-motion`
+- Icons: `lucide-react`
+- Charts (`/ativos` dashboard): `recharts` (stacked `BarChart` for portfolio
+  evolution, `PieChart`/donut for allocation); see "`/ativos` screen" below
+- State: React (`useState`, Context). No external state libraries.
+- Real wallet (Wallet section of `/perfil`, Sepolia testnet): `wagmi` v3 +
+  `viem` v2 + `@tanstack/react-query` v5, the same stack and structure as
+  `niara-site`'s `ConnectWallet`/`ConnectionPanel` (sibling repository, originally
+  from its `/pilot` route), reused here. See "`/perfil` screen" below, section
+  "4. Wallet".
+- Real backend: `@supabase/supabase-js` v2 + `@supabase/ssr` v0.12
+  (Postgres + Auth + Storage) and `zod` v4 for format validation in the Server
+  Actions; the real business rules are locked in the database. See "Backend
+  (Supabase)" below.
+- Solana Devnet: `@solana/web3.js` v1 + `@anchor-lang/core` (Phantom/Solflare);
+  see "Solana Devnet" below.
 
-Removido: `three` / `@react-three/fiber` / `@react-three/drei` (não eram
-mais usados por nada no projeto) e, depois, o próprio astronauta 2D — ver
-"Astronauta (removido)" abaixo.
+Removed: `three` / `@react-three/fiber` / `@react-three/drei` (nothing in the
+project used them anymore) and, later, the 2D astronaut itself; see "Astronaut
+(removed)" below.
 
 ---
 
 ## Design system
 
-Use **somente** tokens do `@theme` (`src/app/globals.css`). Nunca cores
-hardcoded nos componentes.
+Use **only** `@theme` tokens (`src/app/globals.css`). Never hardcoded colors in
+components.
 
-Tema **claro** (diferente do `niara-site`, que é escuro). Paleta oficial:
-**paleta E (sálvia + pêssego)**.
+**Light** theme (unlike `niara-site`, which is dark). Official palette:
+**palette E (sage + peach)**.
 
-**Base / neutros:** `bg` #FAF8F5 · `surface` #FFFFFF · `surface-alt` #F1EEE6
-(tint neutro de chrome — dropdowns, ícones, footer; **não** usar para
-alternância de fundo de seção) · `border` #E7E2D9 · `ink` #23271F (texto
-principal) · `ink-muted` #5C6152 (texto secundário)
+**Base / neutrals:** `bg` #FAF8F5 · `surface` #FFFFFF · `surface-alt` #F1EEE6
+(neutral chrome tint: dropdowns, icons, footer; **don't** use it to alternate
+section backgrounds) · `border` #E7E2D9 · `ink` #23271F (main text) · `ink-muted`
+#5C6152 (secondary text)
 
-**Verde-sálvia (primária):** `military` **#3E4835 / rgb(62,72,53)** — valor
-oficial, medido da faixa CTA "Quer estruturar a captação" e fonte única de
-verdade para qualquer verde do site · `military-600` #4E5A42 (hover) ·
-`military-100` #E6EBDD — **fundo de seção "sálvia"**
+**Sage green (primary):** `military` **#3E4835 / rgb(62,72,53)**, the official
+value, measured from the "Quer estruturar a captação" CTA band and the single
+source of truth for any green on the site · `military-600` #4E5A42 (hover) ·
+`military-100` #E6EBDD, the **"sage" section background**
 
-**Pêssego (acento / CTA):** `salmon` **#F0A487 / rgb(240,164,135)** — valor
-oficial, medido do botão "Contate-nos" e fonte única de verdade para
-qualquer salmão do site · `salmon-600` #E08E6F (hover) · `salmon-100`
-#FBE9DF — **fundo de seção "pêssego"**
+**Peach (accent / CTA):** `salmon` **#F0A487 / rgb(240,164,135)**, the official
+value, measured from the "Contate-nos" button and the single source of truth for
+any salmon on the site · `salmon-600` #E08E6F (hover) · `salmon-100` #FBE9DF,
+the **"peach" section background**
 
-**Acentos de seção:** `ink-peach` #8A5A47 (subtítulo terroso sobre o
-**tint** `salmon-100` — nunca `ink-muted`/cinza ali; não usar sobre o
-salmon cheio, ver regra de contraste abaixo) · `chip-sage` #DCE3CF
-(selo/label atrás do título de card)
+**Section accents:** `ink-peach` #8A5A47 (earthy subtitle on the `salmon-100`
+**tint**; never `ink-muted`/gray there; don't use it on full salmon, see the
+contrast rule below) · `chip-sage` #DCE3CF (badge/label behind a card title)
 
-### 🔴 Fundos cheios de seção + regra de contraste
+### 🔴 Full section backgrounds + contrast rule
 
-Desde a Parte 6, as seções de conteúdo (exceto "Como funciona") alternam
-fundo **cheio** — `bg-military` (#3E4835, escuro) ou `bg-salmon` (#F0A487,
-claro) — em vez dos tints `-100` usados antes. O Hero passou a usar
-`bg-military` cheio também (antes ficava sobre `bg` neutro). Os tints
-(`military-100`/`salmon-100`) continuam existindo como tokens (usados em
-chips, glows do hero, hover de botão outline etc.), só deixaram de ser o
-fundo de seção inteira.
+Since Part 6, the content sections (except "How it works") alternate **full**
+backgrounds, `bg-military` (#3E4835, dark) or `bg-salmon` (#F0A487, light),
+instead of the `-100` tints used before. The Hero also uses full `bg-military`
+now (it used to sit on the neutral `bg`). The tints (`military-100`/`salmon-100`)
+still exist as tokens (used in chips, hero glows, outline button hover, etc.);
+they just stopped being the background of a whole section.
 
-Texto que fica **direto sobre o fundo da seção** (título/subtítulo, fora
-de qualquer card branco) precisa dos tokens semânticos abaixo — checados
-para AA (4.5:1) contra os hex exatos acima, não improvisar outro tom:
+Text that sits **directly on the section background** (title/subtitle, outside
+any white card) needs the semantic tokens below, checked for AA (4.5:1) against
+the exact hex values above; don't improvise another shade:
 
-- Sobre `bg-military` (escuro): `text-on-military` (#FAF8F5, claro —
-  mesmo tom de `--color-bg`, já usado assim na faixa CTA final) para o
-  título; para subtítulo, se houver, reaproveitar o padrão da CTA
-  (`text-on-military/80`) em vez de criar um novo tom.
-- Sobre `bg-salmon` (claro): `text-on-salmon` (#23271F, escuro — mesmo
-  tom de `--color-ink`) para o título; `text-on-salmon-muted` (#5A3325)
-  para subtítulo. **Não** usar `ink-peach` aqui — foi calibrado para o
-  tint `salmon-100`, bem mais claro, e não atinge 4.5:1 sobre o salmon
-  cheio.
+- On `bg-military` (dark): `text-on-military` (#FAF8F5, light; the same tone as
+  `--color-bg`, already used this way in the final CTA band) for the title; for a
+  subtitle, if there is one, reuse the CTA pattern (`text-on-military/80`) instead
+  of creating a new shade.
+- On `bg-salmon` (light): `text-on-salmon` (#23271F, dark; the same tone as
+  `--color-ink`) for the title; `text-on-salmon-muted` (#5A3325) for the
+  subtitle. **Don't** use `ink-peach` here: it was calibrated for the much lighter
+  `salmon-100` tint and doesn't reach 4.5:1 on full salmon.
 
-Cards continuam brancos (`bg-surface`) dentro de qualquer fundo cheio, com
-texto interno (`text-ink`/`text-ink-muted`) inalterado — a regra de
-contraste acima só vale para texto solto direto sobre a cor da seção.
-Cards sem borda (`SectionCard`) não precisam de ajuste sobre fundo escuro
-(nunca tiveram borda); cards com borda (`border-border`, ex.:
-`AudiencesSection`) só devem manter a borda quando o fundo por trás for
-claro (salmon) — sobre `bg-military` ela some visualmente e deve ser
-removida, mantendo só a sombra.
+Cards stay white (`bg-surface`) inside any full background, with unchanged inner
+text (`text-ink`/`text-ink-muted`); the contrast rule above only applies to loose
+text directly on the section color. Borderless cards (`SectionCard`) need no
+adjustment on a dark background (they never had a border); bordered cards
+(`border-border`, e.g. `AudiencesSection`) should only keep the border when the
+background behind them is light (salmon); on `bg-military` it disappears visually
+and should be removed, keeping only the shadow.
 
-Os nomes dos tokens (`military`, `salmon` etc.) foram mantidos por
-compatibilidade de código mesmo após a mudança de paleta militar→sálvia —
-só os valores hex e a semântica visual mudaram.
+The token names (`military`, `salmon`, etc.) were kept for code compatibility
+even after the military→sage palette change; only the hex values and the visual
+meaning changed.
 
-### Tokens do dashboard `/ativos`
+### `/ativos` dashboard tokens
 
-Além dos tokens de seção acima, a tela `/ativos` (ver "Tela /ativos"
-abaixo) introduziu tokens próprios em `@theme`, todos pensados para uso
-**sobre `bg-military` cheio**:
+Besides the section tokens above, the `/ativos` screen (see "`/ativos` screen"
+below) introduced its own `@theme` tokens, all meant to be used **on full
+`bg-military`**:
 
-- `on-military-muted` #C3CBB3 — texto secundário de densidade de dados
-  (rótulos de KPI, legendas, notas), mais suave que `on-military` puro.
-  Diferente de `on-military/80` (usado no subtítulo do Hero/CTA): este é
-  um tom próprio, pensado para telas densas de dados, não para
-  marketing — não reaproveitar `on-military/80` aqui nem vice-versa.
-- `panel` / `panel-border` — fundo e borda dos cards do dashboard (KPI,
-  gráfico, tabela, catálogo). `panel` é `color-mix(military 90%, black)`
-  — **mais escuro** que a seção, não mais claro. Border é um overlay
-  claro sutil (`on-military` em baixa opacidade).
-  🔴 **Isso foi um bug real, não uma escolha estética arbitrária**: a
-  primeira versão usava um overlay *claro* (`color-mix(on-military 6%,
-  transparent)`), que eleva a luminância do fundo do card — e por isso
-  **reduz** o contraste de qualquer texto claro dentro dele. Com esse
-  fundo mais claro, `value-negative` caía para ~3,98:1 contra o painel
-  (abaixo do mínimo AA de 4,5:1 para texto pequeno, ex.: a coluna
-  "Variação" da tabela de posições) mesmo depois de já ter sido escolhido
-  para passar em 4,5:1 contra o `bg-military` puro. Escurecer o fundo do
-  card resolve na direção certa: aumenta a margem de contraste de todos
-  os tokens de texto claro usados dentro dele, em vez de reduzi-la. Ao
-  criar qualquer novo tom de texto claro para uso dentro de um card sobre
-  fundo escuro, **sempre verificar contraste contra o fundo real do card
-  (`panel`), não só contra o fundo da seção** — os dois não são a mesma
-  cor e o card pode ser a superfície mais exigente das duas.
-- `value-positive` #9BD1A0 / `value-negative` #EDA492 — ganho/perda (KPI,
-  variação % da tabela). `value-negative` foi ajustado de um coral mais
-  escuro (#E67C63, ~3,4:1 contra `bg-military`) para #EDA492 (~4,73:1
-  contra `bg-military`, ~5,25:1 contra `panel`) pelo mesmo motivo acima.
-  É inevitavelmente próximo do tom de `salmon` — vermelhos/corais só
-  atingem AA contra este verde ficando claros o bastante para se
-  aproximarem do pêssego; o projeto já reaproveita `salmon` em papéis
-  diferentes em outros lugares (chip de categoria "Token PMEs" *é*
-  literalmente `salmon`), então essa proximidade é consistente com o
-  padrão existente, não uma inconsistência nova.
+- `on-military-muted` #C3CBB3: secondary text for data density (KPI labels,
+  legends, notes), softer than plain `on-military`. Different from
+  `on-military/80` (used in the Hero/CTA subtitle): this is its own tone, designed
+  for dense data screens, not marketing; don't reuse `on-military/80` here nor the
+  other way around.
+- `panel` / `panel-border`: background and border of the dashboard cards (KPI,
+  chart, table, catalog). `panel` is `color-mix(military 90%, black)`, **darker**
+  than the section, not lighter. The border is a subtle light overlay
+  (`on-military` at low opacity).
+  🔴 **This was a real bug, not an arbitrary aesthetic choice**: the first
+  version used a *light* overlay (`color-mix(on-military 6%, transparent)`),
+  which raises the card background's luminance and therefore **reduces** the
+  contrast of any light text inside it. With that lighter background,
+  `value-negative` dropped to ~3.98:1 against the panel (below the 4.5:1 AA
+  minimum for small text, e.g. the positions table's "Change" column) even after
+  being chosen to pass 4.5:1 against plain `bg-military`. Darkening the card
+  background fixes it in the right direction: it increases the contrast margin of
+  every light text token used inside it instead of reducing it. When creating any
+  new light text tone for use inside a card on a dark background, **always check
+  contrast against the card's real background (`panel`), not only against the
+  section background**; they are not the same color and the card can be the more
+  demanding surface of the two.
+- `value-positive` #9BD1A0 / `value-negative` #EDA492: gain/loss (KPI, the
+  table's % change). `value-negative` was adjusted from a darker coral (#E67C63,
+  ~3.4:1 against `bg-military`) to #EDA492 (~4.73:1 against `bg-military`,
+  ~5.25:1 against `panel`) for the same reason as above. It is inevitably close
+  to the `salmon` tone: reds/corals only reach AA against this green by being
+  light enough to approach peach; the project already reuses `salmon` in
+  different roles elsewhere (the "Token PMEs" category chip *is* literally
+  `salmon`), so this closeness is consistent with the existing pattern, not a new
+  inconsistency.
 - `chart-pmes` #F0A487 (= `salmon`) · `chart-agro` #B7C29E ·
-  `chart-imobiliario` #E4C07A · `chart-auto` #7FA9A3 · `chart-divida`
-  #B49FC0 — paleta categórica fixa dos gráficos (5 classes de token),
-  usada tanto no donut quanto no indicador de categoria da tabela e do
-  catálogo. Passados ao Recharts como `fill="var(--color-chart-*)"`
-  (atributo lido pelo SVG em tempo de render, funciona normalmente com
-  `var()`) — não hardcodar os hex nos componentes.
+  `chart-imobiliario` #E4C07A · `chart-auto` #7FA9A3 · `chart-divida` #B49FC0:
+  the fixed categorical chart palette (5 token classes), used both in the donut
+  and in the category indicator of the table and the catalog. Passed to Recharts
+  as `fill="var(--color-chart-*)"` (an attribute the SVG reads at render time,
+  which works normally with `var()`); don't hardcode the hex values in
+  components.
 
-Sempre que precisar verificar contraste AA (4.5:1) ao adicionar um tom
-novo, usar a fórmula de luminância relativa do WCAG 2.x contra o hex
-exato do fundo **onde o texto realmente vai ficar** (seção vs. card vs.
-tooltip flutuante — cada um pode ter um fundo efetivo diferente).
+Whenever you need to check AA contrast (4.5:1) when adding a new tone, use the
+WCAG 2.x relative luminance formula against the exact hex of the background
+**where the text will actually sit** (section vs. card vs. floating tooltip; each
+can have a different effective background).
 
-### 🔴 `h1`–`h6` e `@layer base`
+### 🔴 `h1`–`h6` and `@layer base`
 
-A cor/fonte padrão dos headings é definida em `globals.css` **dentro de
-`@layer base`** — não mover para fora dela. Regras CSS fora de qualquer
-`@layer` vencem incondicionalmente qualquer coisa dentro de uma layer
-(inclusive as utilities do Tailwind, que vivem em `@layer utilities`),
-não importa a especificidade. Sem `@layer base` aqui, uma classe como
-`text-bg` num `<h2>` (ex.: título sobre a faixa CTA de fundo verde
-sólido) simplesmente não tem efeito nenhum — foi um bug real encontrado
-e corrigido na Parte 3. Qualquer outro CSS solto adicionado a
-`globals.css` que deva conviver com as utilities do Tailwind precisa do
-mesmo tratamento.
+The default heading color/font is defined in `globals.css` **inside
+`@layer base`**; don't move it out. CSS rules outside any `@layer`
+unconditionally beat anything inside a layer (including Tailwind's utilities,
+which live in `@layer utilities`), regardless of specificity. Without
+`@layer base` here, a class like `text-bg` on an `<h2>` (e.g. a title on the
+solid green CTA band) has no effect at all; this was a real bug found and fixed
+in Part 3. Any other loose CSS added to `globals.css` that must coexist with
+Tailwind's utilities needs the same treatment.
 
-**Tipografia:** Space Grotesk (`--font-display`, títulos) · Inter
-(`--font-sans`, corpo)
+**Typography:** Space Grotesk (`--font-display`, headings) · Inter
+(`--font-sans`, body)
 
-**Raio:** sm 8px · md 12px · lg 20px · full (generoso, estética arejada)
+**Radius:** sm 8px · md 12px · lg 20px · full (generous, airy aesthetic)
 
-**Sombras:** `shadow-soft` / `shadow-soft-lg` — suaves, para cards e
-elementos elevados sobre fundo claro.
+**Shadows:** `shadow-soft` / `shadow-soft-lg`, soft, for cards and elevated
+elements on a light background.
 
-Padrão de alternância de fundo nas seções da home: sálvia (`bg-military`)
-e pêssego (`bg-salmon`), **cheios** (ver "Fundos cheios de seção" acima —
-os tints `-100` não são mais usados como fundo de seção inteira), se
-alternam entre seções de conteúdo. Cards continuam brancos (`bg-surface`)
-sobre qualquer um dos dois, com o chip (`bg-chip-sage`) atrás do
-título/ícone do card.
+Background alternation pattern on the home sections: sage (`bg-military`) and
+peach (`bg-salmon`), **full** (see "Full section backgrounds" above; the `-100`
+tints are no longer used as a whole section background), alternate between
+content sections. Cards stay white (`bg-surface`) on either one, with the chip
+(`bg-chip-sage`) behind the card's title/icon.
 
-Referência visual viva: `/styleguide`.
+Living visual reference: `/styleguide`.
 
-Estética: clara, limpa, moderna, arejada. Adaptamos **estrutura** de
-referências externas (ex.: MetaMask home), nunca a estética escura nem o
-texto delas.
+Aesthetic: light, clean, modern, airy. We adapt the **structure** of external
+references (e.g. the MetaMask home), never their dark look or their copy.
 
 ---
 
-## Idioma
+## Language
 
-O idioma padrão (e único, por ora) é **português do Brasil** —
-`<html lang="pt-BR">` no layout raiz. Todo texto de interface fica
-centralizado em `src/lib/i18n/pt-br.ts` (dicionário tipado por área:
-`common`, `meta`, `nav`, `hero`, `sections`, `footer` etc., crescendo
-conforme as partes seguintes). Componentes importam `{ ptBr }` desse
-arquivo — não hardcodar strings de interface direto no JSX.
-
-Comentários de código ficam em português (convenção do projeto).
+- **English is the standard for everything in this repo:** identifiers, file
+  names, comments, docs, commit messages and PR descriptions. This applies to
+  every Niara repository.
+- **Names that stay in Portuguese, on purpose** (they mirror external data or
+  public interfaces; renaming them would break something that already exists):
+  - the contracts' and the Solana program's names (functions, events, errors,
+    struct and account fields: `aportar`, `OfertaCaptacao`, `metaMinima`,
+    `ParametrosOferta`, ...), the hooks/getters that mirror them one to one, and
+    the ABI file names in `src/lib/web3/abis/` (named after the contracts);
+  - Supabase column names and stored values (`rede`, `sync_status =
+    'nao_onchain' | 'pendente' | 'confirmada' | 'divergente'`,
+    `expected_emissor_wallet`, `onchain_events_cache.tipo`, ...), and the
+    `raise exception` messages in the migrations (the `translate*DbError()`
+    functions match them by substring: "teto anual do investidor", "estoura o
+    hard_cap", "KYC nao aprovado", ...);
+  - category codes (`pmes`, `agro`, `imobiliario`, `auto`, `divida`), investor
+    profile categories (`conservador`/`moderado`/`arrojado`), regions, `pf`/`pj`;
+  - env var names (`NEXT_PUBLIC_OFERTAS_ONCHAIN`, `NIARA_SOCIOS_EMAILS`, ...);
+  - **routes** (`/negociar`, `/investir`, `/empresa/ofertas`, `/perfil`, ...),
+    URL query params (`?intent=captacao`, `?aviso=`, `?rede=solana`,
+    `?onboarding=1`) and the fixed demo slugs. The component folders in
+    `src/components/` keep the route segment's name (`components/negociar/`
+    belongs to `/negociar`); the files inside them are English.
+  New names you create are always English; when you touch a Portuguese name,
+  document its English meaning in a comment. The on-chain/database names get
+  renamed together with the mainnet deploy, never piecemeal.
+- **Interface: Portuguese and English.** All interface copy lives in
+  `src/lib/i18n/`: `pt-br.ts` (Portuguese) and `en.ts` (English), with the same
+  keys — `en.ts` is declared `satisfies Dictionary` (the widened type of
+  `pt-br.ts`), so a missing or extra key fails `tsc`. Components never import a
+  dictionary directly:
+  - Server Components / Server Actions: `const dict = await getDictionary()`
+    (`src/lib/i18n/server.ts`, reads the cookie); `getLocale()` when only the
+    locale is needed.
+  - Client Components: `const dict = useDictionary()` / `useLocale()`
+    (`src/lib/i18n/client.tsx`, from the `<I18nProvider>` mounted in the root
+    layout).
+  - The language comes from the `niara_locale` cookie; without it, the first
+    visit follows the browser's `Accept-Language` (Portuguese → `pt`, anything
+    else → `en`). The `EN · PT` switcher in the header (`LanguageSwitcher.tsx`)
+    calls the `switchLocale` Server Action (`src/app/actions/set-locale.ts`),
+    which sets the cookie. Routes don't change with the language.
+  - `<html lang>` follows the language (`htmlLang()`: `pt-BR` or `en`), and so
+    does the page metadata (`generateMetadata` in the root layout).
+  - Server Action error messages also come from the dictionary
+    (`serverErrors`), and so do the on-chain error translations
+    (`chainErrors.evm` for `describeOnChainError()`, `chainErrors.solana` for
+    `describeSolanaError()`): those functions receive the messages as a
+    parameter instead of importing a dictionary.
+  - Fictitious demo content (companies, sectors, summaries in
+    `src/lib/mock/`) is a `LocalizedText` (`{ pt, en }`) in the mock itself, read
+    with `localize(text, locale)`. Data typed by real users (offering and issuer
+    fields in Supabase) is shown as typed, never translated.
+  - **Numbers, money and dates stay in pt-BR format in both languages**
+    (`R$ 5.000.000,00`, `19/07/2026`): it's a BRL product, and the money inputs
+    parse pt-BR (`reaisToCents`). `intlLocale()` exists for language-dependent
+    text formatting only (month names, sorting with `localeCompare`).
+  - `offerings.onchain_last_error` stores the reason in the language of whoever
+    triggered the check — an accepted limitation of a stored, human-readable
+    reason.
+- Don't hardcode interface strings in JSX; add the key to **both** dictionaries.
 
 ---
-
 ## Backend (Supabase)
 
-Fundação adicionada em 6 commits (`chore: fundação backend` até
-`feat(oferta): ...`) — Postgres + Auth + Storage via Supabase, seguindo
-ports & adapters: UI e Server Actions nunca decidem sozinhos uma regra de
-negócio da Res. CVM 88, só chamam o banco e traduzem o erro que ele
-levantar. Nenhuma dessas partes faz da Niara PMEs uma plataforma
-autorizada pela CVM — disclaimer explícito em
+Foundation added in 6 commits (`chore: fundação backend` through
+`feat(oferta): ...`): Postgres + Auth + Storage via Supabase, following ports &
+adapters: the UI and Server Actions never decide a Res. CVM 88 business rule on
+their own, they only call the database and translate the error it raises. None of
+these parts makes Niara PMEs a CVM-authorized platform; explicit disclaimer in
 `supabase/migrations/0001_core.sql:3-8`.
 
-### Clients e variáveis de ambiente
+### Clients and environment variables
 
-Três clients em `src/lib/supabase/`, cada um com um escopo de acesso
-diferente:
-- `client.ts` — browser (`createBrowserClient`), chave anônima, respeita RLS.
-- `server.ts` — Server Components/Actions (`createServerClient`), chave
-  anônima + cookies da requisição, respeita RLS.
-- `admin.ts` — 🔴 usa `SUPABASE_SERVICE_ROLE_KEY`, **ignora RLS por
-  completo**. Protegido por `import "server-only"` no topo — importar num
-  client component quebra o build. É o client usado por quase todo Server
-  Action de negócio (as tabelas de domínio têm RLS default-deny, ver
-  abaixo, então o controle de acesso é feito no código da action via
-  `resolveAccount()`, não numa policy).
+Three clients in `src/lib/supabase/`, each with a different access scope:
+- `client.ts`: browser (`createBrowserClient`), anon key, respects RLS.
+- `server.ts`: Server Components/Actions (`createServerClient`), anon key +
+  request cookies, respects RLS.
+- `admin.ts`: 🔴 uses `SUPABASE_SERVICE_ROLE_KEY`, **ignores RLS completely**.
+  Protected by `import "server-only"` at the top; importing it in a client
+  component breaks the build. It is the client used by almost every business
+  Server Action (the domain tables have default-deny RLS, see below, so access
+  control is done in the action's code via `resolveAccount()`, not in a policy).
 
-`src/proxy.ts` — em Next.js 16 `middleware.ts` virou `proxy.ts`. Só
-revalida a sessão a cada navegação via `supabase.auth.getUser()` (não
-`getSession()`: `getUser()` revalida contra o servidor Supabase,
-`getSession()` só lê o cookie sem garantia nenhuma). Nenhuma regra de
-negócio mora aqui.
+`src/proxy.ts`: in Next.js 16 `middleware.ts` became `proxy.ts`. It only
+revalidates the session on every navigation via `supabase.auth.getUser()` (not
+`getSession()`: `getUser()` revalidates against the Supabase server,
+`getSession()` only reads the cookie with no guarantee at all). No business rule
+lives here.
 
-Variáveis de ambiente (`.env.example`, nunca commitar valores reais):
-`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (públicas,
-RLS protege), `SUPABASE_SERVICE_ROLE_KEY` (secreta, bypassa RLS),
-`DATABASE_URL` / `DIRECT_URL` (Postgres via pooler), `NIARA_ENV=demo`
-(marca `is_demo=true` nas linhas gravadas), `NIARA_PAYMENT_ADAPTER` /
-`NIARA_KYC_ADAPTER` / `NIARA_CHAIN_ADAPTER` (hoje só existe `"mock"` — ver
-"Ports & adapters" abaixo). `NEXT_PUBLIC_SEPOLIA_RPC_URL` (opcional, da
-conexão wagmi — ver "Tela `/perfil`") é anterior a este backend e
-independente dele.
+Environment variables (`.env.example`, never commit real values):
+`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public, RLS
+protects them), `SUPABASE_SERVICE_ROLE_KEY` (secret, bypasses RLS),
+`DATABASE_URL` / `DIRECT_URL` (Postgres via the pooler), `NIARA_ENV=demo` (marks
+`is_demo=true` on written rows), `NIARA_PAYMENT_ADAPTER` / `NIARA_KYC_ADAPTER` /
+`NIARA_CHAIN_ADAPTER` (only `"mock"` exists today; see "Ports & adapters"
+below). `NEXT_PUBLIC_SEPOLIA_RPC_URL` (optional, for the wagmi connection; see
+"`/perfil` screen") predates this backend and is independent of it.
 
-### Ports & adapters — pagamento, KYC e emissão on-chain são mocks
+### Ports & adapters: payment, KYC and on-chain issuance are mocks
 
-`src/lib/ports.ts` define interfaces puras (`PaymentGateway`,
-`KycProvider`, `ChainRegistry`); `src/lib/adapters.ts` escolhe a
-implementação pela env var correspondente, **caindo em mock por padrão**
-se a var estiver ausente ou tiver valor desconhecido — nunca cai
-silenciosamente numa implementação real por engano. Hoje só existe
-implementação mock (`src/lib/mocks.ts`), com disclaimer explícito: nada
-ali move dinheiro real, verifica identidade de verdade ou emite token
-on-chain de verdade. Todo ref gerado começa com `"MOCK-"` (`mockRef()`,
-ex. `MOCK-ESCROW-<uuid>`, `MOCK-KYC-<uuid>`, `MOCK-TX-<uuid>`) — **nunca
-apresentar um ref `MOCK-*` na UI como se fosse uma operação real.**
-`mockKycProvider.submit` sempre retorna `status: "approved"` (ver "Gate de
-KYC" abaixo).
+`src/lib/ports.ts` defines pure interfaces (`PaymentGateway`, `KycProvider`,
+`ChainRegistry`); `src/lib/adapters.ts` picks the implementation by the
+matching env var, **falling back to the mock by default** if the var is missing
+or has an unknown value; it never silently falls into a real implementation by
+mistake. Only the mock implementation exists today (`src/lib/mocks.ts`), with an
+explicit disclaimer: nothing there moves real money, really verifies identity or
+really issues a token on-chain. Every generated ref starts with `"MOCK-"`
+(`mockRef()`, e.g. `MOCK-ESCROW-<uuid>`, `MOCK-KYC-<uuid>`, `MOCK-TX-<uuid>`);
+**never present a `MOCK-*` ref in the UI as if it were a real operation.**
+`mockKycProvider.submit` always returns `status: "approved"` (see "KYC gate"
+below).
 
-### Schema e invariantes da Res. CVM 88 (`supabase/migrations/`)
+### Schema and Res. CVM 88 invariants (`supabase/migrations/`)
 
-Dinheiro é sempre `bigint` em centavos, nunca float (`0001_core.sql:10`).
-Concorrência é tratada com `SELECT ... FOR UPDATE` na linha pai (oferta ou
-investidor) antes de somar, nunca em JS.
+Money is always `bigint` in cents, never float (`0001_core.sql:10`).
+Concurrency is handled with `SELECT ... FOR UPDATE` on the parent row (offering
+or investor) before summing, never in JS.
 
-- **`0001_core.sql`** — tabelas `issuers`, `offerings`, `investors`,
-  `investments`, `payment_events`, com **RLS default-deny em todas** (sem
-  nenhuma policy — acesso é 100% via client `admin` no servidor). Regras
-  travadas por trigger, todas levantando `SQLSTATE 23514` (o código que os
-  `translate*DbError()` do app casam):
-  - `issuer_is_sep`: faturamento do emissor ≤ R$40M (teto SEP).
-  - `cap_le_15m`: hard cap da oferta ≤ R$15M.
-  - `additional_lot`: lote adicional ≤ 25% do cap base.
-  - `window_le_180d`: janela de captação ≤ 180 dias.
-  - `enforce_investor_annual_limit` — **teto anual do investidor** (padrão
-    R$20 mil/ano; `NULL` = investidor qualificado, sem teto). 🔴 Soma só o
-    que passou pela Niara — a regra real da Res. 88 é entre-plataformas
-    (soma em todas as plataformas CVM ao mesmo tempo, proposta SDM
-    05/2025 ainda não em vigor); é uma aproximação deliberada, não
-    compliance completo — não tratar como se fosse.
-  - `enforce_offering_hard_cap` — bloqueia reserva que estouraria o hard
-    cap da oferta.
-  - `enforce_investment_transition` — só permite transições legais de
-    status (`reserved→{paid,cancelled}`, `paid→{settled,refunded}`) e é o
-    **gate de KYC**: `reserved→paid` exige
-    `investors.kyc_status = 'approved'`.
-- **`0002_settlement.sql`** — `settle_offering()` (fecha a janela: se
-  arrecadado ≥ meta mínima → `funded` + cancela reservas não pagas; senão
-  → `failed` + estorna pagas) e `mark_offering_settled()` (chamada pelo
-  app **depois** de emitir os tokens mock, marca `settled`) —
-  **fechamento all-or-nothing** em duas etapas de estado puro no banco;
-  efeitos externos (emissão do token) ficam por conta do app entre uma
-  chamada e outra.
-- **`0003`/`0004`** — ligam `investors.user_id`/`issuers.user_id` a
-  `auth.users`, `unique` + nullable + `on delete set null` (apagar o login
-  não apaga o histórico financeiro, só desvincula).
-- **`0005_confirm_investment.sql`** — RPC `confirm_investment()`,
-  transição atômica `reserved→paid`, idempotente duas vezes (por status
-  **e** por `idempotency_key` em `payment_events`). Se o gate de KYC do
-  0001 disparar no meio, a função inteira dá rollback — inclusive o
-  `payment_events` já inserido na mesma transação.
-- **`0006`/`0007`** — telefone/endereço/`wallet_address` em `investors` e
-  `issuers` (nullable), depois `unique` em `wallet_address` por tabela. 🔴
-  Gap documentado: a unicidade é *por tabela* — a mesma wallet num
-  investidor e num emissor ao mesmo tempo não é bloqueada; aceito por ora.
-- **`0008`/`0009`/`0010`** — `share_price_cents` (nº de cotas nunca é
-  coluna, sempre derivado de `base_cap_cents / share_price_cents`),
-  `sector`/`business_summary` públicos, `category`, `publish_cnpj`
-  (opt-in — CNPJ some do banco na leitura pública quando `false`, não só
-  da UI) e `logo_path` (arquivo mora no Storage, só o path é coluna).
+- **`0001_core.sql`**: tables `issuers`, `offerings`, `investors`,
+  `investments`, `payment_events`, with **default-deny RLS on all of them** (no
+  policy at all; access is 100% via the `admin` client on the server). Rules
+  locked by triggers, all raising `SQLSTATE 23514` (the code the app's
+  `translate*DbError()` functions match):
+  - `issuer_is_sep`: issuer revenue ≤ R$40M (SEP cap).
+  - `cap_le_15m`: offering hard cap ≤ R$15M.
+  - `additional_lot`: additional lot ≤ 25% of the base cap.
+  - `window_le_180d`: fundraising window ≤ 180 days.
+  - `enforce_investor_annual_limit`: the **investor annual cap** (default
+    R$20k/year; `NULL` = qualified investor, no cap). 🔴 It only sums what went
+    through Niara; the real Res. 88 rule is cross-platform (summed across every
+    CVM platform at once; SDM proposal 05/2025, not yet in force). It's a
+    deliberate approximation, not full compliance; don't treat it as such.
+  - `enforce_offering_hard_cap`: blocks a reservation that would exceed the
+    offering's hard cap.
+  - `enforce_investment_transition`: only allows legal status transitions
+    (`reserved→{paid,cancelled}`, `paid→{settled,refunded}`) and is the **KYC
+    gate**: `reserved→paid` requires `investors.kyc_status = 'approved'`.
+- **`0002_settlement.sql`**: `settle_offering()` (closes the window: if raised ≥
+  minimum target → `funded` + cancels unpaid reservations; otherwise → `failed` +
+  refunds paid ones) and `mark_offering_settled()` (called by the app **after**
+  issuing the mock tokens, marks `settled`): an **all-or-nothing closing** in two
+  pure-state steps in the database; external effects (token issuance) are up to
+  the app between one call and the other.
+- **`0003`/`0004`**: link `investors.user_id`/`issuers.user_id` to `auth.users`,
+  `unique` + nullable + `on delete set null` (deleting the login doesn't delete
+  the financial history, it only unlinks it).
+- **`0005_confirm_investment.sql`**: the `confirm_investment()` RPC, an atomic
+  `reserved→paid` transition, idempotent twice over (by status **and** by
+  `idempotency_key` in `payment_events`). If 0001's KYC gate fires midway, the
+  whole function rolls back, including the `payment_events` row already
+  inserted in the same transaction.
+- **`0006`/`0007`**: phone/address/`wallet_address` in `investors` and
+  `issuers` (nullable), then `unique` on `wallet_address` per table. 🔴
+  Documented gap: uniqueness is *per table*; the same wallet on an investor and
+  an issuer at the same time is not blocked; accepted for now.
+- **`0008`/`0009`/`0010`**: `share_price_cents` (the share count is never a
+  column, always derived from `base_cap_cents / share_price_cents`), public
+  `sector`/`business_summary`, `category`, `publish_cnpj` (opt-in; the CNPJ
+  disappears from the database read on the public side when `false`, not only
+  from the UI) and `logo_path` (the file lives in Storage, only the path is a
+  column).
 
-### Autenticação (`src/lib/auth/resolveInvestor.ts`)
+### Authentication (`src/lib/auth/resolveInvestor.ts`)
 
-`resolveAccount()` é a fonte única de verdade de "quem está logado e
-como": lê o usuário via `getUser()`, depois checa (client `admin`, porque
-ainda não existe policy de self-read) se existe uma linha em
-`investors.user_id` ou `issuers.user_id`. Retorna `{ userId,
-role: 'investor'|'issuer'|null, accountId }` — **uma conta é investidor OU
-emissor, nunca as duas** (a checagem é sequencial, quem casar primeiro
-ganha). `accountId` é o id da linha de domínio (`investors.id`/
-`issuers.id`) — nunca comparar entre roles; só `userId` (o id do login) é
-comparável entre elas. Todo Server Action de negócio chama
-`resolveAccount()` e nunca aceita `investor_id`/`issuer_id` vindo do
-cliente.
+`resolveAccount()` is the single source of truth for "who is signed in and as
+what": it reads the user via `getUser()`, then checks (with the `admin` client,
+because there is no self-read policy yet) whether there is a row in
+`investors.user_id` or `issuers.user_id`. It returns `{ userId,
+role: 'investor'|'issuer'|null, accountId }`: **an account is an investor OR an
+issuer, never both** (the check is sequential, the first match wins).
+`accountId` is the id of the domain row (`investors.id`/`issuers.id`); never
+compare it across roles; only `userId` (the login id) is comparable between them.
+Every business Server Action calls `resolveAccount()` and never accepts an
+`investor_id`/`issuer_id` coming from the client.
 
-`/entrar` ficou **só login** (`signInWithPassword`); criação de conta
-migrou inteira para `/cadastro` (ver seção própria abaixo). Ao concluir o
-cadastro, o app redireciona para `/conta?onboarding=1` — flag que abre o
-quiz de perfil de investidor automaticamente na primeira visita a
-`/perfil` (ver "Tela `/perfil`", seção "3. Perfil de investidor"). `/conta`
-hoje é só um shim de redirect para `/perfil` (preserva `?aviso=`/
-`?onboarding=`), mantido para não quebrar links antigos.
+`/entrar` became **sign-in only** (`signInWithPassword`); account creation moved
+entirely to `/cadastro` (see its own section below). After completing sign-up,
+the app redirects to `/conta?onboarding=1`, a flag that automatically opens the
+investor profile quiz on the first visit to `/perfil` (see "`/perfil` screen",
+section "3. Investor profile"). `/conta` is now just a redirect shim to
+`/perfil` (it keeps `?aviso=`/`?onboarding=`), kept so old links don't break.
 
-### Gate de KYC — o que "KYC (demonstração)" quer dizer aqui
+### KYC gate: what "KYC (demo)" means here
 
-Não existe verificação de identidade real em lugar nenhum. `kyc_status`
-(`pending|approved|rejected`, default `pending`) só muda quando o
-investidor clica "Fazer KYC (demonstração)" em `/investir`
-(`submitKyc()`, `src/app/investir/kyc-actions.ts`) — isso chama o adapter
-mock, que **sempre** retorna `approved`, e a action grava exatamente o
-status que o adapter devolveu (não hardcoda `'approved'`, para trocar de
-adapter no futuro sem mudar esse código). Esse botão só aparece depois de
-uma tentativa de confirmar pagamento falhar com `kycRequired: true`.
+There is no real identity verification anywhere. `kyc_status`
+(`pending|approved|rejected`, default `pending`) only changes when the investor
+clicks "Do KYC (demo)" in `/investir` (`submitKyc()`,
+`src/app/investir/kyc-actions.ts`); that calls the mock adapter, which
+**always** returns `approved`, and the action writes exactly the status the
+adapter returned (it doesn't hardcode `'approved'`, so the adapter can be swapped
+in the future without changing this code). That button only shows up after an
+attempt to confirm payment fails with `kycRequired: true`.
 
-🔴 **Isso é diferente do banner "Não verificado" fixo em `/perfil`**
-(`PerfilPage.tsx`) — esse banner é estático, não lê `investors.kyc_status`
-em nenhum momento. É possível um investidor ter `kyc_status='approved'`
-de verdade no banco (por já ter confirmado um pagamento em `/investir`) e
-`/perfil` continuar mostrando "Não verificado" — inconsistência
-conhecida, não tratada nesta rodada; quem for mexer num dos dois lados
-precisa decidir se liga o banner ao dado real ou documenta a diferença de
-propósito entre eles.
+🔴 **This is different from the fixed "Not verified" banner in `/perfil`**
+(`ProfilePage.tsx`): that banner is static and never reads `investors.kyc_status`.
+An investor can actually have `kyc_status='approved'` in the database (after
+confirming a payment in `/investir`) while `/perfil` keeps showing "Not
+verified"; a known inconsistency, not handled in this round. Whoever touches
+either side needs to decide whether to tie the banner to the real data or
+document the intentional difference between them.
 
-### Ciclo de captação — investidor (`/investir`) e emissor (`/empresa/ofertas`)
+### Fundraising cycle: investor (`/investir`) and issuer (`/empresa/ofertas`)
 
-Investidor: lista ofertas ativas (`loadActiveOfferingsByCategory`/
-`loadPublicOffering`, em `src/lib/investments.ts` e
-`src/app/investir/actions.ts`) → `reserveInvestment()` grava
-`investments` com `status='reserved'` (o banco decide teto/hard
-cap/janela; a action só traduz o erro) → `confirmInvestment()` chama o
-adapter de pagamento mock e a RPC `confirm_investment` (`reserved→paid`,
-gate de KYC) → o dono da oferta chama `closeOffering()` quando a janela
-fecha, que roda `settle_offering`, emite token mock por aporte pago
-(idempotente via `payment_events`) e por fim `mark_offering_settled`. Ver
-"Tela `/investir`" e "Tela `/empresa/ofertas`" abaixo para a UI de cada
-lado.
+Investor: lists active offerings (`loadActiveOfferingsByCategory`/
+`loadPublicOffering`, in `src/lib/investments.ts` and
+`src/app/investir/actions.ts`) → `reserveInvestment()` writes `investments`
+with `status='reserved'` (the database decides cap/hard cap/window; the action
+only translates the error) → `confirmInvestment()` calls the mock payment
+adapter and the `confirm_investment` RPC (`reserved→paid`, KYC gate) → the
+offering owner calls `closeOffering()` when the window closes, which runs
+`settle_offering`, issues a mock token per paid investment (idempotent via
+`payment_events`) and finally `mark_offering_settled`. See "`/investir`
+screen" and "`/empresa/ofertas` screen" below for each side's UI.
 
-🔴 **REGRA DE OURO das leituras**: `loadActiveOfferingsByCategory` e
-`loadPublicOffering` usam sempre uma lista branca explícita de colunas,
-**nunca `select('*')`** — CNPJ, telefone, endereço completo, faturamento e
-wallet nunca saem do banco nessas leituras (não é só "escondido no JSX";
-o campo nem é buscado, então nunca aparece no HTML renderizado no
-servidor / view-source). Aplicar o mesmo padrão em qualquer leitura nova
-que exponha dado de oferta/emissor.
+🔴 **GOLDEN RULE for reads**: `loadActiveOfferingsByCategory` and
+`loadPublicOffering` always use an explicit allowlist of columns, **never
+`select('*')`**: CNPJ, phone, full address, revenue and wallet never leave the
+database in these reads (it's not just "hidden in the JSX"; the field isn't even
+fetched, so it never shows up in the server-rendered HTML / view-source). Apply
+the same pattern to any new read that exposes offering/issuer data.
 
-Emissor: `createOffering()` grava sempre em `status='draft'`;
-`activateOffering()` é a única transição `draft→active` — como
-`offerings` não tem trigger de transição (diferente de `investments`), a
-proteção contra duplo clique/corrida é um `UPDATE ... WHERE id=? AND
-issuer_id=? AND status='draft'` atômico no próprio Server Action, não o
-banco. `hardCapCents` é sempre calculado como `base + floor(base *
-lote% / 100)` — a faixa validada de lote (0–25%) é escolhida
-matematicamente para nunca poder violar o CHECK `additional_lot` do
-banco.
+Issuer: `createOffering()` always writes `status='draft'`; `activateOffering()`
+is the only `draft→active` transition. Since `offerings` has no transition
+trigger (unlike `investments`), protection against a double click/race is an
+atomic `UPDATE ... WHERE id=? AND issuer_id=? AND status='draft'` in the Server
+Action itself, not the database. `hardCapCents` is always computed as
+`base + floor(base * lot% / 100)`; the validated lot range (0–25%) is
+chosen mathematically so it can never violate the database's `additional_lot`
+CHECK.
 
-🔴 **Acoplamento frágil, atenção ao mexer em qualquer migration**: todo
-`translate*DbError()` (em `cadastro/actions.ts`, `investir/actions.ts`,
-`empresa/ofertas/actions.ts`, `perfil/actions.ts`) casa `error.code`
-(`23514`/`23505`) **mais uma substring do texto do erro** (nome da
-constraint ou mensagem de `RAISE EXCEPTION`) — não um código estável.
-Renomear uma constraint CHECK ou editar uma mensagem de `RAISE EXCEPTION`
-numa migration quebra silenciosamente esse casamento (cai no fallback
-genérico "Não foi possível...", sem erro de compilação). Ao tocar numa
-migration, dar `grep` no nome da constraint dentro de `src/app/**/
-actions.ts` antes.
+🔴 **Fragile coupling, watch out when touching any migration**: every
+`translate*DbError()` (in `cadastro/actions.ts`, `investir/actions.ts`,
+`empresa/ofertas/actions.ts`, `perfil/actions.ts`) matches `error.code`
+(`23514`/`23505`) **plus a substring of the error text** (the constraint name or
+the `RAISE EXCEPTION` message), not a stable code. Renaming a CHECK constraint
+or editing a `RAISE EXCEPTION` message in a migration silently breaks that match
+(it falls into the generic "Could not..." fallback, with no compile error). When
+touching a migration, `grep` the constraint name inside `src/app/**/actions.ts`
+first.
 
-### Carteira vinculada ao banco (além da conexão MetaMask real)
+### Wallet linked to the database (besides the real MetaMask connection)
 
-`0006`/`0007` adicionam `wallet_address` (nullable, único por tabela) a
+`0006`/`0007` add `wallet_address` (nullable, unique per table) to
 `investors`/`issuers`. `saveWallet()`/`unlinkWallet()`
-(`src/app/perfil/actions.ts`) persistem o endereço atualmente conectado
-via wagmi — a conexão MetaMask em si continua real e client-side,
-inalterada (ver "Tela `/perfil`", seção "4. Carteira"); o que é novo é só
-a camada de persistência. `WalletSection.tsx` compara o endereço conectado
-no wagmi contra o `walletAddress` vindo do banco e mostra
-Vincular/Trocar/Desvincular conforme o caso. Erro de unicidade (`23505`)
-é traduzido para "Esta carteira já está vinculada a outra conta."
+(`src/app/perfil/actions.ts`) persist the address currently connected via wagmi;
+the MetaMask connection itself is still real and client-side, unchanged (see
+"`/perfil` screen", section "4. Wallet"); only the persistence layer is new.
+`WalletSection.tsx` compares the address connected in wagmi against the
+`walletAddress` coming from the database and shows Link/Switch/Unlink
+accordingly. A uniqueness error (`23505`) is translated to "This wallet is
+already linked to another account."
 
-### Seed de demonstração (`scripts/seed-demo.ts`)
+### Demo seed (`scripts/seed-demo.ts`)
 
-`npm run seed:demo` cria uma conta emissor + uma oferta ativa + uma conta
-investidor prontas para logar (credenciais impressas no terminal ao
-final), pensado para não precisar digitar cadastro ao vivo num pitch.
-Roda fora do Next via `tsx` (novo devDependency, resolve os path aliases
-`@/...` do `tsconfig.json` sozinho) porque os Server Actions reais
-assumem uma requisição HTTP autenticada (`resolveAccount()` via cookies),
-que não existe rodando um script solto — o script cria os usuários de
-auth direto pelo admin API do Supabase e grava as linhas de domínio via
-um client admin local ao script.
+`npm run seed:demo` creates an issuer account + an active offering + an investor
+account ready to sign in (credentials printed in the terminal at the end),
+designed so nobody has to type a sign-up live during a pitch. It runs outside
+Next via `tsx` (a devDependency that resolves the `tsconfig.json` `@/...` path
+aliases by itself) because the real Server Actions assume an authenticated HTTP
+request (`resolveAccount()` via cookies), which doesn't exist when running a
+loose script; the script creates the auth users directly through Supabase's
+admin API and writes the domain rows through an admin client local to the
+script.
 
-🔴 **Não reaproveita `createAdminClient()` de `src/lib/supabase/admin.ts`**
-— tentativa inicial que quebrou na prática: `import "server-only"` lança
-incondicionalmente sob Node puro (`throw` direto em
-`node_modules/server-only/index.js`), não só quando bundlado para
-browser como o comentário do próprio módulo sugere — o no-op só existe
-via campo `"browser"` do `package.json` do pacote, que só bundlers
-(webpack/turbopack) honram, não a resolução de módulo padrão do Node
-usada por `tsx`. O script duplica as mesmas duas linhas de construção do
-client em vez de importar o módulo guardado.
+🔴 **It does not reuse `createAdminClient()` from `src/lib/supabase/admin.ts`**:
+an initial attempt that broke in practice. `import "server-only"` throws
+unconditionally under plain Node (a direct `throw` in
+`node_modules/server-only/index.js`), not only when bundled for the browser as
+the module's own comment suggests; the no-op only exists through the package's
+`"browser"` field in `package.json`, which only bundlers (webpack/turbopack)
+honor, not the standard Node module resolution used by `tsx`. The script
+duplicates the same two lines that build the client instead of importing the
+guarded module.
 
-Idempotente **por conta** (lookup por `user_id` antes de criar — rodar de
-novo não duplica nem troca credenciais), **não por oferta** (cada
-execução cria uma oferta ativa nova, mesmo que a anterior já tenha sido
-fechada num ensaio — não existe hoje um jeito de "resetar" uma oferta que
-já mudou de estado sem mexer no histórico de aportes). Investidor demo
-nasce `kyc_status='pending'` (não pré-aprovado) e sem teto anual
-(`annual_limit_cents=null`) de propósito — deixa o gate de KYC disponível
-para ser demonstrado ao vivo, sem risco de um valor redondo de
-demonstração esbarrar no teto de varejo de R$20 mil/ano no meio do pitch.
-Exige `NIARA_ENV=demo` (recusa rodar sem isso) e marca `is_demo: true` em
-toda linha criada, mesmo padrão do resto do app.
+Idempotent **per account** (lookup by `user_id` before creating; running it again
+doesn't duplicate nor change credentials), **not per offering** (each run
+creates a new active offering, even if the previous one was already closed in a
+rehearsal; there is currently no way to "reset" an offering that already changed
+state without touching the investment history). The demo investor is born with
+`kyc_status='pending'` (not pre-approved) and without an annual cap
+(`annual_limit_cents=null`) on purpose: it leaves the KYC gate available to be
+demonstrated live, with no risk of a round demo amount hitting the R$20k/year
+retail cap in the middle of the pitch. It requires `NIARA_ENV=demo` (refuses to
+run without it) and marks `is_demo: true` on every row it creates, the same
+pattern as the rest of the app.
 
-### Upload de logo do emissor (`src/lib/storage/issuer-logo.ts`)
+### Issuer logo upload (`src/lib/storage/issuer-logo.ts`)
 
-Real (Supabase Storage, bucket público `issuer-logos`,
-`${accountId}/logo.<ext>`) — diferente do `AvatarUpload.tsx` da seção
-"Dados de cadastro" (que continua 100% local/simulado, nunca enviado — ver
-"Tela `/perfil`"). Validação de MIME/tamanho (2MB) roda no servidor, não
-só no cliente. 🔴 Trocar a extensão entre uploads (png→jpg) deixa o
-arquivo antigo órfão no bucket a menos que seja removido explicitamente —
-o código já trata isso, mas é um detalhe fácil de reintroduzir como bug
-(bucket é um domínio de falha separado da linha no banco). A URL pública
-usa `?v=<versão>` para cache-busting, lida do `updated_at` do próprio
-objeto no Storage (não existe `updated_at` em `issuers`) — sem isso,
-sobrescrever o mesmo path manteria a imagem antiga em cache no
-navegador/CDN.
-
----
-
-## Astronauta (removido)
-
-O astronauta (guia de scroll 2D que seguia o cursor e viajava pelas
-âncoras de cada seção) foi **removido por completo** — não ficou bom
-visualmente. Saíram: `src/components/astronaut/` (`AstronautGuide.tsx` +
-`anchors.ts`), o `<AstronautGuide />` em `src/app/page.tsx`,
-`public/astronaut.png` e o gancho de fade-out que existia na seção
-Créditos (seção essa também removida depois — ver "Estado atual").
-
-No lugar dele, o hero foi rebalanceado para ficar centrado no texto
-(headline + subtítulo + CTAs), com um elemento decorativo sutil atrás do
-conteúdo — o motivo do planeta anelado do `<Logo />` (círculo + elipse
-inclinada) desenhado em SVG dentro de `HeroParallaxLayers.tsx`, com leve
-parallax por scroll (GSAP `ScrollTrigger`, respeitando
-`prefers-reduced-motion`) — junto dos glows suaves (`blur` + cores da
-paleta) que já existiam ali. Não reintroduzir um elemento central 3D/2D
-persistente sem alinhar antes com o usuário.
-
-### Anel do planeta: salmão reforçado + rotação lenta
-
-O traço da elipse (anel) usa `--color-salmon` em opacidade alta (`0.9`),
-separada da opacidade do círculo (corpo do planeta, `0.3`) — antes os dois
-dividiam uma única opacidade de container (`0.2`), o que apagava o salmão
-sobre o `bg-military`. Mesma lógica no glow salmão (`layer2Ref`): opacidade
-e área um pouco maiores (`bg-salmon/35`, `h-80 w-80`) para o brilho ficar
-mais presente sem sujar o fundo. Nenhum token novo foi criado — resolvido
-só com opacidade/uso sobre os tokens já oficiais.
-
-O anel gira devagar e continuamente (`hero-orbit-ring-spin`,
-`globals.css`, 56s linear infinite) em torno do centro do próprio traço —
-a `<g>` que envolve a `<ellipse>` recebe `transform-box: fill-box;
-transform-origin: center;` para o eixo de rotação ficar no centro do
-planeta, não no canto do SVG. A inclinação estática original (-18°) foi
-incorporada à animação (`from { rotate(-18deg) }` → `to { rotate(342deg)
-}`, isto é, uma volta completa de -18° a -18°+360°) em vez de ficar num
-atributo `transform` solto na `<ellipse>` — CSS `transform` substitui por
-completo (não combina com) o atributo `transform` do SVG no mesmo
-elemento, então os dois não podiam coexistir. Por essa mesma escolha de
-ângulo final (342° ≡ -18° em módulo 360), a regra global de
-`prefers-reduced-motion: reduce` já existente em `globals.css` (que reduz
-toda animação a uma única iteração de ~0.01ms) trava o anel exatamente na
-inclinação estática original, sem precisar de uma media query própria só
-para este elemento — desde que a animação tenha `forwards` no fill-mode
-(`animation: hero-orbit-ring-spin 56s linear infinite forwards`): sem
-isso, ao fim da única iteração o navegador descarta o "to" e o transform
-volta a `none` (anel "destorcido", perde a inclinação por completo) em
-vez de ficar parado nos 342°. Verificado via Playwright: `getComputedStyle`
-do `<g>` muda de ângulo a cada poucos segundos em modo normal e permanece
-travado com o mesmo transform sob `reducedMotion: 'reduce'`. O parallax de
-scroll (GSAP `ScrollTrigger`, no `<div>`
-externo que envolve o SVG) continua funcionando junto, sem conflito — atua
-sobre um elemento HTML diferente do `<g>` que a animação CSS controla.
+Real (Supabase Storage, public bucket `issuer-logos`,
+`${accountId}/logo.<ext>`), unlike `AvatarUpload.tsx` in the "Registration data"
+section (which is still 100% local/simulated, never uploaded; see "`/perfil`
+screen"). MIME/size validation (2MB) runs on the server, not only on the client.
+🔴 Changing the extension between uploads (png→jpg) leaves the old file orphaned
+in the bucket unless it is explicitly removed; the code already handles that, but
+it is an easy detail to reintroduce as a bug (the bucket is a failure domain
+separate from the database row). The public URL uses `?v=<version>` for cache
+busting, read from the Storage object's own `updated_at` (there is no
+`updated_at` in `issuers`); without it, overwriting the same path would keep the
+old image cached in the browser/CDN.
 
 ---
 
-## Scroll suave (Lenis) + GSAP ScrollTrigger
+## Astronaut (removed)
 
-`src/components/scroll/LenisProvider.tsx`, montado no layout raiz (envolve
-`Header` + conteúdo + `Footer`, global ao site).
+The astronaut (a 2D scroll guide that followed the cursor and traveled through
+each section's anchors) was **removed completely**; it didn't look good. Gone:
+`src/components/astronaut/` (`AstronautGuide.tsx` + `anchors.ts`), the
+`<AstronautGuide />` in `src/app/page.tsx`, `public/astronaut.png` and the
+fade-out hook that existed in the Credits section (a section also removed later;
+see "Current state").
 
-- Lenis roda em modo `root` (sem wrapper/content — hookeia o scroll nativo
-  do `window`), com `autoRaf: false`: quem dirige o tick é o
-  `gsap.ticker`, e `lenis.on('scroll', ScrollTrigger.update)` mantém o
-  ScrollTrigger sincronizado. Padrão recomendado pela própria GSAP para
-  integrar com Lenis.
-- Com `prefers-reduced-motion`, o Lenis **nem é montado** — o componente
-  renderiza `children` direto, sem o wrapper `<ReactLenis>`. Como o
-  `ReactLenis` em modo `root` não insere nenhum elemento DOM (só um
-  `Context.Provider`), os dois caminhos produzem exatamente o mesmo
-  markup — sem risco de mismatch de hidratação por causa disso.
-- Teclado (Page Up/Down, setas, Espaço) e âncoras (`#hash`) continuam
-  funcionando com o Lenis ativo — testado via Playwright.
+In its place, the hero was rebalanced to be centered on the text (headline +
+subtitle + CTAs), with a subtle decorative element behind the content: the ringed
+planet motif of `<Logo />` (circle + tilted ellipse) drawn in SVG inside
+`HeroParallaxLayers.tsx`, with light scroll parallax (GSAP `ScrollTrigger`,
+respecting `prefers-reduced-motion`), together with the soft glows (`blur` +
+palette colors) that were already there. Don't reintroduce a persistent central
+3D/2D element without aligning with the user first.
 
-### 🔴 Pegadinha do pin dentro de `<main>` flex (`pinSpacing`)
+### Planet ring: stronger salmon + slow rotation
 
-Qualquer `ScrollTrigger.create({ pin: true, ... })` numa seção cujo pai
-seja `display: flex` (o `<main className="flex flex-1 flex-col">` da
-home é) **precisa** de `pinSpacing: true` explícito. Por padrão, o GSAP
-detecta pai `display:flex` e desativa o `pinSpacing` automaticamente
-(assumindo que o flex já cuida do espaçamento) — sem isso, o
-pin-spacer não reserva o espaço extra de scroll e a seção "solta" cedo
-demais, revelando o conteúdo de baixo no meio da sequência. Ver
-`HowItWorksSection.tsx` para o padrão correto. Isso vale para qualquer
-seção pinned futura dentro do `<main>` da home.
+The ellipse (ring) stroke uses `--color-salmon` at high opacity (`0.9`),
+separate from the circle's (planet body's) opacity (`0.3`); before, both shared a
+single container opacity (`0.2`), which washed out the salmon on `bg-military`.
+Same logic for the salmon glow (`layer2Ref`): slightly larger opacity and area
+(`bg-salmon/35`, `h-80 w-80`) so the glow is more present without muddying the
+background. No new token was created; solved only with opacity/usage over the
+existing official tokens.
+
+The ring rotates slowly and continuously (`hero-orbit-ring-spin`, `globals.css`,
+56s linear infinite) around the center of its own stroke: the `<g>` wrapping the
+`<ellipse>` gets `transform-box: fill-box; transform-origin: center;` so the
+rotation axis is the planet's center, not the SVG's corner. The original static
+tilt (-18°) was built into the animation (`from { rotate(-18deg) }` → `to {
+rotate(342deg) }`, i.e. a full turn from -18° to -18°+360°) instead of staying in
+a loose `transform` attribute on the `<ellipse>`: a CSS `transform` completely
+replaces (doesn't combine with) the SVG `transform` attribute on the same
+element, so the two couldn't coexist. Because of that choice of end angle (342° ≡
+-18° mod 360), the existing global `prefers-reduced-motion: reduce` rule in
+`globals.css` (which reduces every animation to a single ~0.01ms iteration) locks
+the ring exactly at the original static tilt, without a media query of its own
+for this element, as long as the animation has `forwards` in its fill-mode
+(`animation: hero-orbit-ring-spin 56s linear infinite forwards`): without it, at
+the end of the single iteration the browser discards the "to" and the transform
+goes back to `none` (an "untilted" ring that loses its tilt completely) instead of
+staying at 342°. Verified with Playwright: the `<g>`'s `getComputedStyle` changes
+angle every few seconds in normal mode and stays locked at the same transform
+under `reducedMotion: 'reduce'`. The scroll parallax (GSAP `ScrollTrigger`, on the
+outer `<div>` wrapping the SVG) keeps working alongside it with no conflict; it
+acts on a different HTML element from the `<g>` the CSS animation controls.
 
 ---
 
-## Tela `/ativos` (dashboard de portfólio)
+## Smooth scroll (Lenis) + GSAP ScrollTrigger
 
-Substituiu o stub antigo ("Ativos — em construção"). Dashboard de
-portfólio tokenizado no estilo do dashboard "Assets" do `niara-site`
-(repositório irmão, exchange), mas adaptado: fundo **verde-sálvia cheio**
-(`bg-military`, não o dashboard escuro/preto do `niara-site`), idioma
-pt-BR, moeda **R$ (BRL)** em vez de USDT. Ver `AtivosPage.tsx`
-(orquestrador) e os componentes em `src/components/ativos/`.
+`src/components/scroll/LenisProvider.tsx`, mounted in the root layout (wrapping
+`Header` + content + `Footer`, global to the site).
 
-**Estrutura da página** (`AtivosPage.tsx`, `"use client"` por causa do
-estado da aba):
+- Lenis runs in `root` mode (no wrapper/content; it hooks the `window`'s native
+  scroll), with `autoRaf: false`: the `gsap.ticker` drives the tick, and
+  `lenis.on('scroll', ScrollTrigger.update)` keeps ScrollTrigger in sync. The
+  pattern GSAP itself recommends for integrating with Lenis.
+- With `prefers-reduced-motion`, Lenis **isn't even mounted**: the component
+  renders `children` directly, without the `<ReactLenis>` wrapper. Since
+  `ReactLenis` in `root` mode inserts no DOM element (only a `Context.Provider`),
+  both paths produce exactly the same markup; no hydration mismatch risk from
+  this.
+- Keyboard (Page Up/Down, arrows, Space) and anchors (`#hash`) keep working with
+  Lenis active; tested with Playwright.
 
-- Banner de demonstração fixo no topo (`bg-panel`, obrigatório pela regra
-  "nada simulado pode parecer real" — texto: "Demonstração — carteira e
-  dados simulados. Não reflete posições ou valores reais.")
-- Duas abas (`role="tablist"`/`role="tab"`/`role="tabpanel"`, sem roving
-  tabindex — foco via Tab nativo do `<button>`, ativação via
-  click/Enter/Espaço, suficiente para o nível de acessibilidade já usado
-  no resto do projeto): **"Minha carteira"** (padrão) e **"Ativos
-  disponíveis"**.
-- Aba "Minha carteira": `PortfolioSummary` (4 KPIs) → grid com
-  `PortfolioEvolutionChart` (7 colunas) + `AllocationDonut` (5 colunas) →
+### 🔴 The pin-inside-flex-`<main>` gotcha (`pinSpacing`)
+
+Any `ScrollTrigger.create({ pin: true, ... })` on a section whose parent is
+`display: flex` (the home's `<main className="flex flex-1 flex-col">` is)
+**needs** an explicit `pinSpacing: true`. By default, GSAP detects a
+`display:flex` parent and turns `pinSpacing` off automatically (assuming flex
+already handles the spacing); without it, the pin-spacer doesn't reserve the
+extra scroll space and the section "lets go" too early, revealing the content
+below in the middle of the sequence. See `HowItWorksSection.tsx` for the right
+pattern. This applies to any future pinned section inside the home's `<main>`.
+
+---
+## `/ativos` screen (portfolio dashboard)
+
+Replaced the old stub ("Ativos — em construção"). A tokenized portfolio dashboard
+in the style of `niara-site`'s "Assets" dashboard (sibling repository, the
+exchange), but adapted: a **full sage green** background (`bg-military`, not
+`niara-site`'s dark/black dashboard), **R$ (BRL)** instead of USDT. See
+`AssetsPage.tsx` (orchestrator) and the components in `src/components/ativos/`.
+
+**Page structure** (`AssetsPage.tsx`, `"use client"` because of the tab state):
+
+- A fixed demo banner at the top (`bg-panel`, required by the "nothing simulated
+  may look real" rule; text: "Demo: simulated portfolio and data. Doesn't reflect
+  real positions or values.")
+- Two tabs (`role="tablist"`/`role="tab"`/`role="tabpanel"`, without roving
+  tabindex; focus via the `<button>`'s native Tab, activation via
+  click/Enter/Space, enough for the accessibility level already used across the
+  project): **"My portfolio"** (default) and **"Available assets"**.
+- "My portfolio" tab: `PortfolioSummary` (4 KPIs) → a grid with
+  `PortfolioEvolutionChart` (7 columns) + `AllocationDonut` (5 columns) →
   `PositionsTable`.
-- Aba "Ativos disponíveis": `AssetCatalog` — grade de cards de catálogo
-  demo, cada um com botão "Investir (Em breve)" **desabilitado**
-  (`disabled aria-disabled="true"`, mesmo padrão do CTA do Hero).
+- "Available assets" tab: `AssetCatalog`, a grid of demo catalog cards, each with
+  a **disabled** "Invest (Coming soon)" button (`disabled aria-disabled="true"`,
+  the same pattern as the Hero CTA).
 
-**Dados**: tudo em `src/lib/mock/ativos.ts` (tipado: `Position`,
-`MonthlyEvolution`, `CatalogAsset`) — 5 posições (uma por categoria de
-token: PMEs, Agro, Imobiliário, Auto, Títulos de dívida), 12 meses de
-evolução, 6 itens de catálogo. Nenhum valor é real; números escolhidos só
-para serem internamente coerentes (KPIs somam a partir das posições,
-último mês da evolução bate com os totais). Derivações (totais do
-portfólio, agrupamento de alocação) ficam em `src/lib/ativos/derive.ts`
-como funções puras — os componentes não guardam valor derivado em
-estado, recalculam a partir do mock a cada render (mesmo padrão do
-dashboard do `niara-site`).
+**Data**: everything in `src/lib/mock/assets.ts` (typed: `Position`,
+`MonthlyEvolution`, `CatalogAsset`): 5 positions (one per token category: SMEs,
+Agro, Real estate, Auto, Debt securities), 12 months of evolution, 6 catalog
+items. No value is real; the numbers were chosen only to be internally
+consistent (the KPIs add up from the positions, the last evolution month matches
+the totals). Derivations (portfolio totals, allocation grouping) live in
+`src/lib/assets/derive.ts` as pure functions; components don't keep derived
+values in state, they recompute from the mock on every render (the same pattern
+as `niara-site`'s dashboard).
 
-**Alocação (donut)**: três visões alternáveis (`AllocationView`: `classe`
-| `ativo` | `setor`) — "Por classe" agrupa por categoria de token (cor
-fixa por categoria, `CATEGORY_COLOR_VAR` em `derive.ts`), "Por ativo"
-mostra uma fatia por posição (cor = cor da categoria da posição), "Por
-setor/região" agrupa por região (`Region`: sudeste/sul/nordeste/
-centro-oeste, cor fixa por região). O SVG do gráfico é `aria-hidden`; a
-alternativa acessível é a própria lista de legenda ao lado (texto real,
-não decorativo) com label + % + valor em R$ — mesmo padrão de
-acessibilidade do donut do `niara-site`.
+**Allocation (donut)**: three switchable views (`AllocationView`: `class` |
+`asset` | `sector`). "By class" groups by token category (a fixed color per
+category, `CATEGORY_COLOR_VAR` in `derive.ts`), "By asset" shows one slice per
+position (color = the position's category color), "By sector/region" groups by
+region (`Region`: sudeste/sul/nordeste/centro-oeste, a fixed color per region).
+The chart's SVG is `aria-hidden`; the accessible alternative is the legend list
+next to it (real text, not decorative) with label + % + value in R$, the same
+accessibility pattern as `niara-site`'s donut.
 
-**Gráfico de evolução (barras empilhadas)**: `recharts` `BarChart`,
-`stackId` único para as duas séries ("Valor investido" + "Ganho de
-capital"). Cores via `fill="var(--color-chart-*)"` / `var(--color-value-
-positive)` — atributo SVG lido em runtime, `var()` funciona normalmente
-aqui (diferente de um valor estático de build). Abaixo do gráfico, uma
-descrição textual (`ptBr.ativos.evolucao.description`) serve de
-alternativa de acessibilidade ao SVG `aria-hidden`, apontando que os
-mesmos dados aparecem na tabela de posições.
+**Evolution chart (stacked bars)**: `recharts` `BarChart`, a single `stackId`
+for both series ("Invested amount" + "Capital gain"). Colors via
+`fill="var(--color-chart-*)"` / `var(--color-value-positive)`, an SVG attribute
+read at runtime, so `var()` works normally here (unlike a static build-time
+value). Below the chart, a text description (`dict.assets.evolution.description`)
+is the accessibility alternative to the `aria-hidden` SVG, pointing out that the
+same data appears in the positions table.
 
-**Tooltips do Recharts**: tipo próprio (`ChartTooltipProps`/
-`DonutTooltipProps`) em vez dos genéricos do Recharts (`TooltipProps<...>`)
-— evita conflitos de variância entre o tipo esperado pela prop `content`
-e o componente customizado (mesmo padrão do `niara-site`).
+**Recharts tooltips**: their own type (`ChartTooltipProps`/`DonutTooltipProps`)
+instead of Recharts' generics (`TooltipProps<...>`), which avoids variance
+conflicts between the type expected by the `content` prop and the custom
+component (the same pattern as `niara-site`).
 
-Ver "Tokens do dashboard `/ativos`" (seção de Design system acima) para
-os tokens de cor específicos desta tela e a pegadinha de contraste que já
-foi corrigida (fundo do card mais escuro que a seção, não mais claro).
+See "`/ativos` dashboard tokens" (in the Design system section above) for this
+screen's specific color tokens and the contrast gotcha that was already fixed
+(the card background darker than the section, not lighter).
 
 ---
 
-## Tela `/perfil` (dados de cadastro, minhas ofertas, perfil de investidor, carteira)
+## `/perfil` screen (registration data, my offerings, investor profile, wallet)
 
-Substituiu o stub antigo ("Perfil — em construção"). Inspirada na página
-Profile do `niara-site` (repositório irmão) — mesma estrutura de sidebar +
-seções e mesma lógica de questionário de perfil de investidor (porém
-traduzida e com conteúdo próprio) — adaptada ao tema verde-sálvia cheio
-(`bg-military`, igual à tela `/ativos`, não o dashboard escuro do
-`niara-site`). Ver `PerfilPage.tsx` (orquestrador) e os componentes em
+Replaced the old stub ("Perfil — em construção"). Inspired by `niara-site`'s
+Profile page (sibling repository): the same sidebar + sections structure and the
+same investor profile questionnaire logic (but with its own content), adapted to
+the full sage green theme (`bg-military`, like `/ativos`, not `niara-site`'s dark
+dashboard). See `ProfilePage.tsx` (orchestrator) and the components in
 `src/components/perfil/`.
 
-🔴 **Diferente da versão original desta tela**: os dados de cadastro e a
-seção de ofertas hoje leem/gravam no banco de verdade (ver "Backend
-(Supabase)" acima) — não são mais um formulário 100% em memória. Só o
-resultado do questionário de perfil de investidor (seção 3) e o avatar
-(dentro da seção 1) continuam simulados/locais, ver cada um abaixo. O
-conceito antigo de "conta única com CPF **ou** CNPJ, mais empresas
-cadastradas à parte com finalidade investidora/tokenizada" também não
-existe mais: desde o backend real, uma **conta** já nasce como investidor
-(PF) OU emissor (PJ) na hora do `/cadastro` — nunca as duas — e é
-`profile.role` (vindo de `resolveAccount()`) que decide o que a tela
-mostra, não mais um toggle manual dentro do perfil.
+🔴 **Different from the original version of this screen**: the registration data
+and the offerings section now actually read/write the database (see "Backend
+(Supabase)" above); they are no longer a 100% in-memory form. Only the investor
+profile questionnaire result (section 3) and the avatar (inside section 1) are
+still simulated/local; see each one below. The old concept of "a single account
+with a CPF **or** a CNPJ, plus companies registered separately with an investing
+or tokenized purpose" also no longer exists: since the real backend, an
+**account** is born as an investor (individual) OR an issuer (company) at
+`/cadastro` time, never both, and it is `profile.role` (from `resolveAccount()`)
+that decides what the screen shows, no longer a manual toggle inside the
+profile.
 
-**Estrutura da página** (`PerfilPage.tsx`, `"use client"` por causa do
-estado do contexto de perfil de investidor):
+**Page structure** (`ProfilePage.tsx`, `"use client"` because of the investor
+profile context state):
 
-- Banner de demonstração fixo no topo (mesmo padrão do banner de `/ativos`)
-- Faixa de aviso de KYC (`bg-panel`): "Não verificado" + texto explicando
-  que a verificação de identidade completa será exigida quando o produto
-  entrar no ar. 🔴 Este banner é **estático** — não lê `investors.kyc_status`
-  do banco; ver "Backend (Supabase)" → "Gate de KYC" para a aprovação
-  real (via `/investir`) que ele não reflete.
-- Badges de status (`ShieldAlert` "Não verificado" — mesmo banner estático
-  acima — + `TrendingUp` "Perfil: {categoria atual}")
-- Sidebar de navegação por âncora (`PerfilNav.tsx` — sticky no desktop,
-  abas horizontais roláveis no mobile, mesmo padrão do `ProfileNav` do
-  `niara-site`) + seções empilhadas, nesta ordem: **Dados de cadastro** →
-  **Minhas ofertas** (só para `role==='issuer'`) → **Perfil de
-  investidor** → **Carteira**.
+- A fixed demo banner at the top (the same pattern as `/ativos`'s banner)
+- A KYC notice strip (`bg-panel`): "Not verified" + text explaining that full
+  identity verification will be required when the product goes live. 🔴 This
+  banner is **static**: it doesn't read `investors.kyc_status` from the
+  database; see "Backend (Supabase)" → "KYC gate" for the real approval (via
+  `/investir`) that it doesn't reflect.
+- Status badges (`ShieldAlert` "Not verified", the same static banner above, +
+  `TrendingUp` "Profile: {current category}")
+- An anchor navigation sidebar (`ProfileNav.tsx`; sticky on desktop, horizontally
+  scrollable tabs on mobile, the same pattern as `niara-site`'s `ProfileNav`) +
+  stacked sections, in this order: **Registration data** → **My offerings** (only
+  for `role==='issuer'`) → **Investor profile** → **Wallet**.
 
-**Tokens de cor**: a tela reaproveita os tokens já criados para `/ativos`
-(`panel`/`panel-border` para cards, `on-military`/`on-military-muted`
-para texto, `value-negative` para erro de validação, `salmon`/`on-salmon`
-para CTAs e estado ativo) — **nenhum token novo foi criado**. Campos de
-formulário usam `bg-military` (mais claro que o `panel` do card que os
-contém, para ficarem visualmente distintos) com borda `panel-border` e
-anel de foco `ring-salmon`; erro de validação usa borda e texto
-`value-negative` (já calibrado para AA contra `military`/`panel`, ver
-"Tokens do dashboard `/ativos`" acima).
+**Color tokens**: the screen reuses the tokens already created for `/ativos`
+(`panel`/`panel-border` for cards, `on-military`/`on-military-muted` for text,
+`value-negative` for validation errors, `salmon`/`on-salmon` for CTAs and the
+active state); **no new token was created**. Form fields use `bg-military`
+(lighter than the `panel` of the card containing them, so they stand out
+visually) with a `panel-border` border and a `ring-salmon` focus ring; validation
+errors use a `value-negative` border and text (already calibrated for AA against
+`military`/`panel`, see "`/ativos` dashboard tokens" above).
 
-### 1. Dados de cadastro (`PersonalDataSection.tsx`)
+### 1. Registration data (`PersonalDataSection.tsx`)
 
-O tipo de pessoa (`TipoPessoa`, `"pf"`/`"pj"`) não é mais um toggle
-manual — vem fixo de `profile.role` (investor→pf, issuer→pj) e decide os
-campos exclusivos (Nome completo + Data de nascimento para PF; Razão
-social + Nome fantasia + Faturamento anual + Setor + Resumo do negócio +
-opt-in "Publicar CNPJ" para PJ) e a máscara de documento
-(`maskDocumento`/`isValidDocumento`, `src/lib/masks.ts`). Campos
-compartilhados (documento, telefone com prefixo fixo "+55" só na exibição,
-endereço via CEP) completam o formulário. `updateProfile()`
-(`src/app/perfil/actions.ts`) grava tudo isso de verdade no Postgres — ver
-"Backend (Supabase)" acima. Para emissores, `LogoUpload.tsx` fica
-embutido nesta seção e faz upload real para o Supabase Storage (ver
-"Upload de logo do emissor" no Backend acima) — **diferente** de
-`AvatarUpload.tsx` (foto de perfil, PF **e** PJ), que segue 100%
-local/simulado: object URL via `URL.createObjectURL`, revogado no cleanup
-do `useEffect` e ao trocar de imagem, **nunca enviado**.
+The person type (`PersonType`, `"pf"`/`"pj"`) is no longer a manual toggle: it
+comes fixed from `profile.role` (investor→pf, issuer→pj) and decides the
+exclusive fields (Full name + Date of birth for an individual; Legal name + Trade
+name + Annual revenue + Sector + Business summary + the "Publish CNPJ" opt-in for
+a company) and the document mask (`maskDocument`/`isValidDocument`,
+`src/lib/masks.ts`). Shared fields (document, phone with a fixed "+55" prefix in
+display only, address via CEP) complete the form. `updateProfile()`
+(`src/app/perfil/actions.ts`) actually writes all of it to Postgres; see
+"Backend (Supabase)" above. For issuers, `LogoUpload.tsx` is embedded in this
+section and does a real upload to Supabase Storage (see "Issuer logo upload" in
+the Backend above), **unlike** `AvatarUpload.tsx` (profile photo, individual
+**and** company), which stays 100% local/simulated: an object URL via
+`URL.createObjectURL`, revoked in the `useEffect` cleanup and when the image
+changes, **never uploaded**.
 
-🔴 **LGPD**: nesta fase os dados gravados (nome/CPF-CNPJ/data de
-nascimento/telefone/endereço/setor/resumo do negócio) são fictícios de
-demonstração, mas já são **PII persistida de verdade** num Postgres — não
-mais só estado React efêmero como antes deste backend. Continua valendo a
-regra de nunca persistir nada disso em `localStorage`/`sessionStorage`
-(client-side) — a persistência acontece só no servidor, via Server
-Action, nunca no navegador. Se algum dia os dados deixarem de ser
-fictícios, a responsabilidade de LGPD passa a ser sobre o banco Supabase,
-não mais uma garantia "nada sai do navegador".
+🔴 **LGPD**: at this stage the data written (name/CPF-CNPJ/date of
+birth/phone/address/sector/business summary) is fictitious demo data, but it is
+already **really persisted PII** in Postgres, no longer only ephemeral React
+state as before this backend. The rule of never persisting any of it in
+`localStorage`/`sessionStorage` (client-side) still holds; persistence only
+happens on the server, via a Server Action, never in the browser. If the data
+ever stops being fictitious, the LGPD responsibility moves to the Supabase
+database, no longer a "nothing leaves the browser" guarantee.
 
-### 2. Minhas ofertas (`MyOffersSection.tsx`, só para `role==='issuer'`)
+### 2. My offerings (`MyOffersSection.tsx`, only for `role==='issuer'`)
 
-Substituiu a antiga seção "Empresas"/"Minhas empresas" (cadastro de
-empresa com escolha de finalidade dentro do perfil não existe mais — ver
-nota 🔴 no topo desta tela). Painel **só de leitura**: lista as ofertas
-reais do emissor logado (`loadMyOfferingsSummary()`, filtrado por
-`accountId` no servidor — nunca `select('*')`) com valor do cap, status
-(rótulos em `ptBr.empresaOfertas.status`) e meta mínima; botão "Gerenciar
-ofertas" linka para `/empresa/ofertas`, onde criação/ativação/fechamento
-acontecem de fato (ver seção própria abaixo). Estado vazio quando o
-emissor ainda não tem nenhuma oferta.
+Replaced the old "Companies"/"My companies" section (registering a company with
+a purpose choice inside the profile no longer exists; see the 🔴 note at the top
+of this screen). A **read-only** panel: it lists the signed-in issuer's real
+offerings (`loadMyOfferingsSummary()`, filtered by `accountId` on the server,
+never `select('*')`) with the cap value, status (labels in
+`dict.companyOfferings.status`) and minimum target; the "Manage offerings" button
+links to `/empresa/ofertas`, where creation/activation/closing actually happen
+(see its own section below). An empty state when the issuer has no offering
+yet.
 
-### 3. Perfil de investidor (`InvestorProfileSection.tsx` + `InvestorProfileQuiz.tsx` + `InvestorProfileResultCard.tsx`)
+### 3. Investor profile (`InvestorProfileSection.tsx` + `InvestorProfileQuiz.tsx` + `InvestorProfileResultCard.tsx`)
 
-Explica que a seção equivale à API (Análise do Perfil do Investidor) da
-CVM e que, em produção, o questionário seria obrigatório antes do cadastro
-se completar — "aqui, por ser demonstração, o restante do site continua
-acessível" (nada bloqueia navegação). Um resultado padrão
-(`DEFAULT_INVESTOR_PROFILE` em `src/lib/investor-profile.ts`, categoria
-"Arrojado", avaliado em 19/07/2026) já vem preenchido — diferente do
-`niara-site`, onde o perfil nasce "pendente" até o usuário responder —
-porque aqui não há persistência entre sessões para reidratar um resultado
-real, então começar vazio deixaria a demonstração sempre no estado
-"pendente". "Refazer avaliação" abre o questionário (5 perguntas, pt-BR,
-conteúdo em `ptBr.perfil.investidor.quiz.questions`) e, ao concluir,
-recalcula a categoria (`categorizeScore`, mesma lógica de tercis do
-`niara-site`) e volta para o card de resultado. O resultado (categoria +
-escore + data) fica só no `PerfilContext` (React, em memória) — **nunca**
-em `localStorage`, diferente do `niara-site` (que persiste lá); decisão
-deliberada para manter a mesma garantia de "nada persiste além da sessão"
-que o resto da tela de perfil já promete — **esta é a única parte da
-tela de perfil que continua assim** mesmo depois do backend real (ver nota
-🔴 no topo desta tela): as outras seções passaram a persistir, esta não,
-de propósito.
+Explains that the section is equivalent to CVM's API (Análise do Perfil do
+Investidor) and that, in production, the questionnaire would be mandatory before
+the sign-up could be completed; "here, being a demo, the rest of the site stays
+accessible" (nothing blocks navigation). A default result
+(`DEFAULT_INVESTOR_PROFILE` in `src/lib/investor-profile.ts`, category
+"Aggressive", evaluated on 2026-07-19) comes prefilled, unlike `niara-site`,
+where the profile starts "pending" until the user answers, because here there is
+no persistence across sessions to rehydrate a real result, so starting empty
+would leave the demo always in the "pending" state. "Retake assessment" opens the
+questionnaire (5 questions, content in `dict.profile.investor.quiz.questions`)
+and, when finished, recomputes the category (`categorizeScore`, the same tercile
+logic as `niara-site`) and goes back to the result card. The result (category +
+score + date) lives only in `ProfileContext` (React, in memory), **never** in
+`localStorage`, unlike `niara-site` (which persists it there); a deliberate
+decision to keep the same "nothing persists beyond the session" guarantee the
+rest of the profile screen already promises. **This is the only part of the
+profile screen that still works this way** even after the real backend (see the
+🔴 note at the top of this screen): the other sections started persisting, this
+one didn't, on purpose.
 
-A seção recebe `abrirAutomaticamente` (de `PerfilPage.tsx`, vindo de
-`abrirTesteInvestidor`) — `true` só na primeira visita a `/perfil` logo
-após criar conta em `/cadastro` (via `?onboarding=1`, ver "Backend
-(Supabase)" → "Autenticação"). Nesse caso o quiz abre direto, pulando o
-card de resultado padrão, e a URL é limpa via
-`window.history.replaceState` logo em seguida — sem isso, um F5 na mesma
-URL reabriria o quiz do zero, já que a prop é recalculada a cada mount.
+The section receives `openAutomatically` (from `ProfilePage.tsx`, coming from
+`openInvestorQuiz`), `true` only on the first visit to `/perfil` right after
+creating an account at `/cadastro` (via `?onboarding=1`, see "Backend
+(Supabase)" → "Authentication"). In that case the quiz opens directly, skipping
+the default result card, and the URL is cleaned via
+`window.history.replaceState` right afterwards; without that, an F5 on the same
+URL would reopen the quiz from scratch, since the prop is recomputed on every
+mount.
 
-A escala Conservador–Moderado–Arrojado é uma barra de gradiente
-(`aria-hidden`, decorativa) com um indicador na posição do escore — a
-alternativa acessível são os três rótulos de texto acima da barra (não a
-barra em si), mesmo padrão de acessibilidade do donut de `/ativos` (SVG
-decorativo + lista/texto real ao lado). Blocos "O que este perfil
-significa"/"Reação a risco e volatilidade"/"Classes de ativos mais
-adequadas" e o disclaimer ("resultado ilustrativo, não constitui
-recomendação...") vêm de `ptBr.perfil.investidor.categoryDetails`.
+The Conservative–Moderate–Aggressive scale is a gradient bar (`aria-hidden`,
+decorative) with an indicator at the score's position; the accessible
+alternative is the three text labels above the bar (not the bar itself), the
+same accessibility pattern as `/ativos`'s donut (decorative SVG + a real
+list/text next to it). The "What this profile means"/"Reaction to risk and
+volatility"/"Most suitable asset classes" blocks and the disclaimer
+("illustrative result, it isn't a recommendation...") come from
+`dict.profile.investor.categoryDetails`.
 
-### 4. Carteira (`WalletSection.tsx`)
+### 4. Wallet (`WalletSection.tsx`)
 
-🔴 **Conexão real** — lê endereço, rede e saldo de teste de uma carteira
-MetaMask de verdade via EIP-1193 (`window.ethereum`); nenhuma transação é
-enviada e nenhuma chave privada é tocada pelo app (fica inteiramente a
-cargo do MetaMask). A conexão em si é sempre client-side, direto entre o
-navegador e o MetaMask — isso não mudou. O que mudou com o backend real
-(ver "Backend (Supabase)" → "Carteira vinculada ao banco" acima): o
-endereço conectado agora pode ser **salvo** (persistido em
-`investors.wallet_address`/`issuers.wallet_address`) via
-`saveWallet()`/`unlinkWallet()`, que são Server Actions de verdade — a
-frase antiga "nada é enviado a servidor" só vale para a conexão MetaMask
-propriamente dita, não mais para o botão de vincular. Reaproveita a mesma
-stack e estrutura do `ConnectWallet`/`ConnectionPanel` do `niara-site`
-(repositório irmão, `src/components/web3/` lá, originalmente construídos
-para a rota de piloto `/pilot` dele) — mesmos hooks (`useConnection`,
-`useConnect`, `useDisconnect`, `useSwitchChain`, `useBalance`), mesmo
-connector (`injected()`) e mesma rede única (`sepolia` de `wagmi/chains`),
-só adaptados ao pt-BR e ao tema verde-sálvia (`panel`/`on-military`/
-`salmon` em vez dos tokens de tema escuro do `niara-site`).
+🔴 **Real connection**: it reads the address, network and test balance of a real
+MetaMask wallet via EIP-1193 (`window.ethereum`); no transaction is sent and no
+private key is ever touched by the app (that is entirely up to MetaMask). The
+connection itself is always client-side, directly between the browser and
+MetaMask; that didn't change. What changed with the real backend (see "Backend
+(Supabase)" → "Wallet linked to the database" above): the connected address can
+now be **saved** (persisted in `investors.wallet_address`/
+`issuers.wallet_address`) through `saveWallet()`/`unlinkWallet()`, which are
+real Server Actions; the old sentence "nothing is sent to a server" only applies
+to the MetaMask connection itself, no longer to the link button. It reuses the
+same stack and structure as `niara-site`'s `ConnectWallet`/`ConnectionPanel`
+(sibling repository, `src/components/web3/` there, originally built for its
+`/pilot` route): the same hooks (`useConnection`, `useConnect`, `useDisconnect`,
+`useSwitchChain`, `useBalance`), the same connector (`injected()`) and the same
+single network (`sepolia` from `wagmi/chains`), only adapted to this site's
+copy and the sage green theme (`panel`/`on-military`/`salmon` instead of
+`niara-site`'s dark theme tokens).
 
-**Estrutura** (`src/lib/web3/config.ts` + `src/app/providers.tsx` +
-`src/components/web3/ConnectWallet.tsx` + `ConnectionPanel.tsx`, todos
-copiados/adaptados do `niara-site`):
+**Structure** (`src/lib/web3/config.ts` + `src/app/providers.tsx` +
+`src/components/web3/ConnectWallet.tsx` + `ConnectionPanel.tsx`, all
+copied/adapted from `niara-site`):
 
-- `config.ts`: `createConfig` do wagmi com `chains: [sepolia]`,
-  `connectors: [injected()]`, `storage: createStorage({ storage:
-  cookieStorage })` e `ssr: true` — permite hidratar o estado de conexão
-  no servidor via cookie (evita flash "desconectado" no primeiro render).
-  `transports` usa `http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL)` — sem
-  essa env var (não commitada, `.env*` já no `.gitignore`), cai no RPC
-  público padrão da própria definição de `sepolia` em `wagmi/chains`; não
-  há segredo hardcoded em lugar nenhum.
+- `config.ts`: wagmi's `createConfig` with `chains: [sepolia]`,
+  `connectors: [injected()]`, `storage: createStorage({ storage: cookieStorage })`
+  and `ssr: true`, which lets the connection state hydrate on the server via a
+  cookie (avoids a "disconnected" flash on the first render). `transports` uses
+  `http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL)`; without that env var (not
+  committed, `.env*` is already in `.gitignore`), it falls back to the default
+  public RPC of the `sepolia` definition in `wagmi/chains`; there is no hardcoded
+  secret anywhere.
 - `providers.tsx` (`"use client"`): `WagmiProvider` + `QueryClientProvider`
-  (`@tanstack/react-query`, exigido internamente pelo wagmi para cache dos
-  hooks de leitura). Montado no layout raiz (`src/app/layout.tsx`, que por
-  isso passou a ser `async` — usa `cookieToInitialState(config, (await
-  headers()).get("cookie"))`, padrão Next 16/wagmi para SSR), então a
-  conexão fica disponível em qualquer rota, não só em `/perfil`.
-- `ConnectWallet.tsx`: detecção de provider injetado via
-  `useSyncExternalStore` (sem evento para assinar — só leitura
-  pós-hidratação, servidor assume presente para não penalizar o caminho
-  feliz com flash negativo); três estados — não detectada (link para
-  `metamask.io/download`), rede errada (qualquer `chainId !== sepolia.id`,
-  inclusive mainnet — botão "Trocar para Sepolia" via `useSwitchChain`,
-  que também adiciona a rede automaticamente se a carteira não a conhecer
-  ainda, via `wallet_addEthereumChain` interno do wagmi) e conectada
-  (endereço truncado + botão de copiar endereço completo, feedback
-  "Copiado" por 2s + botão desconectar). Eventos `accountsChanged`/
-  `chainChanged`/desconexão são tratados automaticamente pelo próprio
-  wagmi internamente (não há listener manual no código) — a UI
-  simplesmente re-renderiza porque os hooks são reativos ao estado do
-  connector.
-- `ConnectionPanel.tsx`: painel com status/endereço/rede/saldo em ETH de
-  teste (`useBalance`, só habilitado quando conectado **e** em Sepolia).
-  Diferente do `niara-site` (que também lê saldo de tokens ERC-20 reais
-  via `useReadContracts`, ex. mUSDT), aqui não há leitura de token — a
-  Niara PMEs não tem nenhum contrato ERC-20 real implantado, então
-  fabricar endereços de contrato para ler seria inventar dado que pareceria
-  real (violaria a regra "nada simulado pode parecer real" do topo deste
-  arquivo). Só o saldo nativo (ETH de Sepolia) é lido.
-- "Desconectar" só limpa a sessão de conexão do site (`useDisconnect` do
-  wagmi) — a carteira em si continua conectada no MetaMask; texto da UI
-  deixa isso explícito, já que MetaMask historicamente não expõe uma forma
-  programática de revogar a permissão do site (isso se faz nas
-  configurações de conexões do próprio MetaMask, fora do controle do app).
+  (`@tanstack/react-query`, required internally by wagmi to cache the read
+  hooks). Mounted in the root layout (`src/app/layout.tsx`, which is `async` for
+  that reason: it uses `cookieToInitialState(config, (await
+  headers()).get("cookie"))`, the Next 16/wagmi SSR pattern), so the connection
+  is available on any route, not only `/perfil`.
+- `ConnectWallet.tsx`: injected-provider detection via `useSyncExternalStore`
+  (there is no event to subscribe to, only a post-hydration read; the server
+  assumes it's present so the happy path isn't penalized with a negative flash);
+  three states: not detected (a link to `metamask.io/download`), wrong network
+  (any `chainId !== sepolia.id`, including mainnet; a "Switch to Sepolia" button
+  via `useSwitchChain`, which also adds the network automatically if the wallet
+  doesn't know it yet, via wagmi's internal `wallet_addEthereumChain`) and
+  connected (truncated address + a button to copy the full address, "Copied"
+  feedback for 2s + a disconnect button). `accountsChanged`/`chainChanged`/
+  disconnect events are handled automatically by wagmi internally (there is no
+  manual listener in the code); the UI simply re-renders because the hooks are
+  reactive to the connector state.
+- `ConnectionPanel.tsx`: a panel with status/address/network/test ETH balance
+  (`useBalance`, only enabled when connected **and** on Sepolia). Unlike
+  `niara-site` (which also reads real ERC-20 token balances via
+  `useReadContracts`, e.g. mUSDT), there is no token read here: Niara PMEs had no
+  ERC-20 contract of its own deployed when this was built, so making up contract
+  addresses to read would be inventing data that would look real (violating the
+  "nothing simulated may look real" rule at the top of this file). Only the
+  native balance (Sepolia ETH) is read.
+- "Disconnect" only clears the site's connection session (wagmi's
+  `useDisconnect`); the wallet itself stays connected in MetaMask; the UI copy
+  makes that explicit, since MetaMask historically doesn't expose a programmatic
+  way to revoke the site's permission (that is done in MetaMask's own connections
+  settings, outside the app's control).
 
-Textos em `ptBr.perfil.carteira` (`src/lib/i18n/pt-br.ts`) deixam claro que
-a conexão é real mas o resto da plataforma não: "Conexão real com sua
-carteira — apenas leitura de endereço e rede. Nenhuma transação é
-realizada." + nota reforçando que compra/venda/qualquer operação com valor
-mobiliário não passa por aqui. O pool de carteiras fictícias que existia
-antes (`DEMO_WALLET_POOL`, `src/lib/mock/perfil.ts`) foi removido por
-completo — não faz mais sentido com conexão real.
+The copy in `dict.profile.wallet` (`src/lib/i18n/pt-br.ts`) makes it clear that
+the connection is real but the rest of the platform isn't: "Real connection to
+your wallet: only the address and network are read. No transaction is made." +
+a note stressing that buying/selling/any operation with securities doesn't go
+through here. The pool of fictitious wallets that existed before
+(`DEMO_WALLET_POOL`, `src/lib/mock/perfil.ts`) was removed completely; it no
+longer makes sense with a real connection.
 
 ---
 
-## Telas `/sobre/documentos` (Documentação) e `/sobre/contato` (Contate-nos)
+## `/sobre/documentos` (Docs) and `/sobre/contato` (Contact us) screens
 
-Substituíram os stubs antigos ("Documentos e FAQs" / "Contate-nos").
-Inspiradas nas páginas `docs` e `contact` do `niara-site` (repositório
-irmão) — mesma estrutura (sidebar com navegação por seções/âncoras +
-conteúdo, acordeão de FAQ, formulário de contato via `mailto`) — mas em
-pt-BR, no tema verde-sálvia cheio (`bg-military`, igual a `/ativos` e
-`/perfil`) e com conteúdo próprio de PME (captação via tokenização sob a
-Resolução CVM 88, não a exchange). **Nenhum token novo foi criado** —
-reaproveitam `panel`/`panel-border`, `on-military`/`on-military-muted`,
-`salmon`/`on-salmon` e `value-negative`, já existentes desde `/ativos`.
+Replaced the old stubs ("Documentos e FAQs" / "Contate-nos"). Inspired by
+`niara-site`'s `docs` and `contact` pages (sibling repository): the same
+structure (a sidebar with section/anchor navigation + content, an FAQ accordion,
+a contact form via `mailto`), but on the full sage green theme (`bg-military`,
+like `/ativos` and `/perfil`) and with SME-specific content (tokenized
+fundraising under Resolution CVM 88, not the exchange). **No new token was
+created**: they reuse `panel`/`panel-border`, `on-military`/`on-military-muted`,
+`salmon`/`on-salmon` and `value-negative`, which already existed since `/ativos`.
 
-### `/sobre/documentos` (`DocumentacaoPage.tsx`, componentes em
-`src/components/documentacao/`)
+### `/sobre/documentos` (`DocsPage.tsx`, components in `src/components/documentacao/`)
 
-Tarja "Estágio atual" no topo (`bg-panel`, rótulo em `salmon`) — texto diz
-que os contratos estão em protótipo/testnet, sem mainnet nem auditoria
-publicada, e que todo o conteúdo do site é demonstração. Abaixo, cabeçalho
-centrado (título + subtítulo) e, em seguida, `DocumentacaoNav.tsx`
-(sidebar sticky no desktop / abas horizontais roláveis no mobile, mesmo
-padrão de `PerfilNav.tsx`) ao lado do conteúdo, com seções por âncora
-(`scroll-mt-24`, mesma convenção de `/perfil`): O que é a Niara PMEs →
-Como funciona a tokenização (lista numerada 01–04) → Enquadramento
-regulatório → Modelo de receita → Tecnologia → FAQ (`FaqAccordion.tsx`,
-adaptado do `FaqAccordion` do `niara-site` — teclado + `aria-expanded`/
-`aria-controls`, mesmo padrão de acessibilidade).
+A "Current stage" strip at the top (`bg-panel`, label in `salmon`): the text says
+the contracts are a prototype/testnet, with no mainnet or published audit, and
+that all of the site's content is a demo. Below, a centered header (title +
+subtitle) and then `DocsNav.tsx` (sticky sidebar on desktop /
+horizontally scrollable tabs on mobile, the same pattern as `ProfileNav.tsx`)
+next to the content, with anchored sections (`scroll-mt-24`, the same convention
+as `/perfil`): What Niara PMEs is → How tokenization works (a numbered list 01–04)
+→ Regulatory framework → Revenue model → Technology → FAQ (`FaqAccordion.tsx`,
+adapted from `niara-site`'s `FaqAccordion`; keyboard + `aria-expanded`/
+`aria-controls`, the same accessibility pattern).
 
-🔴 **Revisão jurídica pendente antes do go-live** — textos aprovados para
-exibição nesta fase, mas ainda não validados juridicamente:
-- Seção "Enquadramento regulatório" (`ptBr.documentacao.enquadramento`):
-  menção à Resolução CVM 88 e à necessidade de plataforma
-  autorizada/registrada pela CVM para oferta pública.
-- Afirmação de que o registro on-chain é "probatório de integridade e
-  anterioridade" e não substitui os livros societários da Lei 6.404 nem o
-  registro em cartório (mesma regra já vale para `/perfil`, ver "Regra
-  principal" no topo deste arquivo).
-- Seção "Modelo de receita" (`ptBr.documentacao.modeloReceita`):
-  deliberadamente **sem percentuais** ("em definição") — não preencher
-  números de taxa sem validação jurídica/de produto.
+🔴 **Legal review pending before go-live**: texts approved for display at this
+stage, but not yet legally validated:
+- The "Regulatory framework" section (`dict.docs.framework`): it
+  mentions Resolution CVM 88 and the need for a CVM-authorized/registered
+  platform for a public offering.
+- The claim that the on-chain record is "evidence of integrity and precedence" and
+  doesn't replace the corporate books of Law 6.404 nor a notary record (the same
+  rule already applies to `/perfil`, see "Main rule" at the top of this file).
+- The "Revenue model" section (`dict.docs.revenueModel`): deliberately
+  **without percentages** ("being defined"); don't fill in fee numbers without
+  legal/product validation.
 
-### `/sobre/contato` (`ContatoPage.tsx` + `ContatoForm.tsx`, em
-`src/components/contato/`)
+### `/sobre/contato` (`ContactPage.tsx` + `ContactForm.tsx`, in `src/components/contato/`)
 
-Formulário (Nome, Email, Assunto — select com 6 opções, Mensagem) ao lado
-de um painel "Fale direto com a gente" com o e-mail em link `mailto`.
-Reaproveita `TextField`/`SelectField` de `src/components/perfil/FormField.tsx`
-(rotulado "compartilhado" desde a tela `/perfil`) mais um novo
-`TextareaField` adicionado ao mesmo arquivo. `SelectField` ganhou
-`placeholder` opcional — antes era obrigatório e sempre renderizava uma
-`<option>` em branco (fazia sentido em `CompaniesSection`, onde o campo
-começa vazio); aqui o campo Assunto já nasce com um valor selecionado, e
-uma opção em branco extra seria só ruído.
+A form (Name, Email, Subject, a select with 6 options, Message) next to a "Talk to
+us directly" panel with the email as a `mailto` link. It reuses
+`TextField`/`SelectField` from `src/components/perfil/FormField.tsx` (labeled
+"shared" since the `/perfil` screen) plus a new `TextareaField` added to the same
+file. `SelectField` got an optional `placeholder`: it used to be required and
+always rendered a blank `<option>` (which made sense in `CompaniesSection`, where
+the field starts empty); here the Subject field is born with a selected value,
+and an extra blank option would just be noise.
 
-Envio **honesto via `mailto`, sem backend** (mesmo padrão do
-`ContactForm` do `niara-site`): ao validar (nome, email com formato
-válido via `isValidEmail` de `src/lib/masks.ts`, mensagem não vazia), o
-clique em "Abrir email" monta `mailto:niaragaed@gmail.com` com
-assunto/corpo pré-preenchidos via `window.location.href` — nunca simula
-sucesso nem faz `POST`. LGPD: os campos do formulário vivem só em
-`useState` do componente; nada é persistido em `localStorage`/
-`sessionStorage` nem enviado a servidor.
+**Honest sending via `mailto`, without a backend** (the same pattern as
+`niara-site`'s `ContactForm`): after validating (name, email with a valid format
+via `isValidEmail` from `src/lib/masks.ts`, a non-empty message), clicking "Open
+email" builds `mailto:niaragaed@gmail.com` with a prefilled subject/body via
+`window.location.href`; it never simulates success nor does a `POST`. LGPD: the
+form fields live only in the component's `useState`; nothing is persisted in
+`localStorage`/`sessionStorage` nor sent to a server.
+
+---
+## `/negociar` screens (hub, categories, offering detail and simulated order ticket)
+
+Replaced the 6 old stubs of the `/negociar/*` routes (`ativos-e-tokens` and the 5
+categories) and added a new route. Full sage green theme (`bg-military`, like
+`/ativos` and `/perfil`), but with a deliberate difference: here the content
+cards are **white** (`bg-surface`, `ink`/`ink-muted` text), not the dark cards
+(`panel`) used in `/ativos`/`/perfil`; a decision of the approved design for this
+section, replicated on all 4 screens below. `StubPage.tsx` was removed because it
+had no use left after the swap.
+
+🔴 **Trading is 100% a product simulation.** No order is sent to a server, no
+real order matching (order book) exists, and the regulatory framework
+(Resolution CVM 88/135, CVM authorization for the platform) depends on a legal
+review before any real use; the same caveat already recorded for
+`/sobre/documentos`. Unlike `niara-site`'s `/trade` terminal (sibling
+repository), which is an exchange with a real-time order book, the order ticket
+here has no book: each simulated order just confirms instantly, which is the
+right way to simulate buying/selling an illiquid SME stake/share, unlike a liquid
+asset with market depth.
+
+**Icon + color per category** (`src/lib/categories.ts`, `CATEGORY_META`):
+SME Token → `Building2` (reuses `salmon-100`/`ink-peach`, which already existed)
+· Agro Token → `Wheat` (reuses `military-100`, icon in `--color-cat-agro-icon`)
+· Real Estate Token → `Home` · Auto Token → `Car` · Debt securities → `Landmark`;
+the last three with their own tokens (`--color-cat-{imobiliario,auto,divida}-{chip,icon}`
+in `globals.css`). All designed for use on a **white** card, not on
+`bg-military`, unlike `/ativos`'s `--color-chart-*` tokens, which are for the
+donut/chart on a dark background. `CategoryChip` (decorative icon,
+`aria-hidden`) and `CategoryBadge` (icon + category name, real visible text) live
+in `src/components/negociar/CategoryChip.tsx`.
+
+**Data**: `src/lib/mock/offerings.ts`: the 5 categories (name/description/fact
+sheet/use cases live in `dict.trade.categories`, see i18n below) and the
+typed fictitious offerings (`Oferta`), 2+ per category. The names reuse the same
+examples already used in `/ativos`'s catalog (`src/lib/mock/assets.ts`, e.g.
+"Token PME Padaria Bela Vista") for narrative consistency between the two
+screens: the same fictitious demo, seen from two different angles. No
+yield/projected return field exists in the `Oferta` type: the "no return
+promises" rule was respected by removing the field, not by hiding it in the UI.
+`common.defaultDocuments` is a generic list of disclosure material (the same "Coming
+soon" placeholders for every offering, since no real document exists at this
+stage), 7 items in this order: Information memorandum, Balance sheet, Financial
+statements, Earnings release, Earnings presentation, Articles of association /
+bylaws, Offering subscription agreement. Each `Oferta` also has `indicadores:
+FundamentalIndicatorValues` (fictitious fundamental indicators in 6 groups:
+valuation, efficiency, profitability, dividends, debt, growth; see "Fundamental
+indicators" just below). Every offering uses the same
+`DEMO_INDICATORS` object (there is no real fundamental analysis of any
+company); the field is per offering in the type so values can be customized per
+offering in the future without changing the model.
+
+**Hub** (`/negociar/ativos-e-tokens`, `HubPage.tsx`): a demo banner, a grid of 5
+`CategoryCard`s (colored chip + name + 1 line + "View category →", linking to the
+category route) and a "Showcase (demo)" with 3 `ShowcaseCard`s
+(`SHOWCASE_HUB_SLUGS` in `offerings.ts`, one offering from 3 different categories)
+linking to the detail page.
+
+**Category template** (`CategoryPage.tsx`, reused by the 5 routes through the
+`categoria` prop): a link back to the hub, a header with a large `CategoryChip` +
+name + description, a fact sheet in a `<dl>` (Backing per category + the shared
+Audience/Framework/Stage; the last 3 are identical across categories, which is
+why they live in `dict.trade.categoryTemplate` and are not duplicated per
+category), 3 use cases and a showcase filtered by category
+(`getOfferingsByCategory`).
+
+**Offering detail** (`/negociar/oferta/[slug]`, a new dynamic route; async
+`params`, Next.js 16; `notFound()` + its own `not-found.tsx` if the slug doesn't
+exist in `OFFERINGS`). `OfferingDetailPage.tsx`: the company's public data,
+financials/cash (KPIs + `FinancialChart.tsx`, a `recharts` `LineChart` of
+simulated revenue/cash over the last 6 months, with a text description as the
+alternative to the `aria-hidden` SVG, the same pattern as `/ativos`),
+**fundamental indicators** (see its own section below), offering terms (token
+type, fundraising target, value per share, quantity, deadline; a note stressing
+that any estimate is illustrative), disabled placeholder documents (7 items, see
+"Data" above) and CVM 88-style risks. A "Trade (simulation)" CTA in the header
+opens the order ticket and disappears while it is open (avoids duplication); it
+reappears when it closes.
+
+**Fundamental indicators** (`FundamentalIndicators.tsx`, rendered right after
+"Financials / cash"): a white panel inspired by Investidor10's layout: a title +
+a "Simulated demo indicators: they don't reflect real values nor an analysis of
+any company" notice (required by the "nothing simulated may look real" rule),
+then 6 groups (Valuation, Efficiency, Profitability, Dividends, Debt, Growth),
+each with a label + an accent bar on the left (`bg-salmon`, decorative) and a grid
+of indicator cards (`grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))`,
+which stacks by itself on mobile). Each card has the indicator name + a "?"
+button (`HelpCircle` from lucide-react) + a fictitious formatted value
+(`number`: 2 decimal places, pt-BR format; `percent`: the same + `%`). The names, unit and
+explanation text of each indicator live in
+`dict.trade.offering.indicators.groups` (i18n); the (fictitious) numeric
+values themselves live in `DEMO_INDICATORS` (`src/lib/mock/offerings.ts`).
+The group and indicator keys (`valuation`, `efficiency`, `pe`, `grossMargin`,
+...) are shared by the dictionary and the mock and are looked up dynamically —
+rename them in both places at once.
+
+The "?" button (`IndicatorHelp.tsx`) opens an accessible popover
+(`<button aria-expanded aria-controls>` + `role="tooltip"`) with the indicator's
+explanation; it closes with Esc, an outside click or another click on the button
+itself; the "which one is open" state lives in `FundamentalIndicators` (a single
+`openKey`), which guarantees only one popover open at a time across all
+groups/cards. It works by touch (`pointerdown`, not only `mousedown`) and by
+keyboard (visible focus via `focus-visible:outline-salmon`, activated with the
+`<button>`'s native Enter/Space). The entrance uses the same `animate-dropdown`
+utility already used in the header dropdowns, reused instead of creating a new
+animation, and it already respects `prefers-reduced-motion` through the existing
+global rule in `globals.css` (which reduces any `animation-duration` to
+~0.01ms), with no special handling.
+
+🔴 **The popover is anchored to the right of the button (`right-0`), not
+centered**: a deliberate decision, not an aesthetic one. A centered popover
+(`left-1/2 -translate-x-1/2`) on a card near the grid's right edge can overflow
+the viewport on mobile and create horizontal scroll on the whole page (elements
+extending beyond the right edge increase `scrollWidth`; the same class of bug
+doesn't exist on the left, where the excess is just clipped without scrolling).
+Anchored on the right, the popover only extends leftward from the button; in the
+worst case (a card in the first column) it has less room on the left, but it never
+creates overflow on the right. Verified with Playwright:
+`document.documentElement.scrollWidth === document.documentElement.clientWidth`
+at 390px wide with the popover of the last indicator (grid corner) open.
+
+**Simulated order ticket** (`OrderTicket.tsx`): a sticky side panel on desktop
+(`lg:static`, inside the page's 12-column grid) and a bottom drawer with a
+backdrop on mobile (the same component; only responsive Tailwind classes switch
+`fixed inset-x-0 bottom-0` to `lg:static`; the backdrop (`bg-ink/50`) only exists
+below `lg`). It closes with a click on the X, a click on the backdrop or the Esc
+key (the close button gets focus when it opens). Flow: Buy/Sell → quantity + price
+(prefilled with `offering.simulatedPrice`, editable) → computed total/fee → "Review
+(simulation)" → summary → "Confirm (simulation)" → a result message labeled as
+simulated, with a simulated balance in `useState` (not persisted) that is
+debited/credited; everything resets when the ticket closes and reopens (the
+component unmounts). No `fetch`/`POST` anywhere. The Buy/Sell toggle color reuses
+`military`/`salmon` (not `value-positive`/`value-negative`, which are calibrated
+for contrast against a **dark** `bg-military`/`panel` background and would fail
+AA if used as text directly on a **white** card like the ones in this section;
+the same class of gotcha already documented for `--color-panel`). Validation
+errors use the new `--color-on-surface-negative` token (dark red, ~6.5:1 against
+white), created specifically for error text on `bg-surface` in this section; don't
+confuse it with `--color-value-negative`.
+
+**i18n**: all of the interface copy of the 4 screens lives in `dict.trade`
+(`hub`, `categories`, `categoryTemplate`, `offering`, including
+`offering.indicators.groups` (names, unit and explanations of the fundamental
+indicators), `orderTicket`) in `src/lib/i18n/pt-br.ts` and its English mirror in
+`en.ts`; the descriptive text of the fictitious offerings (company name, business
+summary, etc.) and the numeric values of the fundamental indicators live directly
+in the mock (`offerings.ts`), with both languages, following the same pattern as
+`mock/assets.ts`.
+
+Verified with the dev server + Playwright (desktop 1280px and mobile 390px): hub,
+category template, offering detail (expanded documents + fundamental indicators;
+the "?" popover opening/closing by click, Esc, outside click and keyboard, one at
+a time, no horizontal scroll on mobile) and the full order ticket flow (open →
+review → confirm → new order), including the mobile drawer with the backdrop; no
+console errors.
 
 ---
 
-## Telas `/negociar` (hub, categorias, detalhe da oferta e boleta simulada)
+## `/entrar` screen (sign-in)
 
-Substituíram os 6 stubs antigos das rotas `/negociar/*`
-(`ativos-e-tokens` e as 5 categorias) e adicionaram uma rota nova. Tema
-verde-sálvia cheio (`bg-military`, igual a `/ativos` e `/perfil`), mas
-com uma diferença deliberada: aqui os cards de conteúdo são **brancos**
-(`bg-surface`, texto `ink`/`ink-muted`), não os cards escuros (`panel`)
-usados em `/ativos`/`/perfil` — decisão do design aprovado para esta
-seção, replicada em todas as 4 telas abaixo. `StubPage.tsx` foi removido
-por ficar sem nenhum uso depois da troca.
+Replaced the disabled "Entrar" (header) and "Iniciar captação" (hero) buttons,
+which are **enabled** from this part on. Header "Sign in" → `/entrar`; hero
+"Start fundraising" → `/entrar?intent=captacao`; the same screen, the parameter
+only swaps the title/subtitle to stress "create an account to structure
+fundraising" (`SignInPage.tsx` receives `isFundraisingIntent`, computed from the
+async `searchParams`, Next 16, in `src/app/entrar/page.tsx`). Structure inspired
+by Ondo's sign-in screen (split: media on the left, a unified "sign in or create
+an account" form on the right), adapted: the left side is the cover of a YouTube
+video (not a photo) that teaches how to create a MetaMask account.
 
-🔴 **A negociação é 100% simulação de produto.** Nenhuma ordem é
-enviada a um servidor, nenhuma correspondência de ordens (order book)
-real existe, e o enquadramento regulatório (Resolução CVM 88/135,
-autorização da CVM para a plataforma) depende de revisão jurídica
-antes de qualquer uso real — mesma ressalva já registrada para
-`/sobre/documentos`. Ao contrário do terminal `/trade` do `niara-site`
-(repositório irmão), que é uma bolsa com book de ofertas em tempo real,
-a boleta aqui não tem book: cada ordem simulada apenas confirma
-instantaneamente, o que é a forma correta de simular a compra/venda de
-uma participação/cota ilíquida de PME, diferente de um ativo líquido
-com profundidade de mercado.
+**A full-screen overlay, not a "normal" route**: since Header/Footer are mounted
+in the root layout (`src/app/layout.tsx`) and wrap every route unconditionally, a
+nested layout can't remove them; it can only add UI. `SignInPage.tsx`
+(`"use client"`) solves this by being a `<div role="dialog" aria-modal="true">`
+**`fixed inset-0 z-50`**, which visually covers the Header (`z-40`) and Footer
+completely without unmounting them from the DOM. While mounted, it locks the
+`<body>` scroll (`document.body.style.overflow = "hidden"` in a `useEffect`,
+restored in the cleanup); without it, the page behind the overlay would keep
+scrolling. It closes with a click on the X (`<Link href="/">`, top right corner,
+`z-20` to stay above the video cover) or the Esc key (`router.push("/")` in a
+`keydown` listener, the same keyboard-close pattern already used in `/negociar`'s
+order ticket drawer).
 
-**Ícone + cor por categoria** (`src/lib/categories.ts`, `CATEGORY_META`):
-Token PMEs → `Building2` (reaproveita `salmon-100`/`ink-peach`, já
-existentes) · Token Agro → `Wheat` (reaproveita `military-100`, ícone em
-`--color-cat-agro-icon`) · Token Imobiliário → `Home` · Token Auto →
-`Car` · Títulos de dívida → `Landmark` — os últimos três com tokens
-próprios (`--color-cat-{imobiliario,auto,divida}-{chip,icon}` em
-`globals.css`). Todos pensados para uso sobre card **branco**, não sobre
-`bg-military` — diferente dos tokens `--color-chart-*` de `/ativos`, que
-são para o donut/gráfico sobre fundo escuro. `CategoryChip` (ícone
-decorativo, `aria-hidden`) e `CategoryBadge` (ícone + nome da categoria,
-texto real e visível) ficam em
-`src/components/negociar/CategoryChip.tsx`.
+**Left column: video cover** (`VideoCover.tsx`): the YouTube thumbnail
+(`https://img.youtube.com/vi/m7lSSzq6xg4/maxresdefault.jpg`, with an automatic
+fallback via the `<img>`'s own `onError` to `hqdefault.jpg`, which YouTube always
+generates even when the maxres doesn't exist) as a plain `<img>` (not
+`next/image`: simplicity, it avoids touching `images.remotePatterns` in
+`next.config.ts` just for one external thumbnail; `eslint-disable-next-line
+@next/next/no-img-element`, the same pattern already used in `AvatarUpload.tsx`).
+The whole area is a single `<a target="_blank" rel="noopener noreferrer">` to
+`https://youtu.be/m7lSSzq6xg4`, with a descriptive `aria-label`, not only the play
+button.
 
-**Dados**: `src/lib/mock/ofertas.ts` — as 5 categorias (nome/descrição/
-ficha/casos de uso ficam em `ptBr.negociar.categorias`, ver
-i18n abaixo) e 10 ofertas fictícias tipadas (`Oferta`), 2 por categoria.
-Os nomes reaproveitam os mesmos exemplos já usados no catálogo de
-`/ativos` (`src/lib/mock/ativos.ts`, ex.: "Token PME Padaria Bela
-Vista") para consistência narrativa entre as duas telas — mesma
-demonstração fictícia, vista de dois ângulos diferentes. Nenhum campo
-de rendimento/retorno projetado existe no tipo `Oferta`: a regra "nada
-de promessa de retorno" foi respeitada removendo o campo, não
-escondendo-o na UI. `DOCUMENTOS_PADRAO` é uma lista genérica de
-material de divulgação (mesmos placeholders "Em breve" para todas as
-ofertas, já que nenhum documento real existe nesta fase) — 7 itens,
-nesta ordem: Memorando de informações, Balanço financeiro,
-Demonstrações financeiras, Release de resultados, Apresentação dos
-resultados, Contrato social / estatuto, Termo de adesão à oferta.
-Cada `Oferta` também tem `indicadores: IndicadoresFundamentalistas`
-(indicadores fundamentalistas fictícios em 6 grupos — valuation,
-eficiência, rentabilidade, dividendos, endividamento, crescimento; ver
-"Indicadores fundamentalistas" logo abaixo). Todas as 10 ofertas usam o
-mesmo objeto `INDICADORES_DEMONSTRACAO` (não há análise fundamentalista
-real de nenhuma empresa) — o campo fica por oferta no tipo para
-permitir personalizar valores por oferta no futuro sem mudar a
-modelagem.
+🔴 **The gradient overlay was calibrated for legibility, not only aesthetics**:
+the first version used `from-military` (100% opaque) `via-military/75`
+`to-military/40`, meant only to "darken for text legibility", but since the
+text/caption is vertically centered (`items-center justify-center`) and the
+video's own palette is already a dark teal close to `military`, the average result
+was a cover that looked **almost solid**, not recognizable as a video thumbnail
+(verified with a Playwright screenshot with the overlay temporarily removed via
+`display:none` for a side-by-side comparison). Fixed to `from-military/85
+via-military/40 to-military/10` (much lighter) **plus** a background of its own
+(`bg-military/70 backdrop-blur-sm`, rounded) only behind the caption paragraph:
+the text's legibility comes from that dedicated pill, not from darkening the
+whole image; the play button is already legible on its own (solid salmon
+background). When changing this overlay in the future, always compare against the
+raw image (overlay `display:none`) before assuming it got too dark or too light.
 
-**Hub** (`/negociar/ativos-e-tokens`, `HubPage.tsx`): banner de
-demonstração, grade de 5 `CategoryCard` (chip colorido + nome + 1 linha
-+ "Ver categoria →", linkando para a rota da categoria) e uma "Vitrine
-(demonstração)" com 3 `ShowcaseCard` (`VITRINE_HUB_SLUGS` em
-`ofertas.ts`, uma oferta de 3 categorias diferentes) linkando para o
-detalhe.
+**Right column: form** (inside `SignInPage.tsx` itself): the full sage green theme
+(`bg-military`, the same pattern as `/ativos`, `/perfil`, `/negociar`, not
+Ondo-style light panel, to keep the same visual theme as the other internal
+screens even without reusing any web3 component here).
 
-**Template de categoria** (`CategoryPage.tsx`, reaproveitado pelas 5
-rotas via prop `categoria`): link de volta ao hub, cabeçalho com
-`CategoryChip` grande + nome + descrição, ficha em `<dl>` (Lastro
-por categoria + Público/Enquadramento/Estágio compartilhados — os 3
-últimos são idênticos entre categorias, por isso vivem em
-`ptBr.negociar.categoriaTemplate` e não duplicados por categoria), 3
-casos de uso e vitrine filtrada por categoria (`getOfertasByCategoria`).
+🔴 **Since the Supabase backend, this screen became real sign-in only; it no
+longer has the decorative/disabled fields it had before.** `handleSignIn()`
+actually calls `supabase.auth.signInWithPassword({ email, password: senha })`; the
+only error mapped by `mapAuthError()` is `invalid_credentials` (account creation
+no longer happens here, only at `/cadastro`; see its own section). After a
+successful sign-in, `router.push("/perfil")` (which in turn redirects by itself to
+`/cadastro` if the account doesn't have investor/issuer data yet, covering whoever
+created a login but didn't finish signing up). Below the "Sign in" button, a
+"Create account" link goes to `/cadastro`, then an "or" divider and only then the
+"Continue with Google" button (an inline `GoogleIcon`; lucide-react has no brand
+logos) stays **disabled and labeled "(Coming soon)"**, the same visual pattern as
+the Hero CTA; it is the only decorative element left on this screen. This screen
+does **not** offer a MetaMask connection; the site's only real wallet connection
+is still the Wallet section of `/perfil` (see "`/perfil` screen", section "4.
+Wallet"), **intact and unrelated to this screen**.
+- The terms note (`dict.signIn.termsNote`) mentions the Terms of Use and the
+  Privacy Policy as "documents coming soon": plain text, **without** dead
+  `href="#"` links, since those pages don't exist yet.
 
-**Detalhe da oferta** (`/negociar/oferta/[slug]`, rota dinâmica nova —
-`params` assíncrono, Next.js 16; `notFound()` + `not-found.tsx` próprio
-se o slug não existir em `OFERTAS`). `OfertaDetailPage.tsx`: dados
-públicos da empresa, financeiro/caixa (KPIs + `FinanceiroChart.tsx`,
-`recharts` `LineChart` de receita/caixa simulados dos últimos 6 meses,
-com descrição textual como alternativa ao SVG `aria-hidden` — mesmo
-padrão de `/ativos`), **indicadores fundamentalistas** (ver seção
-própria abaixo), termos da oferta (tipo de token, meta de
-captação, valor por cota, quantidade, prazo — nota reforçando que
-qualquer estimativa é ilustrativa), documentos placeholder desabilitados
-(7 itens, ver "Dados" acima) e riscos estilo CVM 88. CTA "Negociar
-(simulação)" no cabeçalho abre a boleta e some enquanto ela está aberta
-(evita duplicidade); reaparece ao fechar.
+**Honesty and LGPD**: the email/password form actually writes (via Supabase
+Auth, see "Backend (Supabase)" above); only the Google button remains decorative
+(`disabled`, it neither sends nor persists anything). When `intent=captacao`, the
+subtitle (`dict.signIn.fundraisingSubtitle`) already makes it explicit that
+structuring the offering itself is still a demo and depends on CVM
+authorizations, without mentioning a wallet, since this screen doesn't offer one.
 
-**Indicadores fundamentalistas** (`FundamentalIndicators.tsx`,
-renderizado logo após "Financeiro / caixa"): painel branco inspirado no
-layout do Investidor10 — título + aviso "Indicadores simulados de
-demonstração — não refletem valores reais nem análise de nenhuma
-empresa" (obrigatório pela regra "nada simulado pode parecer real"),
-depois 6 grupos (Valuation, Eficiência, Rentabilidade, Dividendos,
-Endividamento, Crescimento), cada um com rótulo + barra de acento à
-esquerda (`bg-salmon`, decorativa) e uma grade de cards de indicador
-(`grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))`, empilha
-sozinha no mobile). Cada card tem nome do indicador + botão "?"
-(`HelpCircle` do lucide-react) + valor fictício formatado (`numero`:
-2 casas decimais pt-BR; `percentual`: idem + `%`). Nomes, unidade e
-texto de explicação de cada indicador vivem em
-`ptBr.negociar.oferta.indicadores.grupos` (i18n); os valores numéricos
-em si (fictícios) vivem em `INDICADORES_DEMONSTRACAO`
-(`src/lib/mock/ofertas.ts`).
-
-O botão "?" (`IndicatorHelp.tsx`) abre um popover acessível
-(`<button aria-expanded aria-controls>` + `role="tooltip"`) com a
-explicação do indicador — fecha com Esc, clique fora ou novo clique no
-próprio botão; o estado de "qual está aberto" fica em
-`FundamentalIndicators` (um único `openKey`), garantindo só um popover
-aberto por vez entre todos os grupos/cards. Funciona por toque
-(`pointerdown`, não só `mousedown`) e por teclado (foco visível via
-`focus-visible:outline-salmon`, ativa com Enter/Espaço nativos do
-`<button>`). Entrada usa a mesma utility `animate-dropdown` já usada
-nos dropdowns do header — reaproveitada em vez de criar uma nova
-animação, e já respeita `prefers-reduced-motion` pela regra global
-existente em `globals.css` (reduz qualquer `animation-duration` a
-~0.01ms), sem precisar de tratamento próprio.
-
-🔴 **Posicionamento do popover é ancorado à direita do botão
-(`right-0`), não centralizado** — decisão deliberada, não estética: um
-popover centralizado (`left-1/2 -translate-x-1/2`) sobre um card perto
-da borda direita da grade pode ultrapassar a viewport no mobile e criar
-scroll horizontal na página inteira (elementos que se estendem além da
-borda direita aumentam `scrollWidth`; a mesma classe de bug já não
-existe para a esquerda, onde o excesso é só clipado sem gerar scroll).
-Ancorando pela direita, o popover só se estende para a esquerda a
-partir do botão — no pior caso (card na primeira coluna) fica com
-menos espaço à esquerda, nunca cria overflow à direita. Verificado com
-Playwright: `document.documentElement.scrollWidth ===
-document.documentElement.clientWidth` em 390px de largura com o
-popover do último indicador (canto da grade) aberto.
-
-**Boleta simulada** (`OrderTicket.tsx`): painel lateral sticky no
-desktop (`lg:static`, dentro do grid de 12 colunas da página) e drawer
-inferior com backdrop no mobile (mesmo componente — só classes
-Tailwind responsivas mudam `fixed inset-x-0 bottom-0` para
-`lg:static`; o backdrop (`bg-ink/50`) só existe abaixo de `lg`). Fecha
-por clique no X, clique no backdrop ou tecla Esc (o botão fechar
-recebe foco ao abrir). Fluxo: Comprar/Vender → quantidade + preço
-(pré-preenchido com `oferta.precoSimulado`, editável) → total/taxa
-calculados → "Revisar (simulação)" → resumo → "Confirmar (simulação)"
-→ mensagem de resultado rotulada como simulada, com um saldo simulado
-em `useState` (não persistido) que é debitado/creditado — tudo
-reseta ao fechar e reabrir a boleta (o componente desmonta). Nenhum
-`fetch`/`POST` em lugar nenhum. Cor do toggle Comprar/Vender reaproveita
-`military`/`salmon` (não `value-positive`/`value-negative`, que são
-calibrados para contraste contra fundo **escuro** `bg-military`/`panel`
-e falhariam AA se usados como texto direto sobre um card **branco**
-como os desta seção — mesma classe de pegadinha já documentada para
-`--color-panel`). Erro de validação usa o token novo
-`--color-on-surface-negative` (vermelho escuro, ~6.5:1 contra branco),
-criado especificamente para texto de erro sobre `bg-surface` nesta
-seção — não confundir com `--color-value-negative`.
-
-**i18n**: todo o texto de interface das 4 telas fica em
-`ptBr.negociar` (`hub`, `categorias`, `categoriaTemplate`, `oferta`
-— incluindo `oferta.indicadores.grupos` (nomes, unidade e explicações
-dos indicadores fundamentalistas), `boleta`) em `src/lib/i18n/pt-br.ts`;
-texto descritivo das ofertas fictícias (nome da empresa, resumo do
-negócio etc.) e os valores numéricos dos indicadores fundamentalistas
-ficam direto no mock (`ofertas.ts`), seguindo o mesmo padrão de
-`mock/ativos.ts`.
-
-Verificado com dev server + Playwright (desktop 1280px e mobile 390px):
-hub, template de categoria, detalhe da oferta (documentos ampliados +
-indicadores fundamentalistas — popover do "?" abrindo/fechando por
-clique, Esc, clique fora e teclado, um por vez, sem scroll horizontal
-no mobile) e o fluxo completo da boleta (abrir → revisar → confirmar →
-nova ordem), incluindo o drawer mobile com backdrop — sem erros de
-console.
+**i18n**: `dict.signIn` in `src/lib/i18n/pt-br.ts` (and its mirror in `en.ts`).
 
 ---
 
-## Tela `/entrar` (login/registro)
+## `/cadastro` screen (account creation)
 
-Substituiu os botões desabilitados "Entrar" (header) e "Iniciar
-captação" (hero), que ficam **habilitados** a partir desta parte.
-Header "Entrar" → `/entrar`; hero "Iniciar captação" →
-`/entrar?intent=captacao` — mesma tela, o parâmetro só troca
-título/subtítulo para dar ênfase a "criar conta para estruturar
-captação" (`EntrarPage.tsx` recebe `isCaptacaoIntent`, calculado a
-partir de `searchParams` assíncrono, Next 16, em `src/app/entrar/
-page.tsx`). Estrutura inspirada na tela de login da Ondo (split:
-mídia à esquerda, formulário unificado "entrar ou criar conta" à
-direita), adaptada: a esquerda é a capa de um vídeo do YouTube (não
-foto) que ensina a criar conta na MetaMask.
-
-**Overlay de tela cheia, não rota "normal"**: como Header/Footer são
-montados no layout raiz (`src/app/layout.tsx`) e envolvem todas as
-rotas incondicionalmente, uma nested layout não consegue removê-los
-— só adicionar UI. `EntrarPage.tsx` (`"use client"`) resolve isso
-sendo um `<div role="dialog" aria-modal="true">` **`fixed inset-0
-z-50`**, que cobre visualmente Header (`z-40`) e Footer por completo
-sem precisar desmontá-los do DOM. Enquanto montado, trava o scroll do
-`<body>` (`document.body.style.overflow = "hidden"` num `useEffect`,
-restaurado no cleanup) — sem isso a página por trás do overlay
-continuaria rolável. Fecha por clique no X (`<Link href="/">`,
-canto superior direito, `z-20` para ficar acima da capa de vídeo) ou
-tecla Esc (`router.push("/")` num listener de `keydown`, mesmo padrão
-de fechamento por teclado já usado no drawer da boleta de
-`/negociar`).
-
-**Coluna esquerda — capa do vídeo** (`VideoCover.tsx`): thumbnail do
-YouTube (`https://img.youtube.com/vi/m7lSSzq6xg4/maxresdefault.jpg`,
-com fallback automático via `onError` da própria `<img>` para
-`hqdefault.jpg`, que o YouTube sempre gera mesmo quando a maxres não
-existe) como `<img>` comum (não `next/image` — simplicidade, evita
-mexer em `images.remotePatterns` do `next.config.ts` só por uma
-thumbnail externa; `eslint-disable-next-line @next/next/no-img-
-element`, mesmo padrão já usado em `AvatarUpload.tsx`). Toda a área é
-um único `<a target="_blank" rel="noopener noreferrer">` para
-`https://youtu.be/m7lSSzq6xg4`, com `aria-label` descritivo — não só
-o botão de play.
-
-🔴 **Overlay do gradiente foi calibrado por legibilidade, não só
-estética**: a primeira versão usava `from-military` (100% opaco) `via-
-military/75` `to-military/40`, pensada só para "escurecer para
-legibilidade do texto" — mas como o texto/legenda fica centralizado
-verticalmente (`items-center justify-center`) e a paleta do vídeo em
-si já é um verde-petróleo escuro próximo do `military`, o resultado
-media era a capa parecer **quase sólida**, sem se reconhecer como
-thumbnail de vídeo (verificado via screenshot Playwright com o overlay
-temporariamente removido via `display:none` para comparação lado a
-lado). Corrigido para `from-military/85 via-military/40 to-
-military/10` (bem mais claro) **mais** um fundo próprio
-(`bg-military/70 backdrop-blur-sm`, rounded) só atrás do parágrafo de
-legenda — a legibilidade do texto vem desse pill dedicado, não de
-escurecer a imagem inteira; o botão de play já é legível sozinho
-(fundo salmão sólido). Ao alterar este overlay no futuro, sempre
-comparar contra a imagem crua (overlay `display:none`) antes de
-assumir que ficou escuro demais ou de menos.
-
-**Coluna direita — formulário** (dentro do próprio `EntrarPage.tsx`):
-tema verde-sálvia cheio (`bg-military`, mesmo padrão de `/ativos`,
-`/perfil`, `/negociar` — não o painel claro estilo Ondo, para manter o
-mesmo tema visual das demais telas internas mesmo sem reaproveitar
-componente nenhum de web3 aqui).
-
-🔴 **Desde o backend Supabase, esta tela ficou só login de verdade —
-deixou de ter os campos decorativos/desabilitados que tinha antes.**
-`handleEntrar()` chama `supabase.auth.signInWithPassword({ email,
-password: senha })` de verdade; o único erro mapeado de
-`mapAuthError()` é `invalid_credentials` (criação de conta não acontece
-mais aqui, só em `/cadastro` — ver seção própria acima). Ao logar com
-sucesso, `router.push("/perfil")` (que por sua vez redireciona sozinho
-para `/cadastro` se a conta ainda não tiver dados de investidor/emissor,
-cobrindo quem criou login mas não terminou o cadastro). Abaixo do botão
-"Entrar", um link "Criar conta" leva para `/cadastro`, depois um divisor
-"ou" e só então o botão "Continuar com Google" (`GoogleIcon` inline —
-lucide-react não tem logos de marca) continua **desabilitado e rotulado
-"(Em breve)"**, mesmo padrão visual do CTA do Hero — este é o único
-elemento decorativo que sobrou nesta tela. Esta tela **não** oferece
-conexão MetaMask; a única conexão de carteira real do site continua
-sendo a seção Carteira de `/perfil` (ver "Tela `/perfil`", seção "4.
-Carteira"), **intacta e sem relação com esta tela**.
-- Nota de termos (`ptBr.entrar.termosNota`) menciona Termos de Uso e
-  Política de Privacidade como "documentos em breve" — texto puro,
-  **sem** links `href="#"` mortos, já que essas páginas ainda não
-  existem.
-
-**Honestidade e LGPD**: o formulário de email/senha grava de verdade
-(via Supabase Auth, ver "Backend (Supabase)" acima) — só o botão Google
-segue decorativo (`disabled`, não envia nem persiste nada). Quando
-`intent=captacao`, o subtítulo (`ptBr.entrar.subtituloCaptacao`) já
-deixa explícito que a estruturação da oferta em si continua demonstração
-e depende das autorizações da CVM — sem mencionar carteira, já que esta
-tela não a oferece.
-
-**i18n**: `ptBr.entrar` em `src/lib/i18n/pt-br.ts`.
+A 3-step flow in `SignUpPage.tsx`: **account** (email + password,
+`supabase.auth.signUp`) → **type** (investor "pf" vs. company "pj", a choice that
+fixes the account's `role` forever; see "Backend (Supabase)" → "Authentication") →
+**data** (the full form per type, submitted to `createAccount()`). `signUp` errors
+handled: `user_already_exists`, `weak_password`; database errors (`23514`
+`issuer_is_sep`, `23505` for a duplicate `user_id`) translated by
+`translateDbError()`; `23505` here isn't treated as an error, it's a sign of
+"already has an account", and the UI redirects instead of showing a failure
+message. `createAccount()` always reads `user.id` on the server side, it never
+trusts an id coming from the client. When done, it redirects to
+`/conta?onboarding=1`, which automatically opens the investor profile quiz on the
+first visit to `/perfil` (see "`/perfil` screen", section "3. Investor profile").
 
 ---
 
-## Tela `/cadastro` (criação de conta)
+## `/investir` (list + reservation) and `/investir/[offeringId]` (real detail) screens
 
-Fluxo de 3 passos em `CadastroPage.tsx` (566 linhas): **conta** (email +
-senha, `supabase.auth.signUp`) → **tipo** (investidor "pf" vs. empresa
-"pj", escolha que fixa o `role` da conta para sempre — ver "Backend
-(Supabase)" → "Autenticação") → **dados** (formulário completo por tipo,
-submete para `createAccount()`). Erros de `signUp` tratados:
-`user_already_exists`, `weak_password`; erros de banco (`23514`
-`issuer_is_sep`, `23505` de `user_id` duplicado) traduzidos por
-`translateDbError()` — `23505` aqui não é tratado como erro, é sinal de
-"já tem conta", e a UI redireciona em vez de mostrar mensagem de falha.
-`createAccount()` sempre lê `user.id` do lado do servidor, nunca confia
-num id vindo do cliente. Ao concluir, redireciona para
-`/conta?onboarding=1`, que abre automaticamente o quiz de perfil de
-investidor na primeira visita a `/perfil` (ver "Tela `/perfil`", seção
-"3. Perfil de investidor").
+The real investment flow, different from `/ativos` (which is still the 100% mock
+portfolio dashboard, unchanged; see "`/ativos` screen" above) and different from
+`/negociar`'s simulated order ticket (which still doesn't touch any database; see
+its own section). Access restricted to `role==='investor'` (redirects to
+`/conta?aviso=apenas-investidor`), with one exception: the issuer that owns a
+specific offering can see its own `/investir/[offeringId]` (without the reserve
+button), via `isOfferingOwner()`.
 
----
+`InvestPage.tsx`: active offering cards (linking to the detail) + "My
+reservations" (the signed-in investor's `reserved`/`paid` investments), with a
+"Confirm payment" button per reservation and, only when the last attempt came back
+with `kycRequired: true`, an inline "Do KYC (demo)" button; see "Backend
+(Supabase)" → "KYC gate" above.
 
-## Telas `/investir` (listagem + reserva) e `/investir/[offeringId]` (detalhe real)
+`OfferingDetailPage.tsx`: the issuer's public data, terms (target/hard
+cap/raised/value per share/shares/window), a list of placeholder documents (the
+same 7 "Coming soon" items as `/negociar`) and CVM-style risks. `ReserveTicket` is
+the reservation panel (sticky on desktop, a bottom sheet on mobile, the same
+pattern as `/negociar`'s simulated `OrderTicket`); it actually calls
+`reserveInvestment()`, not a simulation.
 
-Fluxo real de investimento — diferente de `/ativos` (que continua sendo o
-dashboard de portfólio 100% mock, inalterado, ver "Tela `/ativos`" acima)
-e diferente da boleta simulada de `/negociar` (que segue sem tocar em
-banco nenhum, ver seção própria abaixo). Acesso restrito a
-`role==='investor'` (redireciona para `/conta?aviso=apenas-investidor`),
-com uma exceção: o emissor dono de uma oferta específica pode ver o
-próprio `/investir/[offeringId]` (sem botão de reservar), via
-`isOfferingOwner()`.
-
-`InvestirPage.tsx`: cards de oferta ativa (linkam para o detalhe) +
-"Minhas reservas" (aportes `reserved`/`paid` do investidor logado), com
-botão "Confirmar pagamento" por reserva e, só quando a última tentativa
-voltou com `kycRequired: true`, um botão inline "Fazer KYC
-(demonstração)" — ver "Backend (Supabase)" → "Gate de KYC" acima.
-
-`OfferingDetailPage.tsx`: dados públicos do emissor, termos (meta/hard
-cap/arrecadado/valor por cota/cotas/janela), lista de documentos
-placeholder (mesmos 7 itens "Em breve" de `/negociar`) e riscos estilo
-CVM. `ReserveTicket` é o painel de reserva (sticky no desktop, bottom
-sheet no mobile, mesmo padrão do `OrderTicket` da boleta simulada de
-`/negociar`) — chama `reserveInvestment()` de verdade, não uma simulação.
-
-`RealOfferCard.tsx` (usado dentro de `CategoryPage.tsx`, nas 5 categorias
-de `/negociar`) mostra ofertas reais do banco lado a lado com o catálogo
-fictício das mesmas categorias — badge sólido + anel salmão, visualmente
-distinto do `ShowcaseCard` fictício, justamente para que uma oferta real
-e uma fictícia nunca se confundam na mesma tela (aplicação direta da
-regra "nada simulado pode parecer real" a essa superfície de dado real
-convivendo com a demonstração antiga).
+`RealOfferCard.tsx` (used inside `CategoryPage.tsx`, in the 5 `/negociar`
+categories) shows real offerings from the database side by side with the
+fictitious catalog of the same categories: a solid badge + a salmon ring, visually
+distinct from the fictitious `ShowcaseCard`, precisely so a real and a fictitious
+offering are never confused on the same screen (a direct application of the
+"nothing simulated may look real" rule to this surface where real data coexists
+with the old demo).
 
 ---
+## `/investir/onchain` screen (real investment on Sepolia: a real blockchain)
 
-## Tela `/investir/onchain` (investimento real em Sepolia — blockchain de verdade)
+The platform's third "investment" system, distinct from both `/ativos` (a 100%
+mock dashboard) and `/investir` (which writes a *simulated* reservation/payment
+to a real Postgres). There is no Supabase here: a MetaMask wallet connects
+directly to real contracts deployed and verified on Sepolia
+(`niara-contracts-PMEs`, see that repository's `CLAUDE.md`); `aportar`,
+`encerrar`, `resgatarCotas` are real transactions, signed by the user's wallet,
+confirmed on-chain. The only "mock" thing here is `MockBRL` (the escrow's test
+currency, with no backing); the contract mechanics and the recorded state are
+real.
 
-Terceiro sistema de "investimento" da plataforma, distinto tanto de
-`/ativos` (dashboard 100% mock) quanto de `/investir` (grava reserva/
-pagamento *simulado* num Postgres real). Aqui não há Supabase nenhum:
-carteira MetaMask conecta direto contra contratos reais implantados e
-verificados em Sepolia (`niara-contracts-PMEs`, ver o `CLAUDE.md` daquele
-repositório) — `aportar`, `encerrar`, `resgatarCotas` são transações de
-verdade, assinadas pela carteira do usuário, confirmadas on-chain. A
-única coisa "mock" aqui é o `MockBRL` (moeda de teste do escrow, sem
-lastro) — a mecânica do contrato e o estado gravado são reais.
+🔴 **Unlike `/investir`, this route doesn't require a sign-in/account on Niara
+PMEs**: it is driven entirely by the connected wallet, a deliberate decision so
+anyone can demonstrate the full cycle without signing up.
 
-🔴 **Diferente de `/investir`, esta rota não exige login/conta na Niara
-PMEs** — é dirigida inteiramente pela carteira conectada, decisão
-deliberada para que qualquer pessoa consiga demonstrar o ciclo completo
-sem precisar de cadastro.
+**Discovery**: `/investir/onchain` **is not in the main menu**
+(`src/lib/nav-items.ts` only has Trade/Assets/Profile/About; neither `/investir`
+nor `/investir/onchain` appear there). Since the unification with fictitious SME
+companies (see its own section below), the main discovery path is the
+`/negociar/token-pmes` category, where each of the 10 real Sepolia offerings
+already appears with a name, photo and a direct link to its own detail page
+(`/negociar/oferta/<slug>`, which embeds the real investment);
+`/investir/onchain` still exists behind that only as the presenter's
+multi-offering tool (see "One or several offerings" below) and via a link inside
+`/investir` (`dict.invest.linkOnChain`, which requires being signed in as an
+investor to be seen). No item was added to the main menu; a deliberate decision by
+the user.
 
-**Descoberta**: `/investir/onchain` **não está no menu principal**
-(`src/lib/nav-items.ts` só tem Negociar/Ativos/Perfil/Sobre — nem
-`/investir` nem `/investir/onchain` aparecem lá). Desde a unificação com
-empresas fictícias de PME (ver seção própria abaixo), o caminho principal
-de descoberta é a categoria `/negociar/token-pmes`, onde cada uma das 10
-ofertas reais em Sepolia já aparece com nome, foto e link direto para sua
-própria página de detalhe (`/negociar/oferta/<slug>`, que embute o
-investimento real) — `/investir/onchain` continua existindo por trás
-disso só como a ferramenta multi-oferta do apresentador (ver "Uma ou
-várias ofertas" abaixo) e via link dentro de `/investir`
-(`ptBr.investir.linkOnChain`, exige login como investidor pra ser
-visto). Nenhum item foi adicionado ao menu principal — decisão
-deliberada do usuário.
+### Unification with fictitious SME companies (`/negociar/token-pmes`)
 
-### Unificação com empresas fictícias de PME (`/negociar/token-pmes`)
+The 10 real Sepolia offerings (see "One or several offerings" below) had no name
+at all in the UI until this part; they only showed up as "Offering 1".."Offering
+10" in `/investir/onchain`'s selector. To make the SME Token category more
+attractive (the user's request, a mockup with a banner photo + logo per company),
+each of the 10 real offerings got the "face" of a fictitious SME company from the
+demo catalog (`src/lib/mock/offerings.ts`): the 2 that already existed (Padaria
+Bela Vista, Clínica Vitalis) plus 8 new ones (Barbearia Corte & Estilo, Pet Shop
+Amigo Fiel, Academia Vigor Fitness, Marcenaria Raízes, Cafeteria Grão & Arte,
+Lavanderia Expressa Clean, Escola de Idiomas Global Fluente, Estúdio de Estética
+Bella Pele). 🔴 **The blockchain transaction is real; the company behind it is
+fictitious**: the "nothing simulated may look real" rule applies to the opposite
+case here, which is why every surface repeats the notice: the grid card shows
+"Fictitious demo company" next to the "Real — Sepolia" badge, the detail page's
+demo banner changes text (`dict.trade.offering.demoBannerOnChain`) and an extra
+notice (`mixedNotice`) sits right above the invest panel.
 
-As 10 ofertas reais em Sepolia (ver "Uma ou várias ofertas" abaixo) não
-tinham nome nenhum na UI até esta parte — só apareciam como "Oferta
-1".."Oferta 10" no seletor de `/investir/onchain`. Para a categoria Token
-PMEs ficar mais atrativa (pedido do usuário, mockup com foto de banner +
-logo por empresa), cada uma das 10 ofertas reais ganhou a "cara" de uma
-empresa fictícia de PME do catálogo de demonstração (`src/lib/mock/
-ofertas.ts`) — as 2 que já existiam (Padaria Bela Vista, Clínica Vitalis)
-mais 8 novas (Barbearia Corte & Estilo, Pet Shop Amigo Fiel, Academia
-Vigor Fitness, Marcenaria Raízes, Cafeteria Grão & Arte, Lavanderia
-Expressa Clean, Escola de Idiomas Global Fluente, Estúdio de Estética
-Bella Pele). 🔴 **A transação em blockchain é real; a empresa por trás
-dela é fictícia** — a regra "nada simulado pode parecer real" se aplica
-ao caso inverso aqui, e por isso cada superfície repete o aviso: o card
-da grade traz "Empresa fictícia de demonstração" ao lado do selo "Real —
-Sepolia", o banner de demonstração da página de detalhe troca de texto
-(`ptBr.negociar.oferta.demoBannerOnChain`) e um aviso extra
-(`avisoMisto`) fica logo acima do painel de investir.
+- **slug → on-chain index mapping**: `src/lib/mock/onChainOfferings.ts`,
+  `ONCHAIN_SMES_SLUGS_IN_ORDER`, a list whose **position** of each slug is the
+  index used in `NEXT_PUBLIC_OFERTAS_ONCHAIN` (`getOnChainIndexBySlug()`).
+  Deliberately an ordered list, not a loose `onChainIndex` field on each `Oferta`;
+  it avoids a duplicated literal that is easy to get out of sync. A dev-only check
+  (10 entries, no duplicates, all with `categoria === "pmes"`) runs on module
+  import, cross-checked with `OFFERINGS` in `offerings.ts`.
+- **Terms without conflicting with the chain**: `src/lib/web3/demoConstants.ts`
+  mirrors the contract's real fixed values (the 10 offerings are clones of the
+  same script: min target 100 mBRL, max target 200 mBRL, 10 mBRL/share, cap 200
+  mBRL, 20 shares). The `termos` of each of the 10 fictitious `Oferta`s
+  (`buildFixedOnChainTerms()`) uses exactly these numbers; before, they were made
+  up and different per company (e.g. the bakery had a R$500k target), which would
+  have produced two conflicting numbers for "the same offering" on this unified
+  page. Fields that change over time (state, total raised, exact deadline) never
+  come from static data; always from `useOnChainOfferingTerms()`, straight from the
+  chain, and the card's preview always uses **mBRL**, never "R$" (MockBRL has no
+  backing).
+- **Photos**: `src/lib/trade/offeringAssets.ts` (`getOfferingAssetPaths()`,
+  server-only via `fs.existsSync`) resolves `public/negociar/pmes/<slug>/banner.jpg`
+  + `logo.png` when they exist, `null` when they don't; dropping the real files into
+  those folders replaces the placeholder with no code change (only a new
+  commit/deploy, since `public/` is bundled in the build). `OfferingBanner.tsx`
+  (`src/components/negociar/`) renders the photo + an overlapping circular logo,
+  with a placeholder (the category's own color/icon tokens, the same as
+  `CategoryChip`/`CategoryBadge`), used both in the grid card (`size="card"`) and at
+  the top of the detail page (`size="hero"`, every category, not only SMEs).
+- **Unified card**: `SmesOnChainCard.tsx` replaced both the old
+  `RealOnChainCard.tsx` (a single generic card, removed) and the fictitious
+  `ShowcaseCard` in the SME category/hub showcase; the same visual pattern of a
+  solid badge + salmon ring as `RealOfferCard.tsx`.
+- **Reused invest panel**: `RealOnChainInvestPanel.tsx`
+  (`src/components/investir-onchain/`, extracted from `OnChainInvestPage.tsx`; see
+  "One or several offerings" above) is mounted directly inside
+  `OfferingDetailPage.tsx` when the slug resolves an `onChainIndex`, replacing the
+  static "Offering terms" section and the "Trade (simulation)" button/
+  `OrderTicket` (it makes no sense to offer a purchase simulation next to a real
+  purchase on the same page). For the other 4 categories, `OfferingDetailPage.tsx`
+  stays identical to before; it only got the same `OfferingBanner` at the top, with
+  a placeholder (no real photo is fetched outside the SME category).
 
-- **Mapeamento slug → índice on-chain**: `src/lib/mock/ofertasOnChain.ts`
-  — `ONCHAIN_PMES_SLUGS_EM_ORDEM`, uma lista cuja **posição** de cada
-  slug é o índice usado em `NEXT_PUBLIC_OFERTAS_ONCHAIN`
-  (`getOnChainIndexBySlug()`). Deliberadamente uma lista ordenada, não um
-  campo `onChainIndex` solto em cada `Oferta` — evita literal duplicado e
-  fácil de dessincronizar. Checagem dev-only (10 entradas, sem
-  duplicata, todas com `categoria === "pmes"`) roda no import do módulo,
-  cruzada com `OFERTAS` em `ofertas.ts`.
-- **Termos sem conflito com a chain**: `src/lib/web3/demoConstants.ts`
-  espelha os valores fixos reais do contrato (as 10 ofertas são clones
-  do mesmo script — meta mín. 100 mBRL, meta máx. 200 mBRL, 10 mBRL/cota,
-  teto 200 mBRL, 20 cotas). O `termos` de cada uma das 10 `Oferta`
-  ficticías (`buildTermosOnChainFixos()`) usa exatamente esses números —
-  antes eram inventados e diferentes por empresa (ex. Padaria tinha meta
-  R$500 mil), o que teria gerado dois números conflitantes para "a mesma
-  oferta" nesta página unificada. Campos que mudam com o tempo (estado,
-  total arrecadado, prazo exato) nunca vêm de dado estático — sempre de
-  `useOfertaOnChainTermos()`, direto da chain — e a prévia no card usa
-  sempre **mBRL**, nunca "R$" (MockBRL não tem lastro).
-- **Fotos**: `src/lib/negociar/ofertaAssets.ts` (`getOfertaAssetPaths()`,
-  server-only via `fs.existsSync`) resolve `public/negociar/pmes/<slug>/
-  banner.jpg` + `logo.png` quando existem, `null` quando não — soltar os
-  arquivos reais nessas pastas troca o placeholder sem nenhuma mudança de
-  código (só um novo commit/deploy, já que `public/` é empacotado no
-  build). `OfertaBanner.tsx` (`src/components/negociar/`) renderiza a
-  foto + logo circular sobreposto, com placeholder (tokens de cor/ícone
-  da própria categoria, mesmos de `CategoryChip`/`CategoryBadge`) — usado
-  tanto no card da grade (`size="card"`) quanto no topo da página de
-  detalhe (`size="hero"`, todas as categorias, não só PMEs).
-- **Card unificado**: `PmesOnChainCard.tsx` substituiu tanto o antigo
-  `RealOnChainCard.tsx` (card único genérico, removido) quanto o
-  `ShowcaseCard` fictício na categoria/vitrine do hub PMEs — mesmo
-  padrão visual de selo sólido + anel salmão de `RealOfferCard.tsx`.
-- **Painel de investir reaproveitado**: `RealOnChainInvestPanel.tsx`
-  (`src/components/investir-onchain/`, extraído de `OnChainInvestPage.tsx`
-  — ver "Uma ou várias ofertas" acima) é montado direto dentro de
-  `OfertaDetailPage.tsx` quando o slug resolve um `onChainIndex`,
-  substituindo a seção estática "Termos da oferta" e o botão "Negociar
-  (simulação)"/`OrderTicket` (não faz sentido oferecer uma simulação de
-  compra ao lado de uma compra real na mesma página). Para as outras 4
-  categorias, `OfertaDetailPage.tsx` continua idêntica a antes — só
-  ganhou o mesmo `OfertaBanner` no topo, com placeholder (nenhuma foto
-  real é buscada fora da categoria PMEs).
+**One or several offerings**, each created by an administrative script outside
+the front end (`niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol`; see that
+repository); this project never creates on-chain offerings dynamically, it only
+reads/writes the existing offerings. The legacy `MockBRL` is shared
+(`NEXT_PUBLIC_MOCKBRL_ADDRESS`, a single address); each offering's
+`ParticipacaoToken`/`OfertaCaptacao` come from `NEXT_PUBLIC_OFERTAS_ONCHAIN`, a
+list in the format `token1:offering1;token2:offering2;...` (see `.env.example`),
+designed for an in-person demo: the presenter switches offerings between one
+visitor and the next without a new deploy. The investment core (terms, faucet,
+invest, position, close, redeem) lives in `RealOnChainInvestPanel.tsx`
+(`{ offeringIndex }`, see "Unification with fictitious SME companies" above);
+`OnChainInvestPage.tsx` became a thin host: a title, the selector (`<select>`,
+only shown with more than one configured offering; with a single one, the
+behavior is identical to before this change) and `<RealOnChainInvestPanel
+key={offeringIndex} offeringIndex={offeringIndex} />`. Switching offerings in the
+selector remounts the whole panel through that `key`, which resets all the local
+state for free (the invest form, the invest/close/redeem status, the faucet
+field), with no manual resets. Without `MockBRL` and at least 1 offering filled
+in, the screen shows "contract not configured" instead of breaking
+(`getOnChainAddresses()`/`getOnChainContracts()` return `null`, they never
+throw). `RealPositionCard.tsx` (`/ativos`) always shows the position on the first
+offering in the list (index 0); a deliberate simplification, it doesn't try to
+guess which offering is "being demoed" at the moment.
 
-**Uma ou várias ofertas**, cada uma criada por um script administrativo
-fora do frontend (`niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol`
-— ver aquele repositório) — este projeto nunca cria ofertas on-chain
-dinamicamente, só lê/escreve nas ofertas já existentes. `MockBRL` é
-compartilhado (`NEXT_PUBLIC_MOCKBRL_ADDRESS`, um endereço só);
-`ParticipacaoToken`/`OfertaCaptacao` de cada oferta vêm de
-`NEXT_PUBLIC_OFERTAS_ONCHAIN` — lista no formato
-`token1:oferta1;token2:oferta2;...` (ver `.env.example`), pensada para
-demo presencial: o apresentador troca de oferta entre um visitante e
-outro sem precisar de novo deploy. O miolo de investimento (termos,
-faucet, investir, posição, encerrar, resgatar) vive em
-`RealOnChainInvestPanel.tsx` (`{ ofertaIndex }`, ver "Unificação com
-empresas fictícias de PME" abaixo) — `OnChainInvestPage.tsx` ficou um
-host fino: título, o seletor (`<select>`, só aparece com mais de uma
-oferta configurada — com uma só, comportamento idêntico a antes desta
-mudança) e `<RealOnChainInvestPanel key={ofertaIndex} ofertaIndex=
-{ofertaIndex} />`. Trocar de oferta no seletor remonta o painel inteiro
-via esse `key` — reseta de graça todo o estado local (formulário de
-investir, status de invest/encerrar/resgatar, campo do faucet), sem
-precisar de resets manuais. Sem `MockBRL` nem ao menos 1 oferta
-preenchidos, a tela mostra "contrato não configurado" em vez de quebrar
-(`getOnChainAddresses()`/`getOnChainContracts()` retornam `null`, nunca
-lançam). `RealPositionCard.tsx` (`/ativos`) sempre mostra a posição na
-primeira oferta da lista (índice 0) — simplificação deliberada, não
-tenta adivinhar qual oferta está "em demonstração" no momento.
+**Layout** (`src/lib/web3/`, extending the structure that already existed only for
+the wallet connection; no second, parallel Web3 layer was created):
+- `abis/{mockBrl,ofertaCaptacao,participacaoToken}.ts`: ABIs extracted directly
+  from `niara-contracts-PMEs/out/*.sol/*.json` (`forge build`), never written by
+  hand; function names checked against the `.sol` source before any parameter was
+  fixed (see this part's history).
+- `addresses.ts` / `contracts.ts`: the only places that know the addresses; no
+  React component has a hardcoded contract address.
+- `errors.ts`: `describeOnChainError()` translates `UserRejectedRequestError`,
+  custom reverts (`AporteNaoMultiploDoPreco`, `OfertaNaoAberta`,
+  `ExcedeMetaMaxima`, `ExcedeTetoInvestidor`, etc., names checked against
+  `OfertaCaptacao.sol`) and RPC/gas failures into the current language.
+- `hooks/useOnChainOffering.ts`: reads (`useReadContracts`, multicall): the offering
+  terms (no wallet needed) + the connected investor's position (invested, redeemed
+  shares, `MockBRL` balance/allowance, `ParticipacaoToken` balance).
+- `hooks/useOnChainActions.ts`: writes: `useMintMockBrl` (a self-service faucet;
+  `MockBRL.mint` is public and unrestricted, so no admin wallet is needed to fund
+  the demo), `useInvestOnChain` (checks the allowance; only calls `approve` when
+  it's insufficient, then `aportar`; it never asks for approval again for nothing),
+  `useCloseOffering`, `useRedeemShares`. Each one exposes an explicit status per
+  step (`signing` → `confirming` → `success`/`error`); it never shows success
+  before the on-chain confirmation (`publicClient.waitForTransactionReceipt`), and
+  never requires a manual refresh (the read hooks are refetched after each
+  confirmation).
 
-**Organização** (`src/lib/web3/`, estendendo a estrutura que já existia
-só para a conexão de carteira — nenhuma segunda camada Web3 paralela foi
-criada):
-- `abis/{mockBrl,ofertaCaptacao,participacaoToken}.ts` — ABIs extraídas
-  direto de `niara-contracts-PMEs/out/*.sol/*.json` (`forge build`), nunca
-  escritas à mão — nomes de função conferidos contra o `.sol` fonte antes
-  de qualquer parâmetro ser fixado (ver histórico desta parte).
-- `addresses.ts` / `contracts.ts` — únicos pontos que sabem os 3
-  endereços; nenhum componente React tem endereço de contrato hardcoded.
-- `errors.ts` — `describeOnChainError()` traduz `UserRejectedRequestError`,
-  reverts customizados (`AporteNaoMultiploDoPreco`, `OfertaNaoAberta`,
-  `ExcedeMetaMaxima`, `ExcedeTetoInvestidor`, etc. — nomes batidos contra
-  `OfertaCaptacao.sol`) e falhas de RPC/gas para pt-BR.
-- `hooks/useOfertaOnChain.ts` — leituras (`useReadContracts`, multicall):
-  termos da oferta (não depende de carteira) + posição do investidor
-  conectado (aportado, cotas resgatadas, saldo/allowance de `MockBRL`,
-  saldo de `ParticipacaoToken`).
-- `hooks/useOnChainActions.ts` — escritas: `useMintMockBrl` (faucet
-  auto-serviço — `MockBRL.mint` é público e irrestrito, então nenhuma
-  carteira administrativa é necessária para abastecer a demo),
-  `useInvestirOnChain` (checa allowance; só chama `approve` quando
-  insuficiente, depois `aportar` — nunca pede aprovação de novo à toa),
-  `useEncerrarOferta`, `useResgatarCotas`. Cada um expõe um status
-  explícito por etapa (`assinando` → `confirmando` → `sucesso`/`erro`) —
-  nunca mostra sucesso antes da confirmação on-chain (`publicClient.
-  waitForTransactionReceipt`), e nunca exige refresh manual (os hooks de
-  leitura são re-chamados depois de cada confirmação).
+**UI** (`src/components/investir-onchain/OnChainInvestPage.tsx`): reuses
+`<ConnectWallet />` (the same component as `/perfil`'s Wallet section, not
+duplicated) to connect/switch networks, then shows the offering terms read from
+the contract, the `MockBRL` faucet, the invest form (the input is a **share
+quantity**, not an amount in R$; the `MockBRL` amount is derived as `quantidade *
+precoPorCota`, always an exact multiple of the price per share; this deliberately
+solves the gap documented in `niara-contracts-PMEs`'s `CLAUDE.md`, "real UX would
+need to compute/suggest the closest multiple"), the investor's position, the close
+button (permissionless: any wallet can call it) and the redeem shares button.
 
-**UI** (`src/components/investir-onchain/OnChainInvestPage.tsx`):
-reaproveita `<ConnectWallet />` (mesmo componente da seção Carteira de
-`/perfil` — não duplicado) para conectar/trocar de rede, depois mostra
-termos da oferta lidos do contrato, faucet de `MockBRL`, formulário de
-investir (input é **quantidade de cotas**, não valor em R$ — o valor em
-`MockBRL` é derivado como `quantidade * precoPorCota`, sempre múltiplo
-exato do preço por cota; resolve de propósito o gap documentado no
-`CLAUDE.md` de `niara-contracts-PMEs`, "UX real precisaria calcular/
-sugerir o múltiplo mais próximo"), posição do investidor, botão de
-encerrar (permissionless — qualquer carteira pode chamar) e botão de
-resgatar cotas.
+**A manual prerequisite the UI can't automate**: the investor's wallet needs
+Sepolia ETH to pay gas (`aportar`/`encerrar`/`resgatarCotas` are real
+transactions); explicit text on the screen points to a public Sepolia faucet;
+Niara PMEs doesn't have, and shouldn't have, its own ETH faucet.
 
-**Pré-requisito manual, não automatizável pela UI**: a carteira do
-investidor precisa de Sepolia ETH para pagar gas (`aportar`/`encerrar`/
-`resgatarCotas` são transações reais) — texto explícito na tela
-apontando para um faucet público de Sepolia; a Niara PMEs não tem, e não
-deveria ter, um faucet de ETH próprio.
+**Real position inside `/ativos`**: `RealPositionCard.tsx`
+(`src/components/ativos/`), the screen's only real card, at the top of the "My
+portfolio" tab (before `PortfolioSummary`), with the same read hooks as
+`/investir/onchain`. Visually distinct on purpose (`ring-2 ring-salmon` + a solid
+salmon badge with `BadgeCheck`), the same pattern already used in
+`RealOfferCard.tsx` (`/negociar`) to tell a real offering from a fictitious one,
+adapted here to the dark card (`bg-panel`) of the rest of `/ativos`. **It never
+enters `computeTotals`/`PortfolioSummary` nor the `PositionsTable` rows**: mock and
+real are always kept separate, never summed together. The demo banner at the top
+of the page (`dict.assets.demoBanner`) was adjusted to call out this exception
+explicitly, the same pattern already used in `/perfil`'s banner (which also carves
+out real parts inside a mostly mock screen).
 
-**Posição real dentro de `/ativos`**: `RealPositionCard.tsx`
-(`src/components/ativos/`) — único cartão real da tela, no topo da aba
-"Minha carteira" (antes de `PortfolioSummary`), mesmos hooks de leitura
-de `/investir/onchain`. Visualmente distinto de propósito (`ring-2
-ring-salmon` + selo sólido salmão com `BadgeCheck`), mesmo padrão já
-usado em `RealOfferCard.tsx` (`/negociar`) para diferenciar oferta real
-de fictícia — aqui adaptado ao cartão escuro (`bg-panel`) do resto de
-`/ativos`. **Nunca entra em `computeTotals`/`PortfolioSummary` nem nas
-linhas de `PositionsTable`** — mock e real ficam sempre separados, nunca
-somados juntos. O banner de demonstração do topo da página
-(`ptBr.ativos.demoBanner`) foi ajustado para citar essa exceção
-explicitamente, mesmo padrão já usado no banner de `/perfil` (que também
-carve-outs partes reais dentro de uma tela majoritariamente mock).
+`forge build` confirmed clean in the contracts repository after adding the
+administrative script; the full `forge test` suite (266+ tests/invariants) ran
+again afterwards: **266/266 passing**, no regression (no contract/test was
+changed, only new scripts).
 
-`forge build` confirmado limpo no repositório de contratos após
-adicionar o script administrativo; a suíte completa de `forge test`
-(266+ testes/invariantes) rodou de novo depois — **266/266 passando**,
-sem regressão (nenhum contrato/teste foi alterado, só scripts novos).
+### Phase 4: `/investir/onchain` also invests in self-service offerings
 
-### Fase 4 — `/investir/onchain` também investe em ofertas self-service
+Until here, `/investir/onchain` only knew how to invest in the 10 legacy offerings
+(`NEXT_PUBLIC_OFERTAS_ONCHAIN`, created by an administrative script). Phase 3
+(self-service publication by the issuer, see "`/empresa/ofertas` screen") started
+creating real offerings on Sepolia with no investment UI pointing at them; Phase 4
+closes that gap, in two sub-steps.
 
-Até aqui, `/investir/onchain` só sabia investir nas 10 ofertas legadas
-(`NEXT_PUBLIC_OFERTAS_ONCHAIN`, criadas por script administrativo). A Fase
-3 (publicação self-service pelo emissor, ver "Tela `/empresa/ofertas`")
-passou a criar ofertas reais em Sepolia sem nenhuma UI de investimento
-apontando para elas — a Fase 4 fecha essa lacuna, em duas sub-etapas.
+🔴 **There is no "mixing real with fictitious" here**: both sources have the same
+status. The whole platform is a demo, without CVM authorization, with
+backing-less `MockBRL` for both. The only difference is the **provenance of the
+content** (a company made up by hand in `mock/offerings.ts` vs. data the issuer
+itself filled in), which is why the solution is a line of text in the selector,
+not a structural separation like `/socios`.
 
-🔴 **Não existe "misturar real com fictício" aqui** — as duas origens têm
-o mesmo estatuto: toda a plataforma é demonstração, sem autorização da
-CVM, `MockBRL` sem lastro para as duas. A única diferença é de
-**proveniência do conteúdo** — empresa inventada à mão (`mock/ofertas.ts`)
-vs. dados que o próprio emissor preencheu — por isso a solução é uma linha
-de texto no seletor, não uma separação estrutural tipo `/socios`.
+🔴 **Retroactive correction**: this section originally claimed that both sources,
+"confirmed by an on-chain read before coding", shared the same `MockBRL`
+(`0xEC377e00e022675B67Da6ab1966Bc0764bF792A4`). That check was never done line by
+line against a real transaction (it was a misread isolated read) and it was
+**false**: the 10 legacy offerings do share one `MockBRL` (`0xb99dda4e...`,
+`NEXT_PUBLIC_MOCKBRL_ADDRESS`), but each self-service offering has its own,
+different one (`OfertaCaptacao.moeda()`, fixed at creation). That caused a real
+investment incident (an approve against the wrong MockBRL; see "Real incident,
+root cause found: MockBRL resolved as a global constant..." further below). Since
+the fix, no code reads MockBRL from a constant; always from `moeda()`, per
+offering.
 
-🔴 **Correção retroativa**: esta seção originalmente afirmava que as duas
-origens "confirmadas por leitura on-chain antes de codar" compartilhavam o
-mesmo `MockBRL` (`0xEC377e00e022675B67Da6ab1966Bc0764bF792A4`). Essa
-verificação nunca foi feita linha a linha contra uma transação de verdade
-— era uma leitura isolada mal interpretada — e era **falsa**: as 10
-ofertas legadas de fato compartilham um `MockBRL` (`0xb99dda4e...`,
-`NEXT_PUBLIC_MOCKBRL_ADDRESS`), mas cada oferta self-service tem o seu
-próprio, diferente (`OfertaCaptacao.moeda()`, fixado na criação). Isso
-causou um incidente real de aporte (approve contra o MockBRL errado, ver
-"Incidente real, causa de fundo encontrada: MockBRL resolvido como
-constante global..." mais abaixo). Desde a correção, nenhum código lê
-MockBRL de uma constante — sempre de `moeda()`, por oferta.
+**5.1: read** (`src/lib/web3/confirmedOfferings.ts`,
+`loadConfirmedOnChainOfferings()`): offerings with `sync_status='confirmada'`,
+bringing `contract_address`/`token_address`/the issuer name. The same GOLDEN RULE
+as `investments.ts`: an explicit allowlist, never `select('*')`. It filters by
+`sync_status`, not by `status` (which always stays `'draft'` for these rows, by
+Phase 3's design); none of the existing reads (`loadActiveOfferingsByCategory`,
+`/investir`) filters by `sync_status`, so none of them would ever show these
+offerings; there was nothing to "relax", only a new read to write.
 
-**5.1 — leitura** (`src/lib/web3/confirmedOfferings.ts`,
-`loadConfirmedOnChainOfferings()`): ofertas com `sync_status='confirmada'`,
-trazendo `contract_address`/`token_address`/nome do emissor. Mesma REGRA DE
-OURO de `investments.ts` — lista branca explícita, nunca `select('*')`.
-Filtra por `sync_status`, não por `status` (que fica sempre `'draft'` para
-essas linhas, por desenho da Fase 3) — nenhuma leitura existente
-(`loadActiveOfferingsByCategory`, `/investir`) filtra por `sync_status`,
-então nenhuma delas jamais mostraria essas ofertas; não havia nada para
-"relaxar", só uma leitura nova para escrever.
+**5.2: identity by address, not by index**: before, `offeringIndex: number` (the
+position in the env var list) was the identity unit passed through
+`getOnChainContracts` and the six hooks of
+`useOnChainOffering.ts`/`useOnChainActions.ts`; there was no way to point at a
+Supabase offering, which has no "index" at all. `getOnChainContracts` now receives
+the already resolved `{token, oferta}` pair (the `OnChainOfferingAddresses` type).
+🔴 In this sub-step, a `getMockBrlContract()` resolved `MockBRL` as a global
+constant (`NEXT_PUBLIC_MOCKBRL_ADDRESS`), **removed later** in a fixed real
+incident (see "Real incident, root cause found: MockBRL resolved as a global
+constant..." further below): MockBRL isn't global, it's `OfertaCaptacao.moeda()`
+per offering. `RealOnChainInvestPanel` receives `tokenAddress`/`offeringAddress`
+directly (memoized into a single object via `useMemo`, so the six hooks don't
+recreate callbacks on every render because of a new object).
+`OnChainInvestPage.tsx` builds the joined list (legacy + `confirmedOfferings`, a
+prop coming from `page.tsx` via 5.1) and shows each option's provenance:
+"Fictitious demo company" for the old ones, "Data provided by the issuer itself
+(demo)" for the new ones.
 
-**5.2 — identidade por endereço, não por índice**: antes, `ofertaIndex:
-number` (posição na lista da env var) era a unidade de identidade passada
-por `getOnChainContracts` e pelas seis hooks de
-`useOfertaOnChain.ts`/`useOnChainActions.ts` — não dava para apontar para
-uma oferta do Supabase, que não tem "índice" nenhum. `getOnChainContracts`
-passou a receber o par `{token, oferta}` já resolvido (tipo
-`OfertaOnChainEnderecos`). 🔴 Nesta sub-etapa, um `getMockBrlContract()`
-resolvia o `MockBRL` como constante global (`NEXT_PUBLIC_MOCKBRL_ADDRESS`)
-— **removido depois**, num incidente real corrigido (ver "Incidente real,
-causa de fundo encontrada: MockBRL resolvido como constante global..."
-mais abaixo): o MockBRL não é global, é `OfertaCaptacao.moeda()` por
-oferta. `RealOnChainInvestPanel` recebe
-`tokenAddress`/`ofertaAddress` direto (memoizados num único objeto via
-`useMemo`, para as seis hooks não recriarem callbacks a cada render por
-causa de um objeto novo). `OnChainInvestPage.tsx` monta a lista unida
-(legado + `confirmedOfferings`, prop vinda do `page.tsx` via 5.1) e mostra,
-por opção, a proveniência: "Empresa fictícia de demonstração" para as
-antigas, "Dados informados pelo próprio emissor (demonstração)" para as
-novas.
+A necessary side effect of the refactor (not new scope, just keeping it
+compiling): `RealPositionCard.tsx` (`/ativos`) and `OfferingDetailPage.tsx`
+(`/negociar`) called the hooks with an index; both keep resolving against the
+LEGACY list exactly as before (`RealPositionCard` always at index 0;
+`OfferingDetailPage` via `getOnChainIndexBySlug`), only converting to the address
+pair before calling. **`/negociar/token-pmes` and `/socios` are left out of this
+phase**: no self-service offering gets the showcase with photo/logo nor shows up in
+the internal dashboard's events; only `/investir/onchain` sees both sources. 🔴
+**Later update**: `/negociar/token-pmes` also started seeing both sources; see
+"`/negociar/token-pmes` showcase unified with self-service" further below.
+`/socios` is still left out of the showcase (not requested).
 
-Efeito colateral necessário do refactor (não é escopo novo, é só manter
-compilando): `RealPositionCard.tsx` (`/ativos`) e `OfertaDetailPage.tsx`
-(`/negociar`) chamavam as hooks com índice — os dois continuam resolvendo
-contra a lista LEGADA exatamente como antes (`RealPositionCard` sempre no
-índice 0; `OfertaDetailPage` via `getOnChainIndexBySlug`), só que
-convertendo para o par de endereços antes de chamar. **`/negociar/token-
-pmes` e `/socios` ficam de fora desta fase** — nenhuma oferta self-service
-ganha a vitrine com foto/logo nem aparece nos eventos do painel interno;
-só `/investir/onchain` enxerga as duas origens. 🔴 **Atualização
-posterior**: `/negociar/token-pmes` passou a enxergar as duas origens
-também — ver "Vitrine `/negociar/token-pmes` unificada com self-service"
-mais abaixo. `/socios` continua de fora (não pedido).
+### 🔴 Real incident: an investment skipped the `approve` because an unreliable read was treated as data
 
-### 🔴 Incidente real: aporte pulou o `approve` porque uma leitura não confiável foi tratada como dado
+In the first end-to-end investment test on a self-service offering, the
+transaction failed with `eth_sendRawTransaction: transaction gas limit too high
+(cap: 16777216, tx: 21000000)`. Investigated thoroughly before fixing (never
+assume the first explanation):
 
-No primeiro teste ponta a ponta de aporte numa oferta self-service, a
-transação falhou com `eth_sendRawTransaction: transaction gas limit too
-high (cap: 16777216, tx: 21000000)`. Investigado a fundo antes de
-corrigir (nunca assumir a primeira explicação):
+- **The 21 million gas was a symptom, not the cause.** `cast call`/`cast estimate`
+  against the offering itself reproduced the real revert:
+  `ERC20InsufficientAllowance(spender=<offering>, allowance=0, needed=<value>)`;
+  the MockBRL `allowance` for that wallet/offering pair really was **zero**. A
+  reverting call has no gas for `eth_estimateGas` to return; the "21,000,000" is
+  MetaMask improvising a value when it can't estimate, not something this code
+  defines (checked: no write hook in `useOnChainActions.ts` ever set an explicit
+  `gas`, before or after the 5.2 refactor; the project's only fixed `gas` is
+  `PUBLICATION_GAS_LIMIT`, from the publication flow, unrelated).
+- **It wasn't the 5.2 refactor**: `useMyOnChainPosition` (the `allowance` read)
+  and `useInvestOnChain` (the `aportar` write) always read the same
+  `addresses` object, never different addresses; there is no (and there never was,
+  even before the refactor) place in the code where the two could diverge.
+- **The real cause**: `handleInvest()` passed `posicao.allowanceMockBrl` to the
+  invest flow without checking whether that read had actually finished
+  successfully. `useReadContracts` returned `0` both for "the chain answered:
+  allowance is zero" and for "the read hasn't come back yet" and for "the read
+  failed"; the three cases were indistinguishable by the return type, and only the
+  first should have triggered the approve (the other two should have blocked the
+  click, not let it through). The same defect had shown up minutes earlier as
+  `metaMaxima=0` being displayed as the offering's "zero capacity": the same class
+  of bug, two symptoms.
+- **Why the read failed/lagged**: `NEXT_PUBLIC_SEPOLIA_RPC_URL` wasn't
+  configured; every read in this app (client and server, the same variable, see
+  `config.ts`/`eventsCore.ts`) fell back to `viem/chains`' default public Sepolia
+  RPC (`https://11155111.rpc.thirdweb.com`), subject to rate limits, completely
+  unrelated to `niara-contracts-PMEs`'s `SEPOLIA_RPC_URL` (without
+  `NEXT_PUBLIC_`): a different variable, file and purpose, despite the similar
+  name.
 
-- **O gás de 21 milhões era sintoma, não causa.** `cast call`/`cast
-  estimate` contra a própria oferta reproduziram o revert real:
-  `ERC20InsufficientAllowance(spender=<oferta>, allowance=0,
-  needed=<valor>)` — o `allowance` de MockBRL para aquele par
-  carteira/oferta era **zero** de verdade. Uma chamada que reverte não
-  tem gás nenhum pra `eth_estimateGas` devolver; o "21.000.000" é a
-  MetaMask improvisando um valor quando não consegue estimar, não algo
-  que este código define (conferido: nenhuma hook de escrita em
-  `useOnChainActions.ts` jamais definiu `gas` explícito, nem antes nem
-  depois do refactor da 5.2 — o único `gas` fixo do projeto é
-  `GAS_LIMITE_PUBLICACAO`, do fluxo de publicação, sem nenhuma relação).
-- **Não era o refactor da 5.2** — `useMinhaPosicaoOnChain` (leitura de
-  `allowance`) e `useInvestirOnChain` (escrita de `aportar`) sempre leram
-  o mesmo objeto `enderecos`, nunca endereços diferentes; não existe (e
-  nunca existiu, nem antes do refactor) um ponto de código onde os dois
-  pudessem divergir.
-- **A causa real**: `handleInvestir()` passava `posicao.allowanceMockBrl`
-  pro fluxo de investir sem checar se aquela leitura tinha de fato
-  terminado com sucesso. `useReadContracts` devolvia `0` tanto para "a
-  chain respondeu: allowance é zero" quanto para "a leitura ainda não
-  voltou" quanto para "a leitura falhou" — os três casos eram
-  indistinguíveis pelo tipo de retorno, e só o primeiro deveria ter
-  disparado o approve (os outros dois deveriam ter bloqueado o clique,
-  não deixado passar). O mesmo defeito já tinha aparecido minutos antes
-  como `metaMaxima=0` sendo mostrado como "capacidade zero" da oferta —
-  mesma classe de bug, dois sintomas.
-- **Por que a leitura falhava/atrasava**: `NEXT_PUBLIC_SEPOLIA_RPC_URL`
-  não estava configurada — toda leitura deste app (cliente e servidor,
-  mesma variável, ver `config.ts`/`eventsCore.ts`) caía no RPC público
-  padrão do `viem/chains` para Sepolia (`https://11155111.rpc.thirdweb.com`),
-  sujeito a rate-limit, sem relação nenhuma com o `SEPOLIA_RPC_URL`
-  (sem `NEXT_PUBLIC_`) do repositório `niara-contracts-PMEs` — variável,
-  arquivo e propósito diferentes, apesar do nome parecido.
+**Fix, on three fronts**:
 
-**Correção, em três frentes**:
+1. **`NEXT_PUBLIC_SEPOLIA_RPC_URL` configured** (`.env.local`/`.env.example`, see
+   the comment there); it fixes the root cause of slow/unstable reads. Still
+   optional in code (it never breaks without it), but it must never be missing in
+   production.
+2. **A strict gate, the same principle as `useAuthorizedIssuer`** (which since
+   sub-step 1 of Phase 3 already separates "the chain said no" from "I couldn't
+   ask", see "`/empresa/ofertas` screen" above): `useOnChainOfferingTerms` and
+   `useMyOnChainPosition` got a `ready: boolean` field, `true` only when
+   **every** read in the multicall finished with `status: "success"` (not only the
+   absence of an error in the query as a whole; an individual call inside a
+   multicall can fail without the whole query being marked as an error), plus an
+   `errorMessage: string | null`, translated via `describeOnChainError`.
+   `RealOnChainInvestPanel.tsx` computes `leiturasProntas = termos.pronto &&
+   posicao.pronto` and requires it in `investDisabled`; while not ready, the
+   invest section shows "loading" or the error reason instead of the form, never
+   the form with fallback numbers.
+3. **A fallback never becomes data**: the individual fields (`metaMaxima`,
+   `allowanceMockBrl`, etc.) still return `0`/`false` when their read fails; that
+   didn't change and doesn't need to, because `ready` is now checked **before**
+   any decision uses those fields. The defect was never the fallback value
+   existing; it was someone deciding with it without checking whether it was real.
 
-1. **`NEXT_PUBLIC_SEPOLIA_RPC_URL` configurada** (`.env.local`/`.env.example`,
-   ver comentário lá) — resolve a causa raiz de leituras lentas/instáveis.
-   Continua opcional em código (nunca quebra sem ela), mas nunca deve
-   ficar ausente em produção.
-2. **Gate rígido, mesmo princípio de `useEmissorAutorizado`** (que desde a
-   sub-etapa 1 da Fase 3 já separa "a chain disse não" de "não consegui
-   perguntar", ver "Tela `/empresa/ofertas`" acima): `useOfertaOnChainTermos`
-   e `useMinhaPosicaoOnChain` ganharam um campo `pronto: boolean` — só
-   `true` quando **todas** as leituras do multicall terminaram com
-   `status: "success"` (não só ausência de erro na query como um todo;
-   uma chamada individual dentro de um multicall pode falhar sem que a
-   query inteira seja marcada como erro) — mais `errorMessage: string |
-   null`, traduzido via `describeOnChainError`. `RealOnChainInvestPanel.tsx`
-   calcula `leiturasProntas = termos.pronto && posicao.pronto` e exige
-   isso em `investirDesabilitado`; enquanto não pronto, a seção de
-   investir mostra "carregando" ou o motivo do erro em vez do formulário
-   — nunca o formulário com números de fallback.
-3. **Fallback nunca vira dado**: os campos individuais (`metaMaxima`,
-   `allowanceMockBrl` etc.) continuam retornando `0`/`false` quando a
-   leitura correspondente falha — isso não mudou, e não precisa mudar,
-   porque agora `pronto` é checado **antes** de qualquer decisão usar
-   esses campos. O defeito nunca foi o valor de fallback existir; foi
-   alguém decidir com ele sem checar se era real.
+`RealPositionCard.tsx` (`/ativos`) uses the same two hooks but wasn't updated to
+consume `ready`; it's a pure read with no invest button, a much smaller risk; it
+stays as a known gap, not fixed in this round.
 
-`RealPositionCard.tsx` (`/ativos`) usa as mesmas duas hooks mas não foi
-atualizado para consumir `pronto` — é leitura pura, sem botão de
-investir, risco bem menor; fica como gap conhecido, não corrigido nesta
-rodada.
+### 🔴 Real incident: a second investment attempt skipped the `approve` with a stale allowance
 
-### 🔴 Incidente real: segunda tentativa de aporte pulou o `approve` com allowance obsoleta
+After the strict gate above, the same symptom (absurd gas because
+`eth_estimateGas` failed on a reverting call) came back, this time with
+confirmation that **none of the three test offerings had an approved allowance**
+(`cast call` on all of them, allowance = 0). The real sequence: first click →
+`approve` failed with "nonce too low" (the wallet's own error when signing, before
+mining); second click → the revert already came from `aportar`, not `approve`; in
+other words, the second attempt skipped the `approve` entirely.
 
-Depois do gate rígido acima, o mesmo sintoma (gás absurdo por
-`eth_estimateGas` falhar numa chamada que reverte) voltou a acontecer —
-desta vez confirmado que **nenhuma das três ofertas de teste tinha
-allowance aprovada** (`cast call` em todas, allowance = 0). A sequência
-real: primeiro clique → `approve` falhou com "nonce too low" (erro da
-própria carteira ao assinar, antes de minerar); segundo clique → o revert
-já veio de `aportar`, não de `approve` — ou seja, a segunda tentativa
-pulou o `approve` inteiro.
+**Cause**: `useInvestOnChain.investir()` decided whether to call `approve` by
+comparing `valor` against an `currentAllowance` received **from outside**, as a
+parameter (`posicao.allowanceMockBrl`, from the `useMyOnChainPosition` read
+hook). After an attempt fails, `handleInvest()` triggers `posicao.refetch()`,
+but that is async and **not awaited** before the button is re-enabled
+(`invest.status` goes back to `"erro"`, which already re-enables the button,
+before the refetch even starts). A fast enough second click inherited the
+`currentAllowance` from BEFORE the previous attempt (in this case, luckily still
+`0`, but the decision itself never rechecked the chain, so any delayed refetch
+timing (a slow RPC, etc.) could produce the same skipped `approve` even with a
+genuinely insufficient allowance). `investir()` also never checked
+`approveReceipt.status`: if an `approve` was mined and reverted (instead of
+failing at signing), the code went on to `aportar` anyway, the same class of bug
+`confirmPublication()` had already had on the server side (a receipt existing ≠
+the receipt succeeding).
 
-**Causa**: `useInvestirOnChain.investir()` decidia se chamava `approve`
-comparando `valor` contra um `allowanceAtual` recebido **de fora**, via
-parâmetro (`posicao.allowanceMockBrl`, do hook de leitura
-`useMinhaPosicaoOnChain`). Depois de uma tentativa falhar,
-`handleInvestir()` dispara `posicao.refetch()` — mas isso é assíncrono e
-**não é esperado** antes do botão reabilitar (`invest.status` volta a
-`"erro"`, que já reabilita o botão, antes do refetch sequer começar). Um
-segundo clique rápido o bastante herdava o `allowanceAtual` de ANTES da
-tentativa anterior — nesse caso felizmente ainda `0`, mas a decisão em si
-nunca reconferia a chain, então qualquer timing de refetch atrasado (RPC
-lento, etc.) podia produzir o mesmo pulo do `approve` mesmo com allowance
-genuinamente insuficiente. `investir()` também nunca conferia
-`approveReceipt.status` — se um `approve` minerasse e revertesse (em vez
-de falhar na assinatura), o código seguia para `aportar` do mesmo jeito,
-mesma classe de bug que `confirmarPublicacao()` já tinha tido do lado do
-servidor (recibo existir ≠ recibo ter dado certo).
+**Fix**: `investir()` no longer receives `currentAllowance` from outside; it reads
+`allowance` **straight from the chain, right then**, inside the function itself
+(`publicClient.readContract`), immediately before deciding. No React state value
+enters that decision. And `approveReceipt.status` is now checked explicitly:
+`"reverted"` stops the sequence with its own message ("the approval reverted: the
+investment wasn't attempted"), it never falls through to `aportar`.
 
-**Correção**: `investir()` não recebe mais `allowanceAtual` de fora —
-lê `allowance` **direto da chain, na hora**, dentro da própria função
-(`publicClient.readContract`), imediatamente antes de decidir. Nenhum
-valor de React state entra nessa decisão. E `approveReceipt.status` agora
-é checado explicitamente: `"reverted"` interrompe a sequência com uma
-mensagem própria ("a aprovação reverteu — o aporte não foi tentado"),
-nunca cai para `aportar`.
+The `simulateContract` above really ran and caught a real revert, but the
+translated message lied about the cause (see "`describeOnChainError` never again
+classifies a revert as an RPC outage" just below): the real revert was
+`ERC20InsufficientAllowance` (selector `0xfb8f41b2`), not an RPC failure. Fixed
+there; `0xfb8f41b2` also got its own entry in `chainErrors.evm.custom`
+(`errors.ts`): the error belongs to the ERC20 (MockBRL), not to `OfertaCaptacao`,
+so decoding the `aportar()` simulation against `ofertaCaptacaoAbi` never resolves
+the error's NAME (it isn't declared in that ABI) and viem falls back to the raw
+selector as `errorName`; the `ERC20InsufficientAllowance` entry (by name) still
+exists for when decoding IS against `mockBrlAbi` directly (e.g. a reverting
+`approve`).
 
-A `simulateContract` acima rodou de verdade e capturou um revert real — mas a
-mensagem traduzida mentiu sobre a causa (ver "`describeOnChainError` nunca mais
-classifica revert como RPC fora do ar" logo abaixo): o revert real era
-`ERC20InsufficientAllowance` (selector `0xfb8f41b2`), não uma falha de RPC.
-Corrigido ali; `0xfb8f41b2` também ganhou entrada própria em
-`CUSTOM_ERROR_MESSAGES` (`errors.ts`) — o erro pertence ao ERC20 (MockBRL), não
-a `OfertaCaptacao`, então decodificar a simulação de `aportar()` contra
-`ofertaCaptacaoAbi` nunca resolve o NOME do erro (ele não está declarado
-naquele ABI) e o viem cai pro selector cru como `errorName`; a entrada
-`ERC20InsufficientAllowance` (por nome) continua existindo para quando a
-decodificação É contra `mockBrlAbi` diretamente (ex.: um `approve`
-revertendo).
+### 🔴 Real incident, root cause found: MockBRL resolved as a global constant, but each offering has its own
 
-### 🔴 Incidente real, causa de fundo encontrada: MockBRL resolvido como constante global, mas cada oferta tem o seu próprio
+After the two incidents above (stale allowance and a misclassified revert), the
+symptom persisted only on self-service offerings, and only on them: "investing
+works on the 10 legacy offerings (approve and aportar in the right order,
+'Investment confirmed on-chain') but keeps failing on the offerings created via
+`OfertaOrquestrador`", with `useInvestOnChain.investir()` being **exactly the
+same code** for both sources; there is no branching by provenance once `addresses`
+is resolved (see "Phase 4" above). The initial suspicion (an inverted order between
+`simulateContract` and the allowance check) was ruled out by reading the code
+directly; both blocks were already in the right order.
 
-Depois dos dois incidentes acima (allowance obsoleta e revert mal
-classificado), o sintoma persistia só nas ofertas self-service — e só nelas:
-"o aporte funciona nas 10 ofertas legadas (approve e aportar na sequência
-certa, 'Aporte confirmado on-chain') mas continua falhando nas ofertas criadas
-via `OfertaOrquestrador`", com `useInvestirOnChain.investir()` sendo
-**exatamente o mesmo código** para as duas origens — nenhuma ramificação por
-proveniência depois que `enderecos` é resolvido (ver "Fase 4" acima). A
-suspeita inicial (ordem invertida entre `simulateContract` e o check de
-allowance) foi descartada por leitura direta do código — os dois blocos já
-estavam na ordem certa.
+**Root cause, found by the user via Etherscan + `cast call`, not by a log**:
+`cast call <self-service-offering> "moeda()"` returned
+`0xEC377e00e022675B67Da6ab1966Bc0764bF792A4`, but the `approve` transaction the
+screen sent (checked on Etherscan) had `to =
+0xb99dda4e4d89f40324A7831970b8f37dBc35668F`, a **different** MockBRL. The screen
+approved and checked the allowance against one token; `aportar()` spent from
+another. The `approve` was mined with `Success` (the wrong address exists and
+accepts the call normally); the allowance on the real offering stayed zero;
+`aportar` reverted with `ERC20InsufficientAllowance`, the same symptom as the two
+previous incidents, but from a cause neither of those fixes touched.
 
-**Causa raiz, encontrada pelo usuário via Etherscan + `cast call`, não por
-log**: `cast call <oferta-self-service> "moeda()"` retornou
-`0xEC377e00e022675B67Da6ab1966Bc0764bF792A4` — mas a transação de `approve`
-que a tela disparou (conferida no Etherscan) tinha `to =
-0xb99dda4e4d89f40324A7831970b8f37dBc35668F`, um MockBRL **diferente**. A tela
-aprovava e consultava allowance contra um token; `aportar()` gastava de
-outro. O `approve` minerava com `Success` (o endereço errado existe e aceita
-a chamada normalmente); o allowance na oferta de verdade continuava zero;
-`aportar` revertia com `ERC20InsufficientAllowance` — o mesmo sintoma dos dois
-incidentes anteriores, mas por uma causa que nenhum dos dois fixes tocava.
-
-A raiz: `getMockBrlContract()` (introduzido no refactor da sub-etapa 5.2, ver
-"Fase 4" acima) resolvia o MockBRL como **constante global**
-(`NEXT_PUBLIC_MOCKBRL_ADDRESS`) — um comentário da época chegou a afirmar
-("confirmado por leitura on-chain antes de codar") que `OfertaCaptacao.moeda()`
-de uma oferta self-service "retornou exatamente" o mesmo MockBRL das legadas.
-Essa verificação **nunca foi feita linha a linha contra uma transação de
-verdade** — só assumida a partir de uma leitura isolada que, por coincidência
-ou engano, pareceu confirmar a premissa errada. `moeda()` **não é** uma
-constante do sistema: é um valor próprio de cada `OfertaCaptacao`, fixado na
-hora em que ela foi criada. Confirmado depois, por `cast call` em 3 ofertas
-legadas amostradas (`0xd4AC69a4c7Bfdc5E85c0e0da76ce12a1552b2704`,
+The root: `getMockBrlContract()` (introduced in sub-step 5.2's refactor, see
+"Phase 4" above) resolved MockBRL as a **global constant**
+(`NEXT_PUBLIC_MOCKBRL_ADDRESS`); a comment from that time even claimed
+("confirmed by an on-chain read before coding") that a self-service offering's
+`OfertaCaptacao.moeda()` "returned exactly" the same MockBRL as the legacy ones.
+That check **was never done line by line against a real transaction**; it was only
+assumed from an isolated read that, by coincidence or mistake, seemed to confirm
+the wrong premise. `moeda()` **is not** a system constant: it is each
+`OfertaCaptacao`'s own value, fixed when it was created. Confirmed later by `cast
+call` on 3 sampled legacy offerings (`0xd4AC69a4c7Bfdc5E85c0e0da76ce12a1552b2704`,
 `0xa60119428905fDf66BF967DE90A2F892985d99b2`,
-`0x7EA155F38ACb1B7C119769A21988feEb21388e57`): todas retornam
-`0xb99dda4e4d89f40324A7831970b8f37dBc35668F`, batendo com
-`NEXT_PUBLIC_MOCKBRL_ADDRESS` — as 10 ofertas legadas de fato compartilham um
-MockBRL (todas criadas pelo mesmo script administrativo, que sempre usa o
-mesmo endereço fixo), e é só por isso que o código antigo "funcionava" ali.
-Ofertas self-service, criadas via `OfertaOrquestrador.criarOfertaCompleta`,
-recebem o MockBRL próprio do orquestrador — diferente do env var — e por isso
-sempre quebravam.
+`0x7EA155F38ACb1B7C119769A21988feEb21388e57`): all return
+`0xb99dda4e4d89f40324A7831970b8f37dBc35668F`, matching
+`NEXT_PUBLIC_MOCKBRL_ADDRESS`; the 10 legacy offerings do share one MockBRL (all
+created by the same administrative script, which always uses the same fixed
+address), and that's the only reason the old code "worked" there. Self-service
+offerings, created via `OfertaOrquestrador.criarOfertaCompleta`, get the
+orchestrator's own MockBRL, different from the env var, which is why they always
+broke.
 
-**Correção**: nenhum código deste projeto lê mais MockBRL de uma constante —
-`getMockBrlContract()`/`contracts.mockBrl` foram removidos de
-`src/lib/web3/contracts.ts`, substituídos por `getMockBrlContractAt(address)`
-(só pareia um endereço JÁ resolvido com o ABI — não faz leitura nenhuma) e
-`OnChainContracts` não tem mais o campo `mockBrl`. Todo consumidor passou a
-ler `OfertaCaptacao.moeda()` **on-chain, da própria oferta selecionada**,
-antes de decidir qualquer coisa sobre MockBRL:
-- `useOfertaOnChainTermos`/`useMinhaPosicaoOnChain` (`useOfertaOnChain.ts`)
-  viraram leituras em DOIS ESTÁGIOS: o 1º `useReadContracts` lê tudo que não
-  depende do MockBRL, incluindo `moeda()`; o 2º (`enabled` só depois do 1º
-  resolver) lê decimals/symbol/saldo/allowance do endereço retornado por
-  `moeda()`. `pronto` exige os dois estágios com sucesso — mesmo gate rígido
-  já existente, agora cobrindo também a resolução do próprio MockBRL.
-- `useInvestirOnChain.investir()` lê `moeda()` fresh (`publicClient.
-  readContract`) logo no início, antes de ler allowance — a mesma leitura
-  "direto da chain, agora" que já valia para allowance desde o incidente
-  anterior passou a valer para o endereço do MockBRL também.
-- `useMintMockBrl` ganhou um parâmetro `enderecos` (antes não recebia
-  nenhum) e resolve `moeda()` da oferta antes de mintar — sem isso, o faucet
-  mintaria saldo no MockBRL errado para qualquer oferta self-service.
+**Fix**: no code in this project reads MockBRL from a constant anymore:
+`getMockBrlContract()`/`contracts.mockBrl` were removed from
+`src/lib/web3/contracts.ts`, replaced by `getMockBrlContractAt(address)` (it only
+pairs an ALREADY resolved address with the ABI; it does no read at all) and
+`OnChainContracts` no longer has the `mockBrl` field. Every consumer now reads
+`OfertaCaptacao.moeda()` **on-chain, from the selected offering itself**, before
+deciding anything about MockBRL:
+- `useOnChainOfferingTerms`/`useMyOnChainPosition` (`useOnChainOffering.ts`)
+  became TWO-STAGE reads: the 1st `useReadContracts` reads everything that doesn't
+  depend on MockBRL, including `moeda()`; the 2nd (`enabled` only after the 1st
+  resolves) reads decimals/symbol/balance/allowance from the address returned by
+  `moeda()`. `ready` requires both stages to succeed: the same strict gate as
+  before, now also covering the resolution of MockBRL itself.
+- `useInvestOnChain.investir()` reads `moeda()` fresh (`publicClient.readContract`)
+  right at the start, before reading the allowance; the same "straight from the
+  chain, now" read that has applied to the allowance since the previous incident
+  now applies to the MockBRL address too.
+- `useMintMockBrl` got an `addresses` parameter (it used to receive none) and
+  resolves the offering's `moeda()` before minting; without it, the faucet would
+  mint balance on the wrong MockBRL for any self-service offering.
 
-Cada hook resolve `moeda()` de forma **independente** — nenhum recebe o
-endereço de outro hook como prop/estado compartilhado, mesmo princípio já
-aplicado ao allowance ("nunca decidir com uma leitura que não é a sua
-própria"): um valor resolvido por `useOfertaOnChainTermos` nunca é repassado
-para `useInvestirOnChain`, por exemplo.
+Each hook resolves `moeda()` **independently**: none receives the address from
+another hook as a prop/shared state, the same principle already applied to the
+allowance ("never decide with a read that isn't your own"): a value resolved by
+`useOnChainOfferingTerms` is never passed on to `useInvestOnChain`, for example.
 
-🔴 **Comentários e textos antigos que afirmavam um MockBRL único/compartilhado
-entre as duas origens foram corrigidos** (`contracts.ts`,
-`OnChainInvestPage.tsx`) — a afirmação "mesmo MockBRL das 10 legadas" era a
-raiz deste incidente, não um detalhe cosmético; deixá-la no código ou na
-documentação teria feito alguém reintroduzir o mesmo bug mais tarde.
+🔴 **Old comments and texts claiming a single/shared MockBRL between the two
+sources were corrected** (`contracts.ts`, `OnChainInvestPage.tsx`): the claim
+"the same MockBRL as the 10 legacy ones" was the root of this incident, not a
+cosmetic detail; leaving it in the code or the docs would have made someone
+reintroduce the same bug later.
 
-O diagnóstico temporário (`console.log("[useInvestirOnChain] decisão de
-approve:", ...)`) adicionado para investigar este incidente foi removido —
-a causa está identificada e corrigida.
+The temporary diagnostic (`console.log("[useInvestOnChain] decisão de
+approve:", ...)`) added to investigate this incident was removed; the cause is
+identified and fixed.
 
-### Vitrine `/negociar/token-pmes` unificada com self-service
+### `/negociar/token-pmes` showcase unified with self-service
 
-A vitrine de Token PMEs, até aqui só com as 10 ofertas legadas (empresa
-fictícia + oferta real em Sepolia, ver "Unificação com empresas fictícias
-de PME" acima), passou a mostrar também as ofertas self-service já
-confirmadas on-chain (`sync_status='confirmada'`, publicadas pelo próprio
-emissor via `OfertaOrquestrador` — ver "Tela `/empresa/ofertas`" → Fase
-3) lado a lado, na mesma grade com filtro por setor.
+The SME Token showcase, until then only with the 10 legacy offerings (fictitious
+company + real Sepolia offering, see "Unification with fictitious SME companies"
+above), now also shows the self-service offerings already confirmed on-chain
+(`sync_status='confirmada'`, published by the issuer itself via
+`OfertaOrquestrador`, see "`/empresa/ofertas` screen" → Phase 3) side by side, in
+the same grid with the sector filter.
 
-🔴 **Nenhum upload novo foi criado** — logo e banner do emissor já existiam
-desde antes (migrations `0010`/`0011`, `LogoUpload.tsx`/`BannerUpload.tsx`
-em "Dados de cadastro" de `/perfil`, bucket público `issuer-logos`/
-`issuer-banners`) e já eram lidos por `loadActiveOfferingsByCategory()`
-(`src/lib/investments.ts`, usado por `RealOfferCard`/`MyOfferCard` na
-mesma página). Esta mudança só estende `loadConfirmedOnChainOfferings()`
-(`src/lib/web3/confirmedOfferings.ts`) — até aqui usada só por
-`/investir/onchain` e sem nenhum desses campos — para também selecionar
-`category` e `issuers(sector, business_summary, logo_path, banner_path)`
-e resolver `logoUrl`/`bannerUrl` com a mesma técnica de cache-busting
-(`issuerLogoUrl`/`issuerBannerUrl` + `getIssuer*Version`) já usada ali.
-`category` também já existia (`offerings.category`, migration `0009`,
-mesmo enum de 5 valores do resto do projeto) e já é exigido no formulário
-de criação da oferta (`createOfferingSchema`, `empresa/ofertas/actions.ts`)
-— nada disso precisou de migration nova.
+🔴 **No new upload was created**: the issuer's logo and banner already existed
+(migrations `0010`/`0011`, `LogoUpload.tsx`/`BannerUpload.tsx` in `/perfil`'s
+"Registration data", public buckets `issuer-logos`/`issuer-banners`) and were
+already read by `loadActiveOfferingsByCategory()` (`src/lib/investments.ts`, used
+by `RealOfferCard`/`MyOfferCard` on the same page). This change only extends
+`loadConfirmedOnChainOfferings()` (`src/lib/web3/confirmedOfferings.ts`), until
+then used only by `/investir/onchain` and without any of these fields, to also
+select `category` and `issuers(sector, business_summary, logo_path, banner_path)`
+and resolve `logoUrl`/`bannerUrl` with the same cache-busting technique
+(`issuerLogoUrl`/`issuerBannerUrl` + `getIssuer*Version`) already used there.
+`category` also already existed (`offerings.category`, migration `0009`, the same
+5-value enum as the rest of the project) and is already required in the offering
+creation form (`createOfferingSchema`, `empresa/ofertas/actions.ts`); none of this
+needed a new migration.
 
-**Sem foto enviada pelo emissor**: tratamento idêntico ao que já existia
-para uma PME legada sem arquivo em `public/negociar/pmes/<slug>/` —
-`OfertaBanner.tsx` já mostra, em silêncio, o ícone da categoria sobre o
-chip colorido, sem nenhum texto de "faltando". Decisão deliberada (não
-um esquecimento): um aviso textual de "foto não enviada" criaria uma
-inconsistência visual com as legadas e soaria como erro numa vitrine
-pública — o ícone genérico já comunica "sem foto" sem precisar de texto.
+**No photo sent by the issuer**: handled exactly like a legacy SME without a file
+in `public/negociar/pmes/<slug>/`: `OfferingBanner.tsx` already silently shows the
+category icon on the colored chip, with no "missing" text. A deliberate decision
+(not an oversight): a "photo not sent" text notice would create a visual
+inconsistency with the legacy ones and would read like an error in a public
+showcase; the generic icon already says "no photo" without needing text.
 
-**Slug**: ofertas self-service não têm coluna de slug legível (só
-`offerings.id`, um uuid) — a URL usa o próprio uuid como segmento:
-`/negociar/oferta/<uuid>`. `loadConfirmedOnChainOfferingById()` (novo, no
-mesmo módulo) valida o formato uuid antes de consultar (`z.string().uuid()`,
-mesmo padrão de `loadPublicOffering`), nunca lança para um slug que não é
-um uuid válido — só devolve `null`, tratado como "não encontrada" pela
-rota. `src/app/negociar/oferta/[slug]/page.tsx` tenta a lista mock
-primeiro (síncrona, como antes); só consulta o Supabase quando o slug não
-bate com nenhuma oferta fictícia.
+**Slug**: self-service offerings have no readable slug column (only
+`offerings.id`, a uuid); the URL uses the uuid itself as the segment:
+`/negociar/oferta/<uuid>`. `loadConfirmedOnChainOfferingById()` (new, in the same
+module) validates the uuid format before querying (`z.string().uuid()`, the same
+pattern as `loadPublicOffering`), and never throws for a slug that isn't a valid
+uuid; it just returns `null`, treated as "not found" by the route.
+`src/app/negociar/oferta/[slug]/page.tsx` tries the mock list first (synchronous,
+as before); it only queries Supabase when the slug matches no fictitious offering.
 
-🔴 **Página de detalhe é um componente novo e separado
-(`SelfServiceOfertaDetailPage.tsx`), não uma generalização de
-`OfertaDetailPage.tsx` com condicionais** — decisão deliberada, central
-para a regra "nada simulado pode parecer real" do topo deste arquivo.
-`OfertaDetailPage.tsx` é construída inteira em torno do tipo mock
-`Oferta`: financeiro simulado (`FinanceiroChart`), indicadores
-fundamentalistas fictícios (`FundamentalIndicators`, `INDICADORES_
-DEMONSTRACAO`) e termos fixos. Uma oferta self-service é uma empresa
-REAL — forçá-la a caber no tipo `Oferta` exigiria fabricar indicadores/
-financeiro fictícios para uma empresa de verdade, o inverso exato do que
-a regra proíbe (normalmente a preocupação é "não fingir que o fictício é
-real"; aqui seria o oposto, "não inventar dado fictício sobre algo
-real"). `SelfServiceOfertaDetailPage.tsx` por isso só mostra: banner/logo
-reais (`OfertaBanner`), termos + investimento ao vivo da chain
-(`RealOnChainInvestPanel`, já 100% real, reaproveitado sem nenhuma
-mudança), setor/resumo do negócio reais (quando o emissor preencheu),
-documentos placeholder genéricos (mesma lista `DOCUMENTOS_PADRAO` "Em
-breve" de todas as ofertas — não fabrica nem omite nada específico de
-empresa) e os riscos genéricos da Res. CVM 88 (texto idêntico ao de
-`OfertaDetailPage.tsx`, nunca específico de nenhuma empresa).
+🔴 **The detail page is a new, separate component
+(`SelfServiceOfferingDetailPage.tsx`), not a generalization of
+`OfferingDetailPage.tsx` with conditionals**: a deliberate decision, central to the
+"nothing simulated may look real" rule at the top of this file.
+`OfferingDetailPage.tsx` is built entirely around the mock `Oferta` type: simulated
+financials (`FinancialChart`), fictitious fundamental indicators
+(`FundamentalIndicators`, `DEMO_INDICATORS`) and fixed terms. A
+self-service offering is a REAL company; forcing it to fit the `Oferta` type would
+require making up fictitious indicators/financials for a real company, the exact
+inverse of what the rule forbids (normally the concern is "don't pretend the
+fictitious is real"; here it would be the opposite, "don't invent fictitious data
+about something real"). That's why `SelfServiceOfferingDetailPage.tsx` only shows:
+the real banner/logo (`OfferingBanner`), terms + live investment from the chain
+(`RealOnChainInvestPanel`, already 100% real, reused with no change at all), the
+real sector/business summary (when the issuer filled them in), generic placeholder
+documents (the same "Coming soon" `common.defaultDocuments` list as every offering; it
+neither makes up nor omits anything company-specific) and the generic Res. CVM 88
+risks (text identical to `OfferingDetailPage.tsx`'s, never specific to any company).
 
-**Proveniência**: mesma distinção já usada no seletor de
-`/investir/onchain` (`ptBr.investirOnChain.seletorOferta.proveniencia`) —
-"Empresa fictícia de demonstração" (legado) vs. "Dados informados pelo
-próprio emissor (demonstração)" (self-service), repetida como
-`ptBr.negociar.pmesOnChain.dadosDoEmissor` no card da vitrine e
-`ptBr.negociar.oferta.avisoSelfService`/`.demoBannerSelfService` na
-página de detalhe — strings próprias desta área por simplicidade (duas
-linhas de texto, não justifica importar entre áreas do dicionário i18n).
+**Provenance**: the same distinction already used in `/investir/onchain`'s
+selector (`dict.investOnChain.offeringSelector.provenance`): "Fictitious demo
+company" (legacy) vs. "Data provided by the issuer itself (demo)"
+(self-service), repeated as `dict.trade.smesOnChain.issuerData` on the
+showcase card and `dict.trade.offering.selfServiceNotice`/
+`.demoBannerSelfService` on the detail page; strings of their own in this area for
+simplicity (two lines of text don't justify importing across dictionary areas).
 
-**Card da vitrine**: `SelfServicePmesCard.tsx` (novo), irmão de
-`PmesOnChainCard.tsx` (legado) em vez de generalizá-lo — mesmo layout de
-3 colunas (meta de captação/preço por cota/cotas), mas os números vêm de
-`offerings.hard_cap_cents`/`share_price_cents` (nunca das constantes fixas
-`ONCHAIN_PMES_*`, que só valem para o clone das 10 legadas; os termos de
-uma oferta self-service variam por oferta). 🔴 Mostrar esses valores sem
-reler a chain por card é seguro, não um atalho arriscado: para qualquer
-oferta com `sync_status='confirmada'`, essa mesma coluna já foi conferida
-contra o `metaMaxima`/`precoPorCota` minerado on-chain por
-`confirmarPublicacao()` (na hora da confirmação) e segue sendo reconferida
-a cada chamada de "Verificar consistência" (`verificarConsistencia()`, ver
-"Reconciliação contínua" acima) — nunca um número que só existe no
-Supabase sem checagem contra a chain. Conversão cents→mBRL é a mesma de
-`verificarConsistencia()` (`UNIDADE_ON_CHAIN`, `src/lib/web3/gates.ts`:
-"1 unidade MockBRL = 1 real equivalente"), só que rotulada **mBRL, nunca
-R$** aqui (texto público da vitrine) — ao contrário das mensagens de diff
-daquela função, que são só para o próprio emissor na tela de publicação e
-usam `formatBRL` por serem um log técnico interno, não uma superfície
-pública. Número de cotas é derivado (`hardCapCents / sharePriceCents`,
-mesma fórmula de `ActiveOfferingSummary` em `investments.ts`) — seguro
-porque o contrato já teria revertido com `PrecoNaoDivideMetaMaxima` na
-publicação se não dividisse exato. `PmesSectorFilter.tsx` passou a aceitar
-uma união discriminada
-(`PmesCardData`, campo `origin: "legado" | "selfService"`) em vez de só o
-tipo mock `Oferta`, e escolhe o card certo por item; o filtro de setor
-(client-side, poucos itens) extrai o setor de qualquer uma das duas
-origens via um helper pequeno, ignorando itens self-service sem setor
-preenchido (não geram botão de filtro vazio, mas continuam aparecendo
-sem filtro nenhum selecionado).
+**Showcase card**: `SelfServiceSmesCard.tsx` (new), a sibling of
+`SmesOnChainCard.tsx` (legacy) instead of generalizing it: the same 3-column
+layout (fundraising target/price per share/shares), but the numbers come from
+`offerings.hard_cap_cents`/`share_price_cents` (never from the fixed
+`ONCHAIN_SMES_*` constants, which only apply to the clone of the 10 legacy ones; a
+self-service offering's terms vary by offering). 🔴 Showing these values without
+re-reading the chain per card is safe, not a risky shortcut: for any offering with
+`sync_status='confirmada'`, that same column was already checked against the
+on-chain mined `metaMaxima`/`precoPorCota` by `confirmPublication()` (at
+confirmation time) and keeps being rechecked on every "Verify consistency" call
+(`checkConsistency()`, see "Continuous reconciliation" below); never a number
+that only exists in Supabase without a check against the chain. The cents→mBRL
+conversion is the same as `checkConsistency()`'s (`UNIT_ON_CHAIN`,
+`src/lib/web3/gates.ts`: "1 MockBRL unit = 1 real equivalent"), only labeled
+**mBRL, never R$** here (public showcase text), unlike that function's diff
+messages, which are only for the issuer itself on the publication screen and use
+`formatBRL` because they are an internal technical log, not a public surface. The
+share count is derived (`hardCapCents / sharePriceCents`, the same formula as
+`ActiveOfferingSummary` in `investments.ts`); safe because the contract would
+already have reverted with `PrecoNaoDivideMetaMaxima` at publication if it didn't
+divide exactly. `SmesSectorFilter.tsx` now accepts a discriminated union
+(`SmesCardData`, an `origin: "legacy" | "selfService"` field) instead of only the
+mock `Oferta` type, and picks the right card per item; the sector filter
+(client-side, few items) extracts the sector from either source via a small
+helper, ignoring self-service items without a filled-in sector (they don't create
+an empty filter button, but they still show up when no filter is selected).
 
-`CategoryPage.tsx` só busca as ofertas self-service quando
-`categoria === "pmes"` — `loadConfirmedOnChainOfferings()` não filtra por
-categoria na query (é reaproveitada por `/investir/onchain`, que lista
-todas as categorias), o filtro `category === "pmes"` é feito depois de
-ler, no próprio `CategoryPage.tsx`.
+`CategoryPage.tsx` only fetches the self-service offerings when
+`categoria === "pmes"`; `loadConfirmedOnChainOfferings()` doesn't filter by
+category in the query (it's reused by `/investir/onchain`, which lists every
+category), so the `category === "pmes"` filter happens after reading, in
+`CategoryPage.tsx` itself.
+
+---
+## `/socios` screen (internal dashboard, restricted to the partners)
+
+An administrative area separate from the rest of the site, never aimed at the end
+investor/issuer. It shows transactions and totals combining real data (Sepolia,
+via on-chain events) and demo/mock data (Supabase, `/investir`), **always in
+separate sections/tables**, never mixed in a single row; the same honesty rule as
+the rest of the project, applied in reverse here (the risk isn't mock looking
+real, it's the two getting confused in an administrative dashboard).
+
+🔴 **Access control is just an email allowlist, not a new "role"**:
+`src/lib/auth/resolvePartner.ts` (`resolvePartner()`) is completely separate from
+`resolveAccount()` (`resolveInvestor.ts`, investor/issuer); the two never mix.
+Sign-in is still the same Supabase Auth as always (`signInWithPassword`, the
+browser client, the same mechanism as `/entrar`, with its own form; it doesn't
+redirect there nor touch that screen). The allowlist comes from
+`NIARA_SOCIOS_EMAILS` (an env var, comma-separated emails), **never hardcoded in
+the code**, because the repository is public. Signed in but outside the
+allowlist is not redirected: it stays on the page with "Restricted access" + a
+sign-out button. The partners' Supabase Auth accounts must exist beforehand
+(created directly in the Supabase dashboard, Authentication → Add User; there is no
+sign-up flow for this, it would be a parallel system).
+
+**Real data** (`src/lib/web3/events.ts`): reads events with `viem getLogs`
+**directly on the server**, with no connected wallet nor wagmi (unlike
+`/investir/onchain`'s hooks, which are client-side and depend on MetaMask). Events
+read, names checked directly in the `.sol` before writing any code (not assumed):
+`Aporte`, `OfertaEncerrada`, `OfertaCancelada`, `CotasResgatadas`,
+`RecursosLiberados`, `Reembolso`. The starting block is found automatically and
+cached incrementally (`onchain_events_cache`/`onchain_sync_state`, migrations
+0012–0014): if the saved MockBRL address doesn't match the current one, the code
+understands there was a redeploy and recomputes the starting point (see
+`findDeployBlock` in `eventsCore.ts`). `getSummaryOnChain()` reads `taxaBps`
+**directly from the contract** of each configured offering (it never hardcodes 0,
+even though that's the real value today, confirmed via `cast call` before writing
+any text about fees on the screen).
+
+**Mock data** (`investments` from Supabase), the same GOLDEN RULE as
+`investments.ts` (a column allowlist, never `select('*')`). That schema **has no
+fee field at all**; the screen doesn't invent one, it only explains that the
+concept doesn't exist in that flow (`dict.partners.mockSummary.noFeeNote`).
+
+**Fee shown**: today `taxaBps = 0` on every legacy offering (confirmed via `cast
+call`, not assumed) → it shows "R$ 0.00" with an explicit note "taxaBps = 0 in this
+demo, read directly from the contract: no fee is charged today". If an offering
+ever has `taxaBps > 0`, the dashboard shows the real percentage read from the
+contract, never a simulated/projected value presented as if it were a real
+charge.
+
+**Confirmed self-service offerings in the timeline**: when an offering reaches
+`sync_status='confirmada'`, it shows up as one more row in the single timeline
+(`TransactionsTable`, not a new section; reused on purpose, see the original
+request): `listConfirmedSelfServiceOfferings()` (`src/lib/partners/transactions.ts`)
+reuses `loadConfirmedOnChainOfferings()` without any new read (the same function
+already used by `/investir/onchain` and the `/negociar/token-pmes` showcase).
+Display only, no action: the issuer's name (`ator`), min–max target + price per
+share + deadline condensed into a single string (`valor`; the table only has one
+value column, the same pattern as any other timeline row), a link to the contract
+on Etherscan. `origem: "onchain"` (the "Real — Sepolia" badge) even though the
+read itself comes from Supabase: the referent (the offering/contract) is real on
+Sepolia, only mirrored in the database, and that mirror is already checked against
+the chain at confirmation and on every reconciliation (see "Continuous
+reconciliation" below), never a made-up value. Values in **mBRL, never R$**: the
+same rule already applied in `SelfServiceSmesCard.tsx`, and consistent with the
+OTHER rows of this same table (real on-chain events already use
+`mockBrlSymbol`/mBRL in the "Value" column; mixing R$ in there would clash within
+the column itself). `loadConfirmedOnChainOfferings()` got
+`issuerAccountId`/`targetMinCents`/`opensAt`/`closesAt`/`onchainConfirmedAt` in
+this change (before it only had `hardCapCents`/`sharePriceCents`);
+`issuerAccountId` is also used in `/negociar/oferta/[slug]` to decide `isIssuer`
+(see "Close offering" unlocked for the issuing company, just below).
+
+### 🔴 "Close offering" also unlocked for the issuing company, not only the partners
+
+Until here, `RealOnChainInvestPanel.tsx` only unlocked the "Close offering" button
+for `isPartner` (the Niara team). It now also unlocks it for `isIssuer`, `true` only
+when the signed-in issuer (`resolveAccount()`) owns the self-service offering
+being shown (`accountId === offerings.issuer_id`, resolved in
+`/negociar/oferta/[slug]/page.tsx` and passed down by
+`SelfServiceOfferingDetailPage.tsx`). 🔴 **Only applies to self-service
+offerings**: the 10 legacy ones have no `issuer_id` in this app (they were created
+by an administrative script, a fictitious company in `mock/offerings.ts`, with no real
+issuer account behind them), so `isIssuer` can never be computed for them and the
+button stays restricted to `isPartner` there (`OfferingDetailPage.tsx` didn't get this
+prop). `/investir/onchain` (`OnChainInvestPage.tsx`, the presenter's
+multi-offering tool) was also left out on purpose: it doesn't require a sign-in,
+so there is no issuer account to compare with, and its real use is an in-person
+demo, not the company managing its own offering (which already has
+`/negociar/oferta/<id>` for that; see the link below).
+
+🔴 **The button's copy keeps the explanation in the right direction**:
+`encerrar()` was already permissionless in the contract before this change (any
+wallet can call it directly on the network once eligible); that didn't change now,
+and the copy (`dict.investOnChain.close.description`/`.restricted`) was
+reinforced to make that even more explicit: the contract's permissionless design
+is intentional, so no investor is held hostage by the platform or the issuing
+company to recover their investment in a fundraising that didn't close. The
+button in this UI never controls who CAN close on-chain; it only decides who sees
+a convenient shortcut for it.
+
+**Discovery**: `OfferingsPage.tsx` (`/empresa/ofertas`) got a "View public offering
+→" link in the `confirmada` status block, pointing to `/negociar/oferta/<id>`;
+without it, the issuer had no way to find its own detail page (and therefore the
+"Close offering" button) after publishing; the `confirmada` block used to show
+only the contract/token addresses with Etherscan links, no link back into the app.
 
 ---
 
-## Tela `/socios` (painel interno, restrito aos sócios)
+## `/empresa/ofertas` screen (offering creation and management by the issuer)
 
-Área administrativa separada do resto do site — nunca voltada ao
-investidor/emissor final. Mostra transações e totais combinando dado
-real (Sepolia, via eventos on-chain) e dado demo/mock (Supabase,
-`/investir`), **sempre em seções/tabelas separadas**, nunca misturados
-numa linha só — mesma regra de honestidade do resto do projeto, aplicada
-ao contrário aqui (o risco não é mock parecer real, é os dois se
-confundirem num painel administrativo).
+Only accessible to `role==='issuer'`. `OfferingsPage.tsx`: a creation form
+(`createOffering()`: fundraising size, minimum target, additional lot 0–25%, a
+1–180 day window, value per share, category) + a "My offerings" list with an
+"Activate" action (`activateOffering()`, `draft→active`, the only possible
+transition) and, once open, "Close fundraising" (`closeOffering()`, which runs the
+all-or-nothing closing and issues the mock tokens). See "Backend (Supabase)" →
+"Fundraising cycle" above for the full mechanics (the hard cap computation, race
+protection on activation, error translation by constraint). This is the same list
+`MyOffersSection.tsx` summarizes, read-only, inside `/perfil` (see "`/perfil`
+screen", section "2. My offerings").
 
-🔴 **Controle de acesso é só uma allowlist de e-mail, não um "role"
-novo** — `src/lib/auth/resolveSocio.ts` (`resolveSocio()`) é totalmente
-separado de `resolveAccount()` (`resolveInvestor.ts`, investor/issuer);
-os dois nunca se misturam. Login continua sendo o mesmo Supabase Auth de
-sempre (`signInWithPassword`, client do navegador — mesmo mecanismo de
-`/entrar`, formulário próprio, não redireciona pra lá nem mexe naquela
-tela). A allowlist vem de `NIARA_SOCIOS_EMAILS` (env var, e-mails
-separados por vírgula) — **nunca hardcodada no código**, porque o
-repositório é público. Autenticado mas fora da allowlist não é
-redirecionado — fica na própria página com "Acesso restrito" + botão de
-sair. As contas do Supabase Auth dos sócios precisam existir antes
-(criadas direto no painel do Supabase, Authentication → Add User — não
-há fluxo de cadastro para isso, seria sistema paralelo).
+Phase 3 (self-service publication on Sepolia, see
+`PLANO_FASE_3_PUBLICACAO_ONCHAIN.md`, the full plan, not repeated here) adds
+`/empresa/ofertas/[id]/publicar`: the issuer itself signs
+`OfertaOrquestrador.criarOfertaCompleta` with its own wallet.
+`src/app/empresa/ofertas/onchain-actions.ts` (`registerAttempt`/
+`confirmPublication`) and `src/lib/web3/hooks/usePublishOfferingOnChain.ts`. The
+route is already linked from `OfferingsPage.tsx`: a `draft` offering with
+`sync_status='nao_onchain'` shows the "Publish on-chain →" link in place of the old
+"Activate" button (disabled since before this phase, see section 1.1 of the plan);
+`pendente`/`divergente` show the state + a link to the same route; `confirmada`
+only shows the state (contract/token addresses with Etherscan links), never a
+button; the publication already happened.
 
-**Dados reais** (`src/lib/web3/events.ts`) — leitura de eventos via
-`viem getLogs` **direto no servidor**, sem carteira conectada nem wagmi
-(diferente dos hooks de `/investir/onchain`, que são client-side e
-dependem de MetaMask). Eventos lidos, nomes conferidos direto no `.sol`
-antes de escrever qualquer código (não presumidos): `Aporte`,
-`OfertaEncerrada`, `OfertaCancelada`, `CotasResgatadas`,
-`RecursosLiberados`, `Reembolso`. `FROM_BLOCK` é um bloco fixo (o do
-redeploy da infra em 2026-08-15) — evita escanear a chain desde o
-genesis; **precisa ser atualizado se a infra for redeployada nesta
-sessão** (ver `niara-contracts-PMEs/CLAUDE.md`, "Chave do deployer da
-Fase 4 perdida"). `getResumoOnChain()` lê `taxaBps` **direto do
-contrato** de cada oferta configurada (nunca hardcoda 0, mesmo sendo
-esse o valor real hoje, confirmado via `cast call` antes de escrever
-qualquer texto sobre taxa na tela).
-
-**Dados mock** (`src/lib/socios/mockTransacoes.ts`) — `investments` do
-Supabase, mesma REGRA DE OURO de `investments.ts` (lista branca de
-colunas, nunca `select('*')`). Este schema **não tem nenhum campo de
-taxa** — a tela não inventa um, só explica que o conceito não existe
-nesse fluxo (`ptBr.socios.resumoMock.semTaxaNota`).
-
-**Taxa exibida**: hoje `taxaBps = 0` em todas as ofertas (confirmado via
-`cast call`, não assumido) → mostra "R$ 0,00" com nota explícita "taxaBps
-= 0 nesta demo, lido direto do contrato — nenhuma taxa é cobrada hoje".
-Se um dia uma oferta tiver `taxaBps > 0`, o painel mostra o percentual
-real lido do contrato, nunca um valor simulado/projetado apresentado
-como se fosse cobrança de verdade.
-
-**Ofertas self-service confirmadas na timeline**: quando uma oferta chega a
-`sync_status='confirmada'`, ela passa a aparecer como mais uma linha na
-timeline única (`MovimentacoesTable`, não uma seção nova — reaproveitada de
-propósito, ver pedido original) — `listarOfertasSelfServiceConfirmadas()`
-(`src/lib/socios/movimentacoes.ts`) reaproveita `loadConfirmedOnChainOfferings()`
-sem nenhuma leitura nova (mesma função já usada por `/investir/onchain` e pela
-vitrine de `/negociar/token-pmes`). Só exibição, nenhuma ação: nome do emissor
-(`ator`), meta mínima–máxima + preço por cota + prazo condensados numa única
-string (`valor` — a tabela só tem uma coluna de valor, mesmo padrão de
-qualquer outra linha da timeline), link para o contrato no Etherscan.
-`origem: "onchain"` (badge "Real — Sepolia") mesmo a leitura em si vindo do
-Supabase — o referente (a oferta/contrato) é real em Sepolia, só espelhado
-no banco, e esse espelho já é conferido contra a chain na confirmação e a
-cada reconciliação (ver "Reconciliação contínua" acima), nunca um valor
-inventado. Valores em **mBRL, nunca R$** — mesma regra já aplicada em
-`SelfServicePmesCard.tsx`, e consistente com as OUTRAS linhas desta mesma
-tabela (eventos on-chain reais já usam `mockBrlSymbol`/mBRL na coluna
-"Valor" — misturar R$ ali destoaria dentro da própria coluna).
-`loadConfirmedOnChainOfferings()` ganhou `issuerAccountId`/`targetMinCents`/
-`opensAt`/`closesAt`/`onchainConfirmedAt` nesta mudança (antes só tinha
-`hardCapCents`/`sharePriceCents`) — `issuerAccountId` também passou a ser
-usado em `/negociar/oferta/[slug]` para decidir `isEmissor` (ver "Encerrar
-oferta" liberado para a empresa emissora, logo abaixo).
-
-### 🔴 "Encerrar oferta" liberado também para a empresa emissora, não só sócios
-
-Até aqui, `RealOnChainInvestPanel.tsx` só liberava o botão "Encerrar oferta"
-para `isSocio` (equipe Niara). Passou a liberar também para `isEmissor` —
-`true` só quando o emissor logado (`resolveAccount()`) é o dono da oferta
-self-service sendo exibida (`accountId === offerings.issuer_id`, resolvido em
-`/negociar/oferta/[slug]/page.tsx` e repassado por `SelfServiceOfertaDetailPage.tsx`).
-🔴 **Só se aplica a ofertas self-service** — as 10 legadas não têm `issuer_id`
-nenhum neste app (foram criadas por script administrativo, empresa fictícia em
-`mock/ofertas.ts`, sem conta de emissor de verdade por trás), então `isEmissor`
-nunca é computável pra elas e o botão continua restrito a `isSocio` ali
-(`OfertaDetailPage.tsx` não ganhou essa prop). `/investir/onchain`
-(`OnChainInvestPage.tsx`, a ferramenta multi-oferta do apresentador) também
-ficou de fora de propósito — não exige login, então não há conta de emissor
-pra comparar, e seu uso real é demonstração presencial, não gestão da própria
-oferta pela empresa (que já tem `/negociar/oferta/<id>` para isso, ver link
-abaixo).
-
-🔴 **Texto do botão mantém a direção certa da explicação**: `encerrar()` já
-era permissionless no contrato antes desta mudança (qualquer carteira pode
-chamar diretamente na rede assim que elegível) — isso não mudou agora, e o
-texto (`ptBr.investirOnChain.encerrar.descricao`/`.restrito`) foi reforçado
-pra deixar isso ainda mais explícito: o permissionless do contrato é
-proposital, para nenhum investidor ficar refém da plataforma ou da empresa
-emissora pra recuperar o aporte numa captação que não fechou. O botão nesta
-UI nunca controla quem PODE encerrar on-chain — só decide quem vê um atalho
-conveniente pra isso.
-
-**Descoberta**: `OfertasPage.tsx` (`/empresa/ofertas`) ganhou um link "Ver
-oferta pública →" no bloco de status `confirmada`, apontando para
-`/negociar/oferta/<id>` — sem ele, o emissor não tinha como achar a própria
-página de detalhe (e portanto o botão "Encerrar oferta") depois de publicar;
-o bloco `confirmada` antes só mostrava os endereços de contrato/token com
-link pro Etherscan, nenhum link de volta pro próprio app.
-
----
-
-## Tela `/empresa/ofertas` (criação e gestão de oferta pelo emissor)
-
-Só acessível a `role==='issuer'`. `OfertasPage.tsx`: formulário de criação
-(`createOffering()` — tamanho da captação, meta mínima, lote adicional
-0–25%, janela 1–180 dias, valor por cota, categoria) + lista "Minhas
-ofertas" com ação "Ativar" (`activateOffering()`, `draft→active`, única
-transição possível) e, depois de aberta, "Fechar captação"
-(`closeOffering()` — roda o fechamento all-or-nothing e emite os tokens
-mock). Ver "Backend (Supabase)" → "Ciclo de captação" acima para a
-mecânica completa (cálculo do hard cap, proteção contra corrida na
-ativação, tradução de erro por constraint). Esta é a mesma lista que
-`MyOffersSection.tsx` resume, só de leitura, dentro de `/perfil` (ver
-"Tela `/perfil`", seção "2. Minhas ofertas").
-
-Fase 3 (publicação self-service em Sepolia, ver `PLANO_FASE_3_PUBLICACAO_ONCHAIN.md`
-— plano completo, não repetido aqui) acrescenta `/empresa/ofertas/[id]/publicar`:
-o próprio emissor assina `OfertaOrquestrador.criarOfertaCompleta` com a própria
-carteira. `src/app/empresa/ofertas/onchain-actions.ts` (`registrarTentativa`/
-`confirmarPublicacao`) e `src/lib/web3/hooks/usePublicarOfertaOnChain.ts`. A rota já
-está linkada em `OfertasPage.tsx`: uma oferta `draft` com `sync_status='nao_onchain'`
-mostra o link "Publicar on-chain →" no lugar do antigo botão "Ativar" (desabilitado
-desde antes desta fase, ver seção 1.1 do plano); `pendente`/`divergente` mostram
-estado + link para a mesma rota; `confirmada` mostra só o estado (endereços de
-contrato/token com link pro Etherscan) — nunca um botão, a publicação já aconteceu.
-
-**Teste ponta a ponta validado depois da correção de `expected_emissor_wallet`
-abaixo**: nova oferta, emissor `0x21443ADa1d36e5DCAadD62896Ca2c21aDFE396E1` (carteira
-limpa, nunca usada para assinar nada antes, autorizada via `autorizarEmissor` só para
-este teste), hash
+**End-to-end test validated after the `expected_emissor_wallet` fix below**: a
+new offering, issuer `0x21443ADa1d36e5DCAadD62896Ca2c21aDFE396E1` (a clean wallet,
+never used to sign anything before, authorized via `autorizarEmissor` only for this
+test), hash
 [`0x8f3010c9a2287848bfcf351dfdbcb73b0203e22d707b3a32954a2c89be07866a`](https://sepolia.etherscan.io/tx/0x8f3010c9a2287848bfcf351dfdbcb73b0203e22d707b3a32954a2c89be07866a).
-Desta vez a MetaMask **não** reescreveu a transação em envelope EIP-7702 — `to` foi
-direto ao `OfertaOrquestrador`, sem delegação nenhuma envolvida (nem toda conta vira
-EIP-7702; a primeira vez foi uma escolha da MetaMask para aquela conta especificamente,
-não algo que este projeto controla ou pode prevenir do lado do dApp — por isso a
-validação por log continua sendo a única forma correta, independente de qual dos dois
-formatos aparecer). `sync_status` chegou a `confirmada` sozinho, sem precisar de
-"Reprocessar": oferta `0xE340Bb941E3FADfEbe2454dFd17a10F35b4A5EF6`, token
-`0x0dB0FaB0a41891f023aF58C9AE9C271575590F56`, ambos lidos do evento
-`OfertaCompletaCriada`, ambos confirmados como registrados nas factories
+This time MetaMask did **not** rewrite the transaction into an EIP-7702 envelope:
+`to` went directly to `OfertaOrquestrador`, with no delegation involved (not every
+account becomes EIP-7702; the first time was MetaMask's choice for that account
+specifically, not something this project controls or can prevent from the dApp
+side; that's why log-based validation stays the only correct approach, regardless
+of which of the two formats shows up). `sync_status` reached `confirmada` by
+itself, with no need for "Reprocess": offering
+`0xE340Bb941E3FADfEbe2454dFd17a10F35b4A5EF6`, token
+`0x0dB0FaB0a41891f023aF58C9AE9C271575590F56`, both read from the
+`OfertaCompletaCriada` event, both confirmed as registered in the factories
 (`isOferta`/`isCaptacao`).
 
-A oferta antiga "Empresa Teste" (a que ficou `divergente` por causa do incidente
-EIP-7702 original) foi **reprocessada com sucesso** pelo mesmo caminho — clique em
-"Reprocessar" na própria tela, sem UPDATE manual — e também chegou a `confirmada`,
-usando o valor de `expected_emissor_wallet` recuperado pelo backfill da migration
-0016 (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6`, o mesmo que realmente assinou
-aquela transação). As duas ofertas de teste deste repositório estão hoje
-`confirmada`.
+The old "Empresa Teste" offering (the one left `divergente` by the original
+EIP-7702 incident) was **successfully reprocessed** through the same path (a click
+on "Reprocess" on the screen itself, no manual UPDATE) and also reached
+`confirmada`, using the `expected_emissor_wallet` value recovered by migration
+0016's backfill (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6`, the same wallet
+that actually signed that transaction). Both test offerings in this repository are
+`confirmada` today.
 
-### 🔴 EIP-7702 — a MetaMask pode reescrever a transação; nunca validar por `receipt.to`
+### 🔴 EIP-7702: MetaMask may rewrite the transaction; never validate by `receipt.to`
 
-Incidente real, não hipotético: no primeiro teste ponta a ponta (emissor
-`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` assinando `criarOfertaCompleta` pela
-MetaMask), a transação minerada (`0x533a5bc4…`) tinha `type: 4` — uma transação
-**EIP-7702** ("Set Code Transaction", parte do Pectra, que a Sepolia já suporta) —
-com `to = 0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`, um contrato de
-infraestrutura da própria MetaMask (23KB de bytecode, sem nenhuma relação com este
-projeto), **não** o `OfertaOrquestrador` (`0xde9cC84d…796e5`) que a MetaMask
-mostrou na tela de confirmação e que `writeContractAsync` de fato recebeu como
-alvo. A `authorizationList` da transação continha uma autorização assinada pelo
-próprio emissor delegando sua conta para um contrato de implementação da MetaMask
-(`0x63c0c19a…`) — confirmado lendo `cast code` da conta do emissor **depois** da
-transação: `0xef010063c0c19a282a1b52b07dd5a65b58948a07dae32b`. `0xef0100` é o
-prefixo padrão do "delegation designator" do EIP-7702 — a partir dessa transação,
-**a conta do emissor deixou de ser uma EOA pura, de forma permanente** (fica assim
-até uma nova autorização EIP-7702 mudar isso), e passou a ter bytecode. Qualquer
-lógica futura que assuma "carteira de usuário = EOA sem código" precisa saber
-disso — inclusive fora deste fluxo de publicação.
+A real incident, not a hypothetical one: in the first end-to-end test (issuer
+`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` signing `criarOfertaCompleta` through
+MetaMask), the mined transaction (`0x533a5bc4…`) had `type: 4`, an **EIP-7702**
+transaction ("Set Code Transaction", part of Pectra, which Sepolia already
+supports), with `to = 0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`, an
+infrastructure contract of MetaMask itself (23KB of bytecode, unrelated to this
+project), **not** the `OfertaOrquestrador` (`0xde9cC84d…796e5`) that MetaMask
+showed on the confirmation screen and that `writeContractAsync` actually received
+as the target. The transaction's `authorizationList` contained an authorization
+signed by the issuer itself delegating its account to a MetaMask implementation
+contract (`0x63c0c19a…`); confirmed by reading `cast code` of the issuer's account
+**after** the transaction: `0xef010063c0c19a282a1b52b07dd5a65b58948a07dae32b`.
+`0xef0100` is the standard prefix of the EIP-7702 "delegation designator": from
+that transaction on, **the issuer's account stopped being a pure EOA,
+permanently** (it stays that way until a new EIP-7702 authorization changes it),
+and started having bytecode. Any future logic assuming "user wallet = EOA without
+code" needs to know this, including outside this publication flow.
 
-A chamada em si funcionou perfeitamente (conferido, não presumido): o
-`OfertaOrquestrador` real emitiu `OfertaCompletaCriada` com o emissor certo,
-token/oferta existem on-chain e estão registrados nas duas factories
-(`isOferta`/`isCaptacao` = `true`). O problema era só que `confirmarPublicacao()`
-validava comparando `receipt.to === orquestrador.address` — uma checagem que a
-própria MetaMask pode invalidar reescrevendo a transação nos bastidores, depois
-que o dApp já pediu a chamada original. `receipt.to` **nunca prova o que a
-transação fez** — só o log emitido pelo próprio contrato prova isso (só o
-`OfertaOrquestrador` consegue emitir um log com `log.address` igual ao dele; isso
-é inforjável do jeito que `to` não é).
+The call itself worked perfectly (checked, not assumed): the real
+`OfertaOrquestrador` emitted `OfertaCompletaCriada` with the right issuer, the
+token/offering exist on-chain and are registered in both factories
+(`isOferta`/`isCaptacao` = `true`). The problem was only that
+`confirmPublication()` validated by comparing `receipt.to ===
+orquestrador.address`, a check MetaMask itself can invalidate by rewriting the
+transaction behind the scenes, after the dApp already requested the original call.
+`receipt.to` **never proves what the transaction did**; only the log emitted by
+the contract itself proves it (only `OfertaOrquestrador` can emit a log with
+`log.address` equal to its own; that is unforgeable in the way `to` isn't).
 
-**Regra travada a partir desta fase**: nenhuma verificação de escrita on-chain
-deste projeto compara `receipt.to` contra o endereço esperado. A validação correta
-é sempre: (1) existe um log cujo `address` é o contrato esperado e decodifica como
-o evento esperado; (2) os parâmetros indexados/decodificados do evento batem com o
-que o Supabase esperava (incluindo o emissor, comparado contra o valor congelado
-em `offerings.expected_emissor_wallet` — ver "expected_emissor_wallet" logo
-abaixo — não contra `receipt.from`/`to` nem contra uma releitura ao vivo de
-`issuers.wallet_address`); (3), quando aplicável, os endereços resultantes
-(clones) estão de fato registrados no contrato de origem (`isOferta`/
-`isCaptacao`), não só "existe algum contrato nesse endereço".
-`confirmarPublicacao()` em `onchain-actions.ts` é a implementação de referência
-disso.
+**Rule locked from this phase on**: no on-chain write verification in this project
+compares `receipt.to` against the expected address. The correct validation is
+always: (1) there is a log whose `address` is the expected contract and that
+decodes as the expected event; (2) the event's indexed/decoded parameters match
+what Supabase expected (including the issuer, compared against the value frozen in
+`offerings.expected_emissor_wallet`; see "expected_emissor_wallet" just below; not
+against `receipt.from`/`to` nor against a live re-read of
+`issuers.wallet_address`); (3), when applicable, the resulting addresses (clones)
+are actually registered in the source contract (`isOferta`/`isCaptacao`), not just
+"some contract exists at that address". `confirmPublication()` in
+`onchain-actions.ts` is the reference implementation of this.
 
-### 🔴 `expected_emissor_wallet` — nunca comparar o evento contra uma leitura ao vivo de `issuers.wallet_address`
+### 🔴 `expected_emissor_wallet`: never compare the event against a live read of `issuers.wallet_address`
 
-Segundo bug real, encontrado ao adicionar o botão "Reprocessar" que corrigiu o
-incidente do EIP-7702 acima. `confirmarPublicacao()` comparava `emissor` do evento
-contra `issuers.wallet_address` lido **no momento da confirmação** — o que é uma
-pergunta diferente da que precisa ser respondida. A pergunta certa é "quem tinha
-autoridade **no momento em que assinou**?"; a versão antiga respondia "quem está
-vinculado **agora**?". As duas só coincidem por acaso enquanto `confirmarPublicacao`
-roda logo após a assinatura (o caminho feliz original) — mas "Reprocessar" existe
-justamente para rodar essa função a qualquer distância no tempo da assinatura, e
-`issuers.wallet_address` pode ter mudado nesse intervalo (ex.: a empresa vincula
-uma carteira nova em `/perfil` meses depois). Reconfirmar uma oferta antiga
-compararia o evento contra a carteira **errada**, de forma silenciosa.
+A second real bug, found while adding the "Reprocess" button that fixed the
+EIP-7702 incident above. `confirmPublication()` compared the event's `emissor`
+against `issuers.wallet_address` read **at confirmation time**, which answers a
+different question from the one that needs answering. The right question is "who
+had authority **at the moment they signed**?"; the old version answered "who is
+linked **now**?". The two only coincide by chance while `confirmPublication` runs
+right after the signature (the original happy path), but "Reprocess" exists
+precisely to run that function at any distance in time from the signature, and
+`issuers.wallet_address` may have changed in that interval (e.g. the company links
+a new wallet in `/perfil` months later). Reconfirming an old offering would compare
+the event against the **wrong** wallet, silently.
 
-Corrigido com `offerings.expected_emissor_wallet` (`supabase/migrations/
-0016_offering_expected_emissor_wallet.sql`): `registrarTentativa()` lê
-`issuers.wallet_address` **no próprio servidor**, no instante da tentativa (mesmo
-momento em que já congelava `opens_at`/`closes_at`), e grava esse valor congelado
-— nunca aceito do cliente, pelo mesmo motivo de `accountId` nunca vir do cliente em
-nenhuma Server Action deste projeto: um cliente malicioso poderia simplesmente
-declarar como "esperada" a própria carteira que vai assinar, e a checagem inteira
-viraria teatro. `confirmarPublicacao()` compara `emissor` do evento só contra esta
-coluna — nunca mais lê `issuers` diretamente. Fail-closed: `registrarTentativa()`
-recusa registrar a tentativa se `issuers.wallet_address` estiver nulo (gate 5 no
-client já deveria ter impedido chegar aqui; isso é a mesma checagem, no servidor).
+Fixed with `offerings.expected_emissor_wallet`
+(`supabase/migrations/0016_offering_expected_emissor_wallet.sql`):
+`registerAttempt()` reads `issuers.wallet_address` **on the server itself**, at
+the moment of the attempt (the same moment it already froze
+`opens_at`/`closes_at`), and writes that frozen value, never accepted from the
+client, for the same reason `accountId` never comes from the client in any Server
+Action of this project: a malicious client could simply declare the very wallet
+that is going to sign as the "expected" one, and the whole check would become
+theater. `confirmPublication()` compares the event's `emissor` only against this
+column; it never reads `issuers` directly anymore. Fail-closed:
+`registerAttempt()` refuses to register the attempt if `issuers.wallet_address`
+is null (gate 5 on the client should already have prevented getting here; this is
+the same check, on the server).
 
-A coluna é limpa junto com `tx_hash` no reset de uma transação revertida
-(`sync_status: pendente/divergente → nao_onchain`) — os dois pertencem à mesma
-tentativa, e uma nova tentativa via `registrarTentativa()` precisa poder recongelar
-ambos do zero. Por isso fica **fora** da trigger de imutabilidade de 0015
-(`enforce_onchain_publish_immutable`, mesmo tratamento que `tx_hash` já recebe) e
-ganha a própria trigger condicional (`enforce_expected_wallet_locked`, 0016): trava
-a coluna quando a mudança levaria a linha **para** `confirmada`/`divergente` (os
-dois estados em que o valor já cumpriu seu papel de comparação e vira fato
-histórico), permite quando o destino é `nao_onchain` ou `pendente` — checado por
-`NEW.sync_status`, não `OLD`, porque o reset legítimo por reversão pode partir
-tanto de `pendente` quanto de `divergente`.
+The column is cleared together with `tx_hash` when a reverted transaction is reset
+(`sync_status: pendente/divergente → nao_onchain`): both belong to the same
+attempt, and a new attempt via `registerAttempt()` must be able to refreeze both
+from scratch. That's why it stays **out** of 0015's immutability trigger
+(`enforce_onchain_publish_immutable`, the same treatment `tx_hash` already gets)
+and gets its own conditional trigger (`enforce_expected_wallet_locked`, 0016): it
+locks the column when the change would take the row **to**
+`confirmada`/`divergente` (the two states in which the value has done its job as a
+comparison and becomes a historical fact), and allows it when the target is
+`nao_onchain` or `pendente`; checked on `NEW.sync_status`, not `OLD`, because the
+legitimate reset after a revert can start from either `pendente` or `divergente`.
 
-🔴 **Migration com backfill, verificado à mão**: a única linha afetada quando 0016
-rodou (a oferta de teste "Empresa Teste", então em `sync_status='divergente'` por
-causa do próprio incidente EIP-7702) não tinha `expected_emissor_wallet` — a
-migration faz um backfill geral (join com `issuers.wallet_address`, não hardcoded)
-para qualquer linha em `pendente`/`divergente`/`confirmada` sem o valor congelado,
-e imprime um SELECT final comparando "antes"/"depois" para conferência manual no
-Studio antes de prosseguir. Isso só é seguro **enquanto a carteira vinculada não
-tiver sido trocada** desde a assinatura original — motivo pelo qual a migration foi
-rodada e conferida (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` em ambos os
-lados) antes de qualquer troca de carteira vinculada para as contas afetadas.
+🔴 **A migration with a backfill, checked by hand**: the only row affected when
+0016 ran (the "Empresa Teste" test offering, then in `sync_status='divergente'`
+because of the EIP-7702 incident itself) had no `expected_emissor_wallet`; the
+migration does a general backfill (a join with `issuers.wallet_address`, not
+hardcoded) for any row in `pendente`/`divergente`/`confirmada` without the frozen
+value, and prints a final SELECT comparing "before"/"after" for a manual check in
+Studio before moving on. That is only safe **as long as the linked wallet hasn't
+been switched** since the original signature, which is why the migration was run
+and checked (`0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6` on both sides) before any
+change of linked wallet for the affected accounts.
 
-### Reconciliação contínua (`verificarConsistencia`) — sub-etapa 5 do plano
+### Continuous reconciliation (`checkConsistency`): sub-step 5 of the plan
 
-A oferta on-chain é **imutável** depois de criada, mas a linha de `offerings` não
-é — nada impede um `UPDATE` manual (ou um bug futuro) em `hard_cap_cents`/
-`share_price_cents`/`target_min_cents`/`closes_at` depois da confirmação.
-`verificarConsistencia(offeringId)` (`onchain-actions.ts`) lê ao vivo, direto do
-`contract_address` já gravado, os getters `metaMinima`/`metaMaxima`/`precoPorCota`/
-`prazo` do clone `OfertaCaptacao` (valores `immutable` de fato — escritos uma
-única vez em `initialize`, nunca alterados depois, então uma leitura de agora vale
-tanto quanto o evento original) e compara contra os valores **atuais** da linha no
-Supabase. **Nunca corrige nenhum dos dois lados** — só marca `sync_status` e grava
-o motivo em `onchain_last_error`; a correção, quando existir, é sempre humana (a
-chain nunca muda, então só o Supabase pode estar errado).
+The on-chain offering is **immutable** once created, but the `offerings` row isn't:
+nothing prevents a manual `UPDATE` (or a future bug) on `hard_cap_cents`/
+`share_price_cents`/`target_min_cents`/`closes_at` after confirmation.
+`checkConsistency(offeringId)` (`onchain-actions.ts`) reads live, directly
+from the already written `contract_address`, the `metaMinima`/`metaMaxima`/
+`precoPorCota`/`prazo` getters of the `OfertaCaptacao` clone (truly `immutable`
+values, written only once in `initialize`, never changed afterwards, so a read now
+is as good as the original event) and compares them against the **current** values
+of the Supabase row. **It never fixes either side**: it only marks `sync_status`
+and writes the reason in `onchain_last_error`; the fix, when there is one, is always
+human (the chain never changes, so only Supabase can be wrong).
 
-🔴 **`divergente` passa a cobrir DUAS causas distintas, diferenciadas por
-`contract_address`, não por uma coluna nova**: sem endereço gravado, é uma falha de
-`confirmarPublicacao()` que nunca chegou a confirmar (log ausente, evento errado,
-clone não registrado) — resolvida só por "Reprocessar". Com endereço gravado, só
-pode ser um drift de consistência pós-confirmação — resolvida por "Verificar
-consistência" (`verificarConsistencia`), nunca por "Reprocessar" (que dependeria de
-re-decodificar o evento original, desnecessário aqui). `PublicarOnChainPage.tsx`
-decide qual dos dois botões mostrar checando `displayContract`.
+🔴 **`divergente` now covers TWO distinct causes, told apart by
+`contract_address`, not by a new column**: without an address written, it is a
+`confirmPublication()` failure that never got to confirm (a missing log, the wrong
+event, an unregistered clone), fixed only by "Reprocess". With an address written,
+it can only be a post-confirmation consistency drift, fixed by "Verify consistency"
+(`checkConsistency`), never by "Reprocess" (which would depend on re-decoding
+the original event, unnecessary here). `PublishOnChainPage.tsx` decides which of
+the two buttons to show by checking `displayContract`.
 
-**Quando roda**: automaticamente, uma única vez, ao abrir
-`/empresa/ofertas/[id]/publicar` de uma oferta `confirmada` (ou `divergente` já com
-`contract_address`) — mesmo padrão já usado para `confirmarPublicacao` em ofertas
-`pendente`. Também sob demanda, via botão "Verificar consistência" nos painéis
-`confirmada` e `divergente`-por-drift. **Nunca** roda na listagem `/empresa/ofertas`
-(um card por oferta ali só mostra o último `sync_status` já conhecido, sem leitura
-nova) nem em polling — cada chamada é uma leitura RPC real (`eth_call`, sem gás,
-mas ainda uma requisição contra o RPC configurado), e o custo dela precisa ficar
-proporcional a quantas vezes um humano efetivamente abre aquela oferta específica,
-não a quantas ofertas existem nem a quanto tempo passa.
+**When it runs**: automatically, once, when opening `/empresa/ofertas/[id]/publicar`
+for a `confirmada` offering (or a `divergente` one that already has
+`contract_address`), the same pattern already used for `confirmPublication` on
+`pendente` offerings. Also on demand, through the "Verify consistency" button in the
+`confirmada` and drift-`divergente` panels. **Never** on the `/empresa/ofertas`
+list (a card per offering there only shows the last known `sync_status`, with no new
+read) nor in polling: every call is a real RPC read (`eth_call`, no gas, but still a
+request against the configured RPC), and its cost must stay proportional to how many
+times a human actually opens that specific offering, not to how many offerings exist
+nor how much time passes.
 
-`SyncStatusBadge.tsx` (`src/components/empresa/publicar/`) — pequeno indicador
-reutilizável de `sync_status`, usado no card de `OfertasPage.tsx` (substituindo os
-títulos ad hoc que cada painel tinha antes) e no resumo de `MyOffersSection.tsx`
-(`/perfil`, que antes só mostrava `offerings.status`, nunca `sync_status`).
-`PublicarOnChainPage.tsx` não usa o badge — já comunica cada status com um painel
-próprio, mais detalhado; o badge existe para os dois lugares que só têm espaço para
-um indicador compacto.
+`SyncStatusBadge.tsx` (`src/components/empresa/publicar/`): a small reusable
+`sync_status` indicator, used on `OfferingsPage.tsx`'s card (replacing the ad hoc
+titles each panel had before) and in the `MyOffersSection.tsx` summary (`/perfil`,
+which used to show only `offerings.status`, never `sync_status`).
+`PublishOnChainPage.tsx` doesn't use the badge: it already communicates each status
+with its own, more detailed panel; the badge exists for the two places that only
+have room for a compact indicator.
 
-**Prova de que funciona (pendente de confirmação do usuário no navegador — ver
-instruções passadas fora deste arquivo)**: `hard_cap_cents` de uma das duas ofertas
-`confirmada` é editado direto no Supabase (±1 centavo — pequeno o bastante para
-nunca violar o CHECK `additional_lot`, grande o bastante para a comparação de
-igualdade exata em `bigint` acusar), a tela precisa virar `divergente` com o motivo
-citando os dois valores (Supabase vs. on-chain), e restaurado o valor original,
-"Verificar consistência" precisa trazer de volta `confirmada` sozinha, sem tocar em
-nenhuma transação nos dois sentidos. Atualizar este parágrafo depois de confirmado.
+**Proof that it works (pending the user's confirmation in the browser; see the
+instructions given outside this file)**: `hard_cap_cents` of one of the two
+`confirmada` offerings is edited directly in Supabase (±1 cent: small enough to
+never violate the `additional_lot` CHECK, big enough for the exact `bigint`
+equality comparison to flag it), the screen must turn `divergente` with the reason
+citing both values (Supabase vs. on-chain), and with the original value restored,
+"Verify consistency" must bring `confirmada` back by itself, without touching any
+transaction in either direction. Update this paragraph once confirmed.
 
-### 🔴 Incidente real: revert por violação da Res. 88 mostrava mensagem genérica e conselho errado
+### 🔴 Real incident: a revert for a Res. 88 violation showed a generic message and the wrong advice
 
-Uma oferta de teste antiga (meta mínima R$1.000, teto R$5.000.000 — lote
-adicional de ~500.000% contra o limite de 25% da Res. 88) foi publicada de
-propósito para testar o caminho de erro. O contrato reverteu corretamente
-(`LoteAdicionalExcedeLimite`), mas a tela mostrou só "A transação reverteu
-on-chain — tente publicar de novo" — um conselho **errado**: os valores da
-oferta são permanentes, então publicar de novo reverteria exatamente igual.
+An old test offering (min target R$1,000, cap R$5,000,000: an additional lot of
+~500,000% against the 25% limit of Res. 88) was published on purpose to test the
+error path. The contract correctly reverted (`LoteAdicionalExcedeLimite`), but the
+screen only showed "The transaction reverted on-chain: try publishing again", which
+is **wrong** advice: the offering's values are permanent, so publishing again would
+revert exactly the same way.
 
-**Causa, investigada antes de corrigir**: o mapeamento de erros customizados
-(`CUSTOM_ERROR_MESSAGES`/`describeOnChainError`, `errors.ts`) já cobria
-`LoteAdicionalExcedeLimite` desde a sub-etapa 4 — a mensagem existia. O
-problema é que esse mapeamento **nunca era consultado** no caminho que essa
-transação percorreu. `criarOfertaCompleta` é assinado com `gas` **fixo**
-(`GAS_LIMITE_PUBLICACAO`, ver `usePublicarOfertaOnChain.ts`) de propósito
-(evitar falsos reverts por volatilidade do preço do gás, ver seção acima) —
-isso significa que a MetaMask nunca faz `eth_estimateGas` antes de assinar,
-então uma chamada que reverte por regra de negócio **não lança exceção
-nenhuma no cliente**: ela é minerada normalmente, só que com
-`status: "reverted"`. Só o servidor (`confirmarPublicacao`, no ramo
-`receipt.status === "reverted"`) via essa transação, e esse ramo nunca tinha
-tentado decodificar o motivo — só gravava a frase genérica direto.
+**Cause, investigated before fixing**: the custom error mapping
+(`chainErrors.evm.custom`/`describeOnChainError`, `errors.ts`) already covered
+`LoteAdicionalExcedeLimite` since sub-step 4; the message existed. The problem is
+that this mapping **was never consulted** on the path that transaction took.
+`criarOfertaCompleta` is signed with a **fixed** `gas` (`PUBLICATION_GAS_LIMIT`,
+see `usePublishOfferingOnChain.ts`) on purpose (to avoid false reverts due to gas
+price volatility, see the section above); that means MetaMask never runs
+`eth_estimateGas` before signing, so a call that reverts because of a business
+rule **throws no exception at all on the client**: it is mined normally, just with
+`status: "reverted"`. Only the server (`confirmPublication`, in the
+`receipt.status === "reverted"` branch) saw that transaction, and that branch had
+never tried to decode the reason; it just wrote the generic sentence directly.
 
-**Correção**: o recibo de uma transação não guarda o motivo do revert (a EVM
-não grava isso ali) — a única forma confiável de descobrir é **ressimular a
-mesma calldata já minerada** contra o estado da chain de então.
-`descreverMotivoDoRevert()` (`onchain-actions.ts`) lê a transação original
-(`client.getTransaction`), decodifica os argumentos de volta com
-`decodeFunctionData` (nunca reconstruídos a partir do Supabase, que já pode
-ter mudado), e chama `client.simulateContract` com esses mesmos argumentos —
-que decodifica o erro customizado do jeito que `describeOnChainError` já
-sabe traduzir, a mesma função usada no catch do lado do cliente. Nenhuma
-lógica de tradução nova: só o caminho que faltava chamar a que já existia.
+**Fix**: a transaction's receipt doesn't store the revert reason (the EVM doesn't
+record it there); the only reliable way to find out is to **re-simulate the same
+already-mined calldata** against the chain. `describeRevertReason()`
+(`onchain-actions.ts`) reads the original transaction (`client.getTransaction`),
+decodes the arguments back with `decodeFunctionData` (never rebuilt from Supabase,
+which may have changed already), and calls `client.simulateContract` with those
+same arguments, which decodes the custom error the way `describeOnChainError`
+already knows how to translate, the same function used in the client-side catch.
+No new translation logic: only the missing path that calls the existing one.
 
-As cinco mensagens de erro que descrevem valores permanentes da própria
-oferta (`PrecoInvalido`, `PrazoInvalido`, `PrazoExcedeLimite`,
-`MetaMaximaExcedeTeto`, `LoteAdicionalExcedeLimite`, `PrecoNaoDivideMetaMaxima`)
-foram reescritas para nunca mais sugerir "tente de novo" — todas agora
-terminam em "esta oferta precisa ser recriada... publicar de novo vai
-reverter do mesmo jeito", porque tentar de novo com os MESMOS números
-sempre reverte igual (a chain é determinística).
+The error messages that describe the offering's own permanent values
+(`PrecoInvalido`, `PrazoInvalido`, `PrazoExcedeLimite`, `MetaMaximaExcedeTeto`,
+`LoteAdicionalExcedeLimite`, `PrecoNaoDivideMetaMaxima`) were rewritten to never
+again suggest "try again": they all now end with "this offering needs to be
+recreated... publishing again will revert the same way", because trying again with
+the SAME numbers always reverts the same way (the chain is deterministic).
 
-**Gate de pré-validação, antes de gastar gás**: os três limites numéricos da
-Res. 88 (teto ≤ R$15.000.000, lote adicional ≤ 25% do valor base, prazo ≤
-180 dias) são conhecidos direto do Supabase, sem nenhuma leitura on-chain —
-`/empresa/ofertas/[id]/publicar/page.tsx` checa os três **antes** de
-renderizar qualquer gate/botão, mesmo padrão já usado para `status !== 'draft'`
-e `share_price_cents === null` (ambos no mesmo arquivo). Só bloqueia quando
-`sync_status === 'nao_onchain'` — uma oferta já `pendente`/`divergente`
-continua chegando normalmente em `PublicarOnChainPage.tsx`, porque é lá que
-a reconciliação (`confirmarPublicacao`, já corrigida acima) precisa rodar e
-gravar o motivo decodificado; bloquear estaticamente ali também deixaria
-essas ofertas presas para sempre, sem nunca reconciliar. Mensagem explica
-qual limite falhou (com os valores reais formatados em R$) e deixa explícito
-que a oferta precisa ser **recriada** em "Minhas ofertas", não republicada.
+**A pre-validation gate, before spending gas**: the three numeric limits of Res. 88
+(cap ≤ R$15,000,000, additional lot ≤ 25% of the base amount, deadline ≤ 180 days)
+are known directly from Supabase, with no on-chain read at all;
+`/empresa/ofertas/[id]/publicar/page.tsx` checks all three **before** rendering any
+gate/button, the same pattern already used for `status !== 'draft'` and
+`share_price_cents === null` (both in the same file). It only blocks when
+`sync_status === 'nao_onchain'`: an offering already `pendente`/`divergente` still
+reaches `PublishOnChainPage.tsx` normally, because that is where the
+reconciliation (`confirmPublication`, already fixed above) needs to run and write
+the decoded reason; blocking statically there would leave those offerings stuck
+forever, never reconciling. The message explains which limit failed (with the real
+values formatted in R$) and makes it explicit that the offering must be **recreated**
+in "My offerings", not republished.
 
 ---
 
-## Solana Devnet (multichain, out/2026)
+## Solana Devnet (multichain, Oct 2026)
 
-O ciclo on-chain do PMEs também roda na **Solana Devnet**, pelo programa Anchor
-`niara-pmes-solana` (repositório `niaragaed/niara-pmes-solana`, program ID
-`FKefGFhUmgXBM1xCtSFBWpoNnp3wuPJs6Yddpsp67J2y`) — port das mesmas regras do
-`OfertaOrquestrador`/`OfertaCaptacao` (limites da Res. CVM 88, escrow, taxa de 1%,
-uma oferta aberta por emissor). Feito durante o hackathon Colosseum (Crypto World's Fair).
+The SME on-chain cycle also runs on **Solana Devnet**, through the Anchor program
+`niara-pmes-solana` (repository `niaragaed/niara-pmes-solana`, program ID
+`FKefGFhUmgXBM1xCtSFBWpoNnp3wuPJs6Yddpsp67J2y`), a port of the same rules as
+`OfertaOrquestrador`/`OfertaCaptacao` (Res. CVM 88 limits, escrow, a 1% fee, one
+open offering per issuer). Built during the Colosseum hackathon (Crypto World's
+Fair).
 
-- **Cliente** em `src/lib/solana/`: `config.ts` (program ID, RPC, unidades — MockBRL SPL
-  tem **6 casas**, então centavos × 10^4, nunca `UNIDADE_ON_CHAIN` da Sepolia), `program.ts`
-  (PDAs e leituras pelo coder do Anchor a partir do IDL copiado em `idl/`), `instrucoes.ts`,
-  `phantom.ts` (a carteira só assina; o envio vai sempre pelo RPC da devnet), `errors.ts`
-  (mensagens do próprio IDL) e `servidor.ts` (server-only: evento `OfertaCriada` aceito só
-  quando emitido pelo nosso programa + conta da oferta com dono = programa).
-- **Investidor**: `/investir/onchain` lista também as ofertas do programa (`?rede=solana` abre
-  direto nelas) e `SolanaInvestPanel` faz faucet → aportar → encerrar → resgatar (cotas numa
-  conta SPL **congelada**, intransferível) / reembolsar → liberar. Sem `approve`.
-- **Emissor**: `/empresa/ofertas/[id]/publicar` deixa escolher a rede enquanto
-  `sync_status='nao_onchain'`; `PublicarSolanaPage` + `solana-actions.ts` seguem as mesmas
-  regras de ouro da Sepolia. Diferença: a assinatura da transação é conhecida antes do envio,
-  então a tentativa é registrada **antes** de ir para a rede; tentativa que não chega à rede
-  volta sozinha para `nao_onchain` (blockhash vencido).
-- **Banco** (migration 0017): `offerings.rede` (`sepolia`/`solana-devnet`), CHECKs de formato
-  por rede (base58 na Solana), `chain_id` só na Sepolia, `rede` imutável com tentativa ou
-  endereço gravado, e `solana_wallet_address` em `issuers`/`investors`.
-- **Vínculo da carteira Solana** (`/perfil`, `src/app/perfil/solana-actions.ts`) exige prova
-  de posse: a Phantom assina (signMessage, sem custo) uma mensagem emitida pelo servidor com a
-  conta e o horário; o servidor confere a assinatura ed25519 antes de gravar.
-- `ConfirmedOnChainOffering` virou união discriminada por `rede`: código que usa viem/wagmi
-  precisa checar `rede === "sepolia"` antes de usar `contractAddress` como `0x${string}`.
-- Admin (autorizar emissor, ofertas de demonstração, pausar/cancelar) é feito pelo script
-  `scripts/admin.ts` do repositório `niara-pmes-solana`, com a carteira que é autoridade de
-  upgrade do programa.
+- **Client** in `src/lib/solana/`: `config.ts` (program ID, RPC, units; the SPL
+  MockBRL has **6 decimals**, so cents × 10^4, never Sepolia's `UNIT_ON_CHAIN`),
+  `program.ts` (PDAs and reads with Anchor's coder from the IDL copied into `idl/`),
+  `instructions.ts`, `phantom.ts` (the wallet only signs; sending always goes through
+  the devnet RPC), `errors.ts` (messages from the IDL itself) and `server.ts`
+  (server-only: an `OfertaCriada` event is only accepted when emitted by our program
+  + an offering account owned by the program).
+- **Investor**: `/investir/onchain` also lists the program's offerings
+  (`?rede=solana` opens straight on them) and `SolanaInvestPanel` does faucet →
+  invest → close → redeem (shares in a **frozen**, non-transferable SPL account) /
+  refund → release. No `approve`.
+- **Issuer**: `/empresa/ofertas/[id]/publicar` lets them choose the network while
+  `sync_status='nao_onchain'`; `PublishSolanaPage` + `solana-actions.ts` follow the
+  same golden rules as Sepolia. Difference: the transaction signature is known before
+  sending, so the attempt is registered **before** going to the network; an attempt
+  that never reaches the network goes back to `nao_onchain` by itself (expired
+  blockhash).
+- **Database** (migration 0017): `offerings.rede` (`sepolia`/`solana-devnet`),
+  per-network format CHECKs (base58 on Solana), `chain_id` only on Sepolia, `rede`
+  immutable once there is an attempt or a written address, and
+  `solana_wallet_address` on `issuers`/`investors`.
+- **Linking the Solana wallet** (`/perfil`, `src/app/perfil/solana-actions.ts`)
+  requires proof of ownership: Phantom signs (signMessage, free) a message issued by
+  the server with the account and the time; the server checks the ed25519 signature
+  before writing.
+- `ConfirmedOnChainOffering` became a discriminated union by `rede`: code that uses
+  viem/wagmi must check `rede === "sepolia"` before using `contractAddress` as
+  `0x${string}`.
+- Admin (authorizing issuers, demo offerings, pausing/canceling) is done by the
+  `scripts/admin.ts` script in the `niara-pmes-solana` repository, with the wallet
+  that is the program's upgrade authority.
 
-## Organização
+## Organization
 
 ```
 src/
-  proxy.ts             Next 16 (era middleware.ts) — só revalida sessão
-                       Supabase a cada navegação, ver "Backend (Supabase)"
-  app/                 rotas (App Router)
-    layout.tsx         layout raiz, async (Next 16) — monta <Providers>
-                       (wagmi/react-query) com initialState via cookie
+  proxy.ts             Next 16 (was middleware.ts) — only refreshes the
+                       Supabase session on each navigation, see "Backend
+                       (Supabase)"
+  app/                 routes (App Router) — route segments stay Portuguese,
+                       see "Language"
+    layout.tsx         async root layout (Next 16): reads the locale, sets
+                       <html lang>/metadata, mounts <I18nProvider> and
+                       <Providers> (wagmi/react-query) with initialState
+                       from the cookie
     providers.tsx      Providers (WagmiProvider + QueryClientProvider) —
-                       ver "Tela /perfil", seção "4. Carteira"
-    cadastro/          criação de conta (3 passos), ver "Tela /cadastro"
-                       acima — actions.ts: createAccount()
-    entrar/page.tsx    login (overlay tela cheia, ver "Tela /entrar"
-                       abaixo); searchParams assíncrono (Next 16) para o
-                       parâmetro ?intent=captacao
-    conta/page.tsx     shim de redirect para /perfil (preserva ?aviso=/
-                       ?onboarding=), ver "Backend (Supabase)" →
-                       "Autenticação"
-    perfil/            tela de perfil (ver "Tela /perfil" abaixo) —
-                       actions.ts: loadProfile/updateProfile/
-                       loadMyOfferingsSummary/saveWallet/unlinkWallet/
-                       uploadIssuerLogo/removeIssuerLogo
-    investir/          listagem + reserva real (ver "Telas /investir"
-                       acima) — actions.ts: reserveInvestment/
-                       confirmInvestment/loadPublicOffering;
-                       kyc-actions.ts: submitKyc; [offeringId]/ é rota
-                       dinâmica com not-found.tsx próprio
-    investir/onchain/  investimento REAL em Sepolia (blockchain de
-                       verdade, não Supabase) — ver "Tela /investir/
-                       onchain" acima; sem gate de login/role, dirigido
-                       pela carteira conectada
-    empresa/ofertas/   criação/ativação/fechamento de oferta pelo emissor
-                       (ver "Tela /empresa/ofertas" acima) — actions.ts:
-                       createOffering/activateOffering/closeOffering
-    socios/page.tsx    painel interno restrito (ver "Tela /socios" acima)
-                       — allowlist de e-mail, nunca voltado ao investidor
-    ativos/page.tsx    dashboard de portfólio mock (ver "Tela /ativos"
-                       abaixo) — não confundir com /investir (real)
-    sobre/documentos/  documentação + FAQ (ver "Telas /sobre/documentos e
-                       /sobre/contato" abaixo)
-    sobre/contato/     formulário de contato via mailto (idem acima)
-    negociar/          hub + 5 categorias + detalhe de oferta fictícia
-                       (ver "Telas /negociar" abaixo); oferta/[slug]/ é
-                       rota dinâmica com not-found.tsx próprio
-  components/
-    cadastro/          CadastroPage (fluxo de 3 passos), ver "Tela
-                       /cadastro" acima
-    investir/          InvestirPage (listagem + minhas reservas),
-                       OfferingDetailPage (+ ReserveTicket), ver "Telas
-                       /investir" acima
-    investir-onchain/  OnChainInvestPage (host fino: título + seletor) +
-                       RealOnChainInvestPanel (miolo reutilizável do
-                       investimento real em Sepolia, também montado
-                       dentro de OfertaDetailPage/negociar) — ver "Tela
-                       /investir/onchain" acima
-    empresa/           OfertasPage (criar/ativar/fechar oferta), ver
-                       "Tela /empresa/ofertas" acima
-    socios/            SociosLoginForm + SociosDashboard, ver "Tela
-                       /socios" acima
-    conta/             SignOutButton (reaproveitado também por /socios)
-    ativos/            AtivosPage (abas + banner demo), PortfolioSummary
-                       (KPIs), PortfolioEvolutionChart e AllocationDonut
-                       (recharts), PositionsTable, AssetCatalog
-    perfil/            PerfilPage (sidebar + badges + banners),
-                       PerfilContext (perfil de investidor, em memória —
-                       único pedaço desta tela que continua só em
-                       memória, ver "Tela /perfil"),
-                       PersonalDataSection (dados reais no banco) +
-                       AvatarUpload (simulado) + LogoUpload (upload real
-                       de logo do emissor), MyOffersSection (resumo
-                       real, só leitura), InvestorProfileSection +
-                       InvestorProfileQuiz + InvestorProfileResultCard,
-                       WalletSection (usa components/web3, ver abaixo),
-                       FormField (TextField/SelectField/TextareaField/
-                       ReadField compartilhados)
-    web3/              ConnectWallet + ConnectionPanel — conexão real de
-                       carteira (MetaMask/Sepolia) usada por WalletSection,
-                       adaptados do niara-site (ver "Tela /perfil", seção
-                       "4. Carteira")
-    documentacao/      DocumentacaoPage (sidebar por seções + banner de
-                       estágio atual), DocumentacaoNav, FaqAccordion
-    contato/           ContatoPage (formulário + painel de contato
-                       direto), ContatoForm (envio via mailto)
-    negociar/          HubPage, CategoryPage (template das 5 categorias,
-                       inclui RealOfferCard ao lado do catálogo
-                       fictício), CategoryChip (CategoryChip +
-                       CategoryBadge), CategoryCard, ShowcaseCard,
-                       PmesOnChainCard (as 10 ofertas PMEs legadas —
-                       real em Sepolia + empresa fictícia, ver "Tela
-                       /investir/onchain" → "Unificação com empresas
-                       fictícias de PME") + SelfServicePmesCard (irmã
-                       para ofertas PME self-service confirmadas
-                       on-chain, ver "Vitrine /negociar/token-pmes
-                       unificada com self-service"), PmesSectorFilter
-                       (une as duas origens, união discriminada
-                       PmesCardData), OfertaBanner (foto + logo, com
-                       placeholder — reaproveitado pelas duas origens),
-                       OfertaDetailPage (+ FinanceiroChart (recharts) +
-                       FundamentalIndicators + IndicatorHelp, indicadores
-                       fundamentalistas + popover "?", só para ofertas
-                       legadas/fictícias) + SelfServiceOfertaDetailPage
-                       (irmã enxuta, sem seções fictícias, para ofertas
-                       self-service — ver seção própria acima),
-                       OrderTicket (boleta simulada, só para ofertas sem
-                       oferta real por trás) — ver "Telas /negociar"
-                       abaixo
-    entrar/            EntrarPage (overlay tela cheia, split + form),
-                       VideoCover (capa do vídeo do YouTube) — ver
-                       "Tela /entrar" acima
+                       see "/perfil screen", section "4. Wallet"
+    actions/set-locale.ts  switchLocale() — sets the niara_locale cookie
+    cadastro/          account creation (3 steps), see "/cadastro screen" —
+                       actions.ts: createAccount()
+    entrar/            sign-in (full-screen overlay, see "/entrar screen");
+                       async searchParams (Next 16) for ?intent=captacao
+    conta/page.tsx     redirect shim to /perfil (keeps ?aviso=/?onboarding=),
+                       see "Backend (Supabase)" → "Authentication"
+    perfil/            profile screen (see "/perfil screen") — actions.ts:
+                       loadProfile/updateProfile/loadMyOfferingsSummary/
+                       saveWallet/unlinkWallet/uploadIssuerLogo/...;
+                       solana-actions.ts: Solana wallet linking (signed proof)
+    investir/          list + real reservation (see "/investir screens") —
+                       actions.ts: reserveInvestment/confirmInvestment/
+                       loadPublicOffering; kyc-actions.ts: submitKyc;
+                       [offeringId]/ is a dynamic route with its own
+                       not-found.tsx
+    investir/onchain/  REAL investment on Sepolia/Solana Devnet (a real
+                       blockchain, not Supabase) — see "/investir/onchain
+                       screen"; no login/role gate, driven by the wallet
+    empresa/ofertas/   offering creation/activation/closing by the issuer
+                       (see "/empresa/ofertas screen") — actions.ts:
+                       createOffering/activateOffering/closeOffering;
+                       onchain-actions.ts (Sepolia) and solana-actions.ts
+                       (Solana): registerAttempt/confirmPublication/
+                       checkConsistency; [id]/publicar/ is the publication
+                       screen; diagnostico/ is the internal read-only tool
+    socios/page.tsx    restricted internal dashboard (see "/socios screen")
+                       — email allowlist, never facing the investor
+    api/cron/sync-onchain/  cron that advances the on-chain event cache
+    ativos/page.tsx    mock portfolio dashboard (see "/ativos screen") — not
+                       to be confused with /investir (real)
+    sobre/documentos/  docs + FAQ (see "/sobre/documentos and /sobre/contato")
+    sobre/contato/     contact form via mailto (same)
+    negociar/          hub + 5 categories + offering detail (see "/negociar
+                       screens"); oferta/[slug]/ is a dynamic route with its
+                       own not-found.tsx
+  components/          folders named after the route they serve
+    cadastro/          SignUpPage (3-step flow)
+    investir/          InvestPage (list + my reservations),
+                       OfferingDetailPage (+ ReserveTicket)
+    investir-onchain/  OnChainInvestPage (thin host: title + selector) +
+                       RealOnChainInvestPanel (reusable core of the real
+                       Sepolia investment, also mounted inside
+                       negociar/OfferingDetailPage) + SolanaInvestPanel
+    empresa/           OfferingsPage (create/activate/close offering),
+                       OnChainDiagnostics (internal read-only tool);
+                       publicar/: PublishOnChainPage, PublishSolanaPage,
+                       PublicationNetworkChoice, GateChecklist,
+                       PublicationTerms, SyncStatusBadge
+    socios/            PartnersLoginForm + PartnersDashboard,
+                       TransactionsSection/Table/Skeleton, SummaryCards
+    conta/             SignOutButton (also reused by /socios)
+    ativos/            AssetsPage (tabs + demo banner), PortfolioSummary
+                       (KPIs), PortfolioEvolutionChart and AllocationDonut
+                       (recharts), PositionsTable, AssetCatalog,
+                       RealPositionCard
+    perfil/            ProfilePage (sidebar + badges + banners),
+                       ProfileContext (investor profile, in memory — the
+                       only part of this screen that stays in memory, see
+                       "/perfil screen"), ProfileNav, PersonalDataSection
+                       (real data in the database) + AvatarUpload
+                       (simulated) + LogoUpload/BannerUpload (real issuer
+                       uploads), MyOffersSection (real summary, read-only),
+                       InvestorProfileSection + InvestorProfileQuiz +
+                       InvestorProfileResultCard, WalletSection +
+                       SolanaWalletSection, FormField (shared
+                       TextField/SelectField/TextareaField/ReadField)
+    web3/              ConnectWallet + ConnectionPanel — real wallet
+                       connection (MetaMask/Sepolia), adapted from
+                       niara-site (see "/perfil screen", "4. Wallet")
+    solana/            ConnectPhantom, NetworkBadge
+    documentacao/      DocsPage (sidebar by section + current stage banner),
+                       DocsNav, FaqAccordion
+    contato/           ContactPage (form + direct contact panel),
+                       ContactForm (sent via mailto)
+    negociar/          HubPage, CategoryPage (template of the 5 categories,
+                       includes RealOfferCard next to the fictitious
+                       catalog), CategoryChip (CategoryChip + CategoryBadge),
+                       CategoryCard, ShowcaseCard, SmesOnChainCard (the 10
+                       legacy SME offerings — real on Sepolia + fictitious
+                       company) + SelfServiceSmesCard (self-service SME
+                       offerings confirmed on-chain), SmesSectorFilter
+                       (joins both origins, discriminated union
+                       SmesCardData), OfferingBanner (photo + logo, with a
+                       placeholder), OfferingDetailPage (+ FinancialChart +
+                       FundamentalIndicators + IndicatorHelp, only for
+                       legacy/fictitious offerings) +
+                       SelfServiceOfferingDetailPage (lean sibling, no
+                       fictitious sections), OrderTicket (simulated order
+                       ticket, only for offerings with no real offering
+                       behind them), MyOfferCard
+    entrar/            SignInPage (full-screen overlay, split + form),
+                       VideoCover (YouTube video cover)
     hero/              hero (headline, CTAs), HeroParallaxLayers (glow +
-                       motivo do planeta anelado, decorativos)
-    nav/               header, dropdowns, menu mobile
-    scroll/            LenisProvider (smooth scroll + sync com ScrollTrigger)
-    sections/          narrativa por scroll (home), inclui pin de "Como funciona"
-    ui/                compartilhados (Logo, botões etc.)
+                       ringed planet motif, decorative)
+    nav/               Header/HeaderClient, NavDropdown, AccountMenu,
+                       LanguageSwitcher, Footer
+    motion/            Reveal/RevealGroup (framer-motion micro-reveals)
+    scroll/            LenisProvider (smooth scroll + ScrollTrigger sync)
+    sections/          home scroll narrative, incl. the "How it works" pin
+    ui/                shared (Logo, SectionGlow)
   lib/
+    i18n/              pt-br.ts + en.ts (dictionaries, same keys),
+                       dictionaries.ts (Dictionary type), locale.ts (Locale,
+                       cookie, Accept-Language, htmlLang/intlLocale,
+                       LocalizedText/localize), server.ts (getDictionary/
+                       getLocale), client.tsx (I18nProvider/useDictionary/
+                       useLocale) — see "Language"
     supabase/          client.ts (browser) / server.ts (Server
                        Components/Actions) / admin.ts (service role,
-                       bypassa RLS, server-only) — ver "Backend
-                       (Supabase)" acima
-    auth/resolveInvestor.ts  resolveAccount() — fonte única de
-                       userId/role/accountId, ver "Backend (Supabase)"
-                       → "Autenticação"
-    auth/resolveSocio.ts  resolveSocio() — allowlist de e-mail para
-                       /socios, separado por completo de resolveAccount()
-    socios/mockTransacoes.ts  leitura de investments (Supabase) para o
-                       painel /socios, ver "Tela /socios"
-    web3/events.ts     leitura de eventos on-chain (viem getLogs,
-                       servidor) para /socios — ver "Tela /socios"
-    ports.ts           interfaces PaymentGateway/KycProvider/ChainRegistry
-    adapters.ts        escolhe implementação por env var, default mock
-    mocks.ts           implementação mock de pagamento/KYC/emissão —
-                       todo ref prefixado "MOCK-", ver "Backend
-                       (Supabase)" → "Ports & adapters"
-    investments.ts     leituras de oferta/investimento com lista branca
-                       explícita (nunca select('*')), ver "Backend
-                       (Supabase)" → "Ciclo de captação"
-    money.ts           MONEY_FORMAT (regex) / reaisToCents — parsing do
-                       campo de valor em reais dos formulários reais
-    storage/issuer-logo.ts  upload/URL versionada da logo do emissor no
-                       Supabase Storage, ver "Backend (Supabase)"
-    ativos/derive.ts   funções puras de derivação (totais, alocação por
-                       classe/ativo/setor) a partir do mock de /ativos
-    categories.ts      CATEGORY_META: ícone + tokens de cor + href por
-                       categoria de token, usado nas telas /negociar
+                       bypasses RLS, server-only) — see "Backend (Supabase)"
+    auth/resolveInvestor.ts  resolveAccount() — the single source of
+                       userId/role/accountId
+    auth/resolvePartner.ts  resolvePartner() — email allowlist for /socios,
+                       entirely separate from resolveAccount()
+    partners/transactions.ts  the /socios timeline (Supabase investments +
+                       on-chain events + confirmed self-service offerings)
+    registration-schemas.ts  zod field schemas shared by the registration
+                       and profile Server Actions (messages from the
+                       dictionary)
+    ports.ts           PaymentGateway/KycProvider/ChainRegistry interfaces
+    adapters.ts        picks the implementation by env var, mock by default
+    mocks.ts           mock payment/KYC/issuance — every ref prefixed
+                       "MOCK-", see "Backend (Supabase)" → "Ports & adapters"
+    investments.ts     offering/investment reads with an explicit
+                       allowlist (never select('*'))
+    money.ts           MONEY_FORMAT (regex) / reaisToCents / centsToReais —
+                       parsing of the pt-BR money fields of the real forms
+    storage/           issuer-logo.ts / issuer-banner.ts — upload and
+                       versioned URL in Supabase Storage
+    assets/derive.ts   pure derivation functions (totals, allocation by
+                       class/asset/region) from the /ativos mock
+    categories.ts      CATEGORY_META: icon + color tokens + href per token
+                       category, used on the /negociar screens
     format.ts          formatBRL/formatSignedBRL/formatPercent (Intl pt-BR)
-    investor-profile.ts lógica pura de score/categorização do perfil de
-                       investidor (conteúdo do questionário vem do
-                       dicionário i18n, ver abaixo)
-    masks.ts           máscaras e validações de formato (CPF/CNPJ/CEP/
-                       telefone/data) da tela /perfil — validação só de
-                       formato/comprimento, sem dígito verificador
-    web3/config.ts     config wagmi (chain Sepolia, connector injected) da
-                       conexão real de carteira — ver "Tela /perfil"
-    web3/addresses.ts  endereços das ofertas LEGADAS (env vars
-                       NEXT_PUBLIC_*, nunca hardcoded), ver "Tela
-                       /investir/onchain"
-    web3/contracts.ts  pareia um par {token, oferta} já resolvido com os
-                       ABIs de web3/abis/; MockBRL nunca é constante —
-                       sempre lido de OfertaCaptacao.moeda() por oferta
-                       (getMockBrlContractAt), ver incidente em "Tela
-                       /investir/onchain"
-    web3/abis/         ABIs de MockBRL/OfertaCaptacao/ParticipacaoToken,
-                       extraídas de niara-contracts-PMEs/out/ (forge build)
-    web3/errors.ts     describeOnChainError() — reverts/erros wagmi -> pt-BR
-    web3/hooks/        useOfertaOnChain (leituras) + useOnChainActions
-                       (mint/investir/encerrar/resgatar), ver "Tela
-                       /investir/onchain"
-    web3/format.ts     formatToken/formatPrazo — formatação compartilhada
-                       de valores on-chain (bigint), usada por
-                       RealOnChainInvestPanel e RealPositionCard
-    web3/demoConstants.ts  meta/preço/teto/cotas/prazo fixos das 10
-                       ofertas reais em Sepolia, espelhados do script
-                       Solidity — fonte única para nunca a UI mostrar um
-                       número que discorda da chain, ver "Tela
-                       /investir/onchain" → "Unificação com empresas
-                       fictícias de PME"
-    negociar/ofertaAssets.ts  getOfertaAssetPaths() (server-only, fs) —
-                       resolve banner.jpg/logo.png reais em
-                       public/negociar/pmes/<slug>/ ou null (placeholder)
-    i18n/              dicionário de textos (pt-br.ts)
-    mock/ativos.ts     dados fictícios tipados da tela /ativos (posições,
-                       evolução mensal, catálogo) — nunca dado real
-    mock/ofertasOnChain.ts  ONCHAIN_PMES_SLUGS_EM_ORDEM — mapeia slug →
-                       índice em NEXT_PUBLIC_OFERTAS_ONCHAIN (posição na
-                       lista É o índice), ver "Tela /investir/onchain" →
-                       "Unificação com empresas fictícias de PME"
-    mock/ofertas.ts    categorias + 18 ofertas fictícias tipadas das
-                       telas /negociar (dados públicos, financeiro,
-                       indicadores fundamentalistas, termos, documentos)
-                       — nunca dado real; as 10 da categoria pmes têm
-                       `termos` derivados de web3/demoConstants.ts e
-                       ligação com oferta real via mock/ofertasOnChain.ts
-    nav-items.ts        itens de navegação compartilhados (Header/Footer)
+    investor-profile.ts pure investor profile scoring/categorization (the
+                       questionnaire content comes from the dictionaries)
+    masks.ts           format masks and checks (CPF/CNPJ/CEP/phone/date) —
+                       format/length only, no check digit
+    nav-items.ts       getNavItems(dict) — shared Header/Footer items
+    nav/headerAccount.ts  account state for the header menu
+    web3/config.ts     wagmi config (Sepolia chain, injected connector)
+    web3/addresses.ts  addresses of the LEGACY offerings (NEXT_PUBLIC_* env
+                       vars, never hardcoded)
+    web3/contracts.ts  pairs an already resolved {token, offering} pair with
+                       the ABIs; MockBRL is never a constant — always read
+                       from OfertaCaptacao.moeda() per offering
+                       (getMockBrlContractAt)
+    web3/abis/         MockBRL/OfertaCaptacao/ParticipacaoToken/
+                       OfertaOrquestrador/factories ABIs, extracted from
+                       niara-contracts-PMEs/out/ (forge build)
+    web3/errors.ts     describeOnChainError(error, dict.chainErrors.evm)
+    web3/hooks/        useOnChainOffering (reads) + useOnChainActions
+                       (mint/invest/close/redeem/release),
+                       useAuthorizedIssuer, usePublishOfferingOnChain,
+                       usePublishOnChainGates
+    web3/gates.ts      pure evaluation of the publication gates
+    web3/orchestrator.ts  OfertaOrquestrador address + network
+    web3/confirmedOfferings.ts  confirmed self-service offerings (both
+                       networks), allowlisted reads
+    web3/events.ts + eventsCore.ts  on-chain event reads (viem getLogs,
+                       server) with the Supabase incremental cache
+    web3/format.ts     formatToken/formatEth/formatDeadline — on-chain value
+                       formatting (bigint)
+    web3/demoConstants.ts  fixed target/price/cap/shares/deadline of the 10
+                       legacy Sepolia offerings, mirrored from the Solidity
+                       script
+    solana/            config, program (PDAs/reads), instructions, phantom,
+                       errors (describeSolanaError), server (server-only
+                       publication checks), hooks/, idl/
+    trade/offeringAssets.ts  getOfferingAssetPaths() (server-only, fs) —
+                       resolves real banner.jpg/logo.png in
+                       public/negociar/pmes/<slug>/ or null (placeholder)
+    mock/assets.ts     typed fictitious data of /ativos (positions, monthly
+                       evolution, catalog) — never real data
+    mock/onChainOfferings.ts  ONCHAIN_SMES_SLUGS_IN_ORDER — maps slug →
+                       index in NEXT_PUBLIC_OFERTAS_ONCHAIN (the position in
+                       the list IS the index)
+    mock/offerings.ts  categories + fictitious offerings of the /negociar
+                       screens (public data, financials, fundamental
+                       indicators, terms) — never real data; the 10 in the
+                       pmes category derive their terms from
+                       web3/demoConstants.ts
 public/
-  niara-pme-logo.png   logo oficial (globo + anel + "NIARA", PNG com fundo
-                       transparente, preto — só funciona sobre fundo claro)
+  niara-pme-logo.png   official logo (globe + ring + "NIARA", transparent
+                       black PNG — only works on a light background)
 scripts/
-  seed-demo.ts         `npm run seed:demo` — conta emissor + oferta ativa +
-                       conta investidor prontas para pitch, ver "Backend
-                       (Supabase)" → "Seed de demonstração"
+  seed-demo.ts         `npm run seed:demo` — see "Demo seed"
+  backfill-onchain-cache.ts  `npm run backfill:onchain` — first full scan
+                       of the on-chain event cache, outside Vercel's 60s cap
 supabase/
-  migrations/          0001–0010, schema + invariantes da Res. CVM 88 em
-                       triggers/CHECKs, ver "Backend (Supabase)" →
-                       "Schema e invariantes"
+  migrations/          0001–0017, schema + Res. CVM 88 invariants in
+                       triggers/CHECKs, see "Backend (Supabase)"
 ```
 
 ---
 
-## Convenções
+## Conventions
 
-- **Client components:** tudo que usa canvas, WebGL, `framer-motion` com
-  hooks de scroll, ou listener de mouse/teclado precisa de `"use client"` e
-  cleanup no `useEffect`.
-- **Acessibilidade:** dropdowns com `aria-haspopup`, `aria-expanded`, roles
-  adequados, foco visível, fecham com Esc e clique fora; imagens
-  decorativas com `aria-hidden`.
-- **Responsivo** sempre: testar desktop, tablet e mobile (menu hambúrguer +
-  acordeões).
-- **Logo:** componente `<Logo />` (`next/image`, caminho na constante
-  `LOGO_SRC` em `src/components/ui/Logo.tsx`), apontando para a arte oficial
-  `public/niara-pme-logo.png` (globo + anel + "NIARA", preto sobre fundo
-  transparente — só a arte, sem "PMEs" embutido). O descritor "PMEs" é
-  renderizado como texto real ao lado da imagem (`· PMEs`, `font-display`,
-  `text-ink-muted`), não parte do arquivo, porque a arte não o inclui e ele
-  segue necessário para diferenciar do produto da exchange (`niara-site`).
-  Preta, funciona apenas sobre fundo **claro** (Header, Footer) — se for
-  usada sobre fundo escuro (`bg-military`, seções cheias) no futuro, precisa
-  de uma versão clara própria; não reutilizar a mesma arte lá.
+- **Client components:** anything that uses canvas, WebGL, `framer-motion` with
+  scroll hooks, or a mouse/keyboard listener needs `"use client"` and cleanup in
+  `useEffect`.
+- **Accessibility:** dropdowns with `aria-haspopup`, `aria-expanded`, proper
+  roles, visible focus, closing with Esc and click outside; decorative images
+  with `aria-hidden`.
+- **Always responsive:** test desktop, tablet and mobile (hamburger menu +
+  accordions).
+- **Interface copy:** always through the dictionaries, in both languages (see
+  "Language").
+- **Logo:** the `<Logo />` component (`next/image`, path in the `LOGO_SRC`
+  constant in `src/components/ui/Logo.tsx`), pointing to the official art
+  `public/niara-pme-logo.png` (globe + ring + "NIARA", black on a transparent
+  background — the art only, without "PMEs"). The "PMEs" descriptor is
+  rendered as real text next to the image (`· PMEs`, `font-display`,
+  `text-ink-muted`), not part of the file, because the art doesn't include it
+  and it's still needed to tell it apart from the exchange product
+  (`niara-site`). Black, it only works on a **light** background (Header,
+  Footer) — if it's ever used on a dark background (`bg-military`, solid
+  sections), it needs its own light version; don't reuse the same art there.
 
 ---
 
-## Fluxo de trabalho
+## Workflow
 
-1. Antes de codar, ler os arquivos envolvidos — não presumir.
-2. Rodar `tsc --noEmit` e `npm run lint` ao final de cada parte; corrigir o
-   que aparecer.
-3. Rodar `npm run dev`/`build` para confirmar que compila e que as rotas
-   respondem sem erro de SSR/WebGL.
-4. **Commit local ao final de cada parte**, mensagem em português no padrão
-   `feat:` / `fix:` / `refactor:` / `chore:`.
-5. 🔴 **Sem trailer `Co-Authored-By: Claude` nos commits** — regra do projeto, mas
-   **não é automática nem garantida só por isso estar escrito aqui**. Depende de
-   `.claude/settings.json` existir, na raiz do repo, com exatamente:
+1. Before coding, read the files involved — don't assume.
+2. Run `tsc --noEmit` and `npm run lint` at the end of each part; fix what
+   shows up.
+3. Run `npm run dev`/`build` to confirm it compiles and the routes respond
+   without SSR/WebGL errors.
+4. **Local commit at the end of each part**, message in **English** in the
+   `feat:` / `fix:` / `refactor:` / `chore:` pattern.
+5. 🔴 **No `Co-Authored-By: Claude` trailer in commits** — a project rule, but
+   **not automatic nor guaranteed just because it's written here**. It depends on
+   `.claude/settings.json` existing at the repo root with exactly:
    ```json
    {
      "includeCoAuthoredBy": false
    }
    ```
-   Esse arquivo está no `.gitignore` (`/.claude/`) — nunca é versionado, então
-   **precisa ser criado à mão em cada máquina/clone novo**, antes do primeiro commit.
-   Sem ele, o Claude Code adiciona o trailer por padrão, mesmo com `git config
-   user.name`/`user.email` corretamente configurados (identidade de autor/committer é
-   uma coisa; o trailer no corpo da mensagem é outra, sem nenhuma relação entre as
-   duas). Descoberto na prática: os 3 primeiros commits da Fase 3 (publicação
-   on-chain) saíram com o trailer nesta máquina antes de este arquivo existir aqui,
-   mesmo com a identidade já certa — corrigidos depois via `git commit --amend` +
-   recomposição dos commits anteriores (sem `rebase -i`, proibido por instrução).
-6. Nunca `--force`, nunca reescrever histórico, nunca push sem ser pedido.
-7. Se algo quebrar ou ficar ambíguo: **parar e explicar**, não improvisar.
+   That file is in `.gitignore` (`/.claude/`) — it's never versioned, so it
+   **must be created by hand on every new machine/clone**, before the first
+   commit. Without it, Claude Code adds the trailer by default, even with
+   `git config user.name`/`user.email` correctly set (author/committer identity
+   is one thing; the trailer in the message body is another, with no relation
+   between them). Found in practice: the first 3 commits of Phase 3 (on-chain
+   publication) went out with the trailer on this machine before this file
+   existed here, even with the right identity — fixed afterwards via
+   `git commit --amend` + recomposing the previous commits (without
+   `rebase -i`, forbidden by instruction).
+6. Never `--force`, never rewrite pushed history, never push without being
+   asked.
+7. If something breaks or gets ambiguous: **stop and explain**, don't
+   improvise.
 
 ---
 
-## Estado atual
+## Current state
 
-Homepage (`src/app/page.tsx`), nesta ordem: Hero (**military cheio**, texto
-claro — texto centrado + motivo decorativo do planeta anelado/glow, sem
-astronauta — ver "Astronauta (removido)") → Benefícios da tokenização
-(**salmon cheio**, texto escuro)
-→ Como funciona (sequência pinned, fundo neutro `bg-surface-alt`,
-inalterado) → Quando posso usar a Tokenização? (**military cheio**, texto
-claro) → Conheça os Tokens (**salmon cheio**, cards linkam para as
-rotas de categoria de `/negociar`, ver "Telas /negociar" acima) → Para
-empresas × investidores (**salmon
-cheio** — não verde: ficaria verde→[aviso neutro]→verde colado na faixa
-CTA verde logo depois; salmon aqui mantém a alternância de ritmo) →
-Aviso de demonstração/CVM (`bg-surface-alt`, neutro) → Faixa CTA final
-(military cheio, texto claro — já era assim antes da Parte 6) → Footer.
-Ver "Fundos cheios de seção + regra de contraste" acima para os tokens de
-texto (`on-military`/`on-salmon`/`on-salmon-muted`) usados em cada uma.
+Homepage (`src/app/page.tsx`), in this order: Hero (**solid military**, light
+text — centered text + decorative ringed planet/glow motif, no astronaut —
+see "Astronaut (removed)") → Tokenization benefits (**solid salmon**, dark
+text) → How it works (pinned sequence, neutral `bg-surface-alt` background,
+unchanged) → When can I use tokenization? (**solid military**, light text) →
+Meet the tokens (**solid salmon**, cards link to the `/negociar` category
+routes, see "/negociar screens") → For companies × investors (**solid salmon**
+— not green: it would be green→[neutral notice]→green right next to the green
+CTA band after it; salmon here keeps the alternating rhythm) → Demo/CVM notice
+(`bg-surface-alt`, neutral) → Final CTA band (solid military, light text —
+already like this before Part 6) → Footer. See "Full section backgrounds +
+contrast rule" above for the text tokens (`on-military`/`on-salmon`/
+`on-salmon-muted`) used in each one.
 
-Nas seções "Benefícios da tokenização" (3 cards) e "Quando posso usar a
-Tokenização?" (4 cards), os cards usam `SectionCard` com `h-full` dentro
-de um grid `items-stretch` — garante largura e altura idênticas entre os
-cards de uma mesma linha, independente do tamanho do texto de cada um.
+In the "Tokenization benefits" (3 cards) and "When can I use tokenization?"
+(4 cards) sections, the cards use `SectionCard` with `h-full` inside an
+`items-stretch` grid — guarantees identical width and height between the
+cards of the same row, regardless of each one's text length.
 
-Scroll suave via Lenis sincronizado ao GSAP ScrollTrigger. Header +
-navegação, `/styleguide`. Todas as rotas do nav respondem sem 404 — nenhuma
-é mais `StubPage` (ver "Pendências conhecidas" abaixo). Testado com `tsc`,
-`eslint`, `build` e verificação visual via Playwright (desktop, mobile,
-teclado, reduced-motion) a cada parte.
+Smooth scroll via Lenis synced with GSAP ScrollTrigger. Header + navigation
+(with the `EN · PT` language switcher), `/styleguide`. Every nav route responds
+without a 404 — none is a `StubPage` anymore (see "Known open items" below).
+Tested with `tsc`, `eslint`, `build` and visual checks via Playwright
+(desktop, mobile, keyboard, reduced-motion) at each part.
 
-As 5 partes do redesign (paleta E, astronauta 2D, Lenis + pin, seções de
-conteúdo aprovado, créditos) estão completas. O astronauta foi removido
-depois (ver seção própria) e o hero rebalanceado. A seção "Créditos"
-(placeholder "Equipe Niara" + áreas genéricas) também foi removida por
-completo depois — não fazia falta antes do site ter colaboradores reais a
-creditar.
+The 5 parts of the redesign (palette E, 2D astronaut, Lenis + pin, approved
+content sections, credits) are complete. The astronaut was removed later (see
+its own section) and the hero rebalanced. The "Credits" section (an "Equipe
+Niara" placeholder + generic areas) was also removed entirely later — it
+wasn't needed before the site had real contributors to credit.
 
-## Pendências conhecidas
+The whole repository was moved to English (identifiers, file names, comments,
+docs) and the interface became bilingual (pt/en) after the Colosseum hackathon
+submission — see "Language" for what deliberately stayed in Portuguese.
 
-- Logo final (`public/niara-pme-logo.png`, globo + anel + "NIARA", preto
-  sobre fundo transparente) já integrada no Header e Footer via `<Logo />`.
-  Funciona só sobre fundo **claro** — ainda falta uma versão clara da arte
-  para uso sobre fundo escuro (`bg-military`/seções cheias), caso a logo
-  precise aparecer ali no futuro.
-- Revisão jurídica pendente do texto das seções "Benefícios da
-  tokenização" (Vantagem Tributária, Crédito mais Barato e Justo/
-  Peer-to-Peer) e "Quando posso usar a Tokenização?" (Antecipação do
-  Caixa) — textos aprovados para exibição, mas ainda não validados
-  juridicamente. Não alterar nem expandir esses textos sem instrução.
-- Envio real de formulário de contato continua fora de escopo (hoje via
-  `mailto`, sem backend, ver "Telas `/sobre/documentos` e `/sobre/contato`"
-  acima) — diferente de autenticação/backend, que **já existem** desde o
-  backend Supabase (ver "Backend (Supabase)" acima), mas só para o ciclo
-  cadastro → perfil → oferta → investimento. Não estender o backend real
-  para `/ativos` ou a boleta simulada de `/negociar` sem alinhar antes —
-  continuam demonstração 100% mock por decisão deliberada, não por
-  limitação técnica.
-- Conexão de carteira (`/perfil`, ver "4. Carteira" acima) é real, mas só
-  leitura (endereço/rede/saldo nativo em Sepolia) — sem assinatura de
-  transação, sem leitura de token ERC-20 (a Niara PMEs não tem contrato
-  próprio implantado, diferente do `niara-site`, que lê mUSDT/outros
-  tokens de teste reais). `NEXT_PUBLIC_SEPOLIA_RPC_URL` é opcional (cai no
-  RPC público padrão do `wagmi/chains` se ausente) — não commitar em
-  `.env*` se for definida localmente. A **vinculação** desse endereço à
-  conta no banco (`wallet_address`) é real desde o backend Supabase, mas é
-  uma camada de persistência separada da conexão MetaMask em si — ver
-  "Backend (Supabase)" → "Carteira vinculada ao banco".
-- RLS das tabelas de domínio (`issuers`, `offerings`, `investors`,
-  `investments`, `payment_events`) é **default-deny sem nenhuma policy**
-  (ver "Backend (Supabase)" → "Schema e invariantes") — todo acesso passa
-  pelo client `admin` no servidor, controlado só pelo código do Server
-  Action via `resolveAccount()`. Não existe ainda policy de self-read para
-  o próprio usuário ler seus dados diretamente do client browser; se um
-  dia isso for adicionado, revisar com cuidado para não abrir leitura de
-  campo sensível (CNPJ, telefone, wallet) além do que as listas brancas
-  já expõem hoje.
-- Banner "Não verificado" de `/perfil` e o `kyc_status` real gravado no
-  banco (aprovado via `/investir`) não estão ligados um ao outro — ver
-  "Backend (Supabase)" → "Gate de KYC" para o porquê e para não "corrigir"
-  um lado sem entender o outro.
-- `npm run seed:demo` (`scripts/seed-demo.ts`, ver "Backend (Supabase)" →
-  "Seed de demonstração") cobre conta emissor + oferta ativa + conta
-  investidor prontas para um pitch — mas ainda é preciso rodar na mão
-  antes de cada demonstração (não é seed automático de CI/deploy).
-- Nenhuma rota do site continua como `StubPage` — `/ativos`, `/perfil`,
-  as duas rotas de `/sobre/*` e as 6 rotas de `/negociar/*` (hub + 5
-  categorias + detalhe da oferta) já têm conteúdo real de demonstração
-  (ver as respectivas seções acima). `StubPage.tsx` foi removido do
-  projeto por ficar sem uso — não recriá-lo para novas rotas sem
-  alinhar antes com o usuário.
-- Revisão jurídica pendente do enquadramento regulatório citado nas
-  telas `/negociar` (Resolução CVM 88, riscos estilo CVM) e da boleta
-  simulada em si — nenhuma ordem real é enviada hoje, mas o texto de
-  enquadramento segue a mesma ressalva já registrada para
-  `/sobre/documentos` (ver "Telas /negociar" acima).
-- `/investir/onchain` (ver seção própria acima) depende de uma oferta já
-  criada em Sepolia via script administrativo fora do frontend — sem os
-  3 `NEXT_PUBLIC_*` preenchidos, a tela mostra "contrato não configurado",
-  nunca quebra. **Já configurada e ativa em `.env.local`** desde
-  2026-08-15 (`niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol`,
-  rodado com sucesso — token `0xAD14...eE3A`, oferta `0x8390...C57c6`). 🔴
-  A chave do deployer original da infraestrutura da Fase 4 foi perdida no
-  meio desta parte — toda a infra (10 contratos) precisou ser redeployada
-  com uma carteira nova; ver `niara-contracts-PMEs/CLAUDE.md`, "Chave do
-  deployer da Fase 4 perdida" para o histórico completo e os endereços
-  novos. **Ciclo completo testado pela UI de verdade em 2026-08-15**
-  (mint → approve → aportar 2x, 100+100 mBRL → encerrar → resgatar) —
-  estado final `EncerradaSucesso`, `totalArrecadado=200 mBRL`, 20 `nPME`
-  resgatadas, tudo conferido também via `cast call` direto na chain, não
-  só pela tela. Essa oferta específica **já está encerrada**.
-  🔴 **Suporte a várias ofertas simultâneas adicionado em 2026-08-15**,
-  para uma demonstração presencial (Startup Summit) — ver seção acima
-  ("Uma ou várias ofertas"). Foram criadas **10 ofertas de reserva**
-  rodando `DemoNiaraPMEsOnChain.s.sol` 10x em sequência (todas `Aberta`,
-  confirmadas via `cast call`) — endereços completos das 10 em
-  `niara-contracts-PMEs/CLAUDE.md`, "10 ofertas de reserva para o Startup
-  Summit". Todas já estão em `NEXT_PUBLIC_OFERTAS_ONCHAIN` no
-  `.env.local` deste projeto. A posição real também aparece dentro do dashboard
-  `/ativos` desde então, via `RealPositionCard`
-  (ver "Tela `/investir/onchain`" acima) — cartão isolado, nunca somado ao
-  restante 100% mock daquela tela. Mercado secundário (`LiquidacaoSecundaria`, já
-  implantado em Sepolia do lado dos contratos) não foi integrado nesta
-  rodada — prioridade foi o ciclo primário completo (aportar → encerrar
-  → resgatar), conforme pedido.
-- **Bug conhecido (pré-existente, não corrigido nesta rodada):**
-  `Reveal.tsx`/`RevealGroup.tsx` usam `useReducedMotion()` do
-  framer-motion, que lê `window.matchMedia` de forma síncrona já no
-  primeiro render do cliente — em um dispositivo com
-  `prefers-reduced-motion: reduce` ativo, isso diverge do HTML renderizado
-  no servidor (que não tem acesso a essa preferência) e o React acusa um
-  erro de hidratação no console (`"A tree hydrated but some attributes...
-  didn't match"`). Não observado impacto visual (o framer-motion aplica o
-  estado final correto via DOM direto, independente do mismatch), mas o
-  erro de console é real e é uma limitação do próprio hook do
-  framer-motion, não do nosso código. Corrigir exigiria mudar o padrão de
-  inicialização de `reducedMotion` nesses dois componentes (ex.: começar
-  sempre `false` e só atualizar via `useEffect` pós-montagem) — deixado
-  para uma tarefa própria, já que afeta componentes usados em várias
-  seções existentes.
+## Known open items
+
+- The final logo (`public/niara-pme-logo.png`, globe + ring + "NIARA", black on
+  a transparent background) is already in the Header and Footer via
+  `<Logo />`. It only works on a **light** background — a light version of the
+  art is still missing for dark backgrounds (`bg-military`/solid sections), in
+  case the logo ever needs to appear there.
+- Pending legal review of the copy of the "Tokenization benefits" (Tax
+  advantage, Cheaper and fairer credit/Peer-to-peer) and "When can I use
+  tokenization?" (Cash advance) sections — copy approved for display, but not
+  yet legally validated. Don't change or expand that copy without instruction
+  (in either language — the English version is a translation of the approved
+  Portuguese copy, not new copy).
+- Real contact form sending is still out of scope (today via `mailto`, no
+  backend, see "/sobre/documentos and /sobre/contato screens") — unlike
+  authentication/backend, which **already exist** since the Supabase backend,
+  but only for the sign-up → profile → offering → investment cycle. Don't extend
+  the real backend to `/ativos` or the simulated order ticket of `/negociar`
+  without aligning first — they stay 100% mock demos by deliberate decision,
+  not a technical limitation.
+- The wallet connection (`/perfil`, see "4. Wallet") is real, but read-only
+  (address/network/native balance on Sepolia). `NEXT_PUBLIC_SEPOLIA_RPC_URL` is
+  optional in code (falls back to `wagmi/chains`' default public RPC), but must
+  never be missing in production (see the `/investir/onchain` incidents).
+  **Linking** that address to the account in the database (`wallet_address`) is
+  real since the Supabase backend, but it's a persistence layer separate from
+  the MetaMask connection itself.
+- RLS on the domain tables (`issuers`, `offerings`, `investors`,
+  `investments`, `payment_events`) is **default-deny with no policy at all** —
+  every access goes through the `admin` client on the server, controlled only by
+  the Server Action code via `resolveAccount()`. There's no self-read policy for
+  the user to read their own data straight from the browser client yet; if one
+  is ever added, review it carefully so it doesn't open reads of sensitive
+  fields (CNPJ, phone, wallet) beyond what the allowlists already expose today.
+- The "Not verified" banner on `/perfil` and the real `kyc_status` stored in the
+  database (approved via `/investir`) aren't connected — see "Backend
+  (Supabase)" → "KYC gate" for why, and don't "fix" one side without
+  understanding the other.
+- `npm run seed:demo` (see "Demo seed") still has to be run by hand before each
+  demo (it's not an automatic CI/deploy seed).
+- No site route is a `StubPage` anymore. `StubPage.tsx` was removed from the
+  project for being unused — don't recreate it for new routes without aligning
+  with the user first.
+- Pending legal review of the regulatory framing cited on the `/negociar`
+  screens (CVM Resolution 88, CVM-style risks) and of the simulated order
+  ticket itself.
+- `/investir/onchain` depends on offerings already created on Sepolia by an
+  admin script outside the frontend (or self-service publications) — without
+  the `NEXT_PUBLIC_*` vars filled in, the screen shows "contract not
+  configured", it never breaks. The 10 backup offerings for the Startup Summit
+  are in `NEXT_PUBLIC_OFERTAS_ONCHAIN` (full addresses in
+  `niara-contracts-PMEs/CLAUDE.md`). The secondary market
+  (`LiquidacaoSecundaria`, already deployed on Sepolia on the contracts side)
+  isn't integrated.
+- `RealPositionCard.tsx` (`/ativos`) doesn't consume the `ready` gate of the
+  on-chain read hooks yet (read-only, no invest button — lower risk).
+- **Known bug (pre-existing, not fixed):** `Reveal.tsx`/`RevealGroup.tsx` use
+  framer-motion's `useReducedMotion()`, which reads `window.matchMedia`
+  synchronously on the first client render — on a device with
+  `prefers-reduced-motion: reduce`, this diverges from the server-rendered HTML
+  and React logs a hydration error. No visual impact observed, but the console
+  error is real. Fixing it means changing how `reducedMotion` is initialized in
+  those two components (e.g. always start `false` and update it in a
+  post-mount `useEffect`) — left for its own task.
+- On-chain and database names that are still Portuguese (see "Language") get
+  renamed together with the mainnet deploy.
