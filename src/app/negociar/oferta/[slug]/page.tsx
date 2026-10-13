@@ -1,87 +1,91 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { OfertaDetailPage } from "@/components/negociar/OfertaDetailPage";
-import { SelfServiceOfertaDetailPage } from "@/components/negociar/SelfServiceOfertaDetailPage";
-import { ptBr } from "@/lib/i18n/pt-br";
-import { getOfertaBySlug } from "@/lib/mock/ofertas";
-import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
-import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
+import { OfferingDetailPage } from "@/components/negociar/OfferingDetailPage";
+import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfferingDetailPage";
+import { getOfferingBySlug } from "@/lib/mock/offerings";
+import { getOnChainIndexBySlug } from "@/lib/mock/onChainOfferings";
+import { getOfferingAssetPaths } from "@/lib/trade/offeringAssets";
 import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
-import { resolveSocio } from "@/lib/auth/resolveSocio";
+import { resolvePartner } from "@/lib/auth/resolvePartner";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { localize } from "@/lib/i18n/locale";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const dict = await getDictionary();
+  const locale = await getLocale();
   const { slug } = await params;
-  const oferta = getOfertaBySlug(slug);
+  const offering = getOfferingBySlug(slug);
 
-  if (oferta) {
+  if (offering) {
     return {
-      title: `${oferta.nome} · Niara PMEs`,
-      description: oferta.empresa.resumo,
+      title: `${localize(offering.name, locale)} · Niara PMEs`,
+      description: localize(offering.company.summary, locale),
     };
   }
 
-  // Ofertas self-service não têm slug legível — o "slug" na URL é o próprio uuid de
-  // offerings.id (ver src/lib/web3/confirmedOfferings.ts). Só tenta essa segunda consulta
-  // quando a primeira (mock, síncrona) não achou nada.
+  // Self-service offerings have no readable slug — the "slug" in the URL is the
+  // offerings.id uuid itself (see src/lib/web3/confirmedOfferings.ts). Only tries this second
+  // query when the first one (mock, synchronous) found nothing.
   const confirmedOffering = await loadConfirmedOnChainOfferingById(slug);
   if (confirmedOffering) {
     return { title: `${confirmedOffering.issuerTradeName ?? confirmedOffering.issuerLegalName} · Niara PMEs` };
   }
 
-  return { title: `${ptBr.negociar.oferta.naoEncontrada.title} · Niara PMEs` };
+  return { title: `${dict.trade.offering.notFound.title} · Niara PMEs` };
 }
 
 export default async function Page({ params }: PageProps) {
   await requireLogin();
 
   const { slug } = await params;
-  const oferta = getOfertaBySlug(slug);
+  const offering = getOfferingBySlug(slug);
 
-  if (oferta) {
-    // Fotos reais só existem (por ora) para as 10 ofertas PME ligadas a uma oferta real em
-    // Sepolia — ver src/lib/negociar/ofertaAssets.ts. Para as demais categorias nem vale a pena
-    // checar o filesystem: nunca vai haver arquivo, OfertaBanner já mostra o placeholder sozinho.
-    const assets = oferta.categoria === "pmes" ? getOfertaAssetPaths(oferta.slug) : { bannerUrl: null, logoUrl: null };
-    const onChainIndex = oferta.categoria === "pmes" ? getOnChainIndexBySlug(oferta.slug) : null;
-    // Só importa quando onChainIndex !== null (decide o botão "Encerrar oferta" do painel
-    // on-chain) — resolver sempre é mais simples que condicionar, e resolveSocio() não redireciona.
-    const { autorizado: isSocio } = await resolveSocio();
+  if (offering) {
+    // Real photos only exist (for now) for the 10 SME offerings linked to a real offering on
+    // Sepolia — see src/lib/trade/offeringAssets.ts. For the other categories it's not even worth
+    // checking the filesystem: there will never be a file, OfferingBanner already shows the
+    // placeholder on its own.
+    const assets = offering.category === "pmes" ? getOfferingAssetPaths(offering.slug) : { bannerUrl: null, logoUrl: null };
+    const onChainIndex = offering.category === "pmes" ? getOnChainIndexBySlug(offering.slug) : null;
+    // Only matters when onChainIndex !== null (decides the on-chain panel's "Close offering"
+    // button) — always resolving is simpler than branching, and resolvePartner() doesn't redirect.
+    const { authorized: isPartner } = await resolvePartner();
 
     return (
-      <OfertaDetailPage
-        oferta={oferta}
+      <OfferingDetailPage
+        offering={offering}
         bannerUrl={assets.bannerUrl}
         logoUrl={assets.logoUrl}
         onChainIndex={onChainIndex}
-        isSocio={isSocio}
+        isPartner={isPartner}
       />
     );
   }
 
-  // Não é uma oferta mock (legada) — tenta resolver como oferta self-service (slug = uuid de
-  // offerings.id). loadConfirmedOnChainOfferingById() nunca lança: devolve null pra uuid
-  // inválido, oferta inexistente, não confirmada, ou sem categoria.
+  // Not a mock (legacy) offering — tries to resolve it as a self-service offering (slug = the
+  // offerings.id uuid). loadConfirmedOnChainOfferingById() never throws: it returns null for an
+  // invalid uuid, a nonexistent offering, an unconfirmed one, or one without a category.
   const confirmedOffering = await loadConfirmedOnChainOfferingById(slug);
   if (!confirmedOffering || !confirmedOffering.category) {
     notFound();
   }
 
-  const { autorizado: isSocio } = await resolveSocio();
-  // isEmissor só é possível pra ofertas self-service (têm issuer_id no Supabase) — as 10 legadas
-  // nunca têm conta de emissor neste app, então nem chegam a este ramo.
+  const { authorized: isPartner } = await resolvePartner();
+  // isIssuer is only possible for self-service offerings (they have issuer_id in Supabase) — the 10
+  // legacy ones never have an issuer account in this app, so they don't even reach this branch.
   const { role, accountId } = await resolveAccount();
-  const isEmissor = role === "issuer" && accountId === confirmedOffering.issuerAccountId;
+  const isIssuer = role === "issuer" && accountId === confirmedOffering.issuerAccountId;
 
   return (
-    <SelfServiceOfertaDetailPage
-      oferta={{ ...confirmedOffering, category: confirmedOffering.category }}
-      isSocio={isSocio}
-      isEmissor={isEmissor}
+    <SelfServiceOfferingDetailPage
+      offering={{ ...confirmedOffering, category: confirmedOffering.category }}
+      isPartner={isPartner}
+      isIssuer={isIssuer}
     />
   );
 }

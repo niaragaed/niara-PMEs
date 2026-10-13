@@ -1,21 +1,24 @@
 import Link from "next/link";
 import { CategoryBadge } from "./CategoryChip";
-import { ptBr } from "@/lib/i18n/pt-br";
-import type { Oferta } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/offerings";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { localize } from "@/lib/i18n/locale";
 
-// Card de "vitrine (demonstração)" — reutilizado no hub e no template de
-// categoria. Card branco sobre o fundo military cheio das telas /negociar.
-export function ShowcaseCard({ oferta }: { oferta: Oferta }) {
+// "Showcase (demo)" card — reused on the hub and in the category
+// template. A white card on the solid military background of the /negociar screens.
+export async function ShowcaseCard({ offering }: { offering: Offering }) {
+  const dict = await getDictionary();
+  const locale = await getLocale();
   return (
     <div className="flex h-full flex-col gap-3 rounded-lg bg-surface p-5 shadow-soft">
-      <CategoryBadge categoria={oferta.categoria} />
-      <h3 className="text-sm font-semibold text-ink">{oferta.nome}</h3>
-      <p className="flex-1 text-xs font-medium text-ink-muted">{ptBr.negociar.vitrine.tagExemplo}</p>
+      <CategoryBadge category={offering.category} />
+      <h3 className="text-sm font-semibold text-ink">{localize(offering.name, locale)}</h3>
+      <p className="flex-1 text-xs font-medium text-ink-muted">{dict.trade.showcase.exampleTag}</p>
       <Link
-        href={`/negociar/oferta/${oferta.slug}`}
+        href={`/negociar/oferta/${offering.slug}`}
         className="inline-flex items-center justify-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
       >
-        {ptBr.negociar.vitrine.verDetalhes}
+        {dict.trade.showcase.viewDetails}
       </Link>
     </div>
   );

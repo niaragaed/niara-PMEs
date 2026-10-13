@@ -1,53 +1,54 @@
 "use client";
 
-// Único cartão REAL dentro de /ativos (o resto da tela é 100% mock, ver AtivosPage.tsx) — sua
-// posição de verdade na oferta de demonstração em Sepolia, lida direto do contrato on-chain via
-// os mesmos hooks de src/lib/web3/hooks/useOfertaOnChain.ts usados em /investir/onchain. Nunca
-// entra nos cálculos de computeTotals/PortfolioSummary nem nas linhas de PositionsTable — mock e
-// real ficam sempre em superfícies separadas, nunca somados juntos.
+// The only REAL card inside /ativos (the rest of the screen is 100% mock, see AssetsPage.tsx) —
+// your actual position in the demo offering on Sepolia, read straight from the on-chain contract
+// via the same hooks in src/lib/web3/hooks/useOnChainOffering.ts used in /investir/onchain. Never
+// goes into the computeTotals/PortfolioSummary calculations nor into the PositionsTable rows —
+// mock and real always stay on separate surfaces, never added together.
 //
-// Visualmente distinto de propósito (anel + selo sólido salmão), mesmo padrão já usado em
-// RealOfferCard.tsx (src/components/negociar/) para diferenciar oferta real de fictícia — aqui
-// adaptado ao cartão escuro (bg-panel) já usado no resto de /ativos, em vez do cartão branco de
-// /negociar.
+// Visually distinct on purpose (ring + solid salmon badge), the same pattern already used in
+// RealOfferCard.tsx (src/components/negociar/) to tell a real offering from a fictitious one —
+// here adapted to the dark card (bg-panel) already used in the rest of /ativos, instead of the
+// white card of /negociar.
 //
-// Simplificação deliberada: quando várias ofertas estão configuradas ao mesmo tempo
-// (NEXT_PUBLIC_OFERTAS_ONCHAIN, ver src/lib/web3/addresses.ts — demo presencial com várias
-// ofertas de reserva), este cartão sempre mostra a posição na PRIMEIRA da lista (índice 0,
-// padrão dos hooks) — não tenta adivinhar "qual oferta o usuário está demonstrando agora".
-// Quem quiser ver/trocar a oferta específica usa o seletor dentro de /investir/onchain.
+// Deliberate simplification: when several offerings are configured at the same time
+// (NEXT_PUBLIC_OFERTAS_ONCHAIN, see src/lib/web3/addresses.ts — an in-person demo with several
+// backup offerings), this card always shows the position in the FIRST one of the list (index 0,
+// the hooks' default) — it doesn't try to guess "which offering the user is demonstrating now".
+// Whoever wants to see/switch the specific offering uses the selector inside /investir/onchain.
 import Link from "next/link";
 import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { BadgeCheck } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
-import { useMinhaPosicaoOnChain, useOfertaOnChainTermos } from "@/lib/web3/hooks/useOfertaOnChain";
+import { useMyOnChainPosition, useOnChainOfferingTerms } from "@/lib/web3/hooks/useOnChainOffering";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { formatToken } from "@/lib/web3/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 export function RealPositionCard() {
-  const t = ptBr.ativos.posicaoReal;
+  const dict = useDictionary();
+  const t = dict.assets.realPosition;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 
-  // Continua sempre a primeira oferta da lista LEGADA (env var) — mesma simplificação
-  // deliberada de antes da Fase 4, sub-etapa 5.2: este cartão nunca tentou "adivinhar" qual
-  // oferta mostrar, e não é o lugar de decidir isso entre legado/self-service.
-  const enderecos = getOnChainAddresses()?.ofertas[0] ?? null;
-  const termos = useOfertaOnChainTermos(enderecos);
-  const posicao = useMinhaPosicaoOnChain(enderecos);
+  // Still always the first offering of the LEGACY list (env var) — the same deliberate
+  // simplification as before Phase 4, sub-step 5.2: this card never tried to "guess" which
+  // offering to show, and it isn't the place to decide that between legacy/self-service.
+  const addresses = getOnChainAddresses()?.offerings[0] ?? null;
+  const terms = useOnChainOfferingTerms(addresses);
+  const position = useMyOnChainPosition(addresses);
 
-  // Sem os 3 endereços configurados, o cartão simplesmente não aparece — não há posição real
-  // para mostrar (mesma regra de "nunca quebra" de OnChainInvestPage.tsx).
-  if (!termos.configurado) return null;
+  // Without the 3 addresses configured, the card simply doesn't show up — there's no real
+  // position to show (the same "never breaks" rule as OnChainInvestPage.tsx).
+  if (!terms.configured) return null;
 
   return (
     <div className="rounded-lg bg-panel p-5 ring-2 ring-salmon sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-3 py-1 text-xs font-semibold text-on-salmon">
           <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          {t.selo}
+          {t.badge}
         </span>
         <Link
           href="/investir/onchain"
@@ -57,39 +58,39 @@ export function RealPositionCard() {
         </Link>
       </div>
 
-      <p className="mt-3 text-xs text-on-military-muted">{t.explicacao}</p>
+      <p className="mt-3 text-xs text-on-military-muted">{t.explanation}</p>
 
       {!connection.isConnected ? (
         <div className="mt-4 flex flex-col gap-2">
-          <p className="text-sm text-on-military-muted">{t.conectarPrompt}</p>
+          <p className="text-sm text-on-military-muted">{t.connectPrompt}</p>
           <ConnectWallet />
         </div>
       ) : !isOnSepolia ? (
-        <p className="mt-4 text-sm text-on-military">{t.redeErrada}</p>
-      ) : posicao.aportado === BigInt(0) ? (
-        <p className="mt-4 text-sm text-on-military-muted">{t.semPosicao}</p>
+        <p className="mt-4 text-sm text-on-military">{t.wrongNetwork}</p>
+      ) : position.invested === BigInt(0) ? (
+        <p className="mt-4 text-sm text-on-military-muted">{t.noPosition}</p>
       ) : (
         <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <dt className="text-xs text-on-military-muted">{t.aportado}</dt>
+            <dt className="text-xs text-on-military-muted">{t.invested}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
-              {formatToken(posicao.aportado, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(position.invested, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.cotas}</dt>
+            <dt className="text-xs text-on-military-muted">{t.shares}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
               {formatToken(
-                posicao.saldoParticipacaoToken,
-                termos.participacaoTokenDecimals,
-                termos.participacaoTokenSymbol,
+                position.participationTokenBalance,
+                terms.participationTokenDecimals,
+                terms.participationTokenSymbol,
               )}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.estadoLabel}</dt>
+            <dt className="text-xs text-on-military-muted">{t.stateLabel}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
-              {termos.estado ? ptBr.investirOnChain.termos.estados[termos.estado] : "—"}
+              {terms.state ? dict.investOnChain.terms.states[terms.state] : "—"}
             </dd>
           </div>
         </dl>

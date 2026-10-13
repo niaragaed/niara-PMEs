@@ -1,10 +1,10 @@
-// Implementações MOCK das portas em src/lib/ports.ts.
+// MOCK implementations of the ports in src/lib/ports.ts.
 //
-// 🔴 Nada aqui move dinheiro de verdade, faz verificação de identidade de
-// verdade nem emite token on-chain de verdade. Todo ref/tx retornado por
-// estas implementações começa com o prefixo "MOCK-", seguindo a regra de
-// honestidade do projeto (nada simulado pode parecer real) — o front
-// nunca deve exibir um ref "MOCK-*" como se fosse uma operação real.
+// 🔴 Nothing here moves real money, does real identity verification
+// or issues a real on-chain token. Every ref/tx returned by
+// these implementations starts with the "MOCK-" prefix, following the project's
+// honesty rule (nothing simulated may look real) — the frontend
+// must never display a "MOCK-*" ref as if it were a real operation.
 import type {
   ChainIssuanceResult,
   ChainRegistry,
@@ -14,8 +14,8 @@ import type {
   PaymentGateway,
 } from "./ports";
 
-function mockRef(prefixo: string): string {
-  return `MOCK-${prefixo}-${crypto.randomUUID()}`;
+function mockRef(prefix: string): string {
+  return `MOCK-${prefix}-${crypto.randomUUID()}`;
 }
 
 export const mockPaymentGateway: PaymentGateway = {

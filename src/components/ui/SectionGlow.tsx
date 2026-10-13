@@ -1,64 +1,65 @@
-// Luz de fundo pro sálvia cheio (bg-military) das telas internas — /negociar, /ativos,
-// /perfil, /investir. Puramente decorativo (aria-hidden, sem pointer-events), pra quebrar a
-// "parede de verde" com contraste de matiz de verdade: usa --color-salmon (o mesmo pêssego dos
-// selos/CTAs), não uma variação do próprio verde — essa foi a 1ª tentativa (ver histórico) e não
-// resolveu porque ficava sutil demais pra notar de longe. Nenhum blur filter — o esmaecimento
-// vem do próprio radial-gradient (mais barato pro GPU e sem contorno visível sobrando).
+// Background light for the solid sage (bg-military) of the inner screens — /negociar, /ativos,
+// /perfil, /investir. Purely decorative (aria-hidden, no pointer-events), to break up the
+// "wall of green" with real hue contrast: it uses --color-salmon (the same peach as the
+// badges/CTAs), not a variation of the green itself — that was the 1st attempt (see history) and it
+// didn't work because it was too subtle to notice from afar. No blur filter — the fading
+// comes from the radial-gradient itself (cheaper for the GPU and no leftover visible outline).
 //
-// AJUSTES:
-//   - Cor e intensidade (o que você mais provavelmente vai calibrar) ficam em variáveis CSS no
-//     :root de globals.css (--section-glow-color, --section-glow-opacity-primary/-secondary) —
-//     mude lá, sem precisar tocar neste arquivo.
-//   - Posição/tamanho de cada glow ficam no array GLOWS abaixo (classes Tailwind).
-//   - Pra desligar a animação (deixar os glows fixos), use <SectionGlow animate={false} />.
+// TWEAKS:
+//   - Color and intensity (what you'll most likely calibrate) are CSS variables in
+//     globals.css's :root (--section-glow-color, --section-glow-opacity-primary/-secondary) —
+//     change them there, without touching this file.
+//   - Each glow's position/size is in the GLOWS array below (Tailwind classes).
+//   - To turn the animation off (keep the glows fixed), use <SectionGlow animate={false} />.
 //
-// Geometria pensada pra segurança de contraste: os dois glows nascem ANCORADOS fora do
-// container (offsets negativos grandes) — o centro cheio do gradiente fica sempre fora da área
-// visível, então o que aparece na tela já é a borda mais suave do gradiente, nunca o pico de
-// opacidade. Título/subtítulo (text-on-military) ficam tipicamente no canto oposto de cada
-// glow; cards por cima são opacos (bg-surface/bg-panel) e cobrem o glow por completo onde
-// existem — não há texto solto na zona mais forte de nenhum dos dois.
+// Geometry designed for contrast safety: both glows are ANCHORED outside the
+// container (large negative offsets) — the gradient's full center is always outside the visible
+// area, so what shows on screen is already the gradient's softest edge, never the opacity
+// peak. Title/subtitle (text-on-military) typically sit in the corner opposite each
+// glow; cards on top are opaque (bg-surface/bg-panel) and fully cover the glow where they
+// exist — there's no loose text in the strongest zone of either one.
 //
-// Não precisa de "use client": é só HTML/CSS estático (a animação é CSS puro via classe — ver
-// globals.css), sem nenhum estado ou efeito em React.
+// Doesn't need "use client": it's just static HTML/CSS (the animation is pure CSS via a class — see
+// globals.css), with no React state or effect.
 //
-// 🔴 REQUISITO DO CHAMADOR — o elemento que envolve <SectionGlow /> precisa da classe
-// `isolate` (nunca só `relative`, nunca `relative z-0`). Sem isso, `-z-10` (ver abaixo) escapa
-// pro stacking context do documento e o próprio fundo do chamador cobre o glow por completo —
-// não importa a opacidade. `position: relative` sozinho NÃO cria um stacking context (precisa
-// de `isolate`, ou de `position` + z-index numérico); `isolate` faz o mesmo sem exigir
-// `position` no elemento.
+// 🔴 CALLER REQUIREMENT — the element wrapping <SectionGlow /> needs the
+// `isolate` class (never just `relative`, never `relative z-0`). Without it, `-z-10` (see below)
+// escapes to the document's stacking context and the caller's own background covers the glow
+// completely — no matter the opacity. `position: relative` alone does NOT create a stacking context
+// (it needs `isolate`, or `position` + a numeric z-index); `isolate` does the same without requiring
+// `position` on the element.
 //
-// 🔴 EFEITO COLATERAL DE `isolate` NO CHAMADOR + `fixed` no glow — `isolate` também eleva o
-// chamador (ex.: <main>) pro mesmo "andar" de prioridade de pintura que elementos posicionados,
-// acima de IRMÃOS que não são stacking context (ex.: <Footer>, comum no layout raiz). Como o
-// glow interno é `fixed` (cobre a viewport inteira, inclusive por cima de onde o rodapé aparece
-// ao rolar até o fim), isso fazia o glow vazar visivelmente pro <Footer>, tingindo o fundo claro
-// dele de salmão (visto em screenshot real). Corrigido dando `isolate` também ao <Footer>
-// (src/components/nav/Footer.tsx) — os dois ficam no mesmo "andar", e como <Footer> vem DEPOIS
-// de <main> no documento, ele passa a pintar por cima onde as caixas se sobrepõem, cobrindo o
-// glow com o próprio fundo opaco. Se algum dia outro elemento entre <main> e <Footer> precisar
-// ficar visualmente por cima do glow perto do fim da página, o mesmo raciocínio se aplica: dar
-// `isolate` a ele também (nunca depender só da ordem do DOM sem stacking context equivalente).
+// 🔴 SIDE EFFECT OF `isolate` ON THE CALLER + `fixed` on the glow — `isolate` also raises the
+// caller (e.g. <main>) to the same paint-priority "floor" as positioned elements,
+// above SIBLINGS that aren't stacking contexts (e.g. <Footer>, common in the root layout). Since the
+// inner glow is `fixed` (it covers the whole viewport, including on top of where the footer shows up
+// when scrolling to the end), this made the glow visibly leak into the <Footer>, tinting its light
+// background salmon (seen in a real screenshot). Fixed by giving `isolate` to <Footer> too
+// (src/components/nav/Footer.tsx) — both sit on the same "floor", and since <Footer> comes AFTER
+// <main> in the document, it now paints on top where the boxes overlap, covering the
+// glow with its own opaque background. If some other element between <main> and <Footer> ever needs
+// to sit visually on top of the glow near the end of the page, the same reasoning applies: give
+// it `isolate` too (never rely only on DOM order without an equivalent stacking context).
 //
-// 🔴 HISTÓRICO DE TENTATIVAS DE POSICIONAMENTO (todas verificadas de verdade com Playwright —
-// scroll real + getComputedStyle + screenshot em cada uma, não só raciocínio sobre CSS, porque
-// mais de uma parecia correta no papel e não era):
+// 🔴 HISTORY OF POSITIONING ATTEMPTS (all actually verified with Playwright —
+// real scroll + getComputedStyle + a screenshot for each one, not just reasoning about CSS, because
+// more than one looked right on paper and wasn't):
 //
-// 1. `absolute inset-0` dentro do container: cobria a altura do DOCUMENTO inteiro, não da tela.
-//    Em página curta não se notava, mas numa grade longa (ex.: as 10 PMEs) o glow ancorado no
-//    fundo ficava a milhares de pixels abaixo do que dá pra ver — o meio da rolagem passava sem
-//    nenhum glow por perto.
-// 2. `fixed inset-0` (usado hoje): resolve o problema acima (preso à viewport, não ao
-//    documento) — mas sozinho vazava pro <Footer>, ver "REQUISITO DO CHAMADOR" abaixo pro porquê
-//    e a correção.
-// 3. `sticky top-0` com altura fixa + `margin-bottom` negativo igual, tentando fazer o wrapper
-//    "auto-confinar" à caixa do <main> sem vazar pro Footer: TESTADO E DESCARTADO — medindo com
-//    Playwright em toda a faixa de rolagem (não só início/meio/fim), o wrapper nunca desgrudava
-//    do topo, mesmo perto do fim do documento — o cancelamento de altura via margem negativa não
-//    faz o browser recalcular o limite de descolamento do jeito que a lógica sugere (testado em
-//    layout flex-col; pode ser peculiaridade da combinação, não confiar nela de novo sem medir).
-//    Resultado prático: comportava-se como `fixed`, só que sem a vantagem de ser mais simples.
+// 1. `absolute inset-0` inside the container: covered the whole DOCUMENT height, not the screen.
+//    On a short page it went unnoticed, but on a long grid (e.g. the 10 SMEs) the glow anchored at
+//    the bottom sat thousands of pixels below what can be seen — the middle of the scroll went by
+//    with no glow anywhere near.
+// 2. `fixed inset-0` (used today): solves the problem above (tied to the viewport, not the
+//    document) — but on its own it leaked into the <Footer>, see "CALLER REQUIREMENT" above for why
+//    and the fix.
+// 3. `sticky top-0` with a fixed height + an equal negative `margin-bottom`, trying to make the
+//    wrapper "self-confine" to the <main> box without leaking into the Footer: TESTED AND DISCARDED —
+//    measuring with Playwright across the whole scroll range (not just start/middle/end), the
+//    wrapper never came unstuck from the top, even near the end of the document — cancelling the
+//    height via a negative margin doesn't make the browser recompute the release limit the way the
+//    logic suggests (tested in a flex-col layout; it may be a quirk of the combination, don't trust it
+//    again without measuring). Practical result: it behaved like `fixed`, just without the advantage
+//    of being simpler.
 type GlowSpec = {
   position: string;
   opacityVar: "--section-glow-opacity-primary" | "--section-glow-opacity-secondary";

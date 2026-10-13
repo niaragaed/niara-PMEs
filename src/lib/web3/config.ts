@@ -1,5 +1,5 @@
-// Configuração wagmi da conexão real de carteira da tela /perfil. Rede única
-// (Sepolia, testnet) — mesma abordagem do niara-site (repositório irmão).
+// wagmi configuration for the real wallet connection on the /perfil screen. A single network
+// (Sepolia, testnet) — the same approach as niara-site (sister repository).
 import { cookieStorage, createConfig, createStorage, http } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";

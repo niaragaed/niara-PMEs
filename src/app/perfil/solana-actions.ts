@@ -1,12 +1,12 @@
 "use server";
 
-// Vínculo da carteira Solana à conta (migration 0017, `solana_wallet_address`) — par de
-// saveWallet/unlinkWallet (EVM) em actions.ts, com uma diferença deliberada: aqui o vínculo exige
-// PROVA DE POSSE. A carteira assina (signMessage, sem transação e sem custo) uma mensagem emitida
-// pelo servidor que cita esta conta e o horário de emissão; o servidor confere a assinatura ed25519
-// contra o endereço antes de gravar. Sem isso, qualquer pessoa poderia vincular à própria conta o
-// endereço de outra — e é este vínculo que libera a publicação de ofertas na Solana (gate de
-// titularidade + expected_emissor_wallet).
+// Linking the Solana wallet to the account (migration 0017, `solana_wallet_address`) — the
+// counterpart of saveWallet/unlinkWallet (EVM) in actions.ts, with one deliberate difference: here
+// the link requires PROOF OF OWNERSHIP. The wallet signs (signMessage, no transaction and no cost)
+// a message issued by the server that names this account and the time it was issued; the server
+// checks the ed25519 signature against the address before saving. Without this, anyone could link
+// someone else's address to their own account — and it's this link that unlocks publishing
+// offerings on Solana (ownership gate + expected_emissor_wallet).
 import { createPublicKey, verify } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -19,12 +19,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
 import { BASE58_PUBKEY } from "@/lib/solana/config";
 import type { UpdateProfileState } from "./actions";
+import { getDictionary } from "@/lib/i18n/server";
 
-const VALIDADE_MS = 10 * 60 * 1000;
-// Prefixo DER (SubjectPublicKeyInfo) de uma chave pública ed25519 de 32 bytes.
-const PREFIXO_SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex");
+const VALIDITY_MS = 10 * 60 * 1000;
+// DER prefix (SubjectPublicKeyInfo) of a 32-byte ed25519 public key.
+const PREFIX_SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex");
 
-async function contaAtual() {
+async function currentAccount() {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -35,72 +36,79 @@ async function contaAtual() {
   return { role, accountId };
 }
 
-/** Domínio que pediu a assinatura — um site de phishing não consegue emitir a mesma mensagem. */
-async function dominio(): Promise<string> {
+/** The domain that asked for the signature — a phishing site can't issue the same message. */
+async function domain(): Promise<string> {
   return (await headers()).get("host") ?? "niara-pmes";
 }
 
-function mensagemDeVinculo(dominioAtual: string, endereco: string, accountId: string, emitidoEm: string) {
+/**
+ * The message the wallet signs. It's a protocol artifact, not interface copy: always in English,
+ * whatever the interface language, because the server rebuilds it word for word to check the
+ * signature (a language switch between prepare and save would otherwise break the comparison).
+ */
+function linkMessage(currentDomain: string, address: string, accountId: string, issuedOn: string) {
   return [
-    `${dominioAtual} quer vincular sua carteira Solana à sua conta na Niara PMEs.`,
-    `Carteira: ${endereco}`,
-    `Conta: ${accountId}`,
-    `Emitido em: ${emitidoEm}`,
-    "Esta assinatura não cria transação nem tem custo.",
+    `${currentDomain} wants to link your Solana wallet to your Niara PMEs account.`,
+    `Wallet: ${address}`,
+    `Account: ${accountId}`,
+    `Issued at: ${issuedOn}`,
+    "This signature doesn't create a transaction and has no cost.",
   ].join("\n");
 }
 
-/** Mensagem que a carteira vai assinar. Vale por 10 minutos e só para esta conta e este endereço. */
-export async function prepararVinculoSolana(enderecoInput: unknown): Promise<{ status: "success"; mensagem: string } | { status: "error"; message: string }> {
-  const { accountId } = await contaAtual();
-  const endereco = z.string().trim().regex(BASE58_PUBKEY).safeParse(enderecoInput);
-  if (!endereco.success) return { status: "error", message: "Endereço de carteira Solana inválido." };
-  return { status: "success", mensagem: mensagemDeVinculo(await dominio(), endereco.data, accountId, new Date().toISOString()) };
+/** The message the wallet will sign. Valid for 10 minutes, and only for this account and this address. */
+export async function prepareSolanaLink(addressInput: unknown): Promise<{ status: "success"; message: string } | { status: "error"; message: string }> {
+  const { accountId } = await currentAccount();
+  const e = (await getDictionary()).serverErrors;
+  const address = z.string().trim().regex(BASE58_PUBKEY).safeParse(addressInput);
+  if (!address.success) return { status: "error", message: e.solanaLink.invalidAddress };
+  return { status: "success", message: linkMessage(await domain(), address.data, accountId, new Date().toISOString()) };
 }
 
-const vinculoSchema = z.object({
-  endereco: z.string().trim().regex(BASE58_PUBKEY),
-  mensagem: z.string().max(400),
-  assinatura: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{64,90}$/),
+const linkSchema = z.object({
+  address: z.string().trim().regex(BASE58_PUBKEY),
+  message: z.string().max(400),
+  signature: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{64,90}$/),
 });
 
 export async function saveSolanaWallet(input: unknown): Promise<UpdateProfileState> {
-  const { role, accountId } = await contaAtual();
-  const parsed = vinculoSchema.safeParse(input);
-  if (!parsed.success) return { status: "error", message: "Dados de vínculo inválidos." };
-  const { endereco, mensagem, assinatura } = parsed.data;
+  const { role, accountId } = await currentAccount();
+  const e = (await getDictionary()).serverErrors;
+  const parsed = linkSchema.safeParse(input);
+  if (!parsed.success) return { status: "error", message: e.solanaLink.invalidData };
+  const { address, message, signature } = parsed.data;
 
-  // A mensagem tem que ser exatamente a que este servidor emitiria para esta conta e este
-  // endereço, e ainda estar no prazo — o horário vem de dentro da própria mensagem assinada.
-  const emitidoEm = /^Emitido em: (.+)$/m.exec(mensagem)?.[1] ?? "";
-  const quando = Date.parse(emitidoEm);
-  if (mensagem !== mensagemDeVinculo(await dominio(), endereco, accountId, emitidoEm) || !Number.isFinite(quando)) {
-    return { status: "error", message: "Mensagem de vínculo inválida — tente vincular de novo." };
+  // The message must be exactly the one this server would issue for this account and this address,
+  // and still be within its validity — the time comes from inside the signed message itself.
+  const issuedOn = /^Issued at: (.+)$/m.exec(message)?.[1] ?? "";
+  const when = Date.parse(issuedOn);
+  if (message !== linkMessage(await domain(), address, accountId, issuedOn) || !Number.isFinite(when)) {
+    return { status: "error", message: e.solanaLink.invalidMessage };
   }
-  if (Date.now() - quando > VALIDADE_MS || quando - Date.now() > 60_000) {
-    return { status: "error", message: "A assinatura de vínculo expirou — tente vincular de novo." };
+  if (Date.now() - when > VALIDITY_MS || when - Date.now() > 60_000) {
+    return { status: "error", message: e.solanaLink.expired };
   }
 
-  let valida = false;
+  let valid = false;
   try {
-    const chave = createPublicKey({
-      key: Buffer.concat([PREFIXO_SPKI_ED25519, Buffer.from(new PublicKey(endereco).toBytes())]),
+    const key = createPublicKey({
+      key: Buffer.concat([PREFIX_SPKI_ED25519, Buffer.from(new PublicKey(address).toBytes())]),
       format: "der",
       type: "spki",
     });
-    valida = verify(null, Buffer.from(mensagem, "utf8"), chave, Buffer.from(utils.bytes.bs58.decode(assinatura)));
+    valid = verify(null, Buffer.from(message, "utf8"), key, Buffer.from(utils.bytes.bs58.decode(signature)));
   } catch {
-    valida = false;
+    valid = false;
   }
-  if (!valida) return { status: "error", message: "A assinatura não confere com esta carteira — o vínculo não foi salvo." };
+  if (!valid) return { status: "error", message: e.solanaLink.signatureMismatch };
 
   const admin = createAdminClient();
-  const tabela = role === "investor" ? "investors" : "issuers";
-  const { error } = await admin.from(tabela).update({ solana_wallet_address: endereco }).eq("id", accountId);
+  const table = role === "investor" ? "investors" : "issuers";
+  const { error } = await admin.from(table).update({ solana_wallet_address: address }).eq("id", accountId);
   if (error) {
-    if (error.code === "23505") return { status: "error", message: "Esta carteira Solana já está vinculada a outra conta." };
-    console.error("saveSolanaWallet: erro inesperado do banco", error);
-    return { status: "error", message: "Não foi possível salvar a carteira. Tente novamente em instantes." };
+    if (error.code === "23505") return { status: "error", message: e.solanaLink.alreadyLinked };
+    console.error("saveSolanaWallet: unexpected database error", error);
+    return { status: "error", message: e.wallet.saveFailed };
   }
 
   revalidatePath("/perfil");
@@ -108,13 +116,14 @@ export async function saveSolanaWallet(input: unknown): Promise<UpdateProfileSta
 }
 
 export async function unlinkSolanaWallet(): Promise<UpdateProfileState> {
-  const { role, accountId } = await contaAtual();
+  const { role, accountId } = await currentAccount();
+  const e = (await getDictionary()).serverErrors;
   const admin = createAdminClient();
-  const tabela = role === "investor" ? "investors" : "issuers";
-  const { error } = await admin.from(tabela).update({ solana_wallet_address: null }).eq("id", accountId);
+  const table = role === "investor" ? "investors" : "issuers";
+  const { error } = await admin.from(table).update({ solana_wallet_address: null }).eq("id", accountId);
   if (error) {
-    console.error("unlinkSolanaWallet: erro inesperado do banco", error);
-    return { status: "error", message: "Não foi possível desvincular a carteira. Tente novamente em instantes." };
+    console.error("unlinkSolanaWallet: unexpected database error", error);
+    return { status: "error", message: e.wallet.unlinkFailed };
   }
   revalidatePath("/perfil");
   return { status: "success" };

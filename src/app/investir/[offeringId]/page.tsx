@@ -3,28 +3,29 @@ import { notFound, redirect } from "next/navigation";
 import { loadPublicOffering } from "@/app/investir/actions";
 import { OfferingDetailPage } from "@/components/investir/OfferingDetailPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { ptBr } from "@/lib/i18n/pt-br";
 import { isOfferingOwner } from "@/lib/investments";
 import { createClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/server";
 
 type PageProps = {
   params: Promise<{ offeringId: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const dict = await getDictionary();
   const { offeringId } = await params;
-  const oferta = await loadPublicOffering(offeringId);
+  const offering = await loadPublicOffering(offeringId);
 
-  if (!oferta) {
+  if (!offering) {
     return {
-      title: `${ptBr.investir.detalhe.naoEncontrada.title} · Niara PMEs`,
+      title: `${dict.invest.detail.notFound.title} · Niara PMEs`,
       robots: { index: false, follow: false },
     };
   }
 
   return {
-    title: `${oferta.issuer.legalName} · Niara PMEs`,
-    description: oferta.issuer.businessSummary ?? ptBr.investir.meta.description,
+    title: `${offering.issuer.legalName} · Niara PMEs`,
+    description: offering.issuer.businessSummary ?? dict.invest.meta.description,
     robots: { index: false, follow: false },
   };
 }
@@ -41,12 +42,12 @@ export default async function Page({ params }: PageProps) {
     redirect("/entrar");
   }
 
-  // Mesmo gate de /investir para investidor. Exceção deliberada: o issuer
-  // DONO desta oferta específica (offerings.issuer_id === accountId) também
-  // pode ver a página — sem botão de reserva (ver OfferingDetailPage). Uma
-  // empresa que não é dona desta oferta continua redirecionada, mesmo
-  // padrão de /investir — isOfferingOwner só confirma "é dele?", nunca lista
-  // ofertas de outras empresas.
+  // Same investor gate as /investir. Deliberate exception: the issuer that
+  // OWNS this specific offering (offerings.issuer_id === accountId) can also
+  // see the page — without the reserve button (see OfferingDetailPage). A
+  // company that doesn't own this offering is still redirected, same
+  // pattern as /investir — isOfferingOwner only confirms "is it theirs?", it
+  // never lists other companies' offerings.
   const { role, accountId } = await resolveAccount();
   const isOwner = role === "issuer" && accountId !== null && (await isOfferingOwner(offeringId, accountId));
 
@@ -54,10 +55,10 @@ export default async function Page({ params }: PageProps) {
     redirect("/conta?aviso=apenas-investidor");
   }
 
-  const oferta = await loadPublicOffering(offeringId);
-  if (!oferta) {
+  const offering = await loadPublicOffering(offeringId);
+  if (!offering) {
     notFound();
   }
 
-  return <OfferingDetailPage oferta={oferta} isOwner={isOwner} />;
+  return <OfferingDetailPage offering={offering} isOwner={isOwner} />;
 }

@@ -9,7 +9,7 @@ import {
   Wheat,
   type LucideIcon,
 } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 export type NavChild = {
   label: string;
@@ -19,34 +19,41 @@ export type NavChild = {
 };
 
 export type NavItem = {
+  /** Stable id, independent of the language (the label changes with it). */
+  key: "trade" | "assets" | "profile" | "about";
   label: string;
-  // Não usado quando `children` está presente (o item vira um botão de
-  // dropdown, não um link) — mantido obrigatório só para simplificar o tipo.
+  // Not used when `children` is present (the item becomes a dropdown
+  // button, not a link) — kept required only to keep the type simple.
   href: string;
   children?: NavChild[];
 };
 
-export const NAV_ITEMS: NavItem[] = [
-  {
-    label: ptBr.nav.negociar,
-    href: "#",
-    children: [
-      { ...ptBr.nav.negociarChildren.ativosTokens, icon: Layers },
-      { ...ptBr.nav.negociarChildren.tokenPmes, icon: Building2 },
-      { ...ptBr.nav.negociarChildren.tokenAgro, icon: Wheat },
-      { ...ptBr.nav.negociarChildren.tokenImobiliario, icon: Home },
-      { ...ptBr.nav.negociarChildren.tokenAuto, icon: Car },
-      { ...ptBr.nav.negociarChildren.titulosDivida, icon: Landmark },
-    ],
-  },
-  { label: ptBr.nav.ativos, href: "/ativos" },
-  { label: ptBr.nav.perfil, href: "/perfil" },
-  {
-    label: ptBr.nav.sobre,
-    href: "#",
-    children: [
-      { ...ptBr.nav.sobreChildren.documentos, icon: BookOpen },
-      { ...ptBr.nav.sobreChildren.contato, icon: Mail },
-    ],
-  },
-];
+/** The main navigation (Header and Footer), in the visitor's language. */
+export function getNavItems(dict: Dictionary): NavItem[] {
+  return [
+    {
+      key: "trade",
+      label: dict.nav.trade,
+      href: "#",
+      children: [
+        { ...dict.nav.tradeChildren.assetsAndTokens, icon: Layers },
+        { ...dict.nav.tradeChildren.smesToken, icon: Building2 },
+        { ...dict.nav.tradeChildren.tokenAgro, icon: Wheat },
+        { ...dict.nav.tradeChildren.realEstateToken, icon: Home },
+        { ...dict.nav.tradeChildren.tokenAuto, icon: Car },
+        { ...dict.nav.tradeChildren.debtSecurities, icon: Landmark },
+      ],
+    },
+    { key: "assets", label: dict.nav.assets, href: "/ativos" },
+    { key: "profile", label: dict.nav.profile, href: "/perfil" },
+    {
+      key: "about",
+      label: dict.nav.about,
+      href: "#",
+      children: [
+        { ...dict.nav.aboutChildren.documents, icon: BookOpen },
+        { ...dict.nav.aboutChildren.contact, icon: Mail },
+      ],
+    },
+  ];
+}

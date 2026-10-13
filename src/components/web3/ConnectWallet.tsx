@@ -5,15 +5,15 @@ import { AlertTriangle, Check, Copy, Loader2, LogOut, Wallet } from "lucide-reac
 import { useConnect, useConnectors, useConnection, useDisconnect, useSwitchChain } from "wagmi";
 import { UserRejectedRequestError } from "viem";
 import { sepolia } from "wagmi/chains";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
-// Quanto tempo a reconexão automática do wagmi (reconnectOnMount) pode ficar em "Conectando…"
-// antes de o botão ser liberado para conexão manual — ver comentário em isPending.
+// How long wagmi's automatic reconnection (reconnectOnMount) can stay on "Connecting…"
+// before the button is freed for a manual connection — see the comment on isPending.
 const RECONNECT_TIMEOUT_MS = 5000;
 
 function subscribeToProvider() {
-  // Presença de window.ethereum não muda de forma observável — não há
-  // evento para assinar, só a leitura pós-hidratação via getSnapshot.
+  // The presence of window.ethereum doesn't change observably — there's no
+  // event to subscribe to, only the post-hydration read via getSnapshot.
   return () => {};
 }
 
@@ -22,8 +22,8 @@ function getProviderSnapshot() {
 }
 
 function getProviderServerSnapshot() {
-  // Assume presente no servidor/primeira pintura para não penalizar o
-  // caminho feliz (carteira instalada) com um flash negativo.
+  // Assumes it's present on the server/first paint so the happy path
+  // (wallet installed) isn't penalized with a negative flash.
   return true;
 }
 
@@ -44,7 +44,8 @@ export function ConnectWallet({
   connectLabel,
   connectButtonClassName,
 }: { connectLabel?: string; connectButtonClassName?: string } = {}) {
-  const t = ptBr.perfil.carteira;
+  const dict = useDictionary();
+  const t = dict.profile.wallet;
   const hasProvider = useSyncExternalStore(
     subscribeToProvider,
     getProviderSnapshot,
@@ -58,9 +59,9 @@ export function ConnectWallet({
   const { mutate: switchChain, isPending: isSwitching } = useSwitchChain();
   const [copied, setCopied] = useState(false);
 
-  // Nunca é resetado de propósito: só tem efeito enquanto isReconnecting (ver autoReconnectPending/
-  // reconnectStalled), e o wagmi entra em "reconnecting" no máximo uma vez por carregamento —
-  // reconnect() só roda no mount e tem trava de reentrada.
+  // Never reset on purpose: it only has an effect while isReconnecting (see autoReconnectPending/
+  // reconnectStalled), and wagmi enters "reconnecting" at most once per load —
+  // reconnect() only runs on mount and has a re-entrancy lock.
   const [reconnectTimedOut, setReconnectTimedOut] = useState(false);
   useEffect(() => {
     if (!connection.isReconnecting) return;
@@ -82,14 +83,14 @@ export function ConnectWallet({
     return (
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-panel-border bg-military px-3 py-2 text-sm text-on-military-muted">
         <Wallet className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{t.naoDetectada}</span>
+        <span>{t.notDetected}</span>
         <a
           href="https://metamask.io/download/"
           target="_blank"
           rel="noreferrer"
           className="text-salmon underline underline-offset-2 hover:text-salmon-600"
         >
-          {t.instalarMetaMask}
+          {t.installMetaMask}
         </a>
       </div>
     );
@@ -100,7 +101,7 @@ export function ConnectWallet({
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-2 rounded-md border border-salmon/40 bg-salmon/10 p-3 text-sm text-on-military">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
-          <span>{t.redeErrada}</span>
+          <span>{t.wrongNetwork}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -110,13 +111,13 @@ export function ConnectWallet({
             className="flex items-center gap-2 rounded-md bg-salmon px-3 py-1.5 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSwitching && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            <span>{isSwitching ? t.trocandoRede : t.trocarRedeBotao}</span>
+            <span>{isSwitching ? t.switchingNetwork : t.switchNetworkButton}</span>
           </button>
           <button
             type="button"
             onClick={() => disconnect()}
-            aria-label={t.desconectarAriaLabel}
-            title={t.desconectarBotao}
+            aria-label={t.disconnectAriaLabel}
+            title={t.disconnectButton}
             className="rounded-md border border-panel-border bg-military p-1.5 text-on-military-muted transition-colors hover:text-on-military"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -142,8 +143,8 @@ export function ConnectWallet({
           <button
             type="button"
             onClick={() => handleCopy(connection.address as string)}
-            aria-label={t.copiarEndereco}
-            title={t.copiarEndereco}
+            aria-label={t.copyAddress}
+            title={t.copyAddress}
             className="rounded-md border border-panel-border bg-military p-1.5 text-on-military-muted transition-colors hover:text-on-military"
           >
             {copied ? (
@@ -155,27 +156,27 @@ export function ConnectWallet({
           <button
             type="button"
             onClick={() => disconnect()}
-            aria-label={t.desconectarAriaLabel}
-            title={t.desconectarBotao}
+            aria-label={t.disconnectAriaLabel}
+            title={t.disconnectButton}
             className="rounded-md border border-panel-border bg-military p-1.5 text-on-military-muted transition-colors hover:text-on-military"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
-        <p className="text-xs text-on-military-muted">{t.desconectarNota}</p>
+        <p className="text-xs text-on-military-muted">{t.disconnectNote}</p>
       </div>
     );
   }
 
-  // 🔴 A reconexão automática só conta como pendente enquanto (a) há provider injetado — sem
-  // window.ethereum o próprio wagmi já pula o connector sem chamar nada — e (b) não estourou
-  // RECONNECT_TIMEOUT_MS. Sem isso o botão travava em "Conectando…" para sempre: com conexão
-  // salva no cookie mas carteira bloqueada/indisponível, o eth_accounts/eth_chainId da reconexão
-  // pode nunca responder, e `reconnect()` do core só volta o status para "disconnected" DEPOIS
-  // de esperar o connector (e ainda deixa uma trava interna que torna qualquer `reconnect()`
-  // seguinte no-op). O clique manual usa `connect()`, que não passa por essa trava. Conexão
-  // iniciada pelo usuário (isConnectPending/isConnecting) não tem timeout — ali a espera é pelo
-  // popup da carteira, que pode demorar legitimamente.
+  // 🔴 The automatic reconnection only counts as pending while (a) there's an injected provider —
+  // without window.ethereum wagmi itself already skips the connector without calling anything — and
+  // (b) RECONNECT_TIMEOUT_MS hasn't run out. Without this the button got stuck on "Connecting…"
+  // forever: with a connection saved in the cookie but the wallet locked/unavailable, the
+  // reconnection's eth_accounts/eth_chainId may never answer, and core's `reconnect()` only sets the
+  // status back to "disconnected" AFTER waiting for the connector (and still leaves an internal lock
+  // that turns any following `reconnect()` into a no-op). The manual click uses `connect()`, which
+  // doesn't go through that lock. A user-initiated connection (isConnectPending/isConnecting) has no
+  // timeout — there the wait is for the wallet popup, which can legitimately take a while.
   const autoReconnectPending = connection.isReconnecting && hasProvider && !reconnectTimedOut;
   const isPending = isConnectPending || connection.isConnecting || autoReconnectPending;
   const reconnectStalled = connection.isReconnecting && reconnectTimedOut;
@@ -193,11 +194,11 @@ export function ConnectWallet({
         ) : (
           <Wallet className="h-4 w-4" aria-hidden="true" />
         )}
-        <span>{isPending ? t.conectando : (connectLabel ?? t.conectarBotao)}</span>
+        <span>{isPending ? t.connecting : (connectLabel ?? t.connectButton)}</span>
       </button>
-      {rejected && <span className="text-xs text-on-military-muted">{t.conexaoRejeitada}</span>}
+      {rejected && <span className="text-xs text-on-military-muted">{t.connectionRejected}</span>}
       {reconnectStalled && !rejected && (
-        <span className="text-xs text-on-military-muted">{t.reconexaoDemorou}</span>
+        <span className="text-xs text-on-military-muted">{t.reconnectionTimedOut}</span>
       )}
     </div>
   );

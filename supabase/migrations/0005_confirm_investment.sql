@@ -1,12 +1,12 @@
 -- ============================================================================
 -- Niara-PMEs -- 0005_confirm_investment
--- Confirma um aporte (reserved -> paid) de forma ATOMICA: registra o evento de
--- pagamento (idempotente) e transiciona o status na MESMA transacao. O gate de
--- KYC continua sendo do trigger enforce_investment_transition (0001): se o KYC
--- nao estiver aprovado, o UPDATE levanta excecao e TODA a funcao faz rollback
--- (inclusive o payment_events inserido) -- nada fica gravado pela metade.
--- O escrow/pagamento em si e MOCK e roda no app (gera ref "MOCK-"); aqui so
--- persistimos o resultado.
+-- Confirms an investment (reserved -> paid) ATOMICALLY: records the payment
+-- event (idempotent) and transitions the status in the SAME transaction. The KYC
+-- gate is still the enforce_investment_transition trigger (0001): if KYC is not
+-- approved, the UPDATE raises an exception and the WHOLE function rolls back
+-- (including the inserted payment_events) -- nothing is left half-written.
+-- The escrow/payment itself is a MOCK and runs in the app (it generates a "MOCK-" ref);
+-- here we only persist the result.
 -- ============================================================================
 
 begin;
@@ -23,13 +23,13 @@ begin
     raise exception 'Aporte % nao existe', p_investment_id using errcode = 'check_violation';
   end if;
   if v_status = 'paid' then
-    return 'already_paid';                 -- idempotente: ja confirmado
+    return 'already_paid';                 -- idempotent: already confirmed
   end if;
   if v_status <> 'reserved' then
     raise exception 'Aporte nao esta reservado (status=%)', v_status using errcode = 'check_violation';
   end if;
 
-  -- idempotencia por chave: retry com a mesma chave nao duplica evento
+  -- idempotency by key: a retry with the same key doesn't duplicate the event
   if exists (select 1 from payment_events where idempotency_key = p_idempotency_key) then
     return 'already_processed';
   end if;
@@ -37,8 +37,8 @@ begin
   insert into payment_events(investment_id, event_type, external_ref, idempotency_key)
     values (p_investment_id, 'payment_confirmed', p_external_ref, p_idempotency_key);
 
-  -- reserved -> paid ; o trigger gateia o KYC. Se pendente, levanta e faz
-  -- rollback do insert acima tambem.
+  -- reserved -> paid; the trigger gates KYC. If pending, it raises and also
+  -- rolls back the insert above.
   update investments set status = 'paid', payment_ref = p_external_ref
     where id = p_investment_id;
 

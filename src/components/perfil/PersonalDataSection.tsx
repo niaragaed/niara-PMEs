@@ -8,18 +8,19 @@ import { LogoUpload } from "./LogoUpload";
 import { BannerUpload } from "./BannerUpload";
 import { CardPreview } from "./CardPreview";
 import { ReadField, SelectField, TextareaField, TextField } from "./FormField";
-import { ptBr } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import {
   isValidCEP,
-  isValidDataNascimento,
-  isValidDocumento,
-  isValidTelefone,
+  isValidBirthDate,
+  isValidDocument,
+  isValidPhone,
   maskCEP,
-  maskDataNascimento,
-  maskDocumento,
-  maskTelefone,
-  type TipoPessoa,
+  maskBirthDate,
+  maskDocument,
+  maskPhone,
+  type PersonType,
 } from "@/lib/masks";
+import { useDictionary } from "@/lib/i18n/client";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -27,121 +28,122 @@ const UFS = [
 ];
 
 type FormData = {
-  nomeCompleto: string;
-  razaoSocial: string;
-  nomeFantasia: string;
-  documento: string;
-  dataNascimento: string;
+  fullName: string;
+  legalName: string;
+  tradeName: string;
+  document: string;
+  birthDate: string;
   annualRevenueReais: string;
-  setor: string;
-  resumoNegocio: string;
+  sector: string;
+  businessSummary: string;
   publishCnpj: boolean;
-  telefone: string;
+  phone: string;
   cep: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
 };
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-function display(value: string): string {
-  return value.trim() || ptBr.perfil.dadosCadastro.naoInformado;
+function display(value: string, notProvided: string): string {
+  return value.trim() || notProvided;
 }
 
-// Telefone é salvo/validado só como DDD + número (sem código de país, ver
-// masks.ts); o "+55" é acrescentado aqui só para exibição, mesmo prefixo
-// fixo mostrado no campo em modo de edição (TextField prefix="+55").
-function displayTelefone(value: string): string {
-  return value.trim() ? `+55 ${value.trim()}` : ptBr.perfil.dadosCadastro.naoInformado;
+// The phone is stored/validated only as area code + number (no country code, see
+// masks.ts); the "+55" is added here for display only, the same fixed prefix
+// shown in the field in edit mode (TextField prefix="+55").
+function displayPhone(value: string, notProvided: string): string {
+  return value.trim() ? `+55 ${value.trim()}` : notProvided;
 }
 
-function tipoPessoaOf(role: LoadedProfile["role"]): TipoPessoa {
+function personTypeOf(role: LoadedProfile["role"]): PersonType {
   return role === "investor" ? "pf" : "pj";
 }
 
-function toFormData(profile: LoadedProfile, tipoPessoa: TipoPessoa): FormData {
+function toFormData(profile: LoadedProfile, personType: PersonType): FormData {
   const shared = {
-    documento: maskDocumento(profile.taxId, tipoPessoa),
-    telefone: maskTelefone(profile.phone),
+    document: maskDocument(profile.taxId, personType),
+    phone: maskPhone(profile.phone),
     cep: maskCEP(profile.cep),
-    logradouro: profile.logradouro,
-    numero: profile.numero,
-    complemento: profile.complemento,
-    bairro: profile.bairro,
-    cidade: profile.cidade,
-    estado: profile.estado,
+    street: profile.street,
+    number: profile.number,
+    complement: profile.complement,
+    district: profile.district,
+    city: profile.city,
+    state: profile.state,
   };
 
   if (profile.role === "investor") {
     return {
       ...shared,
-      nomeCompleto: profile.fullName,
-      razaoSocial: "",
-      nomeFantasia: "",
-      dataNascimento: profile.birthDate,
+      fullName: profile.fullName,
+      legalName: "",
+      tradeName: "",
+      birthDate: profile.birthDate,
       annualRevenueReais: "",
-      setor: "",
-      resumoNegocio: "",
+      sector: "",
+      businessSummary: "",
       publishCnpj: false,
     };
   }
 
   return {
     ...shared,
-    nomeCompleto: "",
-    razaoSocial: profile.legalName,
-    nomeFantasia: profile.tradeName,
-    dataNascimento: "",
+    fullName: "",
+    legalName: profile.legalName,
+    tradeName: profile.tradeName,
+    birthDate: "",
     annualRevenueReais: profile.annualRevenueReais,
-    setor: profile.sector,
-    resumoNegocio: profile.businessSummary,
+    sector: profile.sector,
+    businessSummary: profile.businessSummary,
     publishCnpj: profile.publishCnpj,
   };
 }
 
-function validate(data: FormData, tipoPessoa: TipoPessoa): FormErrors {
+function validate(data: FormData, personType: PersonType, dict: Dictionary): FormErrors {
   const errors: FormErrors = {};
-  const t = ptBr.perfil.dadosCadastro.erros;
+  const t = dict.profile.registrationData.errors;
 
-  if (tipoPessoa === "pf") {
-    if (!data.nomeCompleto.trim()) errors.nomeCompleto = t.obrigatorio;
-    if (!isValidDataNascimento(data.dataNascimento)) errors.dataNascimento = t.dataInvalida;
+  if (personType === "pf") {
+    if (!data.fullName.trim()) errors.fullName = t.required;
+    if (!isValidBirthDate(data.birthDate)) errors.birthDate = t.invalidDate;
   } else {
-    if (!data.razaoSocial.trim()) errors.razaoSocial = t.obrigatorio;
-    if (!data.annualRevenueReais.trim()) errors.annualRevenueReais = t.obrigatorio;
+    if (!data.legalName.trim()) errors.legalName = t.required;
+    if (!data.annualRevenueReais.trim()) errors.annualRevenueReais = t.required;
   }
-  if (!isValidDocumento(data.documento, tipoPessoa)) errors.documento = t.documentoInvalido;
-  if (!isValidTelefone(data.telefone)) errors.telefone = t.telefoneInvalido;
-  if (!isValidCEP(data.cep)) errors.cep = t.cepInvalido;
-  if (!data.logradouro.trim()) errors.logradouro = t.obrigatorio;
-  if (!data.numero.trim()) errors.numero = t.obrigatorio;
-  if (!data.bairro.trim()) errors.bairro = t.obrigatorio;
-  if (!data.cidade.trim()) errors.cidade = t.obrigatorio;
-  if (!data.estado.trim()) errors.estado = t.obrigatorio;
+  if (!isValidDocument(data.document, personType)) errors.document = t.invalidDocument;
+  if (!isValidPhone(data.phone)) errors.phone = t.phoneInvalid;
+  if (!isValidCEP(data.cep)) errors.cep = t.invalidCep;
+  if (!data.street.trim()) errors.street = t.required;
+  if (!data.number.trim()) errors.number = t.required;
+  if (!data.district.trim()) errors.district = t.required;
+  if (!data.city.trim()) errors.city = t.required;
+  if (!data.state.trim()) errors.state = t.required;
   return errors;
 }
 
 export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
-  const tipoPessoa = tipoPessoaOf(profile.role);
+  const dict = useDictionary();
+  const personType = personTypeOf(profile.role);
 
-  // CPF/CNPJ, data de nascimento e endereço são dados sensíveis (LGPD) —
-  // vivem em estado local só enquanto a seção está em edição; o valor de
-  // referência é sempre o que veio do banco via `profile` (prop), nunca
+  // CPF/CNPJ, date of birth and address are sensitive data (LGPD) —
+  // they live in local state only while the section is being edited; the
+  // reference value is always what came from the database via `profile` (prop), never
   // localStorage/cookies.
-  const [draft, setDraft] = useState<FormData>(() => toFormData(profile, tipoPessoa));
+  const [draft, setDraft] = useState<FormData>(() => toFormData(profile, personType));
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Espelha o estado de LogoUpload/BannerUpload (via onUrlChange) só para
-  // alimentar a "Prévia do card" (CardPreview) em tempo real — nenhuma
-  // fonte de verdade nova, os dois uploads continuam donos do próprio estado.
+  // Mirrors LogoUpload/BannerUpload's state (via onUrlChange) only to
+  // feed the "Card preview" (CardPreview) in real time — no new
+  // source of truth, both uploads remain the owners of their own state.
   const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(
     profile.role === "issuer" ? profile.logoUrl : null,
   );
@@ -149,11 +151,12 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
     profile.role === "issuer" ? profile.bannerUrl : null,
   );
 
-  const t = ptBr.perfil.dadosCadastro;
-  const documentoLabel = tipoPessoa === "pf" ? t.campos.documentoCpf : t.campos.documentoCnpj;
+  const t = dict.profile.registrationData;
+  const notProvided = t.notProvided;
+  const documentLabel = personType === "pf" ? t.fields.documentCpf : t.fields.documentCnpj;
 
   function startEdit() {
-    setDraft(toFormData(profile, tipoPessoa));
+    setDraft(toFormData(profile, personType));
     setErrors({});
     setServerError(null);
     setJustSaved(false);
@@ -161,7 +164,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
   }
 
   function cancelEdit() {
-    setDraft(toFormData(profile, tipoPessoa));
+    setDraft(toFormData(profile, personType));
     setErrors({});
     setServerError(null);
     setMode("view");
@@ -171,9 +174,9 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
     return (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const raw = event.target.value;
       let masked = raw;
-      if (field === "documento") masked = maskDocumento(raw, tipoPessoa);
-      else if (field === "dataNascimento") masked = maskDataNascimento(raw);
-      else if (field === "telefone") masked = maskTelefone(raw);
+      if (field === "document") masked = maskDocument(raw, personType);
+      else if (field === "birthDate") masked = maskBirthDate(raw);
+      else if (field === "phone") masked = maskPhone(raw);
       else if (field === "cep") masked = maskCEP(raw);
       setDraft((current) => ({ ...current, [field]: masked }));
     };
@@ -181,43 +184,43 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validate(draft, tipoPessoa);
+    const nextErrors = validate(draft, personType, dict);
     setErrors(nextErrors);
     setServerError(null);
     if (Object.keys(nextErrors).length > 0) return;
 
     startTransition(async () => {
       const payload =
-        tipoPessoa === "pf"
+        personType === "pf"
           ? {
-              fullName: draft.nomeCompleto,
-              taxId: draft.documento,
-              birthDate: draft.dataNascimento,
-              phone: draft.telefone,
+              fullName: draft.fullName,
+              taxId: draft.document,
+              birthDate: draft.birthDate,
+              phone: draft.phone,
               cep: draft.cep,
-              logradouro: draft.logradouro,
-              numero: draft.numero,
-              complemento: draft.complemento,
-              bairro: draft.bairro,
-              cidade: draft.cidade,
-              estado: draft.estado,
+              street: draft.street,
+              number: draft.number,
+              complement: draft.complement,
+              district: draft.district,
+              city: draft.city,
+              state: draft.state,
             }
           : {
-              legalName: draft.razaoSocial,
-              tradeName: draft.nomeFantasia,
-              taxId: draft.documento,
+              legalName: draft.legalName,
+              tradeName: draft.tradeName,
+              taxId: draft.document,
               annualRevenueReais: draft.annualRevenueReais,
-              sector: draft.setor,
-              businessSummary: draft.resumoNegocio,
+              sector: draft.sector,
+              businessSummary: draft.businessSummary,
               publishCnpj: draft.publishCnpj,
-              phone: draft.telefone,
+              phone: draft.phone,
               cep: draft.cep,
-              logradouro: draft.logradouro,
-              numero: draft.numero,
-              complemento: draft.complemento,
-              bairro: draft.bairro,
-              cidade: draft.cidade,
-              estado: draft.estado,
+              street: draft.street,
+              number: draft.number,
+              complement: draft.complement,
+              district: draft.district,
+              city: draft.city,
+              state: draft.state,
             };
 
       const result = await updateProfile(payload);
@@ -235,8 +238,8 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
   }
 
   return (
-    <section id="dados-cadastro" aria-labelledby="dados-cadastro-heading" className="scroll-mt-24">
-      <h2 id="dados-cadastro-heading" className="text-xl font-semibold text-on-military">
+    <section id="registration-data" aria-labelledby="registration-data-heading" className="scroll-mt-24">
+      <h2 id="registration-data-heading" className="text-xl font-semibold text-on-military">
         {t.title}
       </h2>
 
@@ -260,8 +263,8 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
 
       {profile.role === "issuer" && (
         <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
-          <h3 className="text-sm font-semibold text-on-military">{t.previaCard.title}</h3>
-          <p className="mt-1 text-xs text-on-military-muted">{t.previaCard.subtitle}</p>
+          <h3 className="text-sm font-semibold text-on-military">{t.cardPreview.title}</h3>
+          <p className="mt-1 text-xs text-on-military-muted">{t.cardPreview.subtitle}</p>
           <div className="mt-3">
             <CardPreview bannerUrl={previewBannerUrl} logoUrl={previewLogoUrl} />
           </div>
@@ -272,47 +275,47 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
         <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
           {justSaved && (
             <p className="mb-5 rounded-md border border-value-positive/30 bg-value-positive/10 px-3 py-2 text-xs text-value-positive">
-              {t.salvoConfirmacao}
+              {t.savedConfirmation}
             </p>
           )}
 
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-            <ReadField label={t.campos.pais} value={t.campos.brasil} />
-            {tipoPessoa === "pf" ? (
-              <ReadField label={t.campos.nomeCompleto} value={display(draft.nomeCompleto)} />
+            <ReadField label={t.fields.country} value={t.fields.brazil} />
+            {personType === "pf" ? (
+              <ReadField label={t.fields.fullName} value={display(draft.fullName, notProvided)} />
             ) : (
               <>
-                <ReadField label={t.campos.razaoSocial} value={display(draft.razaoSocial)} />
-                <ReadField label={t.campos.nomeFantasia} value={display(draft.nomeFantasia)} />
+                <ReadField label={t.fields.legalName} value={display(draft.legalName, notProvided)} />
+                <ReadField label={t.fields.tradeName} value={display(draft.tradeName, notProvided)} />
               </>
             )}
-            <ReadField label={documentoLabel} value={display(draft.documento)} mono />
-            {tipoPessoa === "pf" && (
-              <ReadField label={t.campos.dataNascimento} value={display(draft.dataNascimento)} mono />
+            <ReadField label={documentLabel} value={display(draft.document, notProvided)} mono />
+            {personType === "pf" && (
+              <ReadField label={t.fields.birthDate} value={display(draft.birthDate, notProvided)} mono />
             )}
-            {tipoPessoa === "pj" && (
+            {personType === "pj" && (
               <ReadField
-                label={t.campos.receitaBrutaAnual}
-                value={draft.annualRevenueReais ? `R$ ${draft.annualRevenueReais}` : t.naoInformado}
+                label={t.fields.grossAnnualRevenue}
+                value={draft.annualRevenueReais ? `R$ ${draft.annualRevenueReais}` : t.notProvided}
                 mono
               />
             )}
-            <ReadField label={t.campos.email} value={profile.email} />
-            <ReadField label={t.campos.telefone} value={displayTelefone(draft.telefone)} mono />
+            <ReadField label={t.fields.email} value={profile.email} />
+            <ReadField label={t.fields.phone} value={displayPhone(draft.phone, notProvided)} mono />
           </div>
 
-          {tipoPessoa === "pj" && (
+          {personType === "pj" && (
             <div className="mt-6 border-t border-panel-border pt-5">
               <h3 className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                {t.secaoPublica}
+                {t.publicSection}
               </h3>
-              <p className="mt-1 text-[11px] text-on-military-muted">{t.secaoPublicaNota}</p>
+              <p className="mt-1 text-[11px] text-on-military-muted">{t.publicSectionNote}</p>
               <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                <ReadField label={t.campos.setor} value={display(draft.setor)} />
-                <ReadField label={t.campos.resumoNegocio} value={display(draft.resumoNegocio)} />
+                <ReadField label={t.fields.sector} value={display(draft.sector, notProvided)} />
+                <ReadField label={t.fields.businessSummary} value={display(draft.businessSummary, notProvided)} />
                 <ReadField
                   label={t.publishCnpj.statusLabel}
-                  value={draft.publishCnpj ? t.publishCnpj.exibindo : t.publishCnpj.naoExibindo}
+                  value={draft.publishCnpj ? t.publishCnpj.showing : t.publishCnpj.notShowing}
                 />
               </div>
             </div>
@@ -320,20 +323,20 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
 
           <div className="mt-6 border-t border-panel-border pt-5">
             <h3 className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-              {t.secaoEndereco}
+              {t.addressSection}
             </h3>
             <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-              <ReadField label={t.campos.cep} value={display(draft.cep)} mono />
-              <ReadField label={t.campos.logradouro} value={display(draft.logradouro)} />
-              <ReadField label={t.campos.numero} value={display(draft.numero)} />
-              <ReadField label={t.campos.complemento} value={display(draft.complemento)} />
-              <ReadField label={t.campos.bairro} value={display(draft.bairro)} />
+              <ReadField label={t.fields.cep} value={display(draft.cep, notProvided)} mono />
+              <ReadField label={t.fields.street} value={display(draft.street, notProvided)} />
+              <ReadField label={t.fields.number} value={display(draft.number, notProvided)} />
+              <ReadField label={t.fields.complement} value={display(draft.complement, notProvided)} />
+              <ReadField label={t.fields.district} value={display(draft.district, notProvided)} />
               <ReadField
-                label={`${t.campos.cidade} / ${t.campos.estado}`}
+                label={`${t.fields.city} / ${t.fields.state}`}
                 value={
-                  draft.cidade.trim() || draft.estado.trim()
-                    ? `${display(draft.cidade)} / ${draft.estado || "—"}`
-                    : t.naoInformado
+                  draft.city.trim() || draft.state.trim()
+                    ? `${display(draft.city, notProvided)} / ${draft.state || "—"}`
+                    : t.notProvided
                 }
               />
             </div>
@@ -345,7 +348,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
             className="mt-6 inline-flex items-center gap-1.5 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon"
           >
             <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-            {t.editar}
+            {t.edit}
           </button>
         </div>
       ) : (
@@ -356,60 +359,60 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
         >
           <fieldset className="flex flex-col gap-4">
             <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-              {t.secaoPessoal}
+              {t.personalSection}
             </legend>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ReadField label={t.campos.pais} value={t.campos.brasil} />
-              {tipoPessoa === "pf" ? (
+              <ReadField label={t.fields.country} value={t.fields.brazil} />
+              {personType === "pf" ? (
                 <TextField
-                  id="pd-nome"
-                  label={t.campos.nomeCompleto}
-                  value={draft.nomeCompleto}
-                  onChange={handleFieldChange("nomeCompleto")}
-                  error={errors.nomeCompleto}
+                  id="pd-name"
+                  label={t.fields.fullName}
+                  value={draft.fullName}
+                  onChange={handleFieldChange("fullName")}
+                  error={errors.fullName}
                   autoComplete="name"
                 />
               ) : (
                 <>
                   <TextField
-                    id="pd-razao-social"
-                    label={t.campos.razaoSocial}
-                    value={draft.razaoSocial}
-                    onChange={handleFieldChange("razaoSocial")}
-                    error={errors.razaoSocial}
+                    id="pd-legal-name"
+                    label={t.fields.legalName}
+                    value={draft.legalName}
+                    onChange={handleFieldChange("legalName")}
+                    error={errors.legalName}
                   />
                   <TextField
-                    id="pd-nome-fantasia"
-                    label={t.campos.nomeFantasia}
-                    value={draft.nomeFantasia}
-                    onChange={handleFieldChange("nomeFantasia")}
+                    id="pd-trade-name"
+                    label={t.fields.tradeName}
+                    value={draft.tradeName}
+                    onChange={handleFieldChange("tradeName")}
                   />
                 </>
               )}
               <TextField
-                id="pd-documento"
-                label={documentoLabel}
-                value={draft.documento}
-                onChange={handleFieldChange("documento")}
-                error={errors.documento}
+                id="pd-document"
+                label={documentLabel}
+                value={draft.document}
+                onChange={handleFieldChange("document")}
+                error={errors.document}
                 inputMode="numeric"
-                placeholder={tipoPessoa === "pf" ? "000.000.000-00" : "00.000.000/0000-00"}
+                placeholder={personType === "pf" ? "000.000.000-00" : "00.000.000/0000-00"}
               />
-              {tipoPessoa === "pf" && (
+              {personType === "pf" && (
                 <TextField
-                  id="pd-nascimento"
-                  label={t.campos.dataNascimento}
-                  value={draft.dataNascimento}
-                  onChange={handleFieldChange("dataNascimento")}
-                  error={errors.dataNascimento}
+                  id="pd-birth-date"
+                  label={t.fields.birthDate}
+                  value={draft.birthDate}
+                  onChange={handleFieldChange("birthDate")}
+                  error={errors.birthDate}
                   inputMode="numeric"
-                  placeholder="DD/MM/AAAA"
+                  placeholder={dict.common.datePlaceholder}
                 />
               )}
-              {tipoPessoa === "pj" && (
+              {personType === "pj" && (
                 <TextField
-                  id="pd-receita"
-                  label={t.campos.receitaBrutaAnual}
+                  id="pd-revenue"
+                  label={t.fields.grossAnnualRevenue}
                   value={draft.annualRevenueReais}
                   onChange={handleFieldChange("annualRevenueReais")}
                   error={errors.annualRevenueReais}
@@ -417,13 +420,13 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                   placeholder="5.000.000,00"
                 />
               )}
-              <ReadField label={t.campos.email} value={profile.email} />
+              <ReadField label={t.fields.email} value={profile.email} />
               <TextField
-                id="pd-telefone"
-                label={t.campos.telefone}
-                value={draft.telefone}
-                onChange={handleFieldChange("telefone")}
-                error={errors.telefone}
+                id="pd-phone"
+                label={t.fields.phone}
+                value={draft.phone}
+                onChange={handleFieldChange("phone")}
+                error={errors.phone}
                 inputMode="tel"
                 placeholder="(00) 00000-0000"
                 autoComplete="tel"
@@ -432,25 +435,25 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
             </div>
           </fieldset>
 
-          {tipoPessoa === "pj" && (
+          {personType === "pj" && (
             <fieldset className="flex flex-col gap-4">
               <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                {t.secaoPublica}
+                {t.publicSection}
               </legend>
-              <p className="-mt-2 text-[11px] text-on-military-muted">{t.secaoPublicaNota}</p>
+              <p className="-mt-2 text-[11px] text-on-military-muted">{t.publicSectionNote}</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <TextField
-                  id="pd-setor"
-                  label={t.campos.setor}
-                  value={draft.setor}
-                  onChange={handleFieldChange("setor")}
+                  id="pd-sector"
+                  label={t.fields.sector}
+                  value={draft.sector}
+                  onChange={handleFieldChange("sector")}
                 />
               </div>
               <TextareaField
-                id="pd-resumo-negocio"
-                label={t.campos.resumoNegocio}
-                value={draft.resumoNegocio}
-                onChange={(event) => setDraft((current) => ({ ...current, resumoNegocio: event.target.value }))}
+                id="pd-business-summary"
+                label={t.fields.businessSummary}
+                value={draft.businessSummary}
+                onChange={(event) => setDraft((current) => ({ ...current, businessSummary: event.target.value }))}
                 rows={4}
               />
               <label htmlFor="pd-publish-cnpj" className="flex items-start gap-2.5 text-sm text-on-military">
@@ -471,12 +474,12 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
 
           <fieldset className="flex flex-col gap-4">
             <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-              {t.secaoEndereco}
+              {t.addressSection}
             </legend>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TextField
                 id="pd-cep"
-                label={t.campos.cep}
+                label={t.fields.cep}
                 value={draft.cep}
                 onChange={handleFieldChange("cep")}
                 error={errors.cep}
@@ -484,48 +487,48 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                 placeholder="00000-000"
               />
               <TextField
-                id="pd-logradouro"
-                label={t.campos.logradouro}
-                value={draft.logradouro}
-                onChange={handleFieldChange("logradouro")}
-                error={errors.logradouro}
+                id="pd-street"
+                label={t.fields.street}
+                value={draft.street}
+                onChange={handleFieldChange("street")}
+                error={errors.street}
                 autoComplete="address-line1"
               />
               <TextField
-                id="pd-numero"
-                label={t.campos.numero}
-                value={draft.numero}
-                onChange={handleFieldChange("numero")}
-                error={errors.numero}
+                id="pd-number"
+                label={t.fields.number}
+                value={draft.number}
+                onChange={handleFieldChange("number")}
+                error={errors.number}
               />
               <TextField
-                id="pd-complemento"
-                label={t.campos.complemento}
-                value={draft.complemento}
-                onChange={handleFieldChange("complemento")}
+                id="pd-complement"
+                label={t.fields.complement}
+                value={draft.complement}
+                onChange={handleFieldChange("complement")}
               />
               <TextField
-                id="pd-bairro"
-                label={t.campos.bairro}
-                value={draft.bairro}
-                onChange={handleFieldChange("bairro")}
-                error={errors.bairro}
+                id="pd-district"
+                label={t.fields.district}
+                value={draft.district}
+                onChange={handleFieldChange("district")}
+                error={errors.district}
               />
               <TextField
-                id="pd-cidade"
-                label={t.campos.cidade}
-                value={draft.cidade}
-                onChange={handleFieldChange("cidade")}
-                error={errors.cidade}
+                id="pd-city"
+                label={t.fields.city}
+                value={draft.city}
+                onChange={handleFieldChange("city")}
+                error={errors.city}
                 autoComplete="address-level2"
               />
               <SelectField
-                id="pd-estado"
-                label={t.campos.estado}
-                value={draft.estado}
-                onChange={handleFieldChange("estado")}
-                error={errors.estado}
-                placeholder={t.campos.selecionarEstado}
+                id="pd-state"
+                label={t.fields.state}
+                value={draft.state}
+                onChange={handleFieldChange("state")}
+                error={errors.state}
+                placeholder={t.fields.selectState}
               >
                 {UFS.map((uf) => (
                   <option key={uf} value={uf}>
@@ -542,7 +545,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
             </p>
           )}
 
-          <p className="text-[11px] text-on-military-muted">{t.salvarNota}</p>
+          <p className="text-[11px] text-on-military-muted">{t.saveNote}</p>
 
           <div className="flex gap-2">
             <button
@@ -550,7 +553,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               disabled={isPending}
               className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isPending ? t.salvando : t.salvar}
+              {isPending ? t.saving : t.save}
             </button>
             <button
               type="button"
@@ -558,7 +561,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               disabled={isPending}
               className="rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military-muted hover:text-on-military disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {t.cancelar}
+              {t.cancel}
             </button>
           </div>
         </form>

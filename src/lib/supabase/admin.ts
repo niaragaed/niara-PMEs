@@ -1,9 +1,9 @@
 import "server-only";
 
-// 🔴 Client admin: usa SUPABASE_SERVICE_ROLE_KEY, que BYPASSA o RLS
-// (Row Level Security) inteiro do banco. Nunca importar este módulo em um
-// componente client nem expor `service_role` ao navegador — o
-// `import "server-only"` acima já quebra o build se isso acontecer.
+// 🔴 Admin client: uses SUPABASE_SERVICE_ROLE_KEY, which BYPASSES the database's entire
+// RLS (Row Level Security). Never import this module in a
+// client component nor expose `service_role` to the browser — the
+// `import "server-only"` above already breaks the build if that happens.
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export function createAdminClient() {

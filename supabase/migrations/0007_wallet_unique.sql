@@ -1,10 +1,10 @@
 -- ============================================================================
 -- Niara-PMEs -- 0007_wallet_unique
--- Uma carteira so pode estar vinculada a UMA conta. wallet_address e nullable
--- e o UNIQUE do Postgres permite varios NULL -> contas sem carteira nao colidem;
--- so dois enderecos IGUAIS preenchidos e que sao barrados.
--- (unique e por tabela; colisao investor<->issuer com a mesma carteira nao e
---  coberta aqui -- aceitavel no estagio atual.)
+-- A wallet can be linked to only ONE account. wallet_address is nullable
+-- and Postgres UNIQUE allows several NULLs -> accounts without a wallet don't collide;
+-- only two IDENTICAL filled-in addresses are blocked.
+-- (unique is per table; an investor<->issuer collision with the same wallet is not
+--  covered here -- acceptable at the current stage.)
 -- ============================================================================
 
 begin;

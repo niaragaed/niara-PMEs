@@ -1,9 +1,9 @@
 import "server-only";
 
-// Dados mínimos do usuário logado para o menu de conta do Header
-// (AccountMenu.tsx) — nunca redireciona, diferente de loadProfile
-// (src/app/perfil/actions.ts), porque o Header renderiza em toda rota,
-// inclusive as públicas/anônimas.
+// Minimal data about the signed-in user for the Header's account menu
+// (AccountMenu.tsx) — never redirects, unlike loadProfile
+// (src/app/perfil/actions.ts), because the Header renders on every route,
+// including the public/anonymous ones.
 import { resolveAccount, type AccountRole } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
@@ -11,7 +11,7 @@ import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
 export type HeaderAccount = {
   role: AccountRole;
   name: string;
-  logoUrl: string | null; // só preenchido para role === 'issuer'
+  logoUrl: string | null; // only filled in for role === 'issuer'
 };
 
 export async function loadHeaderAccount(): Promise<HeaderAccount | null> {

@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { DiagnosticoOnChain } from "@/components/empresa/DiagnosticoOnChain";
+import { OnChainDiagnostics } from "@/components/empresa/OnChainDiagnostics";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createClient } from "@/lib/supabase/server";
 
-// Página temporária da Fase 3, sub-etapa 1 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — só
-// leitura on-chain, sem nenhuma escrita, sem UI de publicação. Mesmo gate de acesso de
-// /empresa/ofertas (role === 'issuer'); não há link para esta rota em nenhum menu — acessível
-// só por quem souber a URL. Remover (ou substituir pela tela de publicação real) quando a
-// Fase 3 avançar para as próximas sub-etapas.
+// Temporary page from Phase 3, sub-step 1 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — on-chain
+// reads only, no writes at all, no publication UI. Same access gate as /empresa/ofertas
+// (role === 'issuer'); there's no link to this route in any menu — reachable only by whoever
+// knows the URL. Remove it (or replace it with the real publication screen) when Phase 3 moves
+// on to the next sub-steps.
 export const metadata: Metadata = {
-  title: "Diagnóstico on-chain · Niara PMEs",
+  title: "On-chain diagnostic · Niara PMEs",
   robots: { index: false, follow: false },
 };
 
@@ -29,5 +29,5 @@ export default async function Page() {
     redirect("/conta?aviso=apenas-empresa");
   }
 
-  return <DiagnosticoOnChain />;
+  return <OnChainDiagnostics />;
 }

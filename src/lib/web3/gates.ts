@@ -1,102 +1,102 @@
-// Avaliação PURA dos gates de publicação on-chain (Fase 3, ver
-// PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — sem nenhuma dependência de React/wagmi, só valores já
-// lidos. Isso permite testar cada regra isoladamente (inclusive com números lidos de verdade
-// da chain via `cast`, fora do React) e mantém a UI (GateChecklist.tsx) burra: ela só formata
-// o resultado que já veio pronto daqui, nunca decide sozinha.
+// PURE evaluation of the on-chain publication gates (Phase 3, see
+// PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — no React/wagmi dependency at all, only values already
+// read. This allows testing each rule in isolation (including with numbers actually read from the
+// chain via `cast`, outside React) and keeps the UI (GateChecklist.tsx) dumb: it only formats the
+// result that already comes ready from here, it never decides on its own.
 //
-// Cada gate distingue SEMPRE três coisas diferentes, nunca confundidas:
-//   "ok"        — a condição foi checada e está satisfeita.
-//   "reprovado" — a condição foi checada de verdade e NÃO está satisfeita (a chain/o dado
-//                 respondeu "não", ou a pré-condição para checar ainda não foi cumprida —
-//                 ex.: carteira não conectada).
-//   "erro"      — não foi possível checar (RPC fora do ar, leitura falhou). NUNCA vira
-//                 "reprovado" — um erro de leitura não é a chain dizendo não.
-//   "carregando"— a checagem está em andamento.
-export type GateStatus = "carregando" | "ok" | "reprovado" | "erro";
+// Each gate ALWAYS tells apart different things, never mixed up:
+//   "ok"       — the condition was checked and is satisfied.
+//   "rejected" — the condition was actually checked and is NOT satisfied (the chain/the data
+//                answered "no", or the precondition for checking hasn't been met yet —
+//                e.g. wallet not connected).
+//   "error"    — it couldn't be checked (RPC down, the read failed). It NEVER becomes
+//                "rejected" — a read error isn't the chain saying no.
+//   "loading"  — the check is in progress.
+export type GateStatus = "loading" | "ok" | "rejected" | "error";
 
-export type GateProviderResultado = { status: Extract<GateStatus, "ok" | "reprovado"> };
+export type GateProviderResult = { status: Extract<GateStatus, "ok" | "rejected"> };
 
-export function avaliarGateProvider(hasProvider: boolean): GateProviderResultado {
-  return { status: hasProvider ? "ok" : "reprovado" };
+export function evaluateGateProvider(hasProvider: boolean): GateProviderResult {
+  return { status: hasProvider ? "ok" : "rejected" };
 }
 
-export type GateRedeResultado =
-  | { status: "reprovado"; motivo: "nao_conectado" }
-  | { status: "reprovado"; motivo: "rede_errada"; chainIdConectado: number }
+export type GateNetworkResult =
+  | { status: "rejected"; reason: "nao_conectado" }
+  | { status: "rejected"; reason: "rede_errada"; connectedChainId: number }
   | { status: "ok" };
 
-export function avaliarGateRede(isConnected: boolean, chainIdConectado: number | undefined, chainIdEsperado: number): GateRedeResultado {
-  if (!isConnected) return { status: "reprovado", motivo: "nao_conectado" };
-  if (chainIdConectado !== chainIdEsperado) {
-    return { status: "reprovado", motivo: "rede_errada", chainIdConectado: chainIdConectado ?? -1 };
+export function evaluateGateNetwork(isConnected: boolean, connectedChainId: number | undefined, expectedChainId: number): GateNetworkResult {
+  if (!isConnected) return { status: "rejected", reason: "nao_conectado" };
+  if (connectedChainId !== expectedChainId) {
+    return { status: "rejected", reason: "rede_errada", connectedChainId: connectedChainId ?? -1 };
   }
   return { status: "ok" };
 }
 
 /**
- * Custo estimado = gasLimite fixo (não uma simulação real da chamada — simular
- * `criarOfertaCompleta` antes de passar nos outros gates só reverteria à toa, ver
- * niara-contracts-PMEs/PLANO_OFERTA_ORQUESTRADOR.md §1.6 para a origem do número) × preço do
- * gás lido agora × margem de segurança. A Fase 2 mostrou o preço do gás variar de ~1 gwei a
- * dezenas na mesma sessão — a margem existe para não deixar passar um saldo "no limite" que
- * vira insuficiente entre este check e a assinatura de verdade. Ainda assim é só uma
- * estimativa: quem decide o custo final é a própria MetaMask no momento de assinar.
+ * Estimated cost = a fixed gas limit (not a real simulation of the call — simulating
+ * `criarOfertaCompleta` before passing the other gates would just revert for nothing, see
+ * niara-contracts-PMEs/PLANO_OFERTA_ORQUESTRADOR.md §1.6 for where the number comes from) × the gas
+ * price read now × a safety margin. Phase 2 showed the gas price vary from ~1 gwei to dozens in the
+ * same session — the margin exists so a balance "right at the limit" that becomes insufficient
+ * between this check and the actual signature doesn't get through. It's still just an estimate:
+ * MetaMask itself decides the final cost at signing time.
  */
-// BigInt(...) em vez do sufixo `123n` — este projeto compila para ES2017 (tsconfig.json),
-// abaixo do ES2020 exigido para literais BigInt nativos; mesma convenção já usada em
+// BigInt(...) instead of the `123n` suffix — this project compiles to ES2017 (tsconfig.json),
+// below the ES2020 required for native BigInt literals; the same convention already used in
 // src/lib/money.ts.
-export const GAS_LIMITE_PUBLICACAO = BigInt(1_200_000);
+export const PUBLICATION_GAS_LIMIT = BigInt(1_200_000);
 
-// Centavos de R$ (bigint em offerings.*_cents) -> unidade de 18 casas do MockBRL (1 "unidade" =
-// 1 real equivalente): valor_wei = centavos * 10^16. Fonte única — usada tanto ao montar os
-// argumentos da transação (client) quanto ao conferir o evento minerado contra o Supabase
-// (confirmarPublicacao, server).
-export const UNIDADE_ON_CHAIN = BigInt("10000000000000000");
-export const MARGEM_SEGURANCA_PERCENT = BigInt(130); // 130% = +30% sobre o custo base
+// R$ cents (bigint in offerings.*_cents) -> MockBRL's 18-decimal unit (1 "unit" =
+// 1 real equivalent): amount_wei = cents * 10^16. Single source — used both when building the
+// transaction's arguments (client) and when checking the mined event against Supabase
+// (confirmPublication, server).
+export const UNIT_ON_CHAIN = BigInt("10000000000000000");
+export const SAFETY_MARGIN_PERCENT = BigInt(130); // 130% = +30% over the base cost
 
-export function estimarCustoPublicacaoWei(precoGasWei: bigint): bigint {
-  return (GAS_LIMITE_PUBLICACAO * precoGasWei * MARGEM_SEGURANCA_PERCENT) / BigInt(100);
+export function estimatePublicationCostWei(gasPriceWei: bigint): bigint {
+  return (PUBLICATION_GAS_LIMIT * gasPriceWei * SAFETY_MARGIN_PERCENT) / BigInt(100);
 }
 
-export type GateSaldoResultado =
-  | { status: "carregando" }
-  | { status: "erro" }
-  | { status: "reprovado"; saldoWei: bigint; custoEstimadoWei: bigint }
-  | { status: "ok"; saldoWei: bigint; custoEstimadoWei: bigint };
+export type GateBalanceResult =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "rejected"; balanceWei: bigint; estimatedCostWei: bigint }
+  | { status: "ok"; balanceWei: bigint; estimatedCostWei: bigint };
 
-export function avaliarGateSaldo(params: {
+export function evaluateGateBalance(params: {
   isConnected: boolean;
-  saldoWei: bigint | undefined;
-  precoGasWei: bigint | undefined;
-  saldoCarregando: boolean;
-  saldoComErro: boolean;
-  precoGasCarregando: boolean;
-  precoGasComErro: boolean;
-}): GateSaldoResultado {
-  if (!params.isConnected) return { status: "carregando" };
-  if (params.saldoComErro || params.precoGasComErro) return { status: "erro" };
-  if (params.saldoCarregando || params.precoGasCarregando || params.saldoWei === undefined || params.precoGasWei === undefined) {
-    return { status: "carregando" };
+  balanceWei: bigint | undefined;
+  gasPriceWei: bigint | undefined;
+  balanceLoading: boolean;
+  balanceError: boolean;
+  gasPriceLoading: boolean;
+  gasPriceError: boolean;
+}): GateBalanceResult {
+  if (!params.isConnected) return { status: "loading" };
+  if (params.balanceError || params.gasPriceError) return { status: "error" };
+  if (params.balanceLoading || params.gasPriceLoading || params.balanceWei === undefined || params.gasPriceWei === undefined) {
+    return { status: "loading" };
   }
-  const custoEstimadoWei = estimarCustoPublicacaoWei(params.precoGasWei);
-  if (params.saldoWei < custoEstimadoWei) return { status: "reprovado", saldoWei: params.saldoWei, custoEstimadoWei };
-  return { status: "ok", saldoWei: params.saldoWei, custoEstimadoWei };
+  const estimatedCostWei = estimatePublicationCostWei(params.gasPriceWei);
+  if (params.balanceWei < estimatedCostWei) return { status: "rejected", balanceWei: params.balanceWei, estimatedCostWei };
+  return { status: "ok", balanceWei: params.balanceWei, estimatedCostWei };
 }
 
-export type GateTitularidadeResultado =
-  | { status: "reprovado"; motivo: "sem_carteira_vinculada" }
-  | { status: "reprovado"; motivo: "nao_conectado" }
-  | { status: "reprovado"; motivo: "carteira_diferente"; carteiraConectada: `0x${string}`; walletVinculada: string }
+export type GateOwnershipResult =
+  | { status: "rejected"; reason: "sem_carteira_vinculada" }
+  | { status: "rejected"; reason: "nao_conectado" }
+  | { status: "rejected"; reason: "carteira_diferente"; connectedWallet: `0x${string}`; linkedWallet: string }
   | { status: "ok" };
 
-export function avaliarGateTitularidade(
-  carteiraConectada: `0x${string}` | undefined,
-  walletVinculada: string | null,
-): GateTitularidadeResultado {
-  if (!walletVinculada) return { status: "reprovado", motivo: "sem_carteira_vinculada" };
-  if (!carteiraConectada) return { status: "reprovado", motivo: "nao_conectado" };
-  if (carteiraConectada.toLowerCase() !== walletVinculada.toLowerCase()) {
-    return { status: "reprovado", motivo: "carteira_diferente", carteiraConectada, walletVinculada };
+export function evaluateGateOwnership(
+  connectedWallet: `0x${string}` | undefined,
+  linkedWallet: string | null,
+): GateOwnershipResult {
+  if (!linkedWallet) return { status: "rejected", reason: "sem_carteira_vinculada" };
+  if (!connectedWallet) return { status: "rejected", reason: "nao_conectado" };
+  if (connectedWallet.toLowerCase() !== linkedWallet.toLowerCase()) {
+    return { status: "rejected", reason: "carteira_diferente", connectedWallet, linkedWallet };
   }
   return { status: "ok" };
 }

@@ -2,16 +2,17 @@
 
 import { useEffect, useId, useRef } from "react";
 import { HelpCircle } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 type IndicatorHelpProps = {
-  nome: string;
-  explicacao: string;
+  name: string;
+  explanation: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function IndicatorHelp({ nome, explicacao, isOpen, onOpenChange }: IndicatorHelpProps) {
+export function IndicatorHelp({ name, explanation, isOpen, onOpenChange }: IndicatorHelpProps) {
+  const dict = useDictionary();
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverId = useId();
 
@@ -39,7 +40,7 @@ export function IndicatorHelp({ nome, explicacao, isOpen, onOpenChange }: Indica
     <div ref={containerRef} className="relative inline-flex">
       <button
         type="button"
-        aria-label={ptBr.negociar.oferta.indicadores.ajudaAria(nome)}
+        aria-label={dict.trade.offering.indicators.helpAria(name)}
         aria-expanded={isOpen}
         aria-controls={popoverId}
         onClick={() => onOpenChange(!isOpen)}
@@ -51,14 +52,14 @@ export function IndicatorHelp({ nome, explicacao, isOpen, onOpenChange }: Indica
         <div
           id={popoverId}
           role="tooltip"
-          // Ancorado pela borda direita do botão (não centralizado): um popover
-          // centralizado sobre um card perto da borda direita da grade poderia
-          // ultrapassar a viewport no mobile e criar scroll horizontal na
-          // página. Ancorando à direita, ele só se estende para a esquerda —
-          // no pior caso é parcialmente cortado, nunca cria overflow.
+          // Anchored to the button's right edge (not centered): a centered popover
+          // over a card near the grid's right edge could go past the viewport on
+          // mobile and create horizontal scroll on the page. Anchored to the
+          // right, it only extends to the left — in the worst case it's partially
+          // clipped, it never creates overflow.
           className="animate-dropdown absolute right-0 top-full z-20 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-md border border-border bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-soft-lg"
         >
-          {explicacao}
+          {explanation}
         </div>
       )}
     </div>

@@ -5,13 +5,13 @@ import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Reveal } from "@/components/motion/Reveal";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 const SCROLL_PX_PER_STEP = 600;
-// Duração fixa (ms) das animações de flip (globals.css) — precisa bater com
-// o "0.5s" do CSS: é o timeout de segurança que garante a limpeza da classe
-// mesmo se "animationend" não disparar por algum motivo, e também a janela
-// de "trava" (nenhum novo passo é aceito enquanto uma transição toca).
+// Fixed duration (ms) of the flip animations (globals.css) — must match
+// the CSS "0.5s": it's the safety timeout that guarantees the class is cleaned up
+// even if "animationend" doesn't fire for some reason, and also the
+// "lock" window (no new step is accepted while a transition plays).
 const FLIP_DURATION_MS = 500;
 
 type FlipDirection = "forward" | "backward";
@@ -22,26 +22,27 @@ function stepFromProgress(progress: number, totalSteps: number) {
   return Math.min(totalSteps - 1, Math.round(clamped * (totalSteps - 1)));
 }
 
-// Sequência "pinned": a seção fica presa na tela enquanto o usuário rola.
-// O Lenis continua cuidando do scroll normalmente (não interceptamos wheel/
-// touch diretamente — tentar "sequestrar" o input e pausar o Lenis foi o
-// que quebrou a versão anterior: o Lenis processa o scroll por conta
-// própria, então brigar com ele por fora só deixava os cards travados nos
-// resets de entrada/saída, sem nenhuma transição no meio). Em vez disso,
-// a cada atualização de scroll (onUpdate) só deixamos o índice avançar OU
-// voltar **um** passo por vez, mesmo que o progresso bruto do scroll tenha
-// pulado direto pra um card mais distante num scroll rápido — e, enquanto
-// o flip de 0.5s ainda está tocando, a posição real do scroll é forçada de
-// volta pro degrau atual (lenis.scrollTo) a cada tick, "travando" o scroll
-// até a transição terminar. Avançar usa .flip-2-hor-top-1 (sai) +
-// .flip-in-hor-bottom-1 (entra); voltar usa o par espelhado
-// .flip-2-hor-bottom-1 + .flip-in-hor-top-1 (globals.css), então a direção
-// do flip acompanha a direção real da navegação. Sem JS, os cards
-// continuam em fluxo vertical normal — o JSX abaixo nunca muda; só
-// aplicamos position:absolute/opacity/classes via gsap/DOM direto (estilo
-// imperativo), então não há divergência de markup entre servidor e
-// cliente.
+// "Pinned" sequence: the section stays stuck on screen while the user scrolls.
+// Lenis keeps handling the scroll normally (we don't intercept wheel/
+// touch directly — trying to "hijack" the input and pause Lenis was
+// what broke the previous version: Lenis processes the scroll on its
+// own, so fighting it from the outside only left the cards stuck at the
+// enter/leave resets, with no transition in between). Instead,
+// on each scroll update (onUpdate) we only let the index move forward OR
+// back **one** step at a time, even if the raw scroll progress jumped
+// straight to a farther card on a fast scroll — and, while
+// the 0.5s flip is still playing, the real scroll position is forced
+// back to the current step (lenis.scrollTo) on every tick, "locking" the scroll
+// until the transition ends. Moving forward uses .flip-2-hor-top-1 (out) +
+// .flip-in-hor-bottom-1 (in); moving back uses the mirrored pair
+// .flip-2-hor-bottom-1 + .flip-in-hor-top-1 (globals.css), so the flip's
+// direction follows the real navigation direction. Without JS, the cards
+// stay in normal vertical flow — the JSX below never changes; we only
+// apply position:absolute/opacity/classes via gsap/direct DOM (imperative
+// style), so there's no markup divergence between server and
+// client.
 export function HowItWorksSection() {
+  const dict = useDictionary();
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const lenis = useLenis();
@@ -54,10 +55,10 @@ export function HowItWorksSection() {
     gsap.registerPlugin(ScrollTrigger);
 
     let activeIndex = 0;
-    // Índice "autoritativo" de repouso: igual a activeIndex quando parado;
-    // durante um flip, é o alvo pra onde já pulamos o scroll (não o de
-    // origem) — evita que o próprio ScrollTrigger.onUpdate, disparado pelo
-    // nosso lenis.scrollTo abaixo, desfaça o pulo que acabamos de fazer.
+    // "Authoritative" resting index: equal to activeIndex when idle;
+    // during a flip, it's the target we already jumped the scroll to (not the
+    // origin) — keeps ScrollTrigger.onUpdate itself, fired by
+    // our lenis.scrollTo below, from undoing the jump we just made.
     let lockedIndex = 0;
     let isAnimating = false;
     let st: ScrollTrigger | null = null;
@@ -80,9 +81,9 @@ export function HowItWorksSection() {
       const outClass = direction === "forward" ? "flip-2-hor-top-1" : "flip-2-hor-bottom-1";
       const inClass = direction === "forward" ? "flip-in-hor-bottom-1" : "flip-in-hor-top-1";
 
-      // Saindo por cima (z-index maior) enquanto o card seguinte já fica
-      // visível por baixo — é o que dá a ilusão de um único card virando e
-      // revelando o próximo, não duas trocas independentes.
+      // Leaving on top (higher z-index) while the next card is already
+      // visible underneath — that's what creates the illusion of a single card flipping and
+      // revealing the next one, not two independent swaps.
       gsap.set(outgoing, { zIndex: 2 });
       gsap.set(incoming, { opacity: 1, zIndex: 1 });
       outgoing.classList.add(outClass);
@@ -118,19 +119,19 @@ export function HowItWorksSection() {
         start: "top top",
         end: `+=${(cards.length - 1) * SCROLL_PX_PER_STEP}`,
         pin: true,
-        // O <main> da home é `flex flex-col` — por padrão, o GSAP desativa
-        // o pinSpacing quando o pai do elemento pinado é display:flex (a
-        // suposição é que flex já cuida do espaçamento), o que faz o pin
-        // soltar cedo demais aqui. Forçar true reserva o espaço extra de
-        // scroll corretamente.
+        // The home's <main> is `flex flex-col` — by default, GSAP turns off
+        // pinSpacing when the pinned element's parent is display:flex (the
+        // assumption is that flex already handles the spacing), which makes the pin
+        // release too early here. Forcing true reserves the extra scroll
+        // space correctly.
         pinSpacing: true,
         onEnter: () => resetTo(0),
         onEnterBack: () => resetTo(cards.length - 1),
         onUpdate: (self) => {
           if (isAnimating) {
-            // Trava: qualquer scroll que tenha acontecido durante o flip é
-            // desfeito, mantendo a posição exatamente no degrau-alvo até a
-            // transição terminar.
+            // Lock: any scroll that happened during the flip is
+            // undone, keeping the position exactly on the target step until the
+            // transition ends.
             lenis?.scrollTo(stepScrollY(lockedIndex), { immediate: true, force: true });
             return;
           }
@@ -138,9 +139,9 @@ export function HowItWorksSection() {
           const rawIndex = stepFromProgress(self.progress, cards.length);
           if (rawIndex === activeIndex) return;
 
-          // Nunca avança/volta mais de um degrau por vez, mesmo que o
-          // progresso bruto do scroll tenha pulado direto pra um índice
-          // mais distante num scroll rápido.
+          // Never moves forward/back more than one step at a time, even if the
+          // raw scroll progress jumped straight to a farther index
+          // on a fast scroll.
           const step = rawIndex > activeIndex ? 1 : -1;
           const nextIndex = activeIndex + step;
           goToStep(nextIndex, step > 0 ? "forward" : "backward");
@@ -160,20 +161,20 @@ export function HowItWorksSection() {
       <div className="mx-auto w-full max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            {ptBr.sections.howItWorks.title}
+            {dict.sections.howItWorks.title}
           </h2>
-          <p className="mt-3 text-lg text-ink-muted">{ptBr.sections.howItWorks.subtitle}</p>
+          <p className="mt-3 text-lg text-ink-muted">{dict.sections.howItWorks.subtitle}</p>
         </Reveal>
 
-        {/* perspective no container (não no card): é o que faz o rotateX
-            do flip parecer 3D em vez de achatado. overflow-hidden corta o
-            card saindo assim que ele passa do translateY(±100%), em vez
-            de vazar por cima/baixo do resto da seção. */}
+        {/* perspective on the container (not on the card): it's what makes the flip's
+            rotateX look 3D instead of flattened. overflow-hidden clips the
+            leaving card as soon as it goes past translateY(±100%), instead
+            of spilling over/under the rest of the section. */}
         <div
           className="relative mx-auto mt-12 grid min-h-[200px] w-full max-w-xl grid-cols-1 gap-6 overflow-hidden"
           style={{ perspective: "1000px" }}
         >
-          {ptBr.sections.howItWorks.steps.map((step, index) => (
+          {dict.sections.howItWorks.steps.map((step, index) => (
             <div
               key={step.title}
               ref={(el) => {

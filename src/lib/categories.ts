@@ -1,5 +1,5 @@
 import { Building2, Car, Home, Landmark, Wheat, type LucideIcon } from "lucide-react";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 
 export type CategoryMeta = {
   icon: LucideIcon;
@@ -8,10 +8,10 @@ export type CategoryMeta = {
   href: string;
 };
 
-// Ícone + cor de chip/ícone por categoria (usado nas telas /negociar,
-// sempre sobre card branco — ver comentário dos tokens `--color-cat-*`
-// em globals.css). Token PMEs reaproveita salmon-100/ink-peach já
-// existentes; as demais têm tokens próprios.
+// Icon + chip/icon color per category (used on the /negociar screens,
+// always on a white card — see the comment on the `--color-cat-*` tokens
+// in globals.css). SME Token reuses the existing salmon-100/ink-peach;
+// the others have their own tokens.
 export const CATEGORY_META: Record<TokenCategory, CategoryMeta> = {
   pmes: {
     icon: Building2,

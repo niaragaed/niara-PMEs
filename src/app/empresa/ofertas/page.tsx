@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { OfertasPage, type OfferingRow } from "@/components/empresa/OfertasPage";
+import { OfferingsPage, type OfferingRow } from "@/components/empresa/OfferingsPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { ptBr } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${ptBr.empresaOfertas.meta.title} · Niara PMEs`,
-  description: ptBr.empresaOfertas.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.companyOfferings.meta.title} · Niara PMEs`,
+  description: dict.companyOfferings.meta.description,
   robots: { index: false, follow: false },
 };
+}
 
 export default async function Page() {
   const supabase = await createClient();
@@ -39,9 +42,9 @@ export default async function Page() {
   const offerings = data ?? [];
   const offeringIds = offerings.map((offering) => offering.id as string);
 
-  // Pago até agora (paid + settled) e refs de token emitido por oferta —
-  // derivados aqui em JS a partir de investments/payment_events; nenhum dos
-  // dois vem direto da tabela offerings.
+  // Paid so far (paid + settled) and issued token refs per offering —
+  // derived here in JS from investments/payment_events; neither of them comes
+  // straight from the offerings table.
   const paidCentsByOffering = new Map<string, number>();
   const tokenRefsByOffering = new Map<string, string[]>();
 
@@ -89,5 +92,5 @@ export default async function Page() {
     };
   });
 
-  return <OfertasPage offerings={rows} />;
+  return <OfferingsPage offerings={rows} />;
 }

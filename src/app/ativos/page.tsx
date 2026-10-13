@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { AtivosPage } from "@/components/ativos/AtivosPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { AssetsPage } from "@/components/ativos/AssetsPage";
 import { requireLogin } from "@/lib/auth/resolveInvestor";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${ptBr.ativos.meta.title} · Niara PMEs`,
-  description: ptBr.ativos.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.assets.meta.title} · Niara PMEs`,
+  description: dict.assets.meta.description,
 };
+}
 
 export default async function Page() {
   await requireLogin();
-  return <AtivosPage />;
+  return <AssetsPage />;
 }

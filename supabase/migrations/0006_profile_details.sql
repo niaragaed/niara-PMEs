@@ -1,32 +1,32 @@
 -- ============================================================================
 -- Niara-PMEs -- 0006_profile_details
--- Campos completos de perfil (contato + endereco) e carteira, para investors e
--- issuers. TODOS NULLABLE: o cadastro minimo (nome + documento) continua valido;
--- o resto e preenchido/editado no /perfil.
+-- Full profile fields (contact + address) and wallet, for investors and
+-- issuers. ALL NULLABLE: the minimum sign-up (name + document) stays valid;
+-- the rest is filled in/edited on /profile.
 --
--- IMPORTANTE: no ambiente atual estes sao dados de DEMONSTRACAO/ficticios (a UI
--- deve deixar isso explicito, alem do is_demo na linha). Em producao, isto vira
--- PII real -> responsabilidade de LGPD (tratamento, consentimento, retencao).
+-- IMPORTANT: in the current environment this is DEMO/fictitious data (the UI
+-- must make that explicit, besides is_demo on the row). In production this becomes
+-- real PII -> LGPD responsibility (processing, consent, retention).
 -- ============================================================================
 
 begin;
 
--- Investidores (pessoa fisica)
+-- Investors (individuals)
 alter table investors
   add column birth_date        date,
   add column phone             text,
-  add column wallet_address    text,   -- carteira MetaMask conectada (0x...)
+  add column wallet_address    text,   -- connected MetaMask wallet (0x...)
   add column addr_cep          text,
   add column addr_street       text,
   add column addr_number       text,
   add column addr_complement   text,
   add column addr_neighborhood text,
   add column addr_city         text,
-  add column addr_state        text;   -- UF
+  add column addr_state        text;   -- state code (UF)
 
--- Empresas (pessoa juridica)
+-- Companies (legal entities)
 alter table issuers
-  add column trade_name        text,   -- nome fantasia
+  add column trade_name        text,   -- trade name (nome fantasia)
   add column phone             text,
   add column wallet_address    text,
   add column addr_cep          text,

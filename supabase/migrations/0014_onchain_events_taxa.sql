@@ -1,13 +1,13 @@
 -- ============================================================================
 -- Niara-PMEs -- 0014_onchain_events_taxa
--- Coluna adicional em onchain_events_cache para guardar a taxa (args.taxa) do
--- evento RecursosLiberados -- antes desta migration, o cache só guardava
--- valorEmissor (via valor_wei), então não havia como somar quanto a carteira
--- de protocolo de fato recebeu de taxa (painel /socios). Aditiva, nunca
--- destrutiva: linhas já gravadas ficam com taxa_wei = null (equivalente a "não
--- lido" nesta coluna nova; hoje é sempre 0 de qualquer forma, ver CLAUDE.md do
--- niara-contracts-PMEs, "Decisões travadas" -- taxaBps era 0 em toda oferta
--- existente até esta rodada).
+-- Extra column in onchain_events_cache to store the fee (args.taxa) of the
+-- RecursosLiberados event -- before this migration, the cache only stored
+-- valorEmissor (via valor_wei), so there was no way to sum how much fee the
+-- protocol wallet actually received (/partners dashboard). Additive, never
+-- destructive: rows already written keep taxa_wei = null (equivalent to "not
+-- read" in this new column; it is always 0 anyway today, see niara-contracts-PMEs'
+-- CLAUDE.md, "Locked decisions" -- taxaBps was 0 on every existing offering
+-- until this round).
 -- ============================================================================
 
 begin;

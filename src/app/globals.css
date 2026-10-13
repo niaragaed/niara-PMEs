@@ -1,89 +1,86 @@
 @import "tailwindcss";
 
 @theme {
-  /* Base / neutros */
+  /* Base / neutrals */
   --color-bg: #faf8f5;
   --color-surface: #ffffff;
-  /* Tint neutro de chrome (ícones de dropdown, footer) — não usar para
-     alternância de fundo de seção: isso é papel de military-100/salmon-100. */
+  /* Neutral chrome tint (dropdown icons, footer) — don't use it for
+     alternating section backgrounds: that's the job of military-100/salmon-100. */
   --color-surface-alt: #f1eee6;
   --color-border: #e7e2d9;
   --color-ink: #23271f;
   --color-ink-muted: #5c6152;
 
-  /* Verde-sálvia (primária) */
+  /* Sage green (primary) */
   --color-military: #3e4835;
   --color-military-600: #4e5a42;
   --color-military-100: #e6ebdd;
 
-  /* Pêssego (acento / CTA) */
+  /* Peach (accent / CTA) */
   --color-salmon: #f0a487;
   --color-salmon-600: #e08e6f;
   --color-salmon-100: #fbe9df;
 
-  /* Texto sobre fundo pêssego (títulos de seção) — subton terroso, não cinza */
+  /* Text on a peach background (section titles) — earthy undertone, not gray */
   --color-ink-peach: #8a5a47;
 
-  /* Selo/label de card (chip atrás do título do card) */
+  /* Card badge/label (chip behind the card title) */
   --color-chip-sage: #dce3cf;
 
-  /* Texto sobre fundo CHEIO de seção (military/salmon sólidos, não os tints
-     -100) — contraste AA (4.5:1) verificado contra os hex exatos acima.
-     on-military é o mesmo tom de --color-bg (creme) já usado como texto
-     claro na faixa CTA final; on-salmon é o mesmo tom de --color-ink.
-     on-salmon-muted existe porque --color-ink-peach (pensado para o tint
-     salmon-100, bem mais claro) não atinge 4.5:1 sobre o salmon cheio. */
+  /* Text on a SOLID section background (solid military/salmon, not the -100
+     tints) — AA contrast (4.5:1) checked against the exact hex values above.
+     on-military is the same shade as --color-bg (cream), already used as light
+     text on the final CTA band; on-salmon is the same shade as --color-ink.
+     on-salmon-muted exists because --color-ink-peach (designed for the much
+     lighter salmon-100 tint) doesn't reach 4.5:1 on solid salmon. */
   --color-on-military: #faf8f5;
   --color-on-salmon: #23271f;
   --color-on-salmon-muted: #5a3325;
 
-  /* Painel do dashboard de Ativos (Parte 1): texto secundário sobre
-     bg-military mais suave que on-military/80 — pensado para densidade de
-     dados (rótulos de KPI, legendas), não para títulos/subtítulos de
-     seção de marketing. */
+  /* Assets dashboard panel (Part 1): secondary text on bg-military, softer
+     than on-military/80 — designed for data density (KPI labels, legends),
+     not for marketing section titles/subtitles. */
   --color-on-military-muted: #c3cbb3;
 
-  /* Cards/painéis do dashboard sobre bg-military cheio: fundo um pouco
-     MAIS ESCURO que a seção (mistura com preto em baixa proporção), não
-     mais claro — testado contra a fórmula de luminância relativa do
-     WCAG: um overlay claro (tom de --color-on-military) eleva a
-     luminância do fundo do card e por isso *reduz* o contraste dos textos
-     claros que ficam dentro dele (ex.: --color-value-negative caía para
-     ~3,98:1, abaixo do mínimo AA de 4,5:1); escurecer o fundo do card, ao
-     contrário, aumenta a margem de contraste de todos os tokens de texto
-     claro usados dentro dele. A borda continua clara/sutil (tom de
-     --color-on-military em baixa opacidade), como pedido — só o
-     preenchimento do card mudou de direção. */
+  /* Dashboard cards/panels on solid bg-military: a background slightly
+     DARKER than the section (mixed with a small proportion of black), not
+     lighter — tested against the WCAG relative luminance formula: a light
+     overlay (a --color-on-military shade) raises the card background's
+     luminance and therefore *reduces* the contrast of the light text inside
+     it (e.g. --color-value-negative dropped to ~3.98:1, below the AA minimum
+     of 4.5:1); darkening the card background, on the other hand, increases
+     the contrast margin of every light text token used inside it. The border
+     stays light/subtle (--color-on-military at low opacity), as requested —
+     only the card fill changed direction. */
   --color-panel: color-mix(in srgb, var(--color-military) 90%, black);
   --color-panel-border: color-mix(in srgb, var(--color-on-military) 14%, transparent);
 
-  /* Valores positivos/negativos (KPIs, variação %, ganho/perda). Tom de
-     --color-value-negative ajustado para #eda492 (mais claro que o
-     #e67c63 inicialmente cogitado): contra bg-military (#3e4835) o tom
-     mais escuro só atinge ~3.4:1, abaixo do mínimo AA (4.5:1) para o
-     texto pequeno da coluna "Variação" da tabela de posições — #eda492
-     atinge ~4.73:1. Verificado com a fórmula de luminância relativa do
-     WCAG 2.x.  */
+  /* Positive/negative values (KPIs, % change, gain/loss). The
+     --color-value-negative shade was adjusted to #eda492 (lighter than the
+     #e67c63 first considered): against bg-military (#3e4835) the darker
+     shade only reaches ~3.4:1, below the AA minimum (4.5:1) for the small
+     text of the positions table's "Change" column — #eda492 reaches
+     ~4.73:1. Checked with the WCAG 2.x relative luminance formula. */
   --color-value-positive: #9bd1a0;
   --color-value-negative: #eda492;
 
-  /* Paleta categórica dos gráficos do dashboard de Ativos — 5 classes de
-     token, harmônica sobre bg-military. */
+  /* Categorical palette for the Assets dashboard charts — 5 token classes,
+     harmonious on bg-military. */
   --color-chart-pmes: #f0a487;
   --color-chart-agro: #b7c29e;
   --color-chart-imobiliario: #e4c07a;
   --color-chart-auto: #7fa9a3;
   --color-chart-divida: #b49fc0;
 
-  /* Chip + ícone por categoria de token (telas /negociar) — usados sobre
-     card BRANCO (bg-surface), não sobre bg-military: cada par chip/ícone é
-     um tint claro + um tom escuro saturado da mesma família, mesmo padrão
-     de contraste já usado em chip-sage/ink-peach. Token PMEs reaproveita
-     salmon-100/ink-peach (já existentes) em vez de duplicar; Token Agro
-     reaproveita military-100 (chip) com um verde mais escuro próprio para
-     o ícone, já que ink/military não foi calibrado para ícone pequeno.
-     Não usar em texto solto sobre bg-military — são específicos de chip
-     sobre superfície clara. */
+  /* Chip + icon per token category (/negociar screens) — used on a WHITE
+     card (bg-surface), not on bg-military: each chip/icon pair is a light
+     tint + a dark saturated shade of the same family, the same contrast
+     pattern already used in chip-sage/ink-peach. SME Token reuses
+     salmon-100/ink-peach (already existing) instead of duplicating; Agro
+     Token reuses military-100 (chip) with its own darker green for the
+     icon, since ink/military wasn't calibrated for a small icon. Don't use
+     them for loose text on bg-military — they're specific to chips on a
+     light surface. */
   --color-cat-agro-icon: #3b5a22;
   --color-cat-imobiliario-chip: #faeeda;
   --color-cat-imobiliario-icon: #854f0b;
@@ -92,34 +89,34 @@
   --color-cat-divida-chip: #eeedfe;
   --color-cat-divida-icon: #3c3489;
 
-  /* Texto de erro/negativo sobre card BRANCO (bg-surface) nas telas
-     /negociar (boleta) — diferente de --color-value-negative, que foi
-     calibrado para contraste contra bg-military/panel (fundo ESCURO) e
-     falha AA se usado como texto solto sobre branco (mesma classe de
-     pegadinha já documentada para --color-panel: cada superfície precisa
-     do seu próprio tom calibrado). ~6.5:1 contra #FFFFFF. */
+  /* Error/negative text on a WHITE card (bg-surface) on the /negociar
+     screens (order ticket) — different from --color-value-negative, which
+     was calibrated for contrast against bg-military/panel (a DARK
+     background) and fails AA if used as loose text on white (the same class
+     of gotcha already documented for --color-panel: each surface needs its
+     own calibrated shade). ~6.5:1 against #FFFFFF. */
   --color-on-surface-negative: #b3261e;
 
-  /* Raio */
+  /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Sombras suaves */
+  /* Soft shadows */
   --shadow-soft: 0 2px 8px rgba(27, 30, 23, 0.06), 0 8px 24px rgba(27, 30, 23, 0.06);
   --shadow-soft-lg: 0 4px 16px rgba(27, 30, 23, 0.08), 0 16px 40px rgba(27, 30, 23, 0.1);
 
-  /* Animação */
+  /* Animation */
   --animate-dropdown: dropdown-in 150ms ease-out forwards;
 }
 
-/* Efeito de luz de fundo das telas internas de fundo sálvia cheio (SectionGlow.tsx —
-   /negociar, /ativos, /perfil, /investir). Ajuste aqui pra calibrar sem precisar mexer no
-   componente nem em Tailwind: cor (sempre um token já existente — hoje --color-salmon, o mesmo
-   pêssego oficial dos selos/CTAs — nunca um hex novo) e intensidade de cada um dos dois glows
-   (primário = mais forte/maior, secundário = mais discreto). Ambos em porcentagem, direto como
-   o argumento de color-mix() em SectionGlow.tsx — sem precisar de calc(). */
+/* Background light effect of the inner screens with a solid sage background (SectionGlow.tsx —
+   /negociar, /ativos, /perfil, /investir). Tune it here without touching the component or
+   Tailwind: color (always an existing token — today --color-salmon, the same official peach of
+   the badges/CTAs — never a new hex) and the intensity of each of the two glows (primary =
+   stronger/larger, secondary = subtler). Both as percentages, used directly as the color-mix()
+   argument in SectionGlow.tsx — no calc() needed. */
 :root {
   --section-glow-color: var(--color-salmon);
   --section-glow-opacity-primary: 38%;
@@ -137,12 +134,12 @@
   }
 }
 
-/* Rotação lenta do anel do planeta no hero. "to" fecha em 342deg (= -18deg
-   + 360, a inclinação estática original do traço) em vez de 360deg puro,
-   então cada volta completa passa de novo pela inclinação original antes
-   de recomeçar. Roda em loop infinito (ver regra de uso abaixo) — as
-   animações do site sempre tocam, não são pausadas por
-   prefers-reduced-motion (decisão deliberada do usuário, ver CLAUDE.md). */
+/* Slow rotation of the planet ring in the hero. "to" ends at 342deg (= -18deg
+   + 360, the stroke's original static tilt) instead of a plain 360deg, so
+   each full turn passes through the original tilt again before starting
+   over. Runs in an infinite loop (see the usage rule below) — the site's
+   animations always play, they aren't paused by prefers-reduced-motion
+   (a deliberate decision by the user, see CLAUDE.md). */
 @keyframes hero-orbit-ring-spin {
   from {
     transform: rotate(-18deg);
@@ -152,9 +149,9 @@
   }
 }
 
-/* Drift muito lento e opcional dos glows de fundo (SectionGlow.tsx) — secundário nesta versão
-   (o que importa é cor/intensidade, não o movimento). Só transform (translate + scale) —
-   nunca propriedades que geram repaint/layout. */
+/* Very slow, optional drift of the background glows (SectionGlow.tsx) — secondary in this version
+   (what matters is color/intensity, not movement). Only transform (translate + scale) —
+   never properties that trigger repaint/layout. */
 @keyframes section-glow-drift-a {
   from {
     transform: translate3d(0, 0, 0) scale(1);
@@ -179,10 +176,10 @@
   }
 }
 
-/* text-focus-in (Animista) — animação do título da hero. Valores exatos
-   (duration, cubic-bezier, fill-mode both) preservados sem alteração; não
-   envolvida em @media (prefers-reduced-motion: reduce) de propósito — o
-   site sempre toca suas animações, ver decisão acima. */
+/* text-focus-in (Animista) — the hero title animation. Exact values
+   (duration, cubic-bezier, fill-mode both) kept unchanged; deliberately not
+   wrapped in @media (prefers-reduced-motion: reduce) — the site always
+   plays its animations, see the decision above. */
 @-webkit-keyframes text-focus-in {
   0% {
     -webkit-filter: blur(12px);
@@ -208,11 +205,11 @@
   }
 }
 
-/* flip-2-hor-top-1 (Animista) — saída dos cards de "Como funciona"
-   (HowItWorksSection.tsx). Valores exatos (duration 0.5s, cubic-bezier,
-   fill-mode both) preservados sem alteração; a classe é adicionada/
-   removida via JS no card que sai de cena a cada troca de índice, nunca
-   fica presa num elemento em repouso. */
+/* flip-2-hor-top-1 (Animista) — exit of the "How it works" cards
+   (HowItWorksSection.tsx). Exact values (duration 0.5s, cubic-bezier,
+   fill-mode both) kept unchanged; the class is added/removed via JS on the
+   card leaving the scene at each index change, it never stays stuck on an
+   element at rest. */
 @-webkit-keyframes flip-2-hor-top-1 {
   0% {
     -webkit-transform: translateY(0) rotateX(0);
@@ -242,12 +239,12 @@
   }
 }
 
-/* Entrada simétrica do card que assume o lugar — não existe no Animista
-   nem no projeto, criada aqui com o mesmo timing/cubic-bezier da saída
-   acima (pedido do usuário quando não há uma equivalente pronta). Hinge
-   espelhado (começa com origem embaixo + rotacionado 180deg, termina com
-   origem em cima + sem rotação) para as duas parecerem um único card
-   virando, não duas animações independentes. */
+/* Symmetric entrance of the card taking its place — it doesn't exist in
+   Animista nor in the project, created here with the same timing/cubic-bezier
+   as the exit above (the user's request when there's no ready-made
+   equivalent). Mirrored hinge (starts with the origin at the bottom + rotated
+   180deg, ends with the origin at the top + no rotation) so the two look like
+   a single card flipping, not two independent animations. */
 @-webkit-keyframes flip-in-hor-bottom-1 {
   0% {
     -webkit-transform: translateY(100%) rotateX(180deg);
@@ -277,11 +274,11 @@
   }
 }
 
-/* Par espelhado das duas acima, usado quando o usuário rola para CIMA
-   (voltando um card) — mesmo timing/cubic-bezier, mas o card sai para
-   BAIXO (não para cima) e o próximo entra por CIMA (não por baixo), pra
-   a direção do flip acompanhar a direção real da navegação em vez de
-   sempre repetir a mesma animação de avanço ao voltar. */
+/* Mirrored pair of the two above, used when the user scrolls UP (going
+   back one card) — same timing/cubic-bezier, but the card leaves DOWNWARD
+   (not upward) and the next one enters from the TOP (not the bottom), so
+   the flip direction follows the actual navigation direction instead of
+   always repeating the same forward animation when going back. */
 @-webkit-keyframes flip-2-hor-bottom-1 {
   0% {
     -webkit-transform: translateY(0) rotateX(0);
@@ -346,13 +343,13 @@
     animation: text-focus-in 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
   }
 
-  /* backface-visibility:hidden e box-shadow:none só valem enquanto a
-     classe está presente (durante o flip) — não mexem no timing da
-     animação em si (duration/cubic-bezier/fill-mode continuam exatos).
-     Sem backface-visibility, o navegador mostra o verso do card (texto
-     espelhado/de cabeça para baixo) ao cruzar 90°; sem suprimir o
-     box-shadow, a sombra do card (shadow-soft-lg) se distorce durante a
-     rotação 3D e aparece como um bloco preto atrás do card. */
+  /* backface-visibility:hidden and box-shadow:none only apply while the
+     class is present (during the flip) — they don't touch the animation's
+     timing itself (duration/cubic-bezier/fill-mode stay exact). Without
+     backface-visibility, the browser shows the back of the card (mirrored/
+     upside-down text) when crossing 90°; without suppressing box-shadow, the
+     card's shadow (shadow-soft-lg) distorts during the 3D rotation and shows
+     up as a black block behind the card. */
   .flip-2-hor-top-1 {
     -webkit-animation: flip-2-hor-top-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
     animation: flip-2-hor-top-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
@@ -373,8 +370,8 @@
     box-shadow: none;
   }
 
-  /* Par espelhado (voltar um card) — mesmo tratamento de
-     backface-visibility/box-shadow que o par de avançar acima. */
+  /* Mirrored pair (going back one card) — same backface-visibility/
+     box-shadow treatment as the forward pair above. */
   .flip-2-hor-bottom-1 {
     -webkit-animation: flip-2-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
     animation: flip-2-hor-bottom-1 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) both;
@@ -410,9 +407,9 @@
   }
 }
 
-/* `inline` porque estas variáveis referenciam custom properties definidas em
-   runtime pelas classes do next/font em <html>, não valores literais — ver
-   docs do Tailwind v4 sobre @theme inline. */
+/* `inline` because these variables reference custom properties defined at
+   runtime by the next/font classes on <html>, not literal values — see the
+   Tailwind v4 docs on @theme inline. */
 @theme inline {
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
@@ -423,11 +420,11 @@
   color: var(--color-ink);
 }
 
-/* Em `@layer base`: sem isso, estas regras (fora de qualquer layer) vencem
-   incondicionalmente as utilities do Tailwind v4 (que vivem em `@layer
-   utilities`), não importa a especificidade — ex.: `text-bg` num <h2> não
-   teria efeito nenhum para sobrescrever a cor padrão em seções de fundo
-   escuro (faixa CTA). */
+/* In `@layer base`: without it, these rules (outside any layer) beat
+   Tailwind v4's utilities (which live in `@layer utilities`)
+   unconditionally, regardless of specificity — e.g. `text-bg` on an <h2>
+   would have no effect at all to override the default color in sections
+   with a dark background (CTA band). */
 @layer base {
   body {
     background-color: var(--color-bg);
@@ -446,7 +443,7 @@
   }
 }
 
-/* Removida de propósito a regra global @media (prefers-reduced-motion:
-   reduce) que zerava duração de animação/transição — decisão deliberada do
-   usuário: as animações do site sempre tocam por completo, independente da
-   preferência de SO/navegador do visitante (ver CLAUDE.md). */
+/* The global @media (prefers-reduced-motion: reduce) rule that zeroed
+   animation/transition durations was removed on purpose — a deliberate
+   decision by the user: the site's animations always play in full,
+   regardless of the visitor's OS/browser preference (see CLAUDE.md). */

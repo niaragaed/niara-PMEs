@@ -1,22 +1,22 @@
 "use server";
 
-// Server Action de KYC do investidor — usada só pela tela /investir para
-// destravar a confirmação de pagamento (o trigger enforce_investment_transition,
-// ver supabase/migrations/0001_core.sql, barra reserved->paid sem kyc_status =
-// 'approved'). REGRA DE HONESTIDADE: o provedor de KYC é MOCK (src/lib/mocks.ts,
-// resolvido via src/lib/adapters.ts) — grava exatamente o status que o adapter
-// devolveu, nunca 'approved' fixo no código, para que trocar o adapter no futuro
-// não exija tocar aqui.
+// The investor's KYC Server Action — used only by the /investir screen to unlock the payment
+// confirmation (the enforce_investment_transition trigger, see
+// supabase/migrations/0001_core.sql, blocks reserved->paid without kyc_status = 'approved').
+// HONESTY RULE: the KYC provider is a MOCK (src/lib/mocks.ts, resolved via src/lib/adapters.ts) —
+// it stores exactly the status the adapter returned, never a hard-coded 'approved', so that
+// swapping the adapter in the future doesn't require touching this file.
 import { revalidatePath } from "next/cache";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { kyc } from "@/lib/adapters";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getDictionary } from "@/lib/i18n/server";
 
-// investors.kyc_status (supabase/migrations/0001_core.sql) só aceita estes
-// três valores — mais estreito que o KycStatus da porta (que também tem
-// 'in_review', sem equivalente na coluna). Se o adapter algum dia devolver
-// 'in_review', o update abaixo falha por check_violation e cai no branch de
-// erro, então uma resposta "success" só pode carregar um destes três.
+// investors.kyc_status (supabase/migrations/0001_core.sql) only accepts these three values —
+// narrower than the port's KycStatus (which also has 'in_review', with no equivalent in the
+// column). If the adapter ever returns 'in_review', the update below fails with a
+// check_violation and falls into the error branch, so a "success" response can only carry one of
+// these three.
 type InvestorKycStatus = "pending" | "approved" | "rejected";
 
 export type SubmitKycState =
@@ -24,9 +24,10 @@ export type SubmitKycState =
   | { status: "error"; message: string };
 
 export async function submitKyc(): Promise<SubmitKycState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "investor" || !accountId) {
-    return { status: "error", message: "Apenas investidores cadastrados podem enviar o KYC." };
+    return { status: "error", message: e.investorsOnly.kyc };
   }
 
   const admin = createAdminClient();
@@ -38,11 +39,11 @@ export async function submitKyc(): Promise<SubmitKycState> {
     .single();
 
   if (fetchError || !investor) {
-    console.error("investir: erro ao buscar investidor para KYC", fetchError);
-    return { status: "error", message: "Não foi possível enviar o KYC. Tente novamente em instantes." };
+    console.error("invest: failed to fetch the investor for KYC", fetchError);
+    return { status: "error", message: e.kyc.submitFailed };
   }
 
-  const result = await kyc.submit({ usuarioId: accountId, documento: investor.tax_id as string });
+  const result = await kyc.submit({ userId: accountId, document: investor.tax_id as string });
 
   const { error: updateError } = await admin
     .from("investors")
@@ -50,8 +51,8 @@ export async function submitKyc(): Promise<SubmitKycState> {
     .eq("id", accountId);
 
   if (updateError) {
-    console.error("investir: erro ao gravar kyc_status", updateError);
-    return { status: "error", message: "Não foi possível concluir o KYC. Tente novamente em instantes." };
+    console.error("invest: failed to store kyc_status", updateError);
+    return { status: "error", message: e.kyc.completeFailed };
   }
 
   revalidatePath("/investir");

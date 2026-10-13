@@ -1,48 +1,37 @@
 "use client";
 
-// Lista visual dos gates de publicação (Fase 3) — puramente apresentacional: recebe as linhas
-// já resolvidas (label/status/motivo em pt-BR) e só desenha. Toda decisão de "o que cada
-// status significa" já aconteceu antes, em src/lib/web3/gates.ts + o mapeamento em
-// PublicarOnChainPage.tsx — este componente nunca interpreta um erro como reprovação nem
-// inventa texto.
+// Visual list of the publication gates (Phase 3) — purely presentational: receives the rows
+// already resolved (label/status/reason, already translated) and only draws them. Every decision
+// about "what each status means" already happened before, in src/lib/web3/gates.ts + the mapping
+// in PublishOnChainPage.tsx — this component never interprets an error as a rejection nor makes
+// up text.
 import { AlertTriangle, Check, Loader2, X } from "lucide-react";
 import type { GateStatus } from "@/lib/web3/gates";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type GateRow = {
   id: string;
   label: string;
   status: GateStatus;
-  /** Texto extra em pt-BR — motivo da reprovação/erro, ou um detalhe informativo mesmo em "ok". */
-  detalhe: string | null;
+  /** Extra text — the reason for the rejection/error, or an informative detail even on "ok". */
+  detail: string | null;
 };
 
 function StatusIcon({ status }: { status: GateStatus }) {
   switch (status) {
     case "ok":
       return <Check className="h-4 w-4 shrink-0 text-value-positive" aria-hidden="true" />;
-    case "reprovado":
+    case "rejected":
       return <X className="h-4 w-4 shrink-0 text-value-negative" aria-hidden="true" />;
-    case "erro":
+    case "error":
       return <AlertTriangle className="h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />;
-    case "carregando":
+    case "loading":
       return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-on-military-muted" aria-hidden="true" />;
   }
 }
 
-function statusLabel(status: GateStatus): string {
-  switch (status) {
-    case "ok":
-      return "OK";
-    case "reprovado":
-      return "Reprovado";
-    case "erro":
-      return "Erro de leitura";
-    case "carregando":
-      return "Verificando…";
-  }
-}
-
 export function GateChecklist({ rows }: { rows: GateRow[] }) {
+  const statusLabels = useDictionary().companyOfferings.publishOnChain.gates.statusLabels;
   return (
     <ul className="flex flex-col gap-3">
       {rows.map((row) => (
@@ -56,17 +45,17 @@ export function GateChecklist({ rows }: { rows: GateRow[] }) {
                   className={
                     row.status === "ok"
                       ? "text-xs text-value-positive"
-                      : row.status === "reprovado"
+                      : row.status === "rejected"
                         ? "text-xs text-value-negative"
-                        : row.status === "erro"
+                        : row.status === "error"
                           ? "text-xs text-salmon"
                           : "text-xs text-on-military-muted"
                   }
                 >
-                  {statusLabel(row.status)}
+                  {statusLabels[row.status]}
                 </span>
               </div>
-              {row.detalhe && <p className="mt-1 text-xs text-on-military-muted">{row.detalhe}</p>}
+              {row.detail && <p className="mt-1 text-xs text-on-military-muted">{row.detail}</p>}
             </div>
           </div>
         </li>

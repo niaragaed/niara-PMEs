@@ -1,12 +1,12 @@
 import "server-only";
 
-// Resolve a sessão do usuário logado (se houver) e o cadastro de domínio
-// vinculado a ela (se já existir) — investidor OU empresa, no máximo um dos
-// dois por usuário (ver supabase/migrations/0003_auth_link.sql e
-// 0004_issuer_auth_link.sql). Não cria nenhum dos dois — só resolve o
-// vínculo atual. Usa o admin client (service_role) para ler `investors`/
-// `issuers` porque RLS ali é default-deny e ainda não há policy de leitura
-// própria do usuário.
+// Resolves the signed-in user's session (if any) and the domain registration
+// linked to it (if it already exists) — investor OR company, at most one of the
+// two per user (see supabase/migrations/0003_auth_link.sql and
+// 0004_issuer_auth_link.sql). Creates neither — it only resolves the
+// current link. Uses the admin client (service_role) to read `investors`/
+// `issuers` because RLS there is default-deny and there's no self-read
+// policy for the user yet.
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
@@ -52,10 +52,10 @@ export async function resolveAccount(): Promise<ResolvedAccount> {
   return { userId: user.id, role: null, accountId: null };
 }
 
-// Gate simples de "precisa estar logado" para telas que não exigem role
-// específico (investidor OU emissor servem) — /negociar/*, /ativos. Não
-// confundir com o gate de /perfil, que além de exigir login também exige
-// role já definido (redireciona para /cadastro se logado mas sem role).
+// A simple "must be signed in" gate for screens that don't require a specific
+// role (investor OR issuer both work) — /negociar/*, /ativos. Not to be
+// confused with the /perfil gate, which besides requiring sign-in also requires
+// a role already defined (redirects to /cadastro if signed in but without a role).
 export async function requireLogin(): Promise<void> {
   const supabase = await createServerSupabaseClient();
   const {
@@ -72,8 +72,8 @@ export type ResolvedInvestor = {
   investorId: string | null;
 };
 
-// Wrapper de compatibilidade — mantido porque já havia um caller (ver
-// src/app/conta/page.tsx). Novos callers devem usar resolveAccount direto.
+// Compatibility wrapper — kept because there was already a caller (see
+// src/app/conta/page.tsx). New callers should use resolveAccount directly.
 export async function resolveInvestor(): Promise<ResolvedInvestor> {
   const { userId, role, accountId } = await resolveAccount();
   return { userId, investorId: role === "investor" ? accountId : null };

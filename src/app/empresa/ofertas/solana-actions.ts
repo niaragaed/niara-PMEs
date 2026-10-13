@@ -1,61 +1,64 @@
 "use server";
 
-// Server Actions da publicação self-service na Solana Devnet — par de onchain-actions.ts (Sepolia),
-// com as MESMAS regras de ouro (ler o cabeçalho daquele arquivo antes de mexer aqui):
-//   - contract_address/token_address/onchain_emissor_wallet nunca vêm do cliente: só de leitura
-//     verificada do próprio servidor contra a rede (confirmarPublicacaoSolana);
-//   - issuer_id/accountId sempre de resolveAccount();
-//   - o emissor do evento é comparado com `expected_emissor_wallet`, congelado por
-//     registrarTentativaSolana a partir de issuers.solana_wallet_address lido AQUI, nunca com uma
-//     releitura ao vivo.
+// Server Actions for the self-service publication on Solana Devnet — the counterpart of
+// onchain-actions.ts (Sepolia), with the SAME golden rules (read that file's header before
+// touching this one):
+//   - contract_address/token_address/onchain_emissor_wallet never come from the client: only from
+//     a verified read by the server itself against the network (confirmPublicationSolana);
+//   - issuer_id/accountId always from resolveAccount();
+//   - the event's issuer is compared with `expected_emissor_wallet`, frozen by
+//     registerAttemptSolana from issuers.solana_wallet_address read HERE, never with a live
+//     re-read.
 //
-// Diferenças de mecânica em relação à Sepolia:
-//   - A assinatura da transação (o "tx_hash" da Solana) já é conhecida ANTES do envio — ela é a
-//     própria assinatura do pagador. Por isso a tentativa é registrada antes de a transação ir para
-//     a rede: se o registro falhar, nada é enviado e não sobra oferta órfã on-chain.
-//   - Uma transação da Solana que não entra na rede até o blockhash vencer (~1–2 min) nunca mais
-//     entra. confirmarPublicacaoSolana reconhece esse caso e devolve a oferta para 'nao_onchain', em
-//     vez de deixá-la 'pendente' para sempre.
+// Mechanical differences from Sepolia:
+//   - The transaction signature (Solana's "tx_hash") is known BEFORE sending — it's the payer's
+//     own signature. That's why the attempt is recorded before the transaction goes to the
+//     network: if the recording fails, nothing is sent and no orphan offering is left on-chain.
+//   - A Solana transaction that doesn't land before its blockhash expires (~1–2 min) never lands.
+//     confirmPublicationSolana recognizes that case and sends the offering back to 'nao_onchain',
+//     instead of leaving it 'pendente' forever.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BASE58_ASSINATURA, REDE_SOLANA, UNIDADE_ON_CHAIN_SOLANA } from "@/lib/solana/config";
+import { BASE58_SIGNATURE, SOLANA_NETWORK, SOLANA_UNIT_ON_CHAIN } from "@/lib/solana/config";
 import { keccak256, toHex } from "viem";
-import { alturaDeBlocoAtual, lerContaOfertaVerificada, lerTxPublicacao } from "@/lib/solana/servidor";
-import { descreverErroSolana } from "@/lib/solana/errors";
+import { currentBlockHeight, readVerifiedOfferingAccount, readPublicationTx } from "@/lib/solana/server";
+import { describeSolanaError } from "@/lib/solana/errors";
 import { formatBRL } from "@/lib/format";
-import type { ConfirmarPublicacaoState, RegistrarTentativaState, VerificarConsistenciaState } from "./onchain-actions";
+import { getDictionary } from "@/lib/i18n/server";
+import type { ConfirmPublicationState, RegisterAttemptState, CheckConsistencyState } from "./onchain-actions";
 
-/** Fallback (linha sem lastValidBlockHeight): depois disso sem sinal na rede, o blockhash venceu. */
-const EXPIRACAO_TENTATIVA_MS = 3 * 60 * 1000;
-const FOLGA_RELOGIO_S = 120;
+/** Fallback (row without lastValidBlockHeight): after this with no sign on the network, the blockhash expired. */
+const ATTEMPT_EXPIRATION_MS = 3 * 60 * 1000;
+const CLOCK_SKEW_S = 120;
 
-const registrarSchema = z.object({
+const registerSchema = z.object({
   offeringId: z.string().uuid(),
-  assinatura: z.string().regex(BASE58_ASSINATURA, "Assinatura de transação inválida."),
-  prazoUnixSeconds: z.number().int().positive(),
-  /** lastValidBlockHeight do blockhash da transação assinada (só decide quando ela expirou). */
-  ultimoBlocoValido: z.number().int().positive(),
+  signature: z.string().regex(BASE58_SIGNATURE),
+  deadlineUnixSeconds: z.number().int().positive(),
+  /** lastValidBlockHeight of the signed transaction's blockhash (only decides when it expired). */
+  lastValidBlockHeight: z.number().int().positive(),
 });
 
 /**
- * Chamada pelo cliente com a transação JÁ ASSINADA pela Phantom e ainda NÃO enviada. Congela
- * opens_at/closes_at (o `prazo` exato que foi para a transação) e expected_emissor_wallet
- * (issuers.solana_wallet_address lido aqui). Atômico como na Sepolia: só a primeira tentativa de
- * uma oferta 'nao_onchain' é registrada.
+ * Called by the client with the transaction ALREADY SIGNED by Phantom and NOT sent yet. Freezes
+ * opens_at/closes_at (the exact `prazo` that went into the transaction) and
+ * expected_emissor_wallet (issuers.solana_wallet_address read here). Atomic like on Sepolia: only
+ * the first attempt of a 'nao_onchain' offering is recorded.
  */
-export async function registrarTentativaSolana(input: unknown): Promise<RegistrarTentativaState> {
+export async function registerAttemptSolana(input: unknown): Promise<RegisterAttemptState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem publicar ofertas." };
+    return { status: "error", message: e.issuersOnly.publish };
   }
 
-  const parsed = registrarSchema.safeParse(input);
+  const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: "error", message: "Dados inválidos para registrar a publicação." };
+    return { status: "error", message: e.publication.invalidData };
   }
-  const { offeringId, assinatura, prazoUnixSeconds, ultimoBlocoValido } = parsed.data;
+  const { offeringId, signature, deadlineUnixSeconds, lastValidBlockHeight } = parsed.data;
 
   const admin = createAdminClient();
   const { data: issuer, error: issuerError } = await admin
@@ -64,25 +67,25 @@ export async function registrarTentativaSolana(input: unknown): Promise<Registra
     .eq("id", accountId)
     .maybeSingle();
   if (issuerError) {
-    console.error("registrarTentativaSolana: erro ao ler carteira do emissor", issuerError);
-    return { status: "error", message: "Não foi possível registrar a tentativa de publicação." };
+    console.error("registerAttemptSolana: failed to read the issuer's wallet", issuerError);
+    return { status: "error", message: e.publication.attemptFailed };
   }
-  const walletVinculada = (issuer?.solana_wallet_address as string | null) ?? null;
-  if (!walletVinculada) {
-    return { status: "error", message: "Nenhuma carteira Solana vinculada a esta conta — não é possível registrar a publicação." };
+  const linkedWallet = (issuer?.solana_wallet_address as string | null) ?? null;
+  if (!linkedWallet) {
+    return { status: "error", message: e.publication.noLinkedSolanaWallet };
   }
 
   const { data, error } = await admin
     .from("offerings")
     .update({
-      rede: REDE_SOLANA,
-      tx_hash: assinatura,
+      rede: SOLANA_NETWORK,
+      tx_hash: signature,
       chain_id: null,
       sync_status: "pendente",
       opens_at: new Date().toISOString(),
-      closes_at: new Date(prazoUnixSeconds * 1000).toISOString(),
-      expected_emissor_wallet: walletVinculada,
-      solana_ultimo_bloco_valido: ultimoBlocoValido,
+      closes_at: new Date(deadlineUnixSeconds * 1000).toISOString(),
+      expected_emissor_wallet: linkedWallet,
+      solana_ultimo_bloco_valido: lastValidBlockHeight,
       onchain_last_error: null,
     })
     .eq("id", offeringId)
@@ -91,30 +94,30 @@ export async function registrarTentativaSolana(input: unknown): Promise<Registra
     .select("id");
 
   if (error) {
-    console.error("registrarTentativaSolana: erro inesperado do banco", error);
-    return { status: "error", message: "Não foi possível registrar a tentativa de publicação." };
+    console.error("registerAttemptSolana: unexpected database error", error);
+    return { status: "error", message: e.publication.attemptFailed };
   }
   if (!data || data.length === 0) {
-    return { status: "error", message: "Já existe uma tentativa de publicação em andamento para esta oferta." };
+    return { status: "error", message: e.publication.attemptInProgress };
   }
 
   revalidatePath(`/empresa/ofertas/${offeringId}/publicar`);
   return { status: "success" };
 }
 
-async function marcarDivergente(admin: ReturnType<typeof createAdminClient>, offeringId: string, accountId: string, motivo: string) {
+async function markDivergent(admin: ReturnType<typeof createAdminClient>, offeringId: string, accountId: string, reason: string) {
   await admin
     .from("offerings")
-    .update({ sync_status: "divergente", onchain_last_error: motivo })
+    .update({ sync_status: "divergente", onchain_last_error: reason })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
     .in("sync_status", ["pendente", "divergente"]);
   revalidatePath(`/empresa/ofertas/${offeringId}/publicar`);
 }
 
-async function voltarParaNaoOnchain(admin: ReturnType<typeof createAdminClient>, offeringId: string, accountId: string, motivo: string) {
-  // Mesma regra da Sepolia: tx_hash e expected_emissor_wallet pertencem à MESMA tentativa e voltam
-  // a null juntos, para uma nova tentativa recongelar os dois do zero.
+async function resetToNotOnchain(admin: ReturnType<typeof createAdminClient>, offeringId: string, accountId: string, reason: string) {
+  // Same rule as Sepolia: tx_hash and expected_emissor_wallet belong to the SAME attempt and go
+  // back to null together, so a new attempt can freeze both again from scratch.
   await admin
     .from("offerings")
     .update({
@@ -122,7 +125,7 @@ async function voltarParaNaoOnchain(admin: ReturnType<typeof createAdminClient>,
       tx_hash: null,
       expected_emissor_wallet: null,
       solana_ultimo_bloco_valido: null,
-      onchain_last_error: motivo,
+      onchain_last_error: reason,
     })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
@@ -131,22 +134,26 @@ async function voltarParaNaoOnchain(admin: ReturnType<typeof createAdminClient>,
 }
 
 /**
- * Lê a transação da própria linha na devnet e confere, nesta ordem:
- *   1. a transação existe e não falhou (falhou → volta a 'nao_onchain' com o motivo do programa);
- *   2. há exatamente um evento OfertaCriada emitido pelo programa niara-pmes-solana;
- *   3. emissor do evento = expected_emissor_wallet; meta mínima, meta máxima, preço por cota e prazo
- *      batem com a linha (centavos × 10^4);
- *   4. a conta da oferta existe na rede, pertence ao programa, e o emissor/mint gravados nela são os
- *      mesmos do evento.
- * Só então grava os endereços — sempre os lidos da rede.
+ * Reads the row's own transaction on devnet and checks, in this order:
+ *   1. the transaction exists and didn't fail (failed → back to 'nao_onchain' with the program's
+ *      reason);
+ *   2. there's exactly one OfertaCriada event emitted by the niara-pmes-solana program;
+ *   3. the event's issuer = expected_emissor_wallet; minimum target, maximum target, price per
+ *      share and deadline match the row (cents × 10^4);
+ *   4. the offering account exists on the network, belongs to the program, and the issuer/mint
+ *      stored in it are the same as the event's.
+ * Only then stores the addresses — always the ones read from the network.
  */
-export async function confirmarPublicacaoSolana(offeringId: string): Promise<ConfirmarPublicacaoState> {
+export async function confirmPublicationSolana(offeringId: string): Promise<ConfirmPublicationState> {
+  const dict = await getDictionary();
+  const e = dict.serverErrors;
+  const solanaMessages = dict.chainErrors.solana;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem confirmar publicações." };
+    return { status: "error", message: e.issuersOnly.confirm };
   }
   const parsedId = z.string().uuid().safeParse(offeringId);
-  if (!parsedId.success) return { status: "error", message: "Oferta inválida." };
+  if (!parsedId.success) return { status: "error", message: e.invalidOffering };
 
   const admin = createAdminClient();
   const { data: offering, error: fetchError } = await admin
@@ -158,111 +165,112 @@ export async function confirmarPublicacaoSolana(offeringId: string): Promise<Con
     .eq("issuer_id", accountId)
     .maybeSingle();
 
-  if (fetchError || !offering) return { status: "error", message: "Oferta não encontrada." };
-  if (offering.rede !== REDE_SOLANA) return { status: "error", message: "Esta oferta não foi publicada na Solana." };
+  if (fetchError || !offering) return { status: "error", message: e.offeringNotFound };
+  if (offering.rede !== SOLANA_NETWORK) return { status: "error", message: e.publication.notOnSolana };
 
   if (offering.sync_status === "confirmada") {
     return { status: "confirmada", contractAddress: offering.contract_address as string, tokenAddress: offering.token_address as string };
   }
   if (!["pendente", "divergente"].includes(offering.sync_status as string) || !offering.tx_hash) {
-    return { status: "error", message: "Esta oferta não está com uma publicação pendente." };
+    return { status: "error", message: e.publication.notPending };
   }
-  const walletEsperada = (offering.expected_emissor_wallet as string | null) ?? null;
-  if (!walletEsperada) {
-    return { status: "error", message: "Esta oferta não tem uma carteira esperada congelada — não é possível confirmar." };
+  const expectedWallet = (offering.expected_emissor_wallet as string | null) ?? null;
+  if (!expectedWallet) {
+    return { status: "error", message: e.publication.noFrozenWallet };
   }
 
-  let leitura;
+  let read;
   try {
-    leitura = await lerTxPublicacao(offering.tx_hash as string);
-  } catch (e) {
-    // RPC fora do ar — nunca confundir com "a transação não existe".
-    return { status: "error", message: descreverErroSolana(e) };
+    read = await readPublicationTx(offering.tx_hash as string, solanaMessages);
+  } catch (err) {
+    // RPC down — never mistake it for "the transaction doesn't exist".
+    return { status: "error", message: describeSolanaError(err, solanaMessages) };
   }
 
-  if (leitura.status === "nao-encontrada") {
-    // Só descarta quando é CERTO que a transação não entra mais: sem nenhum sinal dela na rede E
-    // com a rede já além do lastValidBlockHeight do blockhash que ela usou. (Linha sem esse valor:
-    // fallback de tempo, folgado.)
-    const desde = Date.now() - new Date(offering.opens_at as string).getTime();
-    const ultimoValido = offering.solana_ultimo_bloco_valido === null ? null : Number(offering.solana_ultimo_bloco_valido);
-    let venceu = desde > EXPIRACAO_TENTATIVA_MS;
-    if (ultimoValido !== null) {
+  if (read.status === "not-found") {
+    // Only discards when it's CERTAIN the transaction won't land anymore: no sign of it on the
+    // network AND the network already past the lastValidBlockHeight of the blockhash it used. (Row
+    // without that value: a generous time fallback.)
+    const since = Date.now() - new Date(offering.opens_at as string).getTime();
+    const lastValid = offering.solana_ultimo_bloco_valido === null ? null : Number(offering.solana_ultimo_bloco_valido);
+    let expired = since > ATTEMPT_EXPIRATION_MS;
+    if (lastValid !== null) {
       try {
-        venceu = (await alturaDeBlocoAtual()) > ultimoValido;
-      } catch (e) {
-        return { status: "error", message: descreverErroSolana(e) };
+        expired = (await currentBlockHeight()) > lastValid;
+      } catch (err) {
+        return { status: "error", message: describeSolanaError(err, solanaMessages) };
       }
     }
-    if (leitura.jaExpirou && venceu) {
-      const motivo = "A transação não chegou à rede antes de expirar (nada foi gravado on-chain) — pode publicar de novo.";
-      await voltarParaNaoOnchain(admin, parsedId.data, accountId, motivo);
-      return { status: "revertida", motivo };
+    if (read.alreadyExpired && expired) {
+      const reason = e.publication.solanaExpired;
+      await resetToNotOnchain(admin, parsedId.data, accountId, reason);
+      return { status: "reverted", reason };
     }
     return { status: "pendente" };
   }
 
-  if (leitura.status === "falhou") {
-    await voltarParaNaoOnchain(admin, parsedId.data, accountId, leitura.motivo);
-    return { status: "revertida", motivo: leitura.motivo };
+  if (read.status === "failed") {
+    await resetToNotOnchain(admin, parsedId.data, accountId, read.reason);
+    return { status: "reverted", reason: read.reason };
   }
 
-  if (leitura.eventos.length !== 1) {
-    const motivo =
-      leitura.eventos.length === 0
-        ? "Nenhum evento OfertaCriada emitido pelo programa niara-pmes-solana foi encontrado nesta transação."
-        : "Mais de um evento OfertaCriada nesta transação — esperado exatamente um.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+  if (read.events.length !== 1) {
+    const reason =
+      read.events.length === 0
+        ? e.publication.noOfferingCreatedEvent
+        : e.publication.multipleEvents;
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
-  const ev = leitura.eventos[0];
+  const ev = read.events[0];
 
-  // A transação tem que ser DESTA tentativa: confirmada depois de registrada (o registro acontece
-  // antes do envio, com folga para relógios) — uma assinatura antiga de outra oferta não serve.
-  const registradaEm = Math.floor(new Date(offering.opens_at as string).getTime() / 1000);
-  if (leitura.blockTime !== null && leitura.blockTime < registradaEm - FOLGA_RELOGIO_S) {
-    const motivo = "A transação é anterior a esta tentativa de publicação — não pertence a esta oferta.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+  // The transaction must belong to THIS attempt: confirmed after being recorded (the recording
+  // happens before sending, with slack for clocks) — an old signature from another offering won't
+  // do.
+  const registeredOn = Math.floor(new Date(offering.opens_at as string).getTime() / 1000);
+  if (read.blockTime !== null && read.blockTime < registeredOn - CLOCK_SKEW_S) {
+    const reason = e.publication.txBeforeAttempt;
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
-  // E da empresa DESTA conta: o cnpjRef do evento é keccak256 do CNPJ cadastrado (mesmo cálculo
-  // de publicar/page.tsx).
+  // And from THIS account's company: the event's cnpjRef is keccak256 of the registered CNPJ (same
+  // computation as publicar/page.tsx).
   const { data: issuer } = await admin.from("issuers").select("tax_id").eq("id", accountId).maybeSingle();
   if (ev.cnpjRefHex.toLowerCase() !== keccak256(toHex((issuer?.tax_id as string | null) ?? "")).toLowerCase()) {
-    const motivo = "O CNPJ (hash) gravado na oferta on-chain não é o desta empresa.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+    const reason = e.publication.cnpjMismatch;
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
-  const esperado = {
-    metaMinima: BigInt(offering.target_min_cents) * UNIDADE_ON_CHAIN_SOLANA,
-    metaMaxima: BigInt(offering.hard_cap_cents) * UNIDADE_ON_CHAIN_SOLANA,
-    precoPorCota: BigInt(offering.share_price_cents as number) * UNIDADE_ON_CHAIN_SOLANA,
+  const expected = {
+    metaMinima: BigInt(offering.target_min_cents) * SOLANA_UNIT_ON_CHAIN,
+    metaMaxima: BigInt(offering.hard_cap_cents) * SOLANA_UNIT_ON_CHAIN,
+    precoPorCota: BigInt(offering.share_price_cents as number) * SOLANA_UNIT_ON_CHAIN,
     prazo: Math.floor(new Date(offering.closes_at as string).getTime() / 1000),
   };
   if (
-    ev.emissor !== walletEsperada ||
-    ev.metaMinima !== esperado.metaMinima ||
-    ev.metaMaxima !== esperado.metaMaxima ||
-    ev.precoPorCota !== esperado.precoPorCota ||
-    ev.prazo !== esperado.prazo
+    ev.emissor !== expectedWallet ||
+    ev.metaMinima !== expected.metaMinima ||
+    ev.metaMaxima !== expected.metaMaxima ||
+    ev.precoPorCota !== expected.precoPorCota ||
+    ev.prazo !== expected.prazo
   ) {
-    const motivo = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira Solana vinculada) no Supabase.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+    const reason = e.publication.eventMismatchSolana;
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
-  let conta;
+  let account;
   try {
-    conta = await lerContaOfertaVerificada(ev.oferta);
-  } catch (e) {
-    return { status: "error", message: descreverErroSolana(e) };
+    account = await readVerifiedOfferingAccount(ev.oferta);
+  } catch (err) {
+    return { status: "error", message: describeSolanaError(err, solanaMessages) };
   }
-  if (!conta || conta.emissor !== ev.emissor || conta.mintCota !== ev.mintCota) {
-    const motivo = "A conta da oferta citada no evento não existe na rede, não pertence ao programa niara-pmes-solana ou não bate com o evento.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+  if (!account || account.issuer !== ev.emissor || account.shareMint !== ev.mintCota) {
+    const reason = e.publication.accountMismatch;
+    await markDivergent(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", reason };
   }
 
   const { error: updateError } = await admin
@@ -280,8 +288,8 @@ export async function confirmarPublicacaoSolana(offeringId: string): Promise<Con
     .in("sync_status", ["pendente", "divergente"]);
 
   if (updateError) {
-    console.error("confirmarPublicacaoSolana: erro ao gravar confirmação", updateError);
-    return { status: "error", message: "A transação confirmou on-chain, mas não foi possível gravar no banco — tente de novo." };
+    console.error("confirmPublicationSolana: failed to store the confirmation", updateError);
+    return { status: "error", message: e.publication.saveFailed };
   }
 
   revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
@@ -290,17 +298,20 @@ export async function confirmarPublicacaoSolana(offeringId: string): Promise<Con
 }
 
 /**
- * Reconciliação contínua — mesma ideia de verificarConsistencia (Sepolia): relê a conta da oferta
- * (meta mínima, meta máxima, preço por cota e prazo são gravados uma vez em criar_oferta e nunca
- * mudam) e compara com a linha do Supabase. Só sinaliza; nunca corrige nenhum dos lados.
+ * Continuous reconciliation — the same idea as checkConsistency (Sepolia): re-reads the offering
+ * account (minimum target, maximum target, price per share and deadline are written once in
+ * criar_oferta and never change) and compares it with the Supabase row. It only flags; it never
+ * fixes either side.
  */
-export async function verificarConsistenciaSolana(offeringId: string): Promise<VerificarConsistenciaState> {
+export async function verifyConsistencySolana(offeringId: string): Promise<CheckConsistencyState> {
+  const dict = await getDictionary();
+  const e = dict.serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem verificar publicações." };
+    return { status: "error", message: e.issuersOnly.verify };
   }
   const parsedId = z.string().uuid().safeParse(offeringId);
-  if (!parsedId.success) return { status: "error", message: "Oferta inválida." };
+  if (!parsedId.success) return { status: "error", message: e.invalidOffering };
 
   const admin = createAdminClient();
   const { data: offering, error: fetchError } = await admin
@@ -310,51 +321,56 @@ export async function verificarConsistenciaSolana(offeringId: string): Promise<V
     .eq("issuer_id", accountId)
     .maybeSingle();
 
-  if (fetchError || !offering) return { status: "error", message: "Oferta não encontrada." };
-  if (offering.rede !== REDE_SOLANA) return { status: "error", message: "Esta oferta não foi publicada na Solana." };
+  if (fetchError || !offering) return { status: "error", message: e.offeringNotFound };
+  if (offering.rede !== SOLANA_NETWORK) return { status: "error", message: e.publication.notOnSolana };
   if (!["confirmada", "divergente"].includes(offering.sync_status as string) || !offering.contract_address) {
-    return { status: "error", message: "Esta oferta ainda não tem uma publicação confirmada para verificar." };
+    return { status: "error", message: e.publication.notConfirmedYet };
   }
 
-  let conta;
+  let account;
   try {
-    conta = await lerContaOfertaVerificada(offering.contract_address as string);
-  } catch (e) {
-    return { status: "error", message: descreverErroSolana(e) };
+    account = await readVerifiedOfferingAccount(offering.contract_address as string);
+  } catch (err) {
+    return { status: "error", message: describeSolanaError(err, dict.chainErrors.solana) };
   }
-  if (!conta) {
-    return { status: "error", message: "A conta da oferta não foi encontrada na rede agora — tente de novo em instantes." };
+  if (!account) {
+    return { status: "error", message: e.publication.accountNotFoundNow };
   }
 
-  const cents = (v: bigint) => Number(v / UNIDADE_ON_CHAIN_SOLANA);
-  const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+  const cents = (v: bigint) => Number(v / SOLANA_UNIT_ON_CHAIN);
+  const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
   const diffs: string[] = [];
-  if (conta.metaMinima !== BigInt(offering.target_min_cents) * UNIDADE_ON_CHAIN_SOLANA) {
-    diffs.push(`meta mínima: Supabase ${formatBRL(offering.target_min_cents / 100)} ≠ on-chain ${formatBRL(cents(conta.metaMinima) / 100)}`);
+  if (account.minTarget !== BigInt(offering.target_min_cents) * SOLANA_UNIT_ON_CHAIN) {
+    diffs.push(e.publication.diffMinTarget(formatBRL(offering.target_min_cents / 100), formatBRL(cents(account.minTarget) / 100)));
   }
-  if (conta.metaMaxima !== BigInt(offering.hard_cap_cents) * UNIDADE_ON_CHAIN_SOLANA) {
-    diffs.push(`hard cap: Supabase ${formatBRL(offering.hard_cap_cents / 100)} ≠ on-chain ${formatBRL(cents(conta.metaMaxima) / 100)}`);
+  if (account.maxTarget !== BigInt(offering.hard_cap_cents) * SOLANA_UNIT_ON_CHAIN) {
+    diffs.push(e.publication.diffHardCap(formatBRL(offering.hard_cap_cents / 100), formatBRL(cents(account.maxTarget) / 100)));
   }
-  if (conta.precoPorCota !== BigInt(offering.share_price_cents as number) * UNIDADE_ON_CHAIN_SOLANA) {
+  if (account.pricePerShare !== BigInt(offering.share_price_cents as number) * SOLANA_UNIT_ON_CHAIN) {
     diffs.push(
-      `valor por cota: Supabase ${formatBRL((offering.share_price_cents as number) / 100)} ≠ on-chain ${formatBRL(cents(conta.precoPorCota) / 100)}`,
+      e.publication.diffSharePrice(formatBRL((offering.share_price_cents as number) / 100), formatBRL(cents(account.pricePerShare) / 100)),
     );
   }
-  if (conta.prazo !== Math.floor(new Date(offering.closes_at as string).getTime() / 1000)) {
-    diffs.push(`prazo: Supabase ${data.format(new Date(offering.closes_at as string))} ≠ on-chain ${data.format(new Date(conta.prazo * 1000))}`);
+  if (account.deadline !== Math.floor(new Date(offering.closes_at as string).getTime() / 1000)) {
+    diffs.push(
+      e.publication.diffDeadline(
+        dateFormatter.format(new Date(offering.closes_at as string)),
+        dateFormatter.format(new Date(account.deadline * 1000)),
+      ),
+    );
   }
 
   if (diffs.length > 0) {
-    const motivo = `Divergência de consistência (Supabase mudou depois da confirmação) — ${diffs.join("; ")}.`;
+    const reason = e.publication.consistencyDrift(diffs.join("; "));
     await admin
       .from("offerings")
-      .update({ sync_status: "divergente", onchain_last_error: motivo })
+      .update({ sync_status: "divergente", onchain_last_error: reason })
       .eq("id", parsedId.data)
       .eq("issuer_id", accountId)
       .in("sync_status", ["confirmada", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
     revalidatePath("/empresa/ofertas");
-    return { status: "divergente", motivo };
+    return { status: "divergente", reason };
   }
 
   await admin
