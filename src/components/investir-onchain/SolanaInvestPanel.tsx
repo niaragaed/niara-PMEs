@@ -379,7 +379,7 @@ export function SolanaInvestPanel({
             {position.refunded && (
               <div>
                 <dt className="text-xs text-on-military-muted">{ts.refundedLabel}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">Sim</dd>
+                <dd className="mt-0.5 text-sm text-on-military">{dict.common.yes}</dd>
               </div>
             )}
           </dl>

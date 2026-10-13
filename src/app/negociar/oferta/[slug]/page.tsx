@@ -8,7 +8,8 @@ import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
 import { resolvePartner } from "@/lib/auth/resolveSocio";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
-import { getDictionary } from "@/lib/i18n/server";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { localize } from "@/lib/i18n/locale";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -16,13 +17,14 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const dict = await getDictionary();
+  const locale = await getLocale();
   const { slug } = await params;
   const offering = getOfferingBySlug(slug);
 
   if (offering) {
     return {
-      title: `${offering.name} · Niara PMEs`,
-      description: offering.company.summary,
+      title: `${localize(offering.name, locale)} · Niara PMEs`,
+      description: localize(offering.company.summary, locale),
     };
   }
 

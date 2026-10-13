@@ -6,6 +6,16 @@ export const en = {
     skipToContent: "Skip to content",
     yes: "Yes",
     no: "No",
+    datePlaceholder: "DD/MM/YYYY",
+    defaultDocuments: [
+      "Information memorandum",
+      "Balance sheet",
+      "Financial statements",
+      "Earnings release",
+      "Earnings presentation",
+      "Articles of association / bylaws",
+      "Offering subscription agreement",
+    ],
     homeAriaLabel: "Niara PMEs — home page",
     comingSoon: "Coming soon",
     demo: "Demo",
@@ -913,7 +923,7 @@ export const en = {
         title: "Financials / cash (demo)",
         annualRevenue: "Annual revenue",
         availableCash: "Available cash",
-        endividamento: "Debt",
+        debt: "Debt",
         note: "Simulated indicators: fictitious data.",
         revenueSeries: "Revenue",
         cashSeries: "Cash",
@@ -928,18 +938,18 @@ export const en = {
           valuation: {
             label: "Valuation",
             items: {
-              pl: {
+              pe: {
                 name: "P/E",
                 unit: "number",
                 explanation:
                   'Share price divided by earnings per share; shows how many years of earnings it would take to "pay back" the price.',
               },
-              pvp: {
+              pb: {
                 name: "P/B",
                 unit: "number",
                 explanation: "Price divided by book value per share; how much the market pays over the book equity.",
               },
-              psr: {
+              ps: {
                 name: "P/Sales (PSR)",
                 unit: "number",
                 explanation: "Market value divided by net revenue.",
@@ -965,64 +975,64 @@ export const en = {
                 unit: "number",
                 explanation: "Market value divided by EBIT.",
               },
-              pAtivo: {
+              pAssets: {
                 name: "P/Assets",
                 unit: "number",
                 explanation: "Market value divided by total assets.",
               },
-              pAtivoCircLiq: {
+              pNetCurrentAssets: {
                 name: "P/Net Current Assets",
                 unit: "number",
                 explanation: "Price divided by net current assets (current assets minus liabilities).",
               },
-              pCapGiro: {
+              pWorkingCapital: {
                 name: "P/Working Capital",
                 unit: "number",
                 explanation: "Price divided by working capital (current assets minus current liabilities).",
               },
-              lpa: {
+              eps: {
                 name: "EPS",
                 unit: "number",
                 explanation: "Earnings per share: net income divided by the number of shares.",
               },
-              vpa: {
+              bvps: {
                 name: "BVPS",
                 unit: "number",
                 explanation: "Book value per share: shareholders' equity divided by the number of shares.",
               },
             },
           },
-          eficiencia: {
+          efficiency: {
             label: "Efficiency",
             items: {
-              margemBruta: {
+              grossMargin: {
                 name: "Gross margin",
                 unit: "percent",
                 explanation: "Gross profit divided by net revenue.",
               },
-              margemEbitda: {
+              ebitdaMargin: {
                 name: "EBITDA margin",
                 unit: "percent",
                 explanation: "EBITDA divided by net revenue.",
               },
-              margemEbit: {
+              ebitMargin: {
                 name: "EBIT margin",
                 unit: "percent",
                 explanation: "EBIT (operating profit) divided by net revenue.",
               },
-              margemLiquida: {
+              netMargin: {
                 name: "Net margin",
                 unit: "percent",
                 explanation: "Net income divided by net revenue.",
               },
-              giroAtivos: {
+              assetTurnover: {
                 name: "Asset turnover",
                 unit: "number",
                 explanation: "Revenue divided by total assets; how much revenue the assets generate.",
               },
             },
           },
-          rentabilidade: {
+          profitability: {
             label: "Profitability",
             items: {
               roe: {
@@ -1043,7 +1053,7 @@ export const en = {
               },
             },
           },
-          dividendos: {
+          dividends: {
             label: "Dividends",
             items: {
               dividendYield: {
@@ -1058,51 +1068,51 @@ export const en = {
               },
             },
           },
-          endividamento: {
+          debt: {
             label: "Debt",
             items: {
-              liquidezCorrente: {
+              currentRatio: {
                 name: "Current ratio",
                 unit: "number",
                 explanation:
                   "Current assets divided by current liabilities; the ability to meet short-term obligations.",
               },
-              dividaLiquidaEbitda: {
+              netDebtEbitda: {
                 name: "Net debt/EBITDA",
                 unit: "number",
                 explanation: "Net debt divided by EBITDA; how many years of EBITDA it takes to pay off the debt.",
               },
-              dividaLiquidaEbit: {
+              netDebtEbit: {
                 name: "Net debt/EBIT",
                 unit: "number",
                 explanation: "Net debt divided by EBIT.",
               },
-              dividaLiquidaPatrimonio: {
+              netDebtEquity: {
                 name: "Net debt/Equity",
                 unit: "number",
                 explanation: "Net debt divided by shareholders' equity.",
               },
-              dividaBrutaPatrimonio: {
+              grossDebtEquity: {
                 name: "Gross debt/Equity",
                 unit: "number",
                 explanation: "Gross debt divided by shareholders' equity.",
               },
-              patrimonioAtivos: {
+              equityAssets: {
                 name: "Equity/Assets",
                 unit: "number",
                 explanation: "Shareholders' equity divided by total assets.",
               },
-              passivosAtivos: {
+              liabilitiesAssets: {
                 name: "Liabilities/Assets",
                 unit: "number",
                 explanation: "Total liabilities divided by total assets.",
               },
             },
           },
-          crescimento: {
+          growth: {
             label: "Growth",
             items: {
-              cagrReceitas5a: {
+              revenueCagr5y: {
                 name: "5-year revenue CAGR",
                 unit: "percent",
                 explanation: "Compound annual growth rate of revenue over the last 5 years.",

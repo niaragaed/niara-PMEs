@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { SmesOnChainCard } from "./PmesOnChainCard";
 import { SelfServiceSmesCard } from "./SelfServicePmesCard";
 import type { Offering } from "@/lib/mock/ofertas";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { intlLocale, localize, type Locale } from "@/lib/i18n/locale";
 
 // Duas origens na mesma vitrine (ver CLAUDE.md "Fase 4" → unificação da vitrine PMEs): as 10
 // legadas (empresa fictícia, PmesOnChainCard) e as self-service já confirmadas on-chain (dados
@@ -26,8 +27,8 @@ export type SmesCardData =
       rede: "sepolia" | "solana-devnet";
     };
 
-function getSector(item: SmesCardData): string | null {
-  return item.origin === "legado" ? item.offering.company.sector : item.sector;
+function getSector(item: SmesCardData, locale: Locale): string | null {
+  return item.origin === "legado" ? localize(item.offering.company.sector, locale) : item.sector;
 }
 
 function getKey(item: SmesCardData): string {
@@ -42,16 +43,19 @@ function getKey(item: SmesCardData): string {
 // um botão de filtro vazio, mas continuam aparecendo na vitrine sem filtro nenhum selecionado.
 export function SmesSectorFilter({ items }: { items: SmesCardData[] }) {
   const dict = useDictionary();
+  const locale = useLocale();
   const t = dict.trade.categoryTemplate.sectorFilter;
 
   const sectors = useMemo(() => {
-    const unique = new Set(items.map(getSector).filter((sector): sector is string => Boolean(sector)));
-    return Array.from(unique).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [items]);
+    const unique = new Set(
+      items.map((item) => getSector(item, locale)).filter((sector): sector is string => Boolean(sector)),
+    );
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, intlLocale(locale)));
+  }, [items, locale]);
 
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
 
-  const filteredItems = selectedSector ? items.filter((item) => getSector(item) === selectedSector) : items;
+  const filteredItems = selectedSector ? items.filter((item) => getSector(item, locale) === selectedSector) : items;
 
   return (
     <div>

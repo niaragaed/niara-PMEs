@@ -8,7 +8,8 @@ import {
   ONCHAIN_SMES_MAX_TARGET_MBRL,
   ONCHAIN_SMES_PRICE_PER_SHARE_MBRL,
 } from "@/lib/web3/demoConstants";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { localize } from "@/lib/i18n/locale";
 
 // Card unificado das 10 ofertas PME que têm uma oferta real e ativa em Sepolia por trás — cada
 // uma é uma empresa fictícia de demonstração (mesmo padrão de conteúdo de ShowcaseCard), mas o
@@ -29,6 +30,7 @@ export function SmesOnChainCard({
   logoUrl: string | null;
 }) {
   const dict = useDictionary();
+  const locale = useLocale();
   const t = dict.trade.smesOnChain;
 
   return (
@@ -49,7 +51,7 @@ export function SmesOnChainCard({
 
         <div>
           <h3 className="text-sm font-semibold text-ink">{offering.company.tradeName}</h3>
-          <p className="text-xs text-ink-muted">{offering.company.sector}</p>
+          <p className="text-xs text-ink-muted">{localize(offering.company.sector, locale)}</p>
         </div>
 
         <p className="text-xs font-medium italic text-ink-muted">{t.fictitiousCompany}</p>

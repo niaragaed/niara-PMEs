@@ -13,8 +13,9 @@ import { OrderTicket } from "./OrderTicket";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
 import { formatBRL } from "@/lib/format";
-import { DEFAULT_DOCUMENTS, type Offering } from "@/lib/mock/ofertas";
-import { useDictionary } from "@/lib/i18n/client";
+import type { Offering } from "@/lib/mock/ofertas";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { localize } from "@/lib/i18n/locale";
 
 export function OfferingDetailPage({
   offering,
@@ -30,6 +31,7 @@ export function OfferingDetailPage({
   isPartner?: boolean;
 }) {
   const dict = useDictionary();
+  const locale = useLocale();
   const [ticketOpen, setTicketOpen] = useState(false);
   const t = dict.trade.offering;
   // Fase 4, sub-etapa 5.2: RealOnChainInvestPanel não aceita mais índice, só o par de endereços
@@ -68,7 +70,7 @@ export function OfferingDetailPage({
         <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <CategoryBadge category={offering.category} />
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-on-military">{offering.name}</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-on-military">{localize(offering.name, locale)}</h1>
             <p className="mt-1 text-on-military-muted">{offering.company.tradeName}</p>
           </div>
 
@@ -114,7 +116,7 @@ export function OfferingDetailPage({
                 </div>
                 <div>
                   <dt className="text-xs text-ink-muted">{t.publicData.sector}</dt>
-                  <dd className="mt-0.5 text-sm text-ink">{offering.company.sector}</dd>
+                  <dd className="mt-0.5 text-sm text-ink">{localize(offering.company.sector, locale)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-ink-muted">{t.publicData.location}</dt>
@@ -123,7 +125,7 @@ export function OfferingDetailPage({
               </dl>
               <div className="mt-4">
                 <dt className="text-xs text-ink-muted">{t.publicData.summary}</dt>
-                <dd className="mt-0.5 text-sm leading-relaxed text-ink">{offering.company.summary}</dd>
+                <dd className="mt-0.5 text-sm leading-relaxed text-ink">{localize(offering.company.summary, locale)}</dd>
               </div>
             </section>
 
@@ -144,8 +146,8 @@ export function OfferingDetailPage({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-ink-muted">{t.financial.endividamento}</dt>
-                  <dd className="mt-0.5 text-sm font-semibold text-ink">{formatBRL(offering.financial.endividamento)}</dd>
+                  <dt className="text-xs text-ink-muted">{t.financial.debt}</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-ink">{formatBRL(offering.financial.debt)}</dd>
                 </div>
               </dl>
               <div className="mt-6">
@@ -189,7 +191,7 @@ export function OfferingDetailPage({
             <section className="rounded-lg bg-surface p-6 shadow-soft">
               <h2 className="text-lg font-semibold text-ink">{t.documents.title}</h2>
               <ul className="mt-4 flex flex-col gap-2">
-                {DEFAULT_DOCUMENTS.map((doc) => (
+                {dict.common.defaultDocuments.map((doc) => (
                   <li
                     key={doc}
                     className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-2.5 text-sm text-ink-muted"

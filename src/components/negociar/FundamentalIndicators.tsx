@@ -5,7 +5,7 @@ import { IndicatorHelp } from "./IndicatorHelp";
 import type { FundamentalIndicatorValues } from "@/lib/mock/ofertas";
 import { useDictionary } from "@/lib/i18n/client";
 
-const GROUPS = ["valuation", "eficiencia", "rentabilidade", "dividendos", "endividamento", "crescimento"] as const;
+const GROUPS = ["valuation", "efficiency", "profitability", "dividends", "debt", "growth"] as const;
 
 const numberFormatter = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
