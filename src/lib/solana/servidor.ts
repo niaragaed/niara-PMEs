@@ -13,7 +13,7 @@ import "server-only";
 import { PublicKey } from "@solana/web3.js";
 import { solanaConnection, normalizeOffering, smesProgram, type SolanaOffering } from "./program";
 import { SMES_SOLANA_PROGRAM_ID } from "./config";
-import { describeSolanaError } from "./errors";
+import { describeSolanaError, type SolanaErrorMessages } from "./errors";
 
 export type OfferingCreatedEvent = {
   oferta: string;
@@ -30,8 +30,8 @@ export type OfferingCreatedEvent = {
 };
 
 export type PublicationTxRead =
-  | { status: "nao-encontrada"; alreadyExpired: boolean }
-  | { status: "falhou"; reason: string }
+  | { status: "not-found"; alreadyExpired: boolean }
+  | { status: "failed"; reason: string }
   | { status: "ok"; events: OfferingCreatedEvent[]; blockTime: number | null };
 
 /** "Program data:" emitidos pelo NOSSO programa (topo da pilha de invoke no momento do log). */
@@ -59,7 +59,7 @@ function programData(logs: string[]): string[] {
 
 const big = (v: { toString(): string }) => BigInt(v.toString());
 
-export async function readPublicationTx(signature: string): Promise<PublicationTxRead> {
+export async function readPublicationTx(signature: string, messages: SolanaErrorMessages): Promise<PublicationTxRead> {
   const connection = solanaConnection();
   const tx = await connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
 
@@ -68,12 +68,12 @@ export async function readPublicationTx(signature: string): Promise<PublicationT
     // transação já vencido, ela não entra mais na rede. Quem decide o que fazer com isso é o
     // chamador (ver confirmarPublicacaoSolana).
     const status = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
-    return { status: "nao-encontrada", alreadyExpired: status.value === null };
+    return { status: "not-found", alreadyExpired: status.value === null };
   }
 
   const logs = tx.meta?.logMessages ?? [];
   if (tx.meta?.err) {
-    return { status: "falhou", reason: describeSolanaError({ logs, err: tx.meta.err }) };
+    return { status: "failed", reason: describeSolanaError({ logs, err: tx.meta.err }, messages) };
   }
 
   const coder = smesProgram(connection).coder;

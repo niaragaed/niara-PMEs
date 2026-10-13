@@ -9,6 +9,7 @@ import { Check, Copy, Loader2, LogOut, Wallet } from "lucide-react";
 import { useSolanaWallet } from "@/lib/solana/phantom";
 import { solanaConnection } from "@/lib/solana/program";
 import { useDictionary } from "@/lib/i18n/client";
+import { describeSolanaError } from "@/lib/solana/errors";
 
 function truncate(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
@@ -51,7 +52,7 @@ export function ConnectPhantom({ showSolBalance = true }: { showSolBalance?: boo
       await wallet.connect();
     } catch (e) {
       const code = (e as { code?: number })?.code;
-      setError(code === 4001 ? t.connectionRejected : e instanceof Error ? e.message : String(e));
+      setError(code === 4001 ? t.connectionRejected : describeSolanaError(e, dict.chainErrors.solana));
     } finally {
       setConnecting(false);
     }

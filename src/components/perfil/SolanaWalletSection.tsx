@@ -10,6 +10,7 @@ import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
 import { providerPhantom, useSolanaWallet } from "@/lib/solana/phantom";
 import { prepareSolanaLink, saveSolanaWallet, unlinkSolanaWallet } from "@/app/perfil/solana-actions";
 import { useDictionary } from "@/lib/i18n/client";
+import { describeSolanaError } from "@/lib/solana/errors";
 
 function truncate(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
@@ -48,7 +49,7 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
         signature = utils.bytes.bs58.encode(r.signature);
       } catch (e) {
         const code = (e as { code?: number })?.code;
-        setError(code === 4001 ? t.signatureRefused : e instanceof Error ? e.message : String(e));
+        setError(code === 4001 ? t.signatureRefused : describeSolanaError(e, dict.chainErrors.solana));
         return;
       }
       const r = await saveSolanaWallet({ address: connected, message: preparation.message, signature });

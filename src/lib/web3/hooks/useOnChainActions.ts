@@ -1,13 +1,14 @@
 "use client";
 
-// Ações de escrita on-chain (Sepolia) — mint de MockBRL (faucet auto-serviço), investir
-// (approve -> aportar), encerrar oferta e resgatar cotas. Cada hook expõe seu próprio status
-// explícito (nunca mostra "success" antes da confirmação on-chain, ver CLAUDE.md deste
-// projeto) e traduz qualquer erro via describeOnChainError antes de devolvê-lo à UI.
+// On-chain write actions (Sepolia) — MockBRL mint (self-service faucet), invest
+// (approve -> aportar), close the offering and redeem shares. Each hook exposes its own explicit
+// status (it never shows "success" before the on-chain confirmation, see this project's
+// CLAUDE.md) and translates any error via describeOnChainError before handing it to the UI.
 import { useCallback, useState } from "react";
 import { useConnection, usePublicClient, useWriteContract } from "wagmi";
 import { getMockBrlContractAt, getOnChainContracts, type OnChainOfferingAddresses } from "../contracts";
 import { describeOnChainError } from "../errors";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type SimpleTxStatus = "idle" | "signing" | "confirming" | "success" | "error";
 
@@ -19,19 +20,20 @@ export type SimpleTxState = {
 const IDLE: SimpleTxState = { status: "idle", errorMessage: null };
 
 /**
- * MockBRL.mint é público e irrestrito (mock de teste) — qualquer carteira conectada pode
- * cunhar saldo para si mesma, sem depender de nenhuma carteira administrativa.
+ * MockBRL.mint is public and unrestricted (a test mock) — any connected wallet can mint a balance
+ * for itself, without depending on any admin wallet.
  *
- * `enderecos` identifica a oferta para a qual se está mintando saldo — necessário porque o
- * MockBRL não é mais uma constante global (ver CLAUDE.md, incidente do MockBRL por oferta):
- * cada oferta pode ter seu próprio MockBRL (`OfertaCaptacao.moeda()`), resolvido on-chain aqui
- * dentro, nunca herdado de outro hook nem de env var.
+ * `addresses` identifies the offering the balance is being minted for — needed because MockBRL
+ * is no longer a global constant (see CLAUDE.md, the per-offering MockBRL incident): each offering
+ * can have its own MockBRL (`OfertaCaptacao.moeda()`), resolved on-chain in here, never
+ * inherited from another hook nor from an env var.
  */
 export function useMintMockBrl(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const { address } = useConnection();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const mint = useCallback(
     async (amount: bigint) => {
@@ -55,10 +57,10 @@ export function useMintMockBrl(addresses: OnChainOfferingAddresses | null) {
         await publicClient.waitForTransactionReceipt({ hash });
         setState({ status: "success", errorMessage: null });
       } catch (error) {
-        setState({ status: "error", errorMessage: describeOnChainError(error) });
+        setState({ status: "error", errorMessage: describeOnChainError(error, messages) });
       }
     },
-    [address, publicClient, writeContractAsync, addresses],
+    [address, publicClient, writeContractAsync, addresses, messages],
   );
 
   const reset = useCallback(() => setState(IDLE), []);
@@ -83,39 +85,40 @@ export type InvestState = {
 };
 
 /**
- * Fluxo completo de investimento: checa a allowance atual do MockBRL contra `valor`; só chama
- * `approve` quando insuficiente (nunca pede aprovação de novo se já houver allowance
- * suficiente); só então chama `aportar`. `valor` já deve vir calculado como
- * `quantidadeDeCotas * precoPorCota` (múltiplo exato — ver OfertaCaptacao.aportar).
+ * Full investment flow: checks the current MockBRL allowance against `value`; only calls
+ * `approve` when it's insufficient (it never asks for approval again if there's already enough
+ * allowance); only then calls `aportar`. `value` must already be computed as
+ * `shareCount * pricePerShare` (an exact multiple — see OfertaCaptacao.aportar).
  *
- * 🔴 Incidente real corrigido aqui (1): `allowanceAtual` costumava vir de fora, do hook de leitura
- * (`useMinhaPosicaoOnChain`, via React state) — e podia estar OBSOLETO numa segunda tentativa
- * logo após a primeira falhar (ex.: `approve` rejeitado por "nonce too low" na carteira): o
- * `refetch()` disparado depois da falha é assíncrono e não é esperado antes do botão reabilitar,
- * então um clique rápido em seguida podia herdar um `allowanceAtual` de antes da tentativa
- * anterior, decidir (errado) que a allowance já era suficiente, pular o `approve` inteiro e ir
- * direto para `aportar` — que revertia por allowance insuficiente de verdade (e, como
- * `criarOfertaCompleta`/`aportar` não têm gas fixo aqui, a MetaMask nem consegue estimar uma
- * chamada que reverte, daí o gás absurdo de novo — mesma classe de sintoma já documentada no
- * CLAUDE.md). Corrigido lendo a allowance **direto da chain, agora, dentro desta função** — nunca
- * mais um valor herdado de fora, que pode estar desatualizado por qualquer motivo (timing de
- * refetch, RPC, o que for).
+ * 🔴 Real incident fixed here (1): `currentAllowance` used to come from outside, from the read
+ * hook (`useMyOnChainPosition`, via React state) — and it could be STALE on a second attempt
+ * right after the first one failed (e.g. `approve` rejected with "nonce too low" in the wallet):
+ * the `refetch()` fired after the failure is async and isn't awaited before the button is
+ * re-enabled, so a quick click right after could inherit a `currentAllowance` from before the
+ * previous attempt, decide (wrongly) that the allowance was already enough, skip the whole
+ * `approve` and go straight to `aportar` — which reverted for genuinely insufficient allowance
+ * (and, since `criarOfertaCompleta`/`aportar` have no fixed gas here, MetaMask can't even
+ * estimate a call that reverts, hence the absurd gas again — the same class of symptom already
+ * documented in CLAUDE.md). Fixed by reading the allowance **directly from the chain, now,
+ * inside this function** — never again a value inherited from outside, which can be outdated for
+ * any reason (refetch timing, RPC, whatever).
  *
- * 🔴 Incidente real corrigido aqui (2), a causa de fundo do mesmo sintoma: o MockBRL em si também
- * nunca deve vir de fora — resolvido de `OfertaCaptacao.moeda()`, lido on-chain, da PRÓPRIA
- * oferta, imediatamente antes de decidir o approve. Antes, `contracts.mockBrl` vinha de uma
- * constante global (`NEXT_PUBLIC_MOCKBRL_ADDRESS`) — certa por coincidência para as 10 ofertas
- * legadas (que de fato compartilham esse MockBRL, confirmado via `cast call`), mas ERRADA para
- * qualquer oferta self-service (`OfertaOrquestrador`), que usa um MockBRL próprio, diferente. O
- * `approve` minerava com sucesso contra o MockBRL errado; o allowance na oferta de verdade
- * continuava zero; `aportar` revertia com `ERC20InsufficientAllowance` sempre, mesmo logo após um
- * approve aparentemente bem-sucedido. Ver CLAUDE.md para o incidente completo.
+ * 🔴 Real incident fixed here (2), the root cause of the same symptom: the MockBRL itself must
+ * never come from outside either — it's resolved from `OfertaCaptacao.moeda()`, read on-chain,
+ * from the offering ITSELF, right before deciding on the approve. Before, `contracts.mockBrl`
+ * came from a global constant (`NEXT_PUBLIC_MOCKBRL_ADDRESS`) — right by coincidence for the 10
+ * legacy offerings (which do share that MockBRL, confirmed via `cast call`), but WRONG for any
+ * self-service offering (`OfertaOrquestrador`), which uses its own, different MockBRL. The
+ * `approve` was mined successfully against the wrong MockBRL; the allowance on the real offering
+ * stayed zero; `aportar` always reverted with `ERC20InsufficientAllowance`, even right after an
+ * apparently successful approve. See CLAUDE.md for the full incident.
  */
 export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<InvestState>({ status: "idle", errorMessage: null });
   const { address } = useConnection();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const invest = useCallback(
     async (value: bigint) => {
@@ -145,26 +148,22 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
           });
           setState({ status: "confirming-approve", errorMessage: null });
           const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash });
-          // A aprovação foi MINERADA (não lançou exceção), mas pode ter revertido — checar o
-          // status é obrigatório aqui, pelo mesmo motivo que confirmarPublicacao() checa
-          // receipt.status do lado do servidor: um recibo existir não significa que deu certo.
+          // The approval was MINED (it didn't throw), but it may have reverted — checking the
+          // status is mandatory here, for the same reason confirmPublication() checks
+          // receipt.status on the server side: a receipt existing doesn't mean it worked.
           if (approveReceipt.status === "reverted") {
-            setState({
-              status: "error",
-              errorMessage: "A aprovação (approve) de MockBRL reverteu on-chain — o aporte não foi tentado.",
-            });
+            setState({ status: "error", errorMessage: messages.approveReverted });
             return;
           }
         }
 
-        // 🔴 Proteção final, independente da causa raiz: nunca pede assinatura de algo que já
-        // sabemos que vai reverter. Simula a MESMA chamada que estamos prestes a pedir pra
-        // assinar — se reverter, decodifica o motivo real (describeOnChainError, mesma tradução
-        // de sempre) e para aqui, sem chegar a chamar writeContractAsync. Isso mata a classe
-        // inteira do sintoma "gás absurdo/MetaMask não consegue estimar", não só a causa já
-        // corrigida acima (allowance obsoleta) — vale mesmo que a causa desta vez seja outra
-        // (ver CLAUDE.md: aporte nas ofertas do OfertaOrquestrador ainda falha por motivo não
-        // identificado, mesmo código de approve/aportar das 10 ofertas legadas que funcionam).
+        // 🔴 Final safeguard, independent of the root cause: never ask for a signature on
+        // something we already know will revert. Simulates the SAME call we're about to ask to
+        // sign — if it reverts, decodes the real reason (describeOnChainError, the usual
+        // translation) and stops here, without ever calling writeContractAsync. This kills the
+        // whole class of the "absurd gas / MetaMask can't estimate" symptom, not only the cause
+        // already fixed above (stale allowance) — it holds even if the cause is a different one
+        // next time.
         setState({ status: "simulating-invest", errorMessage: null });
         try {
           await publicClient.simulateContract({
@@ -174,7 +173,7 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
             account: address,
           });
         } catch (simError) {
-          setState({ status: "error", errorMessage: describeOnChainError(simError) });
+          setState({ status: "error", errorMessage: describeOnChainError(simError, messages) });
           return;
         }
 
@@ -189,10 +188,10 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
 
         setState({ status: "success", errorMessage: null });
       } catch (error) {
-        setState({ status: "error", errorMessage: describeOnChainError(error) });
+        setState({ status: "error", errorMessage: describeOnChainError(error, messages) });
       }
     },
-    [address, publicClient, writeContractAsync, addresses],
+    [address, publicClient, writeContractAsync, addresses, messages],
   );
 
   const reset = useCallback(() => setState({ status: "idle", errorMessage: null }), []);
@@ -201,14 +200,15 @@ export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
 }
 
 /**
- * `encerrar()` é permissionless — qualquer carteira conectada pode chamar assim que a oferta
- * for elegível (prazo atingido, ou total arrecadado == meta máxima exata). `enderecos`
- * identifica a oferta (par token/oferta, ver contracts.ts).
+ * `encerrar()` is permissionless — any connected wallet can call it as soon as the offering is
+ * eligible (deadline reached, or total raised == exact maximum target). `addresses` identifies
+ * the offering (token/offering pair, see contracts.ts).
  */
 export function useCloseOffering(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const close = useCallback(async () => {
     const contracts = getOnChainContracts(addresses);
@@ -221,9 +221,9 @@ export function useCloseOffering(addresses: OnChainOfferingAddresses | null) {
       await publicClient.waitForTransactionReceipt({ hash });
       setState({ status: "success", errorMessage: null });
     } catch (error) {
-      setState({ status: "error", errorMessage: describeOnChainError(error) });
+      setState({ status: "error", errorMessage: describeOnChainError(error, messages) });
     }
-  }, [publicClient, writeContractAsync, addresses]);
+  }, [publicClient, writeContractAsync, addresses, messages]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
@@ -231,14 +231,15 @@ export function useCloseOffering(addresses: OnChainOfferingAddresses | null) {
 }
 
 /**
- * `resgatarCotas()` é pull, uma vez por investidor, só após `EncerradaSucesso` — independente
- * de `liberarParaEmissor` (ver OfertaCaptacao.sol, confirmado antes de fixar este fluxo).
- * `enderecos` identifica a oferta (par token/oferta, ver contracts.ts).
+ * `resgatarCotas()` is a pull, once per investor, only after `EncerradaSucesso` — independent of
+ * `liberarParaEmissor` (see OfertaCaptacao.sol, checked before settling this flow). `addresses`
+ * identifies the offering (token/offering pair, see contracts.ts).
  */
 export function useRedeemShares(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const redeem = useCallback(async () => {
     const contracts = getOnChainContracts(addresses);
@@ -251,9 +252,9 @@ export function useRedeemShares(addresses: OnChainOfferingAddresses | null) {
       await publicClient.waitForTransactionReceipt({ hash });
       setState({ status: "success", errorMessage: null });
     } catch (error) {
-      setState({ status: "error", errorMessage: describeOnChainError(error) });
+      setState({ status: "error", errorMessage: describeOnChainError(error, messages) });
     }
-  }, [publicClient, writeContractAsync, addresses]);
+  }, [publicClient, writeContractAsync, addresses, messages]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
@@ -261,16 +262,17 @@ export function useRedeemShares(addresses: OnChainOfferingAddresses | null) {
 }
 
 /**
- * `liberarParaEmissor()` é pull, uma vez, permissionless, só após `EncerradaSucesso` — transfere
- * o arrecadado (menos a taxa, se `taxaBps > 0`) ao emissor e a taxa ao `protocoloWallet` (ver
- * OfertaCaptacao.sol). Sem chamar esta função, o dinheiro fica retido no escrow para sempre — é o
- * gatilho que de fato move a receita de taxa da plataforma, quando existir. `enderecos`
- * identifica a oferta (par token/oferta, ver contracts.ts).
+ * `liberarParaEmissor()` is a pull, once, permissionless, only after `EncerradaSucesso` — it
+ * transfers the amount raised (minus the fee, if `taxaBps > 0`) to the issuer and the fee to
+ * `protocoloWallet` (see OfertaCaptacao.sol). Without calling this function, the money stays
+ * locked in escrow forever — it's the trigger that actually moves the platform's fee revenue,
+ * when there is any. `addresses` identifies the offering (token/offering pair, see contracts.ts).
  */
 export function useReleaseToIssuer(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const release = useCallback(async () => {
     const contracts = getOnChainContracts(addresses);
@@ -283,9 +285,9 @@ export function useReleaseToIssuer(addresses: OnChainOfferingAddresses | null) {
       await publicClient.waitForTransactionReceipt({ hash });
       setState({ status: "success", errorMessage: null });
     } catch (error) {
-      setState({ status: "error", errorMessage: describeOnChainError(error) });
+      setState({ status: "error", errorMessage: describeOnChainError(error, messages) });
     }
-  }, [publicClient, writeContractAsync, addresses]);
+  }, [publicClient, writeContractAsync, addresses, messages]);
 
   const reset = useCallback(() => setState(IDLE), []);
 

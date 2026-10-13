@@ -1,30 +1,32 @@
 "use server";
 
-// Server Actions da Fase 3, sub-etapa 4 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — publicação
-// self-service da oferta em Sepolia. REGRA DE OURO: nenhuma delas aceita de ninguém o valor
-// final de contract_address/token_address/onchain_emissor_wallet — esses três só saem de uma
-// leitura verificada do próprio servidor contra a chain (confirmarPublicacao), nunca de um
-// parâmetro. issuer_id/accountId sempre vem de resolveAccount() (sessão no servidor), nunca do
-// cliente — mesmo padrão de toda outra Server Action deste projeto.
+// Phase 3, sub-step 4 Server Actions (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — self-service
+// publication of the offering on Sepolia. GOLDEN RULE: none of them accepts from anyone the final
+// value of contract_address/token_address/onchain_emissor_wallet — those three only come from a
+// verified read by the server itself against the chain (confirmPublication), never from a
+// parameter. issuer_id/accountId always come from resolveAccount() (session on the server), never
+// from the client — the same pattern as every other Server Action in this project.
 //
-// 🔴 confirmarPublicacao() NUNCA valida por `receipt.to` — incidente real documentado no
-// CLAUDE.md: a MetaMask pode reescrever a transação num envelope EIP-7702 (type 4), e nesse
-// caso `receipt.to` é um contrato executor da própria MetaMask, não o OfertaOrquestrador,
-// mesmo a chamada tendo sido executada corretamente por dentro. A validação correta é pelos
-// LOGS: só o próprio OfertaOrquestrador consegue emitir um log cujo `address` é o dele — isso
-// é inforjável, diferente de `to`, que a wallet pode reescrever livremente antes de assinar.
+// 🔴 confirmPublication() NEVER validates by `receipt.to` — a real incident documented in
+// CLAUDE.md: MetaMask can rewrite the transaction into an EIP-7702 envelope (type 4), and in that
+// case `receipt.to` is an executor contract of MetaMask itself, not OfertaOrquestrador, even
+// though the call was executed correctly inside. The correct validation is by the LOGS: only
+// OfertaOrquestrador itself can emit a log whose `address` is its own — that's unforgeable,
+// unlike `to`, which the wallet can freely rewrite before signing.
 //
-// 🔴 confirmarPublicacao() também NUNCA compara o emissor do evento contra uma leitura AO VIVO
-// de issuers.wallet_address — segundo bug real, encontrado ao adicionar o botão "Reprocessar"
-// (que existe justamente para rodar esta função a qualquer distância no tempo da assinatura
-// original). issuers.wallet_address pode mudar entre a assinatura e um reprocessamento futuro;
-// comparar contra o valor atual responde "quem está vinculado agora?", não "quem tinha
-// autoridade no momento em que assinou?" — as duas só coincidem por acaso enquanto a
-// confirmação roda logo após a assinatura. A âncora correta é `offerings.expected_emissor_wallet`
-// (migration 0016), congelada por registrarTentativa a partir de uma leitura do PRÓPRIO
-// SERVIDOR de issuers.wallet_address no instante da tentativa — nunca aceita do cliente, pelo
-// mesmo motivo de accountId/issuer_id nunca virem do cliente em nenhuma Server Action deste
-// projeto.
+// 🔴 confirmPublication() also NEVER compares the event's issuer against a LIVE read of
+// issuers.wallet_address — a second real bug, found when adding the "Reprocess" button (which
+// exists precisely to run this function at any distance in time from the original signature).
+// issuers.wallet_address can change between the signature and a future reprocessing; comparing
+// against the current value answers "who is linked now?", not "who had authority at the moment
+// they signed?" — the two only coincide by chance while the confirmation runs right after the
+// signature. The correct anchor is `offerings.expected_emissor_wallet` (migration 0016), frozen
+// by registerAttempt from the SERVER's OWN read of issuers.wallet_address at the moment of the
+// attempt — never accepted from the client, for the same reason accountId/issuer_id never come
+// from the client in any Server Action in this project.
+//
+// The `reason` strings recorded in offerings.onchain_last_error are written in the language of
+// whoever triggered the check (they're shown back as recorded).
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { decodeEventLog, decodeFunctionData, TransactionReceiptNotFoundError } from "viem";
@@ -38,41 +40,44 @@ import { publicClient } from "@/lib/web3/eventsCore";
 import { describeOnChainError } from "@/lib/web3/errors";
 import { UNIT_ON_CHAIN } from "@/lib/web3/gates";
 import { formatBRL } from "@/lib/format";
+import { getDictionary } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 export type RegisterAttemptState = { status: "success" } | { status: "error"; message: string };
 
 const registerAttemptSchema = z.object({
   offeringId: z.string().uuid(),
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "Hash de transação inválido."),
-  prazoUnixSeconds: z.number().int().positive(),
+  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
+  deadlineUnixSeconds: z.number().int().positive(),
 });
 
 /**
- * Chamada pelo client assim que a wallet devolve o hash da transação — ANTES de esperar
- * confirmação (cobre o caso "usuário fecha a aba logo após assinar": o hash já fica salvo).
- * `prazoUnixSeconds` é o mesmo valor exato usado como argumento `prazo` da transação (calculado
- * no client, uma única vez, imediatamente antes de montar a chamada) — grava opens_at/closes_at
- * com ele para "congelar" a janela real que foi para a chain, já que a oferta on-chain é
- * imutável e a linha do Supabase não é (ver seção 5 do plano).
+ * Called by the client as soon as the wallet returns the transaction hash — BEFORE waiting for
+ * confirmation (covers the "user closes the tab right after signing" case: the hash is already
+ * saved). `deadlineUnixSeconds` is the exact same value used as the transaction's `prazo`
+ * argument (computed on the client, a single time, right before building the call) — it stores
+ * opens_at/closes_at with it to "freeze" the real window that went to the chain, since the
+ * on-chain offering is immutable and the Supabase row isn't (see section 5 of the plan).
  *
- * Também congela `expected_emissor_wallet` (migration 0016) a partir de uma leitura própria de
- * issuers.wallet_address, feita AQUI, no servidor — nunca aceita do cliente. É esse valor,
- * nunca uma releitura futura de issuers.wallet_address, que confirmarPublicacao vai comparar
- * contra o `emissor` do evento minerado, inclusive num reprocessamento muito depois da
- * assinatura. Fail-closed: sem carteira vinculada, nem registra a tentativa (gate 5 no client já
- * deveria ter impedido chegar aqui — isso é só a mesma checagem, mas no servidor).
+ * It also freezes `expected_emissor_wallet` (migration 0016) from its own read of
+ * issuers.wallet_address, done HERE, on the server — never accepted from the client. It's this
+ * value, never a future re-read of issuers.wallet_address, that confirmPublication compares
+ * against the mined event's `emissor`, even in a reprocessing long after the signature.
+ * Fail-closed: without a linked wallet, the attempt isn't even recorded (gate 5 on the client
+ * should already have prevented getting here — this is just the same check, on the server).
  */
 export async function registerAttempt(input: unknown): Promise<RegisterAttemptState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem publicar ofertas." };
+    return { status: "error", message: e.issuersOnly.publish };
   }
 
   const parsed = registerAttemptSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: "error", message: "Dados inválidos para registrar a publicação." };
+    return { status: "error", message: e.publication.invalidData };
   }
-  const { offeringId, txHash, prazoUnixSeconds: deadlineUnixSeconds } = parsed.data;
+  const { offeringId, txHash, deadlineUnixSeconds } = parsed.data;
 
   const admin = createAdminClient();
 
@@ -82,25 +87,25 @@ export async function registerAttempt(input: unknown): Promise<RegisterAttemptSt
     .eq("id", accountId)
     .maybeSingle();
   if (issuerError) {
-    console.error("registrarTentativa: erro ao ler carteira do emissor", issuerError);
-    return { status: "error", message: "Não foi possível registrar a tentativa de publicação." };
+    console.error("registerAttempt: failed to read the issuer's wallet", issuerError);
+    return { status: "error", message: e.publication.attemptFailed };
   }
   const linkedWallet = (issuer?.wallet_address as string | null) ?? null;
   if (!linkedWallet) {
-    return { status: "error", message: "Nenhuma carteira vinculada a esta conta — não é possível registrar a publicação." };
+    return { status: "error", message: e.publication.noLinkedWallet };
   }
 
   const opensAt = new Date();
   const closesAt = new Date(deadlineUnixSeconds * 1000);
 
-  // Atômico: quem chegar primeiro numa corrida de dois cliques ganha (mesmo padrão de
-  // activateOffering) — a condição `sync_status='nao_onchain'` garante que só a PRIMEIRA
-  // tentativa é registrada.
+  // Atomic: whoever gets there first in a race between two clicks wins (same pattern as
+  // activateOffering) — the `sync_status='nao_onchain'` condition guarantees only the FIRST
+  // attempt is recorded.
   const { data, error } = await admin
     .from("offerings")
     .update({
-      // rede explícita (migration 0017): uma tentativa anterior revertida na Solana pode ter
-      // deixado a linha com rede='solana-devnet' — esta tentativa é na Sepolia.
+      // Explicit network (migration 0017): a previous attempt reverted on Solana may have left the
+      // row with rede='solana-devnet' — this attempt is on Sepolia.
       rede: "sepolia",
       tx_hash: txHash,
       chain_id: ORCHESTRATOR_CHAIN_ID,
@@ -115,11 +120,11 @@ export async function registerAttempt(input: unknown): Promise<RegisterAttemptSt
     .select("id");
 
   if (error) {
-    console.error("registrarTentativa: erro inesperado do banco", error);
-    return { status: "error", message: "Não foi possível registrar a tentativa de publicação." };
+    console.error("registerAttempt: unexpected database error", error);
+    return { status: "error", message: e.publication.attemptFailed };
   }
   if (!data || data.length === 0) {
-    return { status: "error", message: "Já existe uma tentativa de publicação em andamento para esta oferta." };
+    return { status: "error", message: e.publication.attemptInProgress };
   }
 
   revalidatePath(`/empresa/ofertas/${offeringId}/publicar`);
@@ -129,39 +134,41 @@ export async function registerAttempt(input: unknown): Promise<RegisterAttemptSt
 export type ConfirmPublicationState =
   | { status: "pendente" }
   | { status: "confirmada"; contractAddress: string; tokenAddress: string }
-  | { status: "revertida"; reason: string }
+  | { status: "reverted"; reason: string }
   | { status: "divergente"; reason: string }
   | { status: "error"; message: string };
 
 /**
- * Nunca confia em nada vindo do client além do `offeringId`. Lê o `tx_hash` da própria linha,
- * busca o recibo no servidor e valida a autenticidade da publicação INTEIRAMENTE por logs +
- * procedência dos clones, nunca por `receipt.to` (ver nota no topo do arquivo):
+ * Never trusts anything from the client besides `offeringId`. Reads the `tx_hash` from the row
+ * itself, fetches the receipt on the server and validates the publication's authenticity
+ * ENTIRELY by logs + the clones' provenance, never by `receipt.to` (see the note at the top of the
+ * file):
  *
- *   1. Existe, no recibo, um log cujo `address` é exatamente o OfertaOrquestrador configurado,
- *      e que decodifica como `OfertaCompletaCriada` — só o próprio contrato consegue emitir um
- *      log com o endereço dele.
- *   2. O `emissor` do evento bate com `offerings.expected_emissor_wallet` — o valor de
- *      issuers.wallet_address CONGELADO por `registrarTentativa` no momento da tentativa, nunca
- *      uma releitura ao vivo de issuers (ver migration 0016) — e
- *      metaMinima/metaMaxima/precoPorCota/prazo batem com os que a oferta tinha no momento em
- *      que a transação foi montada (ver `registrarTentativa`).
- *   3. O `token`/`oferta` do evento estão REALMENTE registrados nas factories corretas
- *      (`ParticipacaoTokenFactory.isOferta` / `OfertaCaptacaoFactory.isCaptacao`) — confirma a
- *      procedência dos clones, não só que "algum contrato existe nesse endereço".
+ *   1. There's a log in the receipt whose `address` is exactly the configured OfertaOrquestrador,
+ *      and which decodes as `OfertaCompletaCriada` — only the contract itself can emit a log with
+ *      its own address.
+ *   2. The event's `emissor` matches `offerings.expected_emissor_wallet` — the issuers.wallet_address
+ *      value FROZEN by `registerAttempt` at the moment of the attempt, never a live re-read of
+ *      issuers (see migration 0016) — and metaMinima/metaMaxima/precoPorCota/prazo match what the
+ *      offering had when the transaction was built (see `registerAttempt`).
+ *   3. The event's `token`/`oferta` are REALLY registered in the right factories
+ *      (`ParticipacaoTokenFactory.isOferta` / `OfertaCaptacaoFactory.isCaptacao`) — confirms the
+ *      clones' provenance, not just that "some contract exists at that address".
  *
- * Só depois das três checagens é que contract_address/token_address/onchain_emissor_wallet são
- * gravados — sempre os valores lidos do evento, nunca uma alegação aceita de ninguém.
+ * Only after the three checks are contract_address/token_address/onchain_emissor_wallet stored —
+ * always the values read from the event, never a claim accepted from anyone.
  */
 export async function confirmPublication(offeringId: string): Promise<ConfirmPublicationState> {
+  const dict = await getDictionary();
+  const e = dict.serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem confirmar publicações." };
+    return { status: "error", message: e.issuersOnly.confirm };
   }
 
   const parsedId = z.string().uuid().safeParse(offeringId);
   if (!parsedId.success) {
-    return { status: "error", message: "Oferta inválida." };
+    return { status: "error", message: e.invalidOffering };
   }
 
   const admin = createAdminClient();
@@ -175,42 +182,42 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
     .maybeSingle();
 
   if (fetchError || !offering) {
-    return { status: "error", message: "Oferta não encontrada." };
+    return { status: "error", message: e.offeringNotFound };
   }
-  // Publicação na Solana é conferida por solana-actions.ts — nunca ler uma assinatura base58 como
-  // hash EVM.
+  // A Solana publication is checked by solana-actions.ts — never read a base58 signature as an EVM
+  // hash.
   if (offering.rede !== "sepolia") {
-    return { status: "error", message: "Esta oferta foi publicada na Solana Devnet, não na Sepolia." };
+    return { status: "error", message: e.publication.publishedOnSolana };
   }
 
   if (offering.sync_status === "confirmada") {
-    // Idempotente: já confirmada antes (ex.: o client chamou de novo à toa) — só devolve o
-    // que já está gravado, sem tocar a chain de novo.
+    // Idempotent: already confirmed before (e.g. the client called it again for nothing) — only
+    // returns what's already stored, without touching the chain again.
     return {
       status: "confirmada",
       contractAddress: offering.contract_address as string,
       tokenAddress: offering.token_address as string,
     };
   }
-  // 'divergente' também pode ser reprocessada por aqui (não só 'pendente') — é exatamente o
-  // caminho normal de corrigir um falso positivo do verificador (ex.: o incidente do EIP-7702,
-  // ver CLAUDE.md), sem precisar de UPDATE manual. tx_hash nunca é limpo ao marcar divergente
-  // (só ao reverter de verdade), então ele continua disponível para reprocessar.
+  // 'divergente' can also be reprocessed here (not only 'pendente') — that's exactly the normal
+  // path to fix a false positive from the checker (e.g. the EIP-7702 incident, see CLAUDE.md),
+  // without a manual UPDATE. tx_hash is never cleared when marking divergent (only on a real
+  // revert), so it's still available for reprocessing.
   if (!["pendente", "divergente"].includes(offering.sync_status as string) || !offering.tx_hash) {
-    return { status: "error", message: "Esta oferta não está com uma publicação pendente." };
+    return { status: "error", message: e.publication.notPending };
   }
 
-  // Defensivo: a constraint sync_status_tem_wallet_esperada (migration 0016) já garante isso no
-  // banco para qualquer linha nova, mas o código não confia cegamente nela — mesmo padrão já
-  // usado acima para tx_hash.
+  // Defensive: the sync_status_tem_wallet_esperada constraint (migration 0016) already guarantees
+  // this in the database for any new row, but the code doesn't blindly trust it — same pattern
+  // already used above for tx_hash.
   const linkedWallet = (offering.expected_emissor_wallet as string | null) ?? null;
   if (!linkedWallet) {
-    return { status: "error", message: "Esta oferta não tem uma carteira esperada congelada — não é possível confirmar." };
+    return { status: "error", message: e.publication.noFrozenWallet };
   }
 
   const orchestrator = getOrchestratorContract();
   if (!orchestrator) {
-    return { status: "error", message: "Contrato não configurado." };
+    return { status: "error", message: e.publication.contractNotConfigured };
   }
 
   const client = publicClient();
@@ -218,40 +225,41 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
   let receipt;
   try {
     receipt = await client.getTransactionReceipt({ hash: offering.tx_hash as `0x${string}` });
-  } catch (e) {
-    if (e instanceof TransactionReceiptNotFoundError) {
+  } catch (err) {
+    if (err instanceof TransactionReceiptNotFoundError) {
       return { status: "pendente" };
     }
-    // RPC fora do ar, timeout etc. — nunca confundir com "ainda minerando".
-    return { status: "error", message: describeOnChainError(e) };
+    // RPC down, timeout etc. — never mistake it for "still mining".
+    return { status: "error", message: describeOnChainError(err, dict.chainErrors.evm) };
   }
 
   if (receipt.status === "reverted") {
-    // 🔴 Bug real corrigido aqui: até esta correção, este ramo NUNCA tentava decodificar o
-    // motivo do revert — gravava sempre a mesma frase genérica "A transação reverteu on-chain —
-    // tente publicar de novo", mesmo quando o motivo real era uma violação de limite da Res. 88
-    // (ex. LoteAdicionalExcedeLimite), caso em que "tente de novo" é um conselho ERRADO: os
-    // valores da oferta são os mesmos, então reverteria de novo, sempre. O mapeamento de erros
-    // customizados (CUSTOM_ERROR_MESSAGES, errors.ts) já cobria esse caso desde a sub-etapa 4 —
-    // só nunca era consultado neste caminho específico (só no catch do lado do cliente, que só
-    // dispara quando a assinatura/estimativa falha ANTES de minerar; aqui a transação já minerou
-    // e reverteu, sem lançar exceção nenhuma pro cliente capturar).
+    // 🔴 Real bug fixed here: until this fix, this branch NEVER tried to decode the revert reason —
+    // it always stored the same generic sentence ("the transaction reverted on-chain — try
+    // publishing again"), even when the real reason was a Res. 88 limit violation (e.g.
+    // LoteAdicionalExcedeLimite), in which case "try again" is WRONG advice: the offering's values
+    // are the same, so it would revert again, every time. The custom error mapping
+    // (chainErrors.evm.custom, see errors.ts) already covered that case since sub-step 4 — it was
+    // just never consulted on this specific path (only in the client-side catch, which only fires
+    // when signing/estimation fails BEFORE mining; here the transaction already mined and
+    // reverted, without throwing anything for the client to catch).
     //
-    // O recibo não guarda o motivo do revert (a EVM não grava isso no receipt) — a única forma de
-    // obter o motivo real é RESSIMULAR a MESMA calldata já minerada (nunca reconstruída a partir
-    // do Supabase, que pode ter mudado desde a assinatura) contra o estado da chain de então.
-    const reason = await describeRevertReason(client, orchestrator, offering.tx_hash as `0x${string}`, receipt.blockNumber);
+    // The receipt doesn't keep the revert reason (the EVM doesn't write it to the receipt) — the
+    // only way to get the real reason is to RE-SIMULATE the SAME calldata that was mined (never
+    // rebuilt from Supabase, which may have changed since the signature) against the chain state
+    // of that time.
+    const reason = await describeRevertReason(client, orchestrator, offering.tx_hash as `0x${string}`, receipt.blockNumber, dict);
 
-    // expected_emissor_wallet volta a null junto com tx_hash: os dois pertencem à MESMA
-    // tentativa (a que reverteu) e uma nova, via registrarTentativa, precisa poder recongelar os
-    // dois do zero. Permitido pela trigger de 0016 porque o destino é 'nao_onchain'.
+    // expected_emissor_wallet goes back to null together with tx_hash: both belong to the SAME
+    // attempt (the one that reverted) and a new one, via registerAttempt, must be able to freeze
+    // both again from scratch. Allowed by the 0016 trigger because the target is 'nao_onchain'.
     await admin
       .from("offerings")
       .update({
         sync_status: "nao_onchain",
         tx_hash: null,
-        // Limpa junto (migration 0017): sem endereço gravado, chain_id ainda não é definitivo — e
-        // preenchido impediria uma nova tentativa na Solana.
+        // Cleared together (migration 0017): without a stored address, chain_id isn't final yet —
+        // and leaving it filled would block a new attempt on Solana.
         chain_id: null,
         expected_emissor_wallet: null,
         onchain_last_error: reason,
@@ -260,14 +268,14 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
       .eq("issuer_id", accountId)
       .in("sync_status", ["pendente", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
-    return { status: "revertida", reason };
+    return { status: "reverted", reason };
   }
 
-  // Log do próprio OfertaOrquestrador — inforjável: só o contrato nesse endereço consegue
-  // emitir um log com esse `address`, não importa qual foi o `to` de nível superior da tx.
+  // A log from OfertaOrquestrador itself — unforgeable: only the contract at that address can emit
+  // a log with that `address`, no matter what the transaction's top-level `to` was.
   const log = receipt.logs.find((l) => l.address.toLowerCase() === orchestrator.address.toLowerCase());
   if (!log) {
-    const reason = "Nenhum evento emitido pelo endereço do OfertaOrquestrador foi encontrado neste recibo.";
+    const reason = e.publication.noOrchestratorEvent;
     await markDivergent(admin, parsedId.data, accountId, reason);
     return { status: "divergente", reason };
   }
@@ -276,7 +284,7 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
   try {
     decoded = decodeEventLog({ abi: orchestrator.abi, data: log.data, topics: log.topics, eventName: "OfertaCompletaCriada" });
   } catch {
-    const reason = "O evento emitido pelo OfertaOrquestrador neste recibo não é OfertaCompletaCriada.";
+    const reason = e.publication.wrongEvent;
     await markDivergent(admin, parsedId.data, accountId, reason);
     return { status: "divergente", reason };
   }
@@ -295,14 +303,14 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
     pricePerShare !== expectedPricePerShare ||
     deadline !== expectedDeadline
   ) {
-    const reason = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira vinculada) no Supabase.";
+    const reason = e.publication.eventMismatch;
     await markDivergent(admin, parsedId.data, accountId, reason);
     return { status: "divergente", reason };
   }
 
-  // Procedência dos clones: confirma que token/oferta foram REALMENTE registrados pelas
-  // factories do próprio orquestrador (lidas dele mesmo, nunca de env var solta) — não basta
-  // "existir algum contrato nesse endereço".
+  // The clones' provenance: confirms token/offering were REALLY registered by the orchestrator's
+  // own factories (read from it, never from a loose env var) — "some contract exists at that
+  // address" isn't enough.
   const [tokenFactoryAddress, fundraisingFactoryAddress] = await Promise.all([
     client.readContract({ address: orchestrator.address, abi: orchestrator.abi, functionName: "tokenFactory" }),
     client.readContract({ address: orchestrator.address, abi: orchestrator.abi, functionName: "captacaoFactory" }),
@@ -313,7 +321,7 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
   ]);
 
   if (!tokenRegistered || !offeringRegistered) {
-    const reason = "O token/oferta do evento não está registrado nas factories do OfertaOrquestrador.";
+    const reason = e.publication.notInFactories;
     await markDivergent(admin, parsedId.data, accountId, reason);
     return { status: "divergente", reason };
   }
@@ -332,8 +340,8 @@ export async function confirmPublication(offeringId: string): Promise<ConfirmPub
     .in("sync_status", ["pendente", "divergente"]);
 
   if (updateError) {
-    console.error("confirmarPublicacao: erro ao gravar confirmação", updateError);
-    return { status: "error", message: "A transação confirmou on-chain, mas não foi possível gravar no banco — tente de novo." };
+    console.error("confirmPublication: failed to store the confirmation", updateError);
+    return { status: "error", message: e.publication.saveFailed };
   }
 
   revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
@@ -356,27 +364,28 @@ async function markDivergent(
 }
 
 /**
- * Decodifica o motivo real de uma transação MINERADA com `status: "reverted"` — o recibo não
- * guarda o motivo (a EVM não grava isso ali), então a única forma confiável é ressimular a MESMA
- * calldata já minerada (decodificada de volta do `input` da própria transação, nunca reconstruída
- * a partir do Supabase — que já pode ter mudado desde a assinatura) contra o estado da chain no
- * bloco em que reverteu. `simulateContract` decodifica erros customizados em
- * `ContractFunctionRevertedError` do jeito que `describeOnChainError` já sabe traduzir — mesma
- * função usada no catch do lado do cliente (usePublicarOfertaOnChain.ts), nunca uma segunda
- * lógica de tradução. Nunca lança — sempre devolve uma string, com um fallback só se a própria
- * decodificação falhar (ex.: a transação reverteu por um motivo que não se reproduz mais).
+ * Decodes the real reason for a MINED transaction with `status: "reverted"` — the receipt doesn't
+ * keep the reason (the EVM doesn't write it there), so the only reliable way is to re-simulate
+ * the SAME calldata that was mined (decoded back from the transaction's own `input`, never rebuilt
+ * from Supabase — which may already have changed since the signature) against the chain state at
+ * the block where it reverted. `simulateContract` decodes custom errors into
+ * `ContractFunctionRevertedError` the way `describeOnChainError` already knows how to translate —
+ * the same function used in the client-side catch (usePublicarOfertaOnChain.ts), never a second
+ * translation logic. Never throws — always returns a string, with a fallback only if the decoding
+ * itself fails (e.g. the transaction reverted for a reason that no longer reproduces).
  */
 async function describeRevertReason(
   client: ReturnType<typeof publicClient>,
   orchestrator: OrchestratorContract,
   txHash: `0x${string}`,
   blockNumber: bigint,
+  dict: Dictionary,
 ): Promise<string> {
   try {
     const tx = await client.getTransaction({ hash: txHash });
     const decoded = decodeFunctionData({ abi: orchestrator.abi, data: tx.input });
     if (decoded.functionName !== "criarOfertaCompleta" || !decoded.args) {
-      return "A transação reverteu on-chain, mas não foi possível decodificar o motivo (calldata inesperada).";
+      return dict.serverErrors.publication.revertUndecodable;
     }
 
     await client.simulateContract({
@@ -388,13 +397,13 @@ async function describeRevertReason(
       blockNumber,
     });
 
-    // Não deveria chegar aqui: se a ressimulação não reverte, a transação minerada reverteu por
-    // um motivo que já não se reproduz mais agora (ex.: estado mudou entre o bloco minerado e a
-    // chamada acima) — raro o bastante para não merecer uma frase própria, mas melhor que inventar
-    // um motivo.
-    return "A transação reverteu on-chain, mas a nova simulação não reproduziu o motivo agora — pode ter sido uma condição temporária.";
+    // Shouldn't get here: if the re-simulation doesn't revert, the mined transaction reverted for a
+    // reason that no longer reproduces now (e.g. the state changed between the mined block and the
+    // call above) — rare enough not to deserve its own sentence, but better than inventing a
+    // reason.
+    return dict.serverErrors.publication.revertNotReproduced;
   } catch (error) {
-    return describeOnChainError(error);
+    return describeOnChainError(error, dict.chainErrors.evm);
   }
 }
 
@@ -404,37 +413,38 @@ export type CheckConsistencyState =
   | { status: "error"; message: string };
 
 /**
- * Sub-etapa 5 do plano (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md, seção 4.2) — reconciliação
- * contínua. A oferta on-chain é IMUTÁVEL depois de criada, mas a linha de `offerings` não é:
- * nada impede um UPDATE manual em `hard_cap_cents`/`share_price_cents`/`target_min_cents`/
- * `closes_at` depois da confirmação. Esta função só COMPARA os dois lados e sinaliza — NUNCA
- * corrige nenhum dos dois (nem o Supabase a partir da chain, nem a chain a partir do Supabase,
- * que é imutável de qualquer forma). A correção, quando existir, é sempre humana: alguém edita o
- * Supabase de volta para bater com a chain (a chain nunca muda), e uma nova chamada aqui limpa o
- * `divergente`.
+ * Sub-step 5 of the plan (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md, section 4.2) — continuous
+ * reconciliation. The on-chain offering is IMMUTABLE once created, but the `offerings` row isn't:
+ * nothing prevents a manual UPDATE of `hard_cap_cents`/`share_price_cents`/`target_min_cents`/
+ * `closes_at` after the confirmation. This function only COMPARES both sides and flags — it NEVER
+ * fixes either of them (neither Supabase from the chain, nor the chain from Supabase, which is
+ * immutable anyway). The fix, when there is one, is always human: someone edits Supabase back to
+ * match the chain (the chain never changes), and a new call here clears the `divergente`.
  *
- * Roda contra `contract_address` diretamente (getters `metaMinima`/`metaMaxima`/`precoPorCota`/
- * `prazo` do próprio clone `OfertaCaptacao`) — não precisa do `tx_hash` nem de decodificar o
- * evento de novo (diferente de `confirmarPublicacao`), porque esses quatro valores são
- * `immutable` de fato no contrato (escritos uma única vez em `initialize`, nunca alterados
- * depois) — uma leitura direta deles hoje é tão válida quanto o evento original.
+ * Runs against `contract_address` directly (the `metaMinima`/`metaMaxima`/`precoPorCota`/`prazo`
+ * getters of the `OfertaCaptacao` clone itself) — it doesn't need the `tx_hash` nor to decode the
+ * event again (unlike `confirmPublication`), because those four values are effectively
+ * `immutable` in the contract (written once in `initialize`, never changed afterwards) — reading
+ * them directly today is as valid as the original event.
  *
- * Só roda quando `contract_address` já existe — ou seja, quando a oferta já foi confirmada pelo
- * menos uma vez (`sync_status` atual pode ser `confirmada` ou `divergente`: um `divergente`
- * anterior desta MESMA função, já corrigido no Supabase, precisa poder voltar a `confirmada`
- * por aqui). Uma oferta `divergente` que nunca chegou a ser confirmada (log ausente, evento
- * errado, clone não registrado — falha de `confirmarPublicacao`) não tem `contract_address`
- * nenhum para comparar; essa continua sendo resolvida por "Reprocessar", não por esta função.
+ * Only runs when `contract_address` already exists — i.e. when the offering has been confirmed at
+ * least once (the current `sync_status` can be `confirmada` or `divergente`: a previous
+ * `divergente` from this SAME function, already fixed in Supabase, must be able to go back to
+ * `confirmada` here). A `divergente` offering that was never confirmed (missing log, wrong event,
+ * unregistered clone — a `confirmPublication` failure) has no `contract_address` to compare; that
+ * one is still resolved by "Reprocess", not by this function.
  */
 export async function checkConsistency(offeringId: string): Promise<CheckConsistencyState> {
+  const dict = await getDictionary();
+  const e = dict.serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem verificar publicações." };
+    return { status: "error", message: e.issuersOnly.verify };
   }
 
   const parsedId = z.string().uuid().safeParse(offeringId);
   if (!parsedId.success) {
-    return { status: "error", message: "Oferta inválida." };
+    return { status: "error", message: e.invalidOffering };
   }
 
   const admin = createAdminClient();
@@ -446,14 +456,14 @@ export async function checkConsistency(offeringId: string): Promise<CheckConsist
     .maybeSingle();
 
   if (fetchError || !offering) {
-    return { status: "error", message: "Oferta não encontrada." };
+    return { status: "error", message: e.offeringNotFound };
   }
 
   if (offering.rede !== "sepolia") {
-    return { status: "error", message: "Esta oferta foi publicada na Solana Devnet, não na Sepolia." };
+    return { status: "error", message: e.publication.publishedOnSolana };
   }
   if (!["confirmada", "divergente"].includes(offering.sync_status as string) || !offering.contract_address) {
-    return { status: "error", message: "Esta oferta ainda não tem uma publicação confirmada para verificar." };
+    return { status: "error", message: e.publication.notConfirmedYet };
   }
 
   const client = publicClient();
@@ -468,9 +478,9 @@ export async function checkConsistency(offeringId: string): Promise<CheckConsist
       client.readContract({ address: contractAddress, abi: ofertaCaptacaoAbi, functionName: "prazo" }),
     ]);
     onchain = { metaMinima, metaMaxima, precoPorCota, prazo };
-  } catch (e) {
-    // RPC fora do ar, timeout etc. — nunca marca divergente por não ter conseguido perguntar.
-    return { status: "error", message: describeOnChainError(e) };
+  } catch (err) {
+    // RPC down, timeout etc. — never marks divergent for not having been able to ask.
+    return { status: "error", message: describeOnChainError(err, dict.chainErrors.evm) };
   }
 
   const expectedMinTarget = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
@@ -484,27 +494,31 @@ export async function checkConsistency(offeringId: string): Promise<CheckConsist
   const diffs: string[] = [];
   if (onchain.metaMinima !== expectedMinTarget) {
     diffs.push(
-      `meta mínima: Supabase ${formatBRL(offering.target_min_cents / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.metaMinima) / 100)}`,
+      e.publication.diffMinTarget(formatBRL(offering.target_min_cents / 100), formatBRL(centsFromChain(onchain.metaMinima) / 100)),
     );
   }
   if (onchain.metaMaxima !== expectedMaxTarget) {
-    diffs.push(
-      `hard cap: Supabase ${formatBRL(offering.hard_cap_cents / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.metaMaxima) / 100)}`,
-    );
+    diffs.push(e.publication.diffHardCap(formatBRL(offering.hard_cap_cents / 100), formatBRL(centsFromChain(onchain.metaMaxima) / 100)));
   }
   if (onchain.precoPorCota !== expectedPricePerShare) {
     diffs.push(
-      `valor por cota: Supabase ${formatBRL((offering.share_price_cents as number) / 100)} ≠ on-chain ${formatBRL(centsFromChain(onchain.precoPorCota) / 100)}`,
+      e.publication.diffSharePrice(
+        formatBRL((offering.share_price_cents as number) / 100),
+        formatBRL(centsFromChain(onchain.precoPorCota) / 100),
+      ),
     );
   }
   if (onchain.prazo !== expectedDeadline) {
     diffs.push(
-      `prazo: Supabase ${dateFormatter.format(new Date(offering.closes_at as string))} ≠ on-chain ${dateFormatter.format(new Date(Number(onchain.prazo) * 1000))}`,
+      e.publication.diffDeadline(
+        dateFormatter.format(new Date(offering.closes_at as string)),
+        dateFormatter.format(new Date(Number(onchain.prazo) * 1000)),
+      ),
     );
   }
 
   if (diffs.length > 0) {
-    const reason = `Divergência de consistência (Supabase mudou depois da confirmação) — ${diffs.join("; ")}.`;
+    const reason = e.publication.consistencyDrift(diffs.join("; "));
     await admin
       .from("offerings")
       .update({ sync_status: "divergente", onchain_last_error: reason })
@@ -516,8 +530,8 @@ export async function checkConsistency(offeringId: string): Promise<CheckConsist
     return { status: "divergente", reason };
   }
 
-  // Sem diferenças: garante 'confirmada' (pode estar vindo de 'divergente', se o drift
-  // detectado antes já foi corrigido no Supabase) e limpa o erro anterior.
+  // No differences: guarantees 'confirmada' (it may be coming from 'divergente', if the drift
+  // detected before has already been fixed in Supabase) and clears the previous error.
   await admin
     .from("offerings")
     .update({ sync_status: "confirmada", onchain_last_error: null })

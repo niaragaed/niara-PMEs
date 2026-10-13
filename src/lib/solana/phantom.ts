@@ -9,7 +9,7 @@
 import { useSyncExternalStore } from "react";
 import { utils } from "@anchor-lang/core";
 import { PublicKey, type Connection, type Transaction } from "@solana/web3.js";
-import { describeSolanaError } from "./errors";
+import { SolanaClientError } from "./errors";
 
 type PhantomEvent = "connect" | "disconnect" | "accountChanged";
 
@@ -91,7 +91,7 @@ export function useSolanaWallet() {
 
   async function connect(): Promise<string> {
     const p = providerPhantom();
-    if (!p) throw new Error("Nenhuma carteira Solana encontrada. Instale a Phantom.");
+    if (!p) throw new SolanaClientError("no-wallet");
     const r = await p.connect();
     const address = r.publicKey.toBase58();
     set({ address });
@@ -124,7 +124,7 @@ export type SignedTransaction = {
  */
 export async function simulateAndSign(connection: Connection, tx: Transaction): Promise<SignedTransaction> {
   const p = providerPhantom();
-  if (!p?.publicKey) throw new Error("Conecte a carteira Solana (Phantom) para continuar.");
+  if (!p?.publicKey) throw new SolanaClientError("not-connected");
   try {
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
     // Normaliza a chave para a classe PublicKey DESTE bundle — a da carteira pode ser de outra
@@ -134,15 +134,17 @@ export async function simulateAndSign(connection: Connection, tx: Transaction): 
 
     const simulation = await connection.simulateTransaction(tx);
     if (simulation.value.err) {
-      throw Object.assign(new Error("simulação falhou"), { logs: simulation.value.logs ?? [], err: simulation.value.err });
+      throw Object.assign(new Error("simulation failed"), { logs: simulation.value.logs ?? [], err: simulation.value.err });
     }
 
     const signed = await p.signTransaction(tx);
     const sig = signed.signature;
-    if (!sig) throw new Error("A carteira não devolveu a assinatura da transação.");
+    if (!sig) throw new SolanaClientError("no-signature");
     return { signed, signature: utils.bytes.bs58.encode(sig), blockhash, lastValidBlockHeight };
   } catch (error) {
-    throw new Error(describeSolanaError(error));
+    // Rethrown untouched: the caller translates it with describeSolanaError(error, messages), in
+    // the visitor's language (this module has no access to the dictionary).
+    throw error;
   }
 }
 
@@ -156,11 +158,13 @@ export async function sendAndConfirm(connection: Connection, t: SignedTransactio
     );
     if (result.value.err) {
       const detail = await connection.getTransaction(t.signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
-      throw Object.assign(new Error("transação falhou"), { logs: detail?.meta?.logMessages ?? [], err: result.value.err });
+      throw Object.assign(new Error("transaction failed"), { logs: detail?.meta?.logMessages ?? [], err: result.value.err });
     }
     return t.signature;
   } catch (error) {
-    throw new Error(describeSolanaError(error));
+    // Rethrown untouched: the caller translates it with describeSolanaError(error, messages), in
+    // the visitor's language (this module has no access to the dictionary).
+    throw error;
   }
 }
 

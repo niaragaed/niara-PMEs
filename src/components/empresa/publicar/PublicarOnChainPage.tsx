@@ -232,7 +232,7 @@ export function PublishOnChainPage({
   const canEnable = pendingItems.length === 0 && displayStatus === "idle";
 
   async function handlePublish() {
-    await hook.publicar({
+    await hook.publish({
       offeringId,
       name: data.name.trim(),
       symbol: data.symbol.trim(),
@@ -246,7 +246,7 @@ export function PublishOnChainPage({
     });
   }
 
-  const inProgress = displayStatus === "signing" || displayStatus === "registrando" || displayStatus === "confirming";
+  const inProgress = displayStatus === "signing" || displayStatus === "registering" || displayStatus === "confirming";
 
   return (
     <main className="flex flex-1 flex-col bg-military">
@@ -332,9 +332,9 @@ export function PublishOnChainPage({
           </div>
         )}
 
-        {(displayStatus === "revertida" || displayStatus === "error") && displayError && (
+        {(displayStatus === "reverted" || displayStatus === "error") && displayError && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
-            {displayStatus === "revertida" && <p className="font-medium">{tp.revertedTitle}</p>}
+            {displayStatus === "reverted" && <p className="font-medium">{tp.revertedTitle}</p>}
             <p className="mt-1">{displayError}</p>
           </div>
         )}
@@ -383,12 +383,12 @@ export function PublishOnChainPage({
           <div className="mt-6 flex items-center gap-3 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             {displayStatus === "signing" && tp.signing}
-            {displayStatus === "registrando" && tp.registering}
+            {displayStatus === "registering" && tp.registering}
             {displayStatus === "confirming" && tp.confirming}
           </div>
         )}
 
-        {(displayStatus === "idle" || displayStatus === "revertida" || displayStatus === "error") && (
+        {(displayStatus === "idle" || displayStatus === "reverted" || displayStatus === "error") && (
           <>
             {!linkedWallet && (
               <div className="mt-6 rounded-lg border border-salmon/40 bg-salmon/10 p-4 text-sm text-on-military">

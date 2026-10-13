@@ -1,17 +1,20 @@
 "use client";
 
-// Executor genérico de uma transação do niara-pmes-solana com o mesmo ciclo de status das ações
-// da Sepolia (useOnChainActions.ts): assinando → confirmando → sucesso/erro. "success" só depois
-// da confirmação real na rede — nunca ao assinar.
+// Generic executor for a niara-pmes-solana transaction with the same status cycle as the Sepolia
+// actions (useOnChainActions.ts): signing → confirming → success/error. "success" only after the
+// real confirmation on the network — never on signing.
 import { useCallback, useMemo, useState } from "react";
 import type { Connection, Transaction } from "@solana/web3.js";
 import { solanaConnection } from "../program";
 import { signAndSend } from "../phantom";
+import { describeSolanaError } from "../errors";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type SolanaActionStatus = "idle" | "signing" | "confirming" | "success" | "error";
 
 export function useSolanaAction() {
   const connection = useMemo(() => solanaConnection(), []);
+  const messages = useDictionary().chainErrors.solana;
   const [status, setStatus] = useState<SolanaActionStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
@@ -30,12 +33,12 @@ export function useSolanaAction() {
         setStatus("success");
         return sig;
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : String(error));
+        setErrorMessage(describeSolanaError(error, messages));
         setStatus("error");
         return null;
       }
     },
-    [connection],
+    [connection, messages],
   );
 
   const busy = status === "signing" || status === "confirming";
