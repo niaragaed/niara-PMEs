@@ -4,8 +4,8 @@ import { ptBr } from "@/lib/i18n/pt-br";
 import { requireLogin } from "@/lib/auth/resolveInvestor";
 
 export const metadata: Metadata = {
-  title: `${ptBr.negociar.hub.meta.title} · Niara PMEs`,
-  description: ptBr.negociar.hub.meta.description,
+  title: `${ptBr.trade.hub.meta.title} · Niara PMEs`,
+  description: ptBr.trade.hub.meta.description,
 };
 
 export default async function Page() {

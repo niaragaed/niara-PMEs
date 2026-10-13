@@ -13,8 +13,8 @@ export function KpiCard({ label, value, note }: { label: string; value: string; 
   );
 }
 
-export function OrigemBadge({ real }: { real: boolean }) {
-  const t = ptBr.socios.origem;
+export function OriginBadge({ real }: { real: boolean }) {
+  const t = ptBr.partners.origin;
   return real ? (
     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-2.5 py-0.5 text-xs font-semibold text-on-salmon">
       <BadgeCheck className="h-3 w-3" aria-hidden="true" />
@@ -27,14 +27,14 @@ export function OrigemBadge({ real }: { real: boolean }) {
   );
 }
 
-export function SociosDashboard({
+export function PartnersDashboard({
   email,
-  movimentacoesSlot,
+  transactionsSlot,
 }: {
   email: string;
-  movimentacoesSlot: ReactNode;
+  transactionsSlot: ReactNode;
 }) {
-  const t = ptBr.socios;
+  const t = ptBr.partners;
 
   return (
     <main className="flex flex-1 flex-col bg-military">
@@ -45,9 +45,9 @@ export function SociosDashboard({
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.titulo}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.title}</h1>
             <p className="mt-1 text-sm text-on-military-muted">
-              {t.logadoComo} {email}
+              {t.loggedInAs} {email}
             </p>
           </div>
           <SignOutButton />
@@ -55,7 +55,7 @@ export function SociosDashboard({
 
         {/* Resumo + timeline única (on-chain real + off-chain/Supabase), streamed via Suspense
             (ver page.tsx) */}
-        {movimentacoesSlot}
+        {transactionsSlot}
       </div>
     </main>
   );

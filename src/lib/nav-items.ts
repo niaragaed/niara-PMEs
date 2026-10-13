@@ -28,25 +28,25 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    label: ptBr.nav.negociar,
+    label: ptBr.nav.trade,
     href: "#",
     children: [
-      { ...ptBr.nav.negociarChildren.ativosTokens, icon: Layers },
-      { ...ptBr.nav.negociarChildren.tokenPmes, icon: Building2 },
-      { ...ptBr.nav.negociarChildren.tokenAgro, icon: Wheat },
-      { ...ptBr.nav.negociarChildren.tokenImobiliario, icon: Home },
-      { ...ptBr.nav.negociarChildren.tokenAuto, icon: Car },
-      { ...ptBr.nav.negociarChildren.titulosDivida, icon: Landmark },
+      { ...ptBr.nav.tradeChildren.assetsAndTokens, icon: Layers },
+      { ...ptBr.nav.tradeChildren.smesToken, icon: Building2 },
+      { ...ptBr.nav.tradeChildren.tokenAgro, icon: Wheat },
+      { ...ptBr.nav.tradeChildren.realEstateToken, icon: Home },
+      { ...ptBr.nav.tradeChildren.tokenAuto, icon: Car },
+      { ...ptBr.nav.tradeChildren.debtSecurities, icon: Landmark },
     ],
   },
-  { label: ptBr.nav.ativos, href: "/ativos" },
-  { label: ptBr.nav.perfil, href: "/perfil" },
+  { label: ptBr.nav.assets, href: "/ativos" },
+  { label: ptBr.nav.profile, href: "/perfil" },
   {
-    label: ptBr.nav.sobre,
+    label: ptBr.nav.about,
     href: "#",
     children: [
-      { ...ptBr.nav.sobreChildren.documentos, icon: BookOpen },
-      { ...ptBr.nav.sobreChildren.contato, icon: Mail },
+      { ...ptBr.nav.aboutChildren.documents, icon: BookOpen },
+      { ...ptBr.nav.aboutChildren.contact, icon: Mail },
     ],
   },
 ];

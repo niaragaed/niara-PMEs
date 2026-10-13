@@ -37,7 +37,7 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
 export function PortfolioEvolutionChart() {
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{ptBr.ativos.evolucao.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{ptBr.assets.evolution.title}</h3>
 
       <div className="mt-4 h-72" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
@@ -60,13 +60,13 @@ export function PortfolioEvolutionChart() {
             <Legend formatter={(value: string) => <span className="text-on-military-muted">{value}</span>} />
             <Bar
               dataKey="investido"
-              name={ptBr.ativos.evolucao.seriesInvestido}
+              name={ptBr.assets.evolution.investedSeries}
               stackId="portfolio"
               fill="var(--color-chart-pmes)"
             />
             <Bar
               dataKey="ganho"
-              name={ptBr.ativos.evolucao.seriesGanho}
+              name={ptBr.assets.evolution.gainSeries}
               stackId="portfolio"
               fill="var(--color-value-positive)"
               radius={[4, 4, 0, 0]}
@@ -75,7 +75,7 @@ export function PortfolioEvolutionChart() {
         </ResponsiveContainer>
       </div>
 
-      <p className="mt-3 text-xs text-on-military-muted">{ptBr.ativos.evolucao.description}</p>
+      <p className="mt-3 text-xs text-on-military-muted">{ptBr.assets.evolution.description}</p>
     </div>
   );
 }

@@ -4,11 +4,11 @@ import { ptBr } from "@/lib/i18n/pt-br";
 import { requireLogin } from "@/lib/auth/resolveInvestor";
 
 export const metadata: Metadata = {
-  title: `${ptBr.ativos.categorias.auto} · Niara PMEs`,
-  description: ptBr.negociar.categorias.auto.descricaoCurta,
+  title: `${ptBr.assets.categories.auto} · Niara PMEs`,
+  description: ptBr.trade.categories.auto.shortDescription,
 };
 
 export default async function Page() {
   await requireLogin();
-  return <CategoryPage categoria="auto" />;
+  return <CategoryPage category="auto" />;
 }

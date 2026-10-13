@@ -8,13 +8,13 @@ import "server-only";
 // sempre (signInWithPassword) — isto aqui só decide quem, já logado, pode ver a página.
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
 
-export type ResolvedSocio = {
+export type ResolvedPartner = {
   userId: string | null;
   email: string | null;
   autorizado: boolean;
 };
 
-function lerAllowlist(): string[] {
+function readAllowlist(): string[] {
   const raw = process.env.NIARA_SOCIOS_EMAILS ?? "";
   return raw
     .split(",")
@@ -22,7 +22,7 @@ function lerAllowlist(): string[] {
     .filter(Boolean);
 }
 
-export async function resolveSocio(): Promise<ResolvedSocio> {
+export async function resolvePartner(): Promise<ResolvedPartner> {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -32,8 +32,8 @@ export async function resolveSocio(): Promise<ResolvedSocio> {
     return { userId: null, email: null, autorizado: false };
   }
 
-  const allowlist = lerAllowlist();
-  const autorizado = allowlist.includes(user.email.toLowerCase());
+  const allowlist = readAllowlist();
+  const authorized = allowlist.includes(user.email.toLowerCase());
 
-  return { userId: user.id, email: user.email, autorizado };
+  return { userId: user.id, email: user.email, autorizado: authorized };
 }

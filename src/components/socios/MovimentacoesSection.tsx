@@ -1,6 +1,6 @@
-import { getMovimentacoesEResumo } from "@/lib/socios/movimentacoes";
-import { MovimentacoesTable } from "./MovimentacoesTable";
-import { ResumoCards } from "./ResumoCards";
+import { getTransactionsAndSummary } from "@/lib/socios/movimentacoes";
+import { TransactionsTable } from "./MovimentacoesTable";
+import { SummaryCards } from "./ResumoCards";
 
 // Componente assíncrono isolado só para ficar atrás do <Suspense> de page.tsx (mesmo motivo de
 // antes: a leitura on-chain, dentro de getMovimentacoesEResumo(), pode demorar sem uma RPC
@@ -8,12 +8,12 @@ import { ResumoCards } from "./ResumoCards";
 // aportes, payment_events) tem seu próprio catch interno (ver
 // src/lib/socios/movimentacoes.ts), então uma falha isolada só tira aquela fonte da timeline,
 // nunca derruba a página.
-export async function MovimentacoesSection() {
-  const { movimentacoes, resumo } = await getMovimentacoesEResumo();
+export async function TransactionsSection() {
+  const { movimentacoes: transactions, resumo: summary } = await getTransactionsAndSummary();
   return (
     <>
-      <ResumoCards resumo={resumo} />
-      <MovimentacoesTable movimentacoes={movimentacoes} />
+      <SummaryCards summary={summary} />
+      <TransactionsTable transactions={transactions} />
     </>
   );
 }

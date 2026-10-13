@@ -7,74 +7,74 @@ import { useState, useTransition } from "react";
 import { Link2, Link2Off, RefreshCw } from "lucide-react";
 import { utils } from "@anchor-lang/core";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
-import { providerPhantom, useCarteiraSolana } from "@/lib/solana/phantom";
-import { prepararVinculoSolana, saveSolanaWallet, unlinkSolanaWallet } from "@/app/perfil/solana-actions";
+import { providerPhantom, useSolanaWallet } from "@/lib/solana/phantom";
+import { prepareSolanaLink, saveSolanaWallet, unlinkSolanaWallet } from "@/app/perfil/solana-actions";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-function truncar(endereco: string) {
-  return `${endereco.slice(0, 4)}…${endereco.slice(-4)}`;
+function truncate(address: string) {
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddress: string | null }) {
-  const t = ptBr.solana.perfil;
-  const carteira = useCarteiraSolana();
-  const [vinculada, setVinculada] = useState(solanaWalletAddress);
-  const [erro, setErro] = useState<string | null>(null);
-  const [feito, setFeito] = useState<"vinculada" | "desvinculada" | null>(null);
+  const t = ptBr.solana.profile;
+  const wallet = useSolanaWallet();
+  const [linked, setLinked] = useState(solanaWalletAddress);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<"vinculada" | "desvinculada" | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const conectada = carteira.endereco;
-  const confere = Boolean(vinculada && conectada && vinculada === conectada);
+  const connected = wallet.address;
+  const matches = Boolean(linked && connected && linked === connected);
 
-  function handleVincular() {
-    if (!conectada) return;
-    setErro(null);
-    setFeito(null);
+  function handleLink() {
+    if (!connected) return;
+    setError(null);
+    setDone(null);
     startTransition(async () => {
-      const preparo = await prepararVinculoSolana(conectada);
-      if (preparo.status === "error") {
-        setErro(preparo.message);
+      const preparation = await prepareSolanaLink(connected);
+      if (preparation.status === "error") {
+        setError(preparation.message);
         return;
       }
       const p = providerPhantom();
       if (!p?.signMessage) {
-        setErro(t.semSignMessage);
+        setError(t.noSignMessage);
         return;
       }
-      let assinatura: string;
+      let signature: string;
       try {
-        const r = await p.signMessage(new TextEncoder().encode(preparo.mensagem), "utf8");
-        assinatura = utils.bytes.bs58.encode(r.signature);
+        const r = await p.signMessage(new TextEncoder().encode(preparation.message), "utf8");
+        signature = utils.bytes.bs58.encode(r.signature);
       } catch (e) {
-        const codigo = (e as { code?: number })?.code;
-        setErro(codigo === 4001 ? t.assinaturaRecusada : e instanceof Error ? e.message : String(e));
+        const code = (e as { code?: number })?.code;
+        setError(code === 4001 ? t.signatureRefused : e instanceof Error ? e.message : String(e));
         return;
       }
-      const r = await saveSolanaWallet({ endereco: conectada, mensagem: preparo.mensagem, assinatura });
+      const r = await saveSolanaWallet({ address: connected, message: preparation.message, signature });
       if (r.status === "error") {
-        setErro(r.message);
+        setError(r.message);
         return;
       }
-      setVinculada(conectada);
-      setFeito("vinculada");
+      setLinked(connected);
+      setDone("vinculada");
     });
   }
 
-  function handleDesvincular() {
-    setErro(null);
-    setFeito(null);
+  function handleUnlink() {
+    setError(null);
+    setDone(null);
     startTransition(async () => {
       const r = await unlinkSolanaWallet();
       if (r.status === "error") {
-        setErro(r.message);
+        setError(r.message);
         return;
       }
-      setVinculada(null);
-      setFeito("desvinculada");
+      setLinked(null);
+      setDone("desvinculada");
     });
   }
 
-  const botaoPrimario =
+  const primaryButton =
     "flex items-center gap-1.5 rounded-md bg-salmon px-3 py-1.5 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
@@ -89,52 +89,52 @@ export function SolanaWalletSection({ solanaWalletAddress }: { solanaWalletAddre
       </div>
 
       <div className="mt-6 rounded-lg border border-panel-border bg-panel p-6">
-        <h3 className="text-sm font-semibold text-on-military">{t.vinculoTitulo}</h3>
-        <p className="mt-1 text-xs text-on-military-muted">{t.explicacao}</p>
+        <h3 className="text-sm font-semibold text-on-military">{t.linkTitle}</h3>
+        <p className="mt-1 text-xs text-on-military-muted">{t.explanation}</p>
 
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex items-center justify-between gap-4">
-            <dt className="text-on-military-muted">{t.vinculadaLabel}</dt>
-            <dd className="break-all text-right font-mono tabular-nums text-on-military">{vinculada ? truncar(vinculada) : t.nenhuma}</dd>
+            <dt className="text-on-military-muted">{t.linkedLabel}</dt>
+            <dd className="break-all text-right font-mono tabular-nums text-on-military">{linked ? truncate(linked) : t.none}</dd>
           </div>
-          {conectada && !confere && (
+          {connected && !matches && (
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-on-military-muted">{t.conectadaAgoraLabel}</dt>
-              <dd className="break-all text-right font-mono tabular-nums text-on-military">{truncar(conectada)}</dd>
+              <dt className="text-on-military-muted">{t.connectedNowLabel}</dt>
+              <dd className="break-all text-right font-mono tabular-nums text-on-military">{truncate(connected)}</dd>
             </div>
           )}
         </dl>
 
-        {erro && (
+        {error && (
           <p role="alert" className="mt-4 text-sm text-value-negative">
-            {erro}
+            {error}
           </p>
         )}
-        {feito && !erro && (
+        {done && !error && (
           <p className="mt-4 rounded-md border border-value-positive/30 bg-value-positive/10 px-3 py-2 text-xs text-value-positive">
-            {feito === "vinculada" ? t.sucessoVinculada : t.sucessoDesvinculada}
+            {done === "vinculada" ? t.successLinked : t.successUnlinked}
           </p>
         )}
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {conectada && !confere && (
-            <button type="button" onClick={handleVincular} disabled={isPending} className={botaoPrimario}>
-              {vinculada ? <RefreshCw className="h-4 w-4" aria-hidden="true" /> : <Link2 className="h-4 w-4" aria-hidden="true" />}
-              {isPending ? t.assinando : vinculada ? t.trocarBotao : t.vincularBotao}
+          {connected && !matches && (
+            <button type="button" onClick={handleLink} disabled={isPending} className={primaryButton}>
+              {linked ? <RefreshCw className="h-4 w-4" aria-hidden="true" /> : <Link2 className="h-4 w-4" aria-hidden="true" />}
+              {isPending ? t.signing : linked ? t.switchButton : t.linkButton}
             </button>
           )}
-          {vinculada && (
+          {linked && (
             <button
               type="button"
-              onClick={handleDesvincular}
+              onClick={handleUnlink}
               disabled={isPending}
               className="flex items-center gap-1.5 rounded-md border border-panel-border px-3 py-1.5 text-sm font-medium text-on-military-muted transition-colors hover:text-on-military disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Link2Off className="h-4 w-4" aria-hidden="true" />
-              {t.desvincularBotao}
+              {t.unlinkButton}
             </button>
           )}
-          {!vinculada && !conectada && <p className="text-xs text-on-military-muted">{t.conecteParaVincular}</p>}
+          {!linked && !connected && <p className="text-xs text-on-military-muted">{t.connectToLink}</p>}
         </div>
       </div>
     </section>

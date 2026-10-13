@@ -71,7 +71,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
               href="/entrar"
               className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
             >
-              {ptBr.nav.entrar}
+              {ptBr.nav.signIn}
             </Link>
           )}
         </div>
@@ -157,7 +157,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
                   onClick={closeMobileMenu}
                   className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
                 >
-                  {ptBr.nav.entrar}
+                  {ptBr.nav.signIn}
                 </Link>
               )}
             </li>

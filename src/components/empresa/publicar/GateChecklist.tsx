@@ -13,7 +13,7 @@ export type GateRow = {
   label: string;
   status: GateStatus;
   /** Texto extra em pt-BR — motivo da reprovação/erro, ou um detalhe informativo mesmo em "ok". */
-  detalhe: string | null;
+  detail: string | null;
 };
 
 function StatusIcon({ status }: { status: GateStatus }) {
@@ -66,7 +66,7 @@ export function GateChecklist({ rows }: { rows: GateRow[] }) {
                   {statusLabel(row.status)}
                 </span>
               </div>
-              {row.detalhe && <p className="mt-1 text-xs text-on-military-muted">{row.detalhe}</p>}
+              {row.detail && <p className="mt-1 text-xs text-on-military-muted">{row.detail}</p>}
             </div>
           </div>
         </li>

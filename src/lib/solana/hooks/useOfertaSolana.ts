@@ -8,70 +8,70 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PublicKey } from "@solana/web3.js";
 import {
-  ata,
-  conexaoSolana,
-  lerOfertaSolana,
-  lerPosicaoSolana,
+  minutes,
+  solanaConnection,
+  readSolanaOffering,
+  readSolanaPosition,
   pdaMintMbrl,
-  saldoTokenSolana,
-  type OfertaSolana,
-  type PosicaoSolana,
+  solanaTokenBalance,
+  type SolanaOffering,
+  type SolanaPosition,
 } from "../program";
-import { descreverErroSolana } from "../errors";
+import { describeSolanaError } from "../errors";
 
-const INTERVALO_MS = 15_000;
+const INTERVAL_MS = 15_000;
 
-export type LeituraOfertaSolana = {
-  oferta: OfertaSolana | null;
+export type SolanaOfferingRead = {
+  offering: SolanaOffering | null;
   /** A conta da oferta não existe no programa (endereço errado ou programa diferente). */
-  inexistente: boolean;
-  posicao: PosicaoSolana;
-  saldoMbrl: bigint;
-  saldoCotas: bigint;
-  pronto: boolean;
+  nonexistent: boolean;
+  position: SolanaPosition;
+  mbrlBalance: bigint;
+  shareBalance: bigint;
+  ready: boolean;
   errorMessage: string | null;
   refetch: () => void;
 };
 
-export function useOfertaSolana(endereco: string, investidor: string | null): LeituraOfertaSolana {
-  const connection = useMemo(() => conexaoSolana(), []);
+export function useSolanaOffering(address: string, investor: string | null): SolanaOfferingRead {
+  const connection = useMemo(() => solanaConnection(), []);
 
-  const termos = useQuery({
-    queryKey: ["solana-oferta", endereco],
-    queryFn: () => lerOfertaSolana(connection, endereco),
-    refetchInterval: INTERVALO_MS,
+  const terms = useQuery({
+    queryKey: ["solana-oferta", address],
+    queryFn: () => readSolanaOffering(connection, address),
+    refetchInterval: INTERVAL_MS,
   });
 
-  const mintCota = termos.data?.mintCota ?? null;
-  const posicao = useQuery({
-    queryKey: ["solana-posicao", endereco, investidor, mintCota],
-    enabled: Boolean(investidor && mintCota),
+  const shareMint = terms.data?.shareMint ?? null;
+  const position = useQuery({
+    queryKey: ["solana-posicao", address, investor, shareMint],
+    enabled: Boolean(investor && shareMint),
     queryFn: async () => {
-      const dono = new PublicKey(investidor as string);
-      const [p, saldoMbrl, saldoCotas] = await Promise.all([
-        lerPosicaoSolana(connection, endereco, investidor as string),
-        saldoTokenSolana(connection, ata(dono, pdaMintMbrl())),
-        saldoTokenSolana(connection, ata(dono, new PublicKey(mintCota as string))),
+      const owner = new PublicKey(investor as string);
+      const [p, mbrlBalance, shareBalance] = await Promise.all([
+        readSolanaPosition(connection, address, investor as string),
+        solanaTokenBalance(connection, minutes(owner, pdaMintMbrl())),
+        solanaTokenBalance(connection, minutes(owner, new PublicKey(shareMint as string))),
       ]);
-      return { posicao: p, saldoMbrl, saldoCotas };
+      return { position: p, mbrlBalance, shareBalance };
     },
-    refetchInterval: INTERVALO_MS,
+    refetchInterval: INTERVAL_MS,
   });
 
-  const erro = termos.error ?? posicao.error;
+  const error = terms.error ?? position.error;
   const zero = BigInt(0);
 
   return {
-    oferta: termos.data ?? null,
-    inexistente: termos.isSuccess && termos.data === null,
-    posicao: posicao.data?.posicao ?? { aportado: zero, cotasResgatadas: false, reembolsado: false },
-    saldoMbrl: posicao.data?.saldoMbrl ?? zero,
-    saldoCotas: posicao.data?.saldoCotas ?? zero,
-    pronto: termos.isSuccess && Boolean(termos.data) && (!investidor || posicao.isSuccess),
-    errorMessage: erro ? descreverErroSolana(erro) : null,
+    offering: terms.data ?? null,
+    nonexistent: terms.isSuccess && terms.data === null,
+    position: position.data?.position ?? { invested: zero, sharesRedeemed: false, refunded: false },
+    mbrlBalance: position.data?.mbrlBalance ?? zero,
+    shareBalance: position.data?.shareBalance ?? zero,
+    ready: terms.isSuccess && Boolean(terms.data) && (!investor || position.isSuccess),
+    errorMessage: error ? describeSolanaError(error) : null,
     refetch: () => {
-      void termos.refetch();
-      void posicao.refetch();
+      void terms.refetch();
+      void position.refetch();
     },
   };
 }

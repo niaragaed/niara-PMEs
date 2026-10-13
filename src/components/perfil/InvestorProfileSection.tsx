@@ -10,16 +10,16 @@ type InvestorProfileSectionProps = {
   // (?onboarding=1 vindo de /cadastro) — abre o questionário direto em vez
   // do resultado padrão "Arrojado" e rola a seção até a viewport, já que
   // ela não é a primeira da página.
-  abrirAutomaticamente?: boolean;
+  openAutomatically?: boolean;
 };
 
-export function InvestorProfileSection({ abrirAutomaticamente }: InvestorProfileSectionProps) {
-  const [retaking, setRetaking] = useState(Boolean(abrirAutomaticamente));
+export function InvestorProfileSection({ openAutomatically }: InvestorProfileSectionProps) {
+  const [retaking, setRetaking] = useState(Boolean(openAutomatically));
   const sectionRef = useRef<HTMLElement>(null);
-  const t = ptBr.perfil.investidor;
+  const t = ptBr.profile.investor;
 
   useEffect(() => {
-    if (abrirAutomaticamente) {
+    if (openAutomatically) {
       sectionRef.current?.scrollIntoView({ block: "start" });
       // Remove o ?onboarding=1 da URL depois de já ter aberto o
       // questionário — sem isso, um F5 nesta mesma página reabriria o

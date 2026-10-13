@@ -23,10 +23,10 @@ config({ path: ".env.local" });
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import {
-  encontrarBlocoDeploy,
+  findDeployBlock,
   publicClient,
-  fetchEventosOnChainRange,
-  type EventoOnChain,
+  fetchOnChainEventsRange,
+  type OnChainEvent,
 } from "@/lib/web3/eventsCore";
 
 function createAdminClient() {
@@ -35,7 +35,7 @@ function createAdminClient() {
   });
 }
 
-function eventoParaRow(evento: EventoOnChain) {
+function eventToRow(evento: OnChainEvent) {
   return {
     tipo: evento.tipo,
     oferta_address: evento.ofertaAddress,
@@ -67,12 +67,12 @@ async function main() {
     .maybeSingle();
   if (syncError) throw syncError;
 
-  const redeployDetectado = syncState !== null && syncState.mock_brl_address !== addresses.mockBrl.toLowerCase();
+  const redeployDetected = syncState !== null && syncState.mock_brl_address !== addresses.mockBrl.toLowerCase();
 
   let fromBlock: bigint;
-  if (!syncState || redeployDetectado) {
-    fromBlock = await encontrarBlocoDeploy(client, addresses.mockBrl);
-    if (redeployDetectado) {
+  if (!syncState || redeployDetected) {
+    fromBlock = await findDeployBlock(client, addresses.mockBrl);
+    if (redeployDetected) {
       console.log(
         `Endereço de MockBRL mudou (era ${syncState?.mock_brl_address}, agora ${addresses.mockBrl}) — recalculando bloco de deploy: ${fromBlock}.`,
       );
@@ -88,16 +88,16 @@ async function main() {
     return;
   }
 
-  console.log(`Escaneando ${addresses.ofertas.length} oferta(s) de ${fromBlock} até ${toBlock} (${toBlock - fromBlock + BigInt(1)} blocos)...`);
+  console.log(`Escaneando ${addresses.offerings.length} oferta(s) de ${fromBlock} até ${toBlock} (${toBlock - fromBlock + BigInt(1)} blocos)...`);
   console.log("Pode demorar alguns minutos na primeira vez — sem pressa, este script não tem limite de 60s.");
 
-  const eventos = await fetchEventosOnChainRange(client, addresses.ofertas, fromBlock, toBlock);
-  console.log(`${eventos.length} evento(s) encontrado(s).`);
+  const events = await fetchOnChainEventsRange(client, addresses.offerings, fromBlock, toBlock);
+  console.log(`${events.length} evento(s) encontrado(s).`);
 
-  if (eventos.length > 0) {
+  if (events.length > 0) {
     const { error: insertError } = await admin
       .from("onchain_events_cache")
-      .upsert(eventos.map(eventoParaRow), { onConflict: "tx_hash,oferta_address,tipo" });
+      .upsert(events.map(eventToRow), { onConflict: "tx_hash,oferta_address,tipo" });
     if (insertError) throw insertError;
   }
 

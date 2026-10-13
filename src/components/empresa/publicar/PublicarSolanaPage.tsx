@@ -14,30 +14,30 @@ import { useQuery } from "@tanstack/react-query";
 import { PublicKey } from "@solana/web3.js";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
 import { GateChecklist, type GateRow } from "./GateChecklist";
-import { TermoPublicacao, type DadosToken } from "./TermoPublicacao";
-import { useCarteiraSolana } from "@/lib/solana/phantom";
-import { conexaoSolana, lerEmissorSolana } from "@/lib/solana/program";
-import { usePublicarOfertaSolana } from "@/lib/solana/hooks/usePublicarOfertaSolana";
+import { PublicationTerms, type DataToken } from "./TermoPublicacao";
+import { useSolanaWallet } from "@/lib/solana/phantom";
+import { solanaConnection, readSolanaIssuer } from "@/lib/solana/program";
+import { usePublishSolanaOffering } from "@/lib/solana/hooks/usePublicarOfertaSolana";
 import {
-  MAX_EMPRESA_SOLANA,
-  MAX_NOME_SOLANA,
-  MAX_SERIE_SOLANA,
-  MAX_SIMBOLO_SOLANA,
-  UNIDADE_ON_CHAIN_SOLANA,
-  linkExplorerSolanaConta,
+  MAX_COMPANY_SOLANA,
+  MAX_NAME_SOLANA,
+  MAX_SERIES_SOLANA,
+  MAX_SYMBOL_SOLANA,
+  UNIT_ON_CHAIN_SOLANA,
+  solanaExplorerAccountLink,
   linkExplorerSolanaTx,
 } from "@/lib/solana/config";
 import {
-  confirmarPublicacaoSolana,
-  verificarConsistenciaSolana,
+  confirmPublicationSolana,
+  verifyConsistencySolana,
 } from "@/app/empresa/ofertas/solana-actions";
-import type { ConfirmarPublicacaoState, VerificarConsistenciaState } from "@/app/empresa/ofertas/onchain-actions";
+import type { ConfirmPublicationState, VerificarConsistenciaState } from "@/app/empresa/ofertas/onchain-actions";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type Props = {
   offeringId: string;
-  walletVinculada: string | null;
-  empresaNome: string;
+  linkedWallet: string | null;
+  companyName: string;
   cnpjRef: `0x${string}`;
   windowDays: number;
   targetMinCents: number;
@@ -50,36 +50,36 @@ type Props = {
   onchainLastError: string | null;
 };
 
-const bytes = (texto: string) => new TextEncoder().encode(texto).length;
+const bytes = (text: string) => new TextEncoder().encode(text).length;
 
 /** Corta no limite de BYTES (UTF-8) do programa sem quebrar um caractere no meio. */
-function cortarBytes(texto: string, maximo: number): string {
-  let saida = "";
-  for (const ch of texto) {
-    if (bytes(saida + ch) > maximo) break;
-    saida += ch;
+function cutBytes(text: string, max: number): string {
+  let output = "";
+  for (const ch of text) {
+    if (bytes(output + ch) > max) break;
+    output += ch;
   }
-  return saida.trim();
+  return output.trim();
 }
 
 // Tamanhos de conta criados por criar_oferta: Oferta (8 + INIT_SPACE = 410), mint SPL (82) e
 // conta de token SPL do escrow (165). Margem de 30%, como o gate de gás da Sepolia.
-const TAMANHOS_CONTAS = [410, 82, 165];
-const TAXA_LAMPORTS = 10_000;
-const LAMPORTS_POR_SOL = 1_000_000_000;
+const ACCOUNT_SIZES = [410, 82, 165];
+const FEE_LAMPORTS = 10_000;
+const LAMPORTS_PER_SOL = 1_000_000_000;
 
 function sol(lamports: number) {
-  return (lamports / LAMPORTS_POR_SOL).toLocaleString("pt-BR", { maximumFractionDigits: 6 });
+  return (lamports / LAMPORTS_PER_SOL).toLocaleString("pt-BR", { maximumFractionDigits: 6 });
 }
 
-function truncar(endereco: string) {
-  return `${endereco.slice(0, 4)}…${endereco.slice(-4)}`;
+function truncate(address: string) {
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
-export function PublicarSolanaPage({
+export function PublishSolanaPage({
   offeringId,
-  walletVinculada,
-  empresaNome,
+  linkedWallet,
+  companyName,
   cnpjRef,
   windowDays,
   targetMinCents,
@@ -91,211 +91,211 @@ export function PublicarSolanaPage({
   tokenAddress,
   onchainLastError,
 }: Props) {
-  const t = ptBr.empresaOfertas.publicarOnChain;
-  const ts = ptBr.solana.publicar;
+  const t = ptBr.companyOfferings.publishOnChain;
+  const ts = ptBr.solana.publish;
   const tg = ts.gates;
-  const tp = t.publicacao;
-  const tsp = ts.publicacao;
+  const tp = t.publication;
+  const tsp = ts.publication;
 
-  const carteira = useCarteiraSolana();
-  const connection = useMemo(() => conexaoSolana(), []);
-  const hook = usePublicarOfertaSolana();
+  const wallet = useSolanaWallet();
+  const connection = useMemo(() => solanaConnection(), []);
+  const hook = usePublishSolanaOffering();
 
-  const empresa = cortarBytes(empresaNome || "Empresa", MAX_EMPRESA_SOLANA);
-  const anoAtual = new Date().getFullYear();
-  const [dados, setDados] = useState<DadosToken>({
-    nome: cortarBytes(`${empresaNome} Participações`, MAX_NOME_SOLANA),
-    simbolo: (empresaNome.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
-    serie: `${anoAtual}-A`,
+  const company = cutBytes(companyName || "Empresa", MAX_COMPANY_SOLANA);
+  const currentYear = new Date().getFullYear();
+  const [data, setData] = useState<DataToken>({
+    name: cutBytes(`${companyName} Participações`, MAX_NAME_SOLANA),
+    symbol: (companyName.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
+    series: `${currentYear}-A`,
   });
-  const [aceito, setAceito] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   // ── leituras on-chain dos gates ─────────────────────────────────────────────────────────────
-  const endereco = carteira.endereco;
-  const saldo = useQuery({
-    queryKey: ["solana-publicar-saldo", endereco],
-    enabled: Boolean(endereco),
+  const address = wallet.address;
+  const balance = useQuery({
+    queryKey: ["solana-publicar-saldo", address],
+    enabled: Boolean(address),
     queryFn: async () => {
-      const [lamports, ...alugueis] = await Promise.all([
-        connection.getBalance(new PublicKey(endereco as string), "confirmed"),
-        ...TAMANHOS_CONTAS.map((n) => connection.getMinimumBalanceForRentExemption(n)),
+      const [lamports, ...rents] = await Promise.all([
+        connection.getBalance(new PublicKey(address as string), "confirmed"),
+        ...ACCOUNT_SIZES.map((n) => connection.getMinimumBalanceForRentExemption(n)),
       ]);
-      const custo = Math.ceil((alugueis.reduce((a, b) => a + b, 0) + TAXA_LAMPORTS) * 1.3);
-      return { lamports, custo };
+      const cost = Math.ceil((rents.reduce((a, b) => a + b, 0) + FEE_LAMPORTS) * 1.3);
+      return { lamports, cost };
     },
     refetchInterval: 20_000,
   });
-  const emissor = useQuery({
-    queryKey: ["solana-publicar-emissor", endereco],
-    enabled: Boolean(endereco),
-    queryFn: () => lerEmissorSolana(connection, endereco as string),
+  const issuer = useQuery({
+    queryKey: ["solana-publicar-emissor", address],
+    enabled: Boolean(address),
+    queryFn: () => readSolanaIssuer(connection, address as string),
     refetchInterval: 20_000,
   });
 
   // ── reconciliação ao (re)abrir a tela — mesma lógica da Sepolia ─────────────────────────────
-  const [reconciliado, setReconciliado] = useState<ConfirmarPublicacaoState | null>(null);
-  const [verificando, setVerificando] = useState(syncStatus === "pendente");
+  const [reconciled, setReconciled] = useState<ConfirmPublicationState | null>(null);
+  const [verifying, setVerifying] = useState(syncStatus === "pendente");
   useEffect(() => {
     if (syncStatus === "pendente") {
-      confirmarPublicacaoSolana(offeringId)
-        .then(setReconciliado)
-        .finally(() => setVerificando(false));
+      confirmPublicationSolana(offeringId)
+        .then(setReconciled)
+        .finally(() => setVerifying(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  async function verificarNovamente() {
-    setVerificando(true);
-    setReconciliado(await confirmarPublicacaoSolana(offeringId));
-    setVerificando(false);
+  async function verifyAgain() {
+    setVerifying(true);
+    setReconciled(await confirmPublicationSolana(offeringId));
+    setVerifying(false);
   }
 
-  const deveVerificarConsistencia = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
-  const [consistencia, setConsistencia] = useState<VerificarConsistenciaState | null>(null);
-  const [verificandoConsistencia, setVerificandoConsistencia] = useState(deveVerificarConsistencia);
+  const shouldVerifyConsistency = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
+  const [consistency, setConsistency] = useState<VerificarConsistenciaState | null>(null);
+  const [verifyingConsistency, setVerifyingConsistency] = useState(shouldVerifyConsistency);
   useEffect(() => {
-    if (deveVerificarConsistencia) {
-      verificarConsistenciaSolana(offeringId)
-        .then(setConsistencia)
-        .finally(() => setVerificandoConsistencia(false));
+    if (shouldVerifyConsistency) {
+      verifyConsistencySolana(offeringId)
+        .then(setConsistency)
+        .finally(() => setVerifyingConsistency(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  async function verificarConsistenciaNovamente() {
-    setVerificandoConsistencia(true);
-    setConsistencia(await verificarConsistenciaSolana(offeringId));
-    setVerificandoConsistencia(false);
+  async function verifyConsistencyAgain() {
+    setVerifyingConsistency(true);
+    setConsistency(await verifyConsistencySolana(offeringId));
+    setVerifyingConsistency(false);
   }
 
   const displayStatus: string =
     hook.status !== "idle"
       ? hook.status
-      : reconciliado
-        ? reconciliado.status === "error"
+      : reconciled
+        ? reconciled.status === "error"
           ? "erro"
-          : reconciliado.status
-        : consistencia
-          ? consistencia.status === "error"
+          : reconciled.status
+        : consistency
+          ? consistency.status === "error"
             ? "erro"
-            : consistencia.status
+            : consistency.status
           : ["pendente", "confirmada", "divergente"].includes(syncStatus)
             ? syncStatus
             : "idle";
 
   const displayTx = hook.txHash ?? txHash;
-  const displayContract = hook.contractAddress ?? contractAddress ?? (reconciliado?.status === "confirmada" ? reconciliado.contractAddress : null);
-  const displayToken = hook.tokenAddress ?? tokenAddress ?? (reconciliado?.status === "confirmada" ? reconciliado.tokenAddress : null);
+  const displayContract = hook.contractAddress ?? contractAddress ?? (reconciled?.status === "confirmada" ? reconciled.contractAddress : null);
+  const displayToken = hook.tokenAddress ?? tokenAddress ?? (reconciled?.status === "confirmada" ? reconciled.tokenAddress : null);
   const displayError =
     hook.errorMessage ??
-    (reconciliado && "motivo" in reconciliado ? reconciliado.motivo : null) ??
-    (reconciliado?.status === "error" ? reconciliado.message : null) ??
-    (consistencia && "motivo" in consistencia ? consistencia.motivo : null) ??
-    (consistencia?.status === "error" ? consistencia.message : null) ??
+    (reconciled && "motivo" in reconciled ? reconciled.motivo : null) ??
+    (reconciled?.status === "error" ? reconciled.message : null) ??
+    (consistency && "motivo" in consistency ? consistency.motivo : null) ??
+    (consistency?.status === "error" ? consistency.message : null) ??
     onchainLastError;
-  const divergenteEhDriftDeConsistencia = Boolean(displayContract);
+  const divergentIsConsistencyDrift = Boolean(displayContract);
 
   // ── gates ───────────────────────────────────────────────────────────────────────────────────
   const rowProvider: GateRow = {
     id: "provider",
     label: tg.provider.label,
-    status: !carteira.iniciado ? "carregando" : carteira.disponivel ? "ok" : "reprovado",
-    detalhe: carteira.iniciado && !carteira.disponivel ? tg.provider.reprovado : null,
+    status: !wallet.started ? "carregando" : wallet.available ? "ok" : "reprovado",
+    detail: wallet.started && !wallet.available ? tg.provider.rejected : null,
   };
-  const rowConexao: GateRow = {
+  const rowConnection: GateRow = {
     id: "conexao",
-    label: tg.conexao.label,
-    status: endereco ? "ok" : "reprovado",
-    detalhe: endereco ? null : tg.conexao.reprovado,
+    label: tg.connection.label,
+    status: address ? "ok" : "reprovado",
+    detail: address ? null : tg.connection.rejected,
   };
 
-  let rowSaldo: GateRow;
-  if (!endereco) rowSaldo = { id: "saldo", label: tg.saldo.label, status: "carregando", detalhe: null };
-  else if (saldo.isError) rowSaldo = { id: "saldo", label: tg.saldo.label, status: "erro", detalhe: tg.saldo.erro };
-  else if (!saldo.data) rowSaldo = { id: "saldo", label: tg.saldo.label, status: "carregando", detalhe: tg.saldo.carregando };
-  else if (saldo.data.lamports < saldo.data.custo)
-    rowSaldo = { id: "saldo", label: tg.saldo.label, status: "reprovado", detalhe: tg.saldo.reprovado(sol(saldo.data.lamports), sol(saldo.data.custo)) };
-  else rowSaldo = { id: "saldo", label: tg.saldo.label, status: "ok", detalhe: tg.saldo.ok(sol(saldo.data.lamports), sol(saldo.data.custo)) };
+  let rowBalance: GateRow;
+  if (!address) rowBalance = { id: "saldo", label: tg.balance.label, status: "carregando", detail: null };
+  else if (balance.isError) rowBalance = { id: "saldo", label: tg.balance.label, status: "erro", detail: tg.balance.error };
+  else if (!balance.data) rowBalance = { id: "saldo", label: tg.balance.label, status: "carregando", detail: tg.balance.loading };
+  else if (balance.data.lamports < balance.data.cost)
+    rowBalance = { id: "saldo", label: tg.balance.label, status: "reprovado", detail: tg.balance.rejected(sol(balance.data.lamports), sol(balance.data.cost)) };
+  else rowBalance = { id: "saldo", label: tg.balance.label, status: "ok", detail: tg.balance.ok(sol(balance.data.lamports), sol(balance.data.cost)) };
 
-  let rowAutorizado: GateRow;
-  if (!endereco) rowAutorizado = { id: "autorizado", label: tg.autorizado.label, status: "carregando", detalhe: tg.autorizado.naoConectado };
-  else if (emissor.isError) rowAutorizado = { id: "autorizado", label: tg.autorizado.label, status: "erro", detalhe: tg.autorizado.erro };
-  else if (!emissor.isSuccess) rowAutorizado = { id: "autorizado", label: tg.autorizado.label, status: "carregando", detalhe: null };
-  else if (!emissor.data?.autorizado) rowAutorizado = { id: "autorizado", label: tg.autorizado.label, status: "reprovado", detalhe: tg.autorizado.reprovado };
-  else if (emissor.data.ofertaAberta) rowAutorizado = { id: "autorizado", label: tg.autorizado.label, status: "reprovado", detalhe: tg.autorizado.ofertaAberta };
-  else rowAutorizado = { id: "autorizado", label: tg.autorizado.label, status: "ok", detalhe: null };
+  let rowAuthorized: GateRow;
+  if (!address) rowAuthorized = { id: "autorizado", label: tg.authorized.label, status: "carregando", detail: tg.authorized.notConnected };
+  else if (issuer.isError) rowAuthorized = { id: "autorizado", label: tg.authorized.label, status: "erro", detail: tg.authorized.error };
+  else if (!issuer.isSuccess) rowAuthorized = { id: "autorizado", label: tg.authorized.label, status: "carregando", detail: null };
+  else if (!issuer.data?.authorized) rowAuthorized = { id: "autorizado", label: tg.authorized.label, status: "reprovado", detail: tg.authorized.rejected };
+  else if (issuer.data.openOffering) rowAuthorized = { id: "autorizado", label: tg.authorized.label, status: "reprovado", detail: tg.authorized.openOffering };
+  else rowAuthorized = { id: "autorizado", label: tg.authorized.label, status: "ok", detail: null };
 
-  let rowTitularidade: GateRow;
-  if (!walletVinculada) rowTitularidade = { id: "titularidade", label: tg.titularidade.label, status: "reprovado", detalhe: tg.titularidade.semCarteiraVinculada };
-  else if (!endereco) rowTitularidade = { id: "titularidade", label: tg.titularidade.label, status: "carregando", detalhe: tg.titularidade.naoConectado };
-  else if (endereco !== walletVinculada)
-    rowTitularidade = { id: "titularidade", label: tg.titularidade.label, status: "reprovado", detalhe: tg.titularidade.diferente(truncar(walletVinculada), truncar(endereco)) };
-  else rowTitularidade = { id: "titularidade", label: tg.titularidade.label, status: "ok", detalhe: null };
+  let rowOwnership: GateRow;
+  if (!linkedWallet) rowOwnership = { id: "titularidade", label: tg.ownership.label, status: "reprovado", detail: tg.ownership.noLinkedWallet };
+  else if (!address) rowOwnership = { id: "titularidade", label: tg.ownership.label, status: "carregando", detail: tg.ownership.notConnected };
+  else if (address !== linkedWallet)
+    rowOwnership = { id: "titularidade", label: tg.ownership.label, status: "reprovado", detail: tg.ownership.different(truncate(linkedWallet), truncate(address)) };
+  else rowOwnership = { id: "titularidade", label: tg.ownership.label, status: "ok", detail: null };
 
-  const nome = dados.nome.trim();
-  const simbolo = dados.simbolo.trim();
-  const serie = dados.serie.trim();
-  const dadosValidos =
-    nome.length > 0 &&
-    simbolo.length > 0 &&
-    serie.length > 0 &&
-    bytes(nome) <= MAX_NOME_SOLANA &&
-    bytes(simbolo) <= MAX_SIMBOLO_SOLANA &&
-    bytes(serie) <= MAX_SERIE_SOLANA;
-  const termoOk = aceito && dadosValidos;
-  const rowTermo: GateRow = {
+  const name = data.name.trim();
+  const symbol = data.symbol.trim();
+  const series = data.series.trim();
+  const validData =
+    name.length > 0 &&
+    symbol.length > 0 &&
+    series.length > 0 &&
+    bytes(name) <= MAX_NAME_SOLANA &&
+    bytes(symbol) <= MAX_SYMBOL_SOLANA &&
+    bytes(series) <= MAX_SERIES_SOLANA;
+  const termOk = accepted && validData;
+  const rowTerm: GateRow = {
     id: "termo",
-    label: tg.termo.label,
-    status: termoOk ? "ok" : "reprovado",
-    detalhe: termoOk ? null : `${tg.termo.reprovado} ${tg.termo.limites}`,
+    label: tg.term.label,
+    status: termOk ? "ok" : "reprovado",
+    detail: termOk ? null : `${tg.term.rejected} ${tg.term.limits}`,
   };
 
-  const rows = [rowProvider, rowConexao, rowSaldo, rowAutorizado, rowTitularidade, rowTermo];
-  const pendencias = rows.filter((r) => r.status !== "ok");
-  const podeHabilitar = pendencias.length === 0 && (displayStatus === "idle" || displayStatus === "erro" || displayStatus === "revertida");
+  const rows = [rowProvider, rowConnection, rowBalance, rowAuthorized, rowOwnership, rowTerm];
+  const pendingItems = rows.filter((r) => r.status !== "ok");
+  const canEnable = pendingItems.length === 0 && (displayStatus === "idle" || displayStatus === "erro" || displayStatus === "revertida");
 
-  async function handlePublicar() {
+  async function handlePublish() {
     await hook.publicar({
       offeringId,
-      nome,
-      simbolo,
-      empresa,
+      name,
+      symbol,
+      company,
       cnpjRefHex: cnpjRef,
-      serie,
-      metaMinima: BigInt(targetMinCents) * UNIDADE_ON_CHAIN_SOLANA,
-      metaMaxima: BigInt(hardCapCents) * UNIDADE_ON_CHAIN_SOLANA,
-      precoPorCota: BigInt(sharePriceCents) * UNIDADE_ON_CHAIN_SOLANA,
+      series,
+      minTarget: BigInt(targetMinCents) * UNIT_ON_CHAIN_SOLANA,
+      maxTarget: BigInt(hardCapCents) * UNIT_ON_CHAIN_SOLANA,
+      pricePerShare: BigInt(sharePriceCents) * UNIT_ON_CHAIN_SOLANA,
       windowDays,
     });
   }
 
-  const emAndamento = displayStatus === "assinando" || displayStatus === "registrando" || displayStatus === "confirmando";
-  const linkClasse = "font-mono text-xs text-salmon hover:text-salmon-600";
+  const inProgress = displayStatus === "assinando" || displayStatus === "registrando" || displayStatus === "confirmando";
+  const linkClassName = "font-mono text-xs text-salmon hover:text-salmon-600";
 
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.common.demonstracao}</span> — {ts.banner}
+        <span className="font-semibold text-salmon">{ptBr.common.demo}</span> — {ts.banner}
       </div>
 
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">
         <Link href="/empresa/ofertas" className="text-sm text-salmon hover:text-salmon-600">
-          {t.voltar}
+          {t.back}
         </Link>
 
         <h1 className="mt-4 text-2xl font-semibold tracking-tight text-on-military">
-          {t.titulo} <span className="text-base font-normal text-on-military-muted">· {ptBr.solana.redeNome}</span>
+          {t.title} <span className="text-base font-normal text-on-military-muted">· {ptBr.solana.networkName}</span>
         </h1>
-        <p className="mt-1 text-sm text-on-military-muted">{ts.subtitulo}</p>
+        <p className="mt-1 text-sm text-on-military-muted">{ts.subtitle}</p>
 
         {displayStatus === "confirmada" && (
           <div className="mt-6 rounded-lg border border-value-positive/40 bg-value-positive/10 p-4 text-sm text-on-military">
-            <p className="font-medium">{tsp.confirmadaTitulo}</p>
-            <p className="mt-1 text-on-military-muted">{tsp.confirmadaTexto}</p>
+            <p className="font-medium">{tsp.confirmedTitle}</p>
+            <p className="mt-1 text-on-military-muted">{tsp.confirmedText}</p>
             <dl className="mt-3 space-y-1">
               {displayContract && (
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <dt className="text-on-military-muted">{tsp.contractLabel}</dt>
                   <dd className="break-all">
-                    <a href={linkExplorerSolanaConta(displayContract)} target="_blank" rel="noreferrer" className={linkClasse}>
+                    <a href={solanaExplorerAccountLink(displayContract)} target="_blank" rel="noreferrer" className={linkClassName}>
                       {displayContract}
                     </a>
                   </dd>
@@ -305,7 +305,7 @@ export function PublicarSolanaPage({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <dt className="text-on-military-muted">{tsp.tokenLabel}</dt>
                   <dd className="break-all">
-                    <a href={linkExplorerSolanaConta(displayToken)} target="_blank" rel="noreferrer" className={linkClasse}>
+                    <a href={solanaExplorerAccountLink(displayToken)} target="_blank" rel="noreferrer" className={linkClassName}>
                       {displayToken}
                     </a>
                   </dd>
@@ -315,47 +315,47 @@ export function PublicarSolanaPage({
             <div className="mt-3 flex flex-wrap gap-4">
               {displayTx && (
                 <a href={linkExplorerSolanaTx(displayTx)} target="_blank" rel="noreferrer" className="text-salmon hover:text-salmon-600">
-                  {tsp.verNoExplorer}
+                  {tsp.viewOnExplorer}
                 </a>
               )}
               <Link href={`/negociar/oferta/${offeringId}`} className="text-salmon hover:text-salmon-600">
-                {tsp.verOferta}
+                {tsp.viewOffering}
               </Link>
             </div>
             <div className="mt-3">
               <button
                 type="button"
-                onClick={verificarConsistenciaNovamente}
-                disabled={verificandoConsistencia}
+                onClick={verifyConsistencyAgain}
+                disabled={verifyingConsistency}
                 className="flex items-center gap-2 rounded-md border border-panel-border px-3 py-1.5 text-sm text-on-military hover:text-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {verificandoConsistencia && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {tp.verificarConsistencia}
+                {verifyingConsistency && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {tp.verifyConsistency}
               </button>
-              <p className="mt-1 text-xs text-on-military-muted">{tsp.verificarConsistenciaNota}</p>
+              <p className="mt-1 text-xs text-on-military-muted">{tsp.verifyConsistencyNote}</p>
             </div>
           </div>
         )}
 
         {displayStatus === "pendente" && (
           <div className="mt-6 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
-            <p className="font-medium">{tp.pendenteTitulo}</p>
-            <p className="mt-1 text-on-military-muted">{tsp.pendenteTexto}</p>
+            <p className="font-medium">{tp.pendingTitle}</p>
+            <p className="mt-1 text-on-military-muted">{tsp.pendingText}</p>
             {displayTx && (
               <a href={linkExplorerSolanaTx(displayTx)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-salmon hover:text-salmon-600">
-                {tsp.verNoExplorer}
+                {tsp.viewOnExplorer}
               </a>
             )}
             {hook.errorMessage && <p className="mt-2 text-xs text-on-military-muted">{hook.errorMessage}</p>}
             <div className="mt-3">
               <button
                 type="button"
-                onClick={verificarNovamente}
-                disabled={verificando}
+                onClick={verifyAgain}
+                disabled={verifying}
                 className="flex items-center gap-2 rounded-md border border-panel-border px-3 py-1.5 text-sm text-on-military hover:text-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {verificando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {tp.verificarNovamente}
+                {verifying && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {tp.verifyAgain}
               </button>
             </div>
           </div>
@@ -363,57 +363,57 @@ export function PublicarSolanaPage({
 
         {(displayStatus === "revertida" || displayStatus === "erro") && displayError && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
-            {displayStatus === "revertida" && <p className="font-medium">{tp.revertidaTitulo}</p>}
+            {displayStatus === "revertida" && <p className="font-medium">{tp.revertedTitle}</p>}
             <p className="mt-1">{displayError}</p>
           </div>
         )}
 
         {displayStatus === "divergente" && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
-            <p className="font-medium">{tp.divergenteTitulo}</p>
-            <p className="mt-1">{divergenteEhDriftDeConsistencia ? tp.divergenteConsistenciaTexto : tp.divergenteTexto}</p>
+            <p className="font-medium">{tp.divergentTitle}</p>
+            <p className="mt-1">{divergentIsConsistencyDrift ? tp.divergentConsistencyText : tp.divergentText}</p>
             {displayError && <p className="mt-1 text-xs">{displayError}</p>}
             {displayTx && (
               <a href={linkExplorerSolanaTx(displayTx)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-value-negative underline">
-                {tsp.verNoExplorer}
+                {tsp.viewOnExplorer}
               </a>
             )}
             <div className="mt-3">
               <button
                 type="button"
-                onClick={divergenteEhDriftDeConsistencia ? verificarConsistenciaNovamente : verificarNovamente}
-                disabled={divergenteEhDriftDeConsistencia ? verificandoConsistencia : verificando}
+                onClick={divergentIsConsistencyDrift ? verifyConsistencyAgain : verifyAgain}
+                disabled={divergentIsConsistencyDrift ? verifyingConsistency : verifying}
                 className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {(divergenteEhDriftDeConsistencia ? verificandoConsistencia : verificando) && (
+                {(divergentIsConsistencyDrift ? verifyingConsistency : verifying) && (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 )}
-                {divergenteEhDriftDeConsistencia ? tp.verificarConsistencia : tp.reprocessar}
+                {divergentIsConsistencyDrift ? tp.verifyConsistency : tp.reprocess}
               </button>
               <p className="mt-1 text-xs text-on-military-muted">
-                {divergenteEhDriftDeConsistencia ? tsp.verificarConsistenciaNota : tp.reprocessarNota}
+                {divergentIsConsistencyDrift ? tsp.verifyConsistencyNote : tp.reprocessNote}
               </p>
             </div>
           </div>
         )}
 
-        {emAndamento && (
+        {inProgress && (
           <div className="mt-6 flex items-center gap-3 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            {displayStatus === "assinando" && tsp.assinando}
-            {displayStatus === "registrando" && tsp.registrando}
-            {displayStatus === "confirmando" && tsp.confirmando}
+            {displayStatus === "assinando" && tsp.signing}
+            {displayStatus === "registrando" && tsp.registering}
+            {displayStatus === "confirmando" && tsp.confirming}
           </div>
         )}
 
         {(displayStatus === "idle" || displayStatus === "revertida" || displayStatus === "erro") && (
           <>
-            {!walletVinculada && (
+            {!linkedWallet && (
               <div className="mt-6 rounded-lg border border-salmon/40 bg-salmon/10 p-4 text-sm text-on-military">
-                <p className="font-medium">{ts.semCarteiraVinculada.titulo}</p>
-                <p className="mt-1 text-on-military-muted">{ts.semCarteiraVinculada.texto}</p>
+                <p className="font-medium">{ts.noLinkedWallet.title}</p>
+                <p className="mt-1 text-on-military-muted">{ts.noLinkedWallet.text}</p>
                 <Link href="/perfil#carteira-solana" className="mt-2 inline-block text-salmon hover:text-salmon-600">
-                  {ts.semCarteiraVinculada.link}
+                  {ts.noLinkedWallet.link}
                 </Link>
               </div>
             )}
@@ -422,36 +422,36 @@ export function PublicarSolanaPage({
               <ConnectPhantom />
             </div>
 
-            <h2 className="mt-8 text-sm font-semibold text-on-military">{t.gates.titulo}</h2>
+            <h2 className="mt-8 text-sm font-semibold text-on-military">{t.gates.title}</h2>
             <div className="mt-3">
               <GateChecklist rows={rows} />
             </div>
 
             <div className="mt-8">
-              <TermoPublicacao textos={ts} dados={dados} onDadosChange={setDados} aceito={aceito} onAceitoChange={setAceito} desabilitado={false} />
+              <PublicationTerms texts={ts} data={data} onDataChange={setData} accepted={accepted} onAcceptedChange={setAccepted} disabled={false} />
             </div>
 
             <div className="mt-8 flex flex-col items-start gap-3">
               <button
                 type="button"
-                onClick={handlePublicar}
-                disabled={!podeHabilitar}
-                aria-disabled={!podeHabilitar}
-                aria-label={podeHabilitar ? t.botao.label : t.botao.bloqueadoAria}
-                title={podeHabilitar ? t.botao.label : t.botao.bloqueadoAria}
+                onClick={handlePublish}
+                disabled={!canEnable}
+                aria-disabled={!canEnable}
+                aria-label={canEnable ? t.button.label : t.button.blockedAria}
+                title={canEnable ? t.button.label : t.button.blockedAria}
                 className={
-                  podeHabilitar
+                  canEnable
                     ? "rounded-md bg-salmon px-6 py-3 text-sm font-semibold text-on-salmon transition-colors hover:bg-salmon-600"
                     : "cursor-not-allowed rounded-md bg-salmon px-6 py-3 text-sm font-semibold text-on-salmon opacity-60"
                 }
               >
-                {t.botao.label} · {ptBr.solana.redeNome}
+                {t.button.label} · {ptBr.solana.networkName}
               </button>
-              {!podeHabilitar && pendencias.length > 0 && (
+              {!canEnable && pendingItems.length > 0 && (
                 <div className="text-xs text-on-military-muted">
-                  <p>{t.botao.pendencias}</p>
+                  <p>{t.button.pendingItems}</p>
                   <ul className="mt-1 list-inside list-disc">
-                    {pendencias.map((p) => (
+                    {pendingItems.map((p) => (
                       <li key={p.id}>{p.label}</li>
                     ))}
                   </ul>

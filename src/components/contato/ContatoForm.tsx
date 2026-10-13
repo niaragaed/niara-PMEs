@@ -7,32 +7,32 @@ import { isValidEmail } from "@/lib/masks";
 
 const CONTACT_EMAIL = "niaragaed@gmail.com";
 
-type AssuntoKey = keyof typeof ptBr.contato.form.assuntoOpcoes;
+type SubjectKey = keyof typeof ptBr.contact.form.subjectOptions;
 
-const ASSUNTOS: AssuntoKey[] = ["empresa", "investidor", "parcerias", "imprensa", "suporte", "outro"];
+const SUBJECTS: SubjectKey[] = ["company", "investor", "partnerships", "press", "support", "other"];
 
 type FormData = {
-  nome: string;
+  name: string;
   email: string;
-  assunto: AssuntoKey;
-  mensagem: string;
+  subject: SubjectKey;
+  message: string;
 };
 
 type FormErrors = Partial<Record<"nome" | "email" | "mensagem", string>>;
 
 const EMPTY_FORM: FormData = {
-  nome: "",
+  name: "",
   email: "",
-  assunto: "empresa",
-  mensagem: "",
+  subject: "company",
+  message: "",
 };
 
-export function ContatoForm() {
+export function ContactForm() {
   // Dados do formulário servem só para montar o mailto no navegador —
   // nunca são persistidos nem enviados a servidor.
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
-  const t = ptBr.contato.form;
+  const t = ptBr.contact.form;
 
   function handleChange(field: "nome" | "email" | "mensagem") {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -40,25 +40,25 @@ export function ContatoForm() {
     };
   }
 
-  function handleAssuntoChange(event: ChangeEvent<HTMLSelectElement>) {
-    setForm((current) => ({ ...current, assunto: event.target.value as AssuntoKey }));
+  function handleSubjectChange(event: ChangeEvent<HTMLSelectElement>) {
+    setForm((current) => ({ ...current, subject: event.target.value as SubjectKey }));
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     const nextErrors: FormErrors = {};
-    if (!form.nome.trim()) nextErrors.nome = t.erros.nome;
-    if (!form.email.trim() || !isValidEmail(form.email)) nextErrors.email = t.erros.email;
-    if (!form.mensagem.trim()) nextErrors.mensagem = t.erros.mensagem;
+    if (!form.name.trim()) nextErrors.nome = t.errors.name;
+    if (!form.email.trim() || !isValidEmail(form.email)) nextErrors.email = t.errors.email;
+    if (!form.message.trim()) nextErrors.mensagem = t.errors.message;
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    const assuntoLabel = t.assuntoOpcoes[form.assunto];
-    const subject = encodeURIComponent(t.assuntoPrefix(assuntoLabel));
+    const subjectLabel = t.subjectOptions[form.subject];
+    const subject = encodeURIComponent(t.subjectPrefix(subjectLabel));
     const body = encodeURIComponent(
-      `Nome: ${form.nome}\nEmail: ${form.email}\nAssunto: ${assuntoLabel}\n\nMensagem:\n${form.mensagem}`,
+      `Nome: ${form.name}\nEmail: ${form.email}\nAssunto: ${subjectLabel}\n\nMensagem:\n${form.message}`,
     );
     window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
   }
@@ -71,8 +71,8 @@ export function ContatoForm() {
     >
       <TextField
         id="contato-nome"
-        label={t.nome}
-        value={form.nome}
+        label={t.name}
+        value={form.name}
         onChange={handleChange("nome")}
         error={errors.nome}
         autoComplete="name"
@@ -90,32 +90,32 @@ export function ContatoForm() {
 
       <SelectField
         id="contato-assunto"
-        label={t.assunto}
-        value={form.assunto}
-        onChange={handleAssuntoChange}
+        label={t.subject}
+        value={form.subject}
+        onChange={handleSubjectChange}
       >
-        {ASSUNTOS.map((assunto) => (
-          <option key={assunto} value={assunto}>
-            {t.assuntoOpcoes[assunto]}
+        {SUBJECTS.map((subject) => (
+          <option key={subject} value={subject}>
+            {t.subjectOptions[subject]}
           </option>
         ))}
       </SelectField>
 
       <TextareaField
         id="contato-mensagem"
-        label={t.mensagem}
-        value={form.mensagem}
+        label={t.message}
+        value={form.message}
         onChange={handleChange("mensagem")}
         error={errors.mensagem}
       />
 
-      <p className="text-[11px] text-on-military-muted">{t.nota(CONTACT_EMAIL)}</p>
+      <p className="text-[11px] text-on-military-muted">{t.note(CONTACT_EMAIL)}</p>
 
       <button
         type="submit"
         className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600"
       >
-        {t.enviarBotao}
+        {t.sendButton}
       </button>
     </form>
   );

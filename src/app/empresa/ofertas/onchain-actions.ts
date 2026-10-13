@@ -30,18 +30,18 @@ import { z } from "zod";
 import { decodeEventLog, decodeFunctionData, TransactionReceiptNotFoundError } from "viem";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID, type OrquestradorContract } from "@/lib/web3/orquestrador";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID, type OrchestratorContract } from "@/lib/web3/orquestrador";
 import { participacaoTokenFactoryAbi } from "@/lib/web3/abis/participacaoTokenFactory";
 import { ofertaCaptacaoFactoryAbi } from "@/lib/web3/abis/ofertaCaptacaoFactory";
 import { ofertaCaptacaoAbi } from "@/lib/web3/abis/ofertaCaptacao";
 import { publicClient } from "@/lib/web3/eventsCore";
 import { describeOnChainError } from "@/lib/web3/errors";
-import { UNIDADE_ON_CHAIN } from "@/lib/web3/gates";
+import { UNIT_ON_CHAIN } from "@/lib/web3/gates";
 import { formatBRL } from "@/lib/format";
 
-export type RegistrarTentativaState = { status: "success" } | { status: "error"; message: string };
+export type RegisterAttemptState = { status: "success" } | { status: "error"; message: string };
 
-const registrarTentativaSchema = z.object({
+const registerAttemptSchema = z.object({
   offeringId: z.string().uuid(),
   txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "Hash de transação inválido."),
   prazoUnixSeconds: z.number().int().positive(),
@@ -62,17 +62,17 @@ const registrarTentativaSchema = z.object({
  * assinatura. Fail-closed: sem carteira vinculada, nem registra a tentativa (gate 5 no client já
  * deveria ter impedido chegar aqui — isso é só a mesma checagem, mas no servidor).
  */
-export async function registrarTentativa(input: unknown): Promise<RegistrarTentativaState> {
+export async function registerAttempt(input: unknown): Promise<RegisterAttemptState> {
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
     return { status: "error", message: "Apenas empresas cadastradas podem publicar ofertas." };
   }
 
-  const parsed = registrarTentativaSchema.safeParse(input);
+  const parsed = registerAttemptSchema.safeParse(input);
   if (!parsed.success) {
     return { status: "error", message: "Dados inválidos para registrar a publicação." };
   }
-  const { offeringId, txHash, prazoUnixSeconds } = parsed.data;
+  const { offeringId, txHash, prazoUnixSeconds: deadlineUnixSeconds } = parsed.data;
 
   const admin = createAdminClient();
 
@@ -85,13 +85,13 @@ export async function registrarTentativa(input: unknown): Promise<RegistrarTenta
     console.error("registrarTentativa: erro ao ler carteira do emissor", issuerError);
     return { status: "error", message: "Não foi possível registrar a tentativa de publicação." };
   }
-  const walletVinculada = (issuer?.wallet_address as string | null) ?? null;
-  if (!walletVinculada) {
+  const linkedWallet = (issuer?.wallet_address as string | null) ?? null;
+  if (!linkedWallet) {
     return { status: "error", message: "Nenhuma carteira vinculada a esta conta — não é possível registrar a publicação." };
   }
 
   const opensAt = new Date();
-  const closesAt = new Date(prazoUnixSeconds * 1000);
+  const closesAt = new Date(deadlineUnixSeconds * 1000);
 
   // Atômico: quem chegar primeiro numa corrida de dois cliques ganha (mesmo padrão de
   // activateOffering) — a condição `sync_status='nao_onchain'` garante que só a PRIMEIRA
@@ -103,11 +103,11 @@ export async function registrarTentativa(input: unknown): Promise<RegistrarTenta
       // deixado a linha com rede='solana-devnet' — esta tentativa é na Sepolia.
       rede: "sepolia",
       tx_hash: txHash,
-      chain_id: ORQUESTRADOR_CHAIN_ID,
+      chain_id: ORCHESTRATOR_CHAIN_ID,
       sync_status: "pendente",
       opens_at: opensAt.toISOString(),
       closes_at: closesAt.toISOString(),
-      expected_emissor_wallet: walletVinculada,
+      expected_emissor_wallet: linkedWallet,
     })
     .eq("id", offeringId)
     .eq("issuer_id", accountId)
@@ -126,7 +126,7 @@ export async function registrarTentativa(input: unknown): Promise<RegistrarTenta
   return { status: "success" };
 }
 
-export type ConfirmarPublicacaoState =
+export type ConfirmPublicationState =
   | { status: "pendente" }
   | { status: "confirmada"; contractAddress: string; tokenAddress: string }
   | { status: "revertida"; motivo: string }
@@ -153,7 +153,7 @@ export type ConfirmarPublicacaoState =
  * Só depois das três checagens é que contract_address/token_address/onchain_emissor_wallet são
  * gravados — sempre os valores lidos do evento, nunca uma alegação aceita de ninguém.
  */
-export async function confirmarPublicacao(offeringId: string): Promise<ConfirmarPublicacaoState> {
+export async function confirmPublication(offeringId: string): Promise<ConfirmPublicationState> {
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
     return { status: "error", message: "Apenas empresas cadastradas podem confirmar publicações." };
@@ -203,13 +203,13 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   // Defensivo: a constraint sync_status_tem_wallet_esperada (migration 0016) já garante isso no
   // banco para qualquer linha nova, mas o código não confia cegamente nela — mesmo padrão já
   // usado acima para tx_hash.
-  const walletVinculada = (offering.expected_emissor_wallet as string | null) ?? null;
-  if (!walletVinculada) {
+  const linkedWallet = (offering.expected_emissor_wallet as string | null) ?? null;
+  if (!linkedWallet) {
     return { status: "error", message: "Esta oferta não tem uma carteira esperada congelada — não é possível confirmar." };
   }
 
-  const orquestrador = getOrquestradorContract();
-  if (!orquestrador) {
+  const orchestrator = getOrchestratorContract();
+  if (!orchestrator) {
     return { status: "error", message: "Contrato não configurado." };
   }
 
@@ -240,7 +240,7 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
     // O recibo não guarda o motivo do revert (a EVM não grava isso no receipt) — a única forma de
     // obter o motivo real é RESSIMULAR a MESMA calldata já minerada (nunca reconstruída a partir
     // do Supabase, que pode ter mudado desde a assinatura) contra o estado da chain de então.
-    const motivo = await descreverMotivoDoRevert(client, orquestrador, offering.tx_hash as `0x${string}`, receipt.blockNumber);
+    const reason = await descreverMotivoDoRevert(client, orchestrator, offering.tx_hash as `0x${string}`, receipt.blockNumber);
 
     // expected_emissor_wallet volta a null junto com tx_hash: os dois pertencem à MESMA
     // tentativa (a que reverteu) e uma nova, via registrarTentativa, precisa poder recongelar os
@@ -254,46 +254,46 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
         // preenchido impediria uma nova tentativa na Solana.
         chain_id: null,
         expected_emissor_wallet: null,
-        onchain_last_error: motivo,
+        onchain_last_error: reason,
       })
       .eq("id", parsedId.data)
       .eq("issuer_id", accountId)
       .in("sync_status", ["pendente", "divergente"]);
     revalidatePath(`/empresa/ofertas/${parsedId.data}/publicar`);
-    return { status: "revertida", motivo };
+    return { status: "revertida", motivo: reason };
   }
 
   // Log do próprio OfertaOrquestrador — inforjável: só o contrato nesse endereço consegue
   // emitir um log com esse `address`, não importa qual foi o `to` de nível superior da tx.
-  const log = receipt.logs.find((l) => l.address.toLowerCase() === orquestrador.address.toLowerCase());
+  const log = receipt.logs.find((l) => l.address.toLowerCase() === orchestrator.address.toLowerCase());
   if (!log) {
-    const motivo = "Nenhum evento emitido pelo endereço do OfertaOrquestrador foi encontrado neste recibo.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+    const reason = "Nenhum evento emitido pelo endereço do OfertaOrquestrador foi encontrado neste recibo.";
+    await marcarDivergente(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", motivo: reason };
   }
 
   let decoded;
   try {
-    decoded = decodeEventLog({ abi: orquestrador.abi, data: log.data, topics: log.topics, eventName: "OfertaCompletaCriada" });
+    decoded = decodeEventLog({ abi: orchestrator.abi, data: log.data, topics: log.topics, eventName: "OfertaCompletaCriada" });
   } catch {
-    const motivo = "O evento emitido pelo OfertaOrquestrador neste recibo não é OfertaCompletaCriada.";
-    await marcarDivergente(admin, parsedId.data, accountId, motivo);
-    return { status: "divergente", motivo };
+    const reason = "O evento emitido pelo OfertaOrquestrador neste recibo não é OfertaCompletaCriada.";
+    await marcarDivergente(admin, parsedId.data, accountId, reason);
+    return { status: "divergente", motivo: reason };
   }
 
-  const { emissor, token, oferta, metaMinima, metaMaxima, precoPorCota, prazo } = decoded.args;
+  const { emissor: issuer, token, oferta, metaMinima: minTarget, metaMaxima: maxTarget, precoPorCota: pricePerShare, prazo: deadline } = decoded.args;
 
-  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIDADE_ON_CHAIN;
-  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIDADE_ON_CHAIN;
-  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIDADE_ON_CHAIN;
+  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
+  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN;
+  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN;
   const prazoEsperado = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
 
   if (
-    emissor.toLowerCase() !== walletVinculada.toLowerCase() ||
-    metaMinima !== metaMinimaEsperada ||
-    metaMaxima !== metaMaximaEsperada ||
-    precoPorCota !== precoPorCotaEsperado ||
-    prazo !== prazoEsperado
+    issuer.toLowerCase() !== linkedWallet.toLowerCase() ||
+    minTarget !== metaMinimaEsperada ||
+    maxTarget !== metaMaximaEsperada ||
+    pricePerShare !== precoPorCotaEsperado ||
+    deadline !== prazoEsperado
   ) {
     const motivo = "Os parâmetros do evento on-chain não batem com os desta oferta (ou com a carteira vinculada) no Supabase.";
     await marcarDivergente(admin, parsedId.data, accountId, motivo);
@@ -304,8 +304,8 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
   // factories do próprio orquestrador (lidas dele mesmo, nunca de env var solta) — não basta
   // "existir algum contrato nesse endereço".
   const [tokenFactoryAddress, captacaoFactoryAddress] = await Promise.all([
-    client.readContract({ address: orquestrador.address, abi: orquestrador.abi, functionName: "tokenFactory" }),
-    client.readContract({ address: orquestrador.address, abi: orquestrador.abi, functionName: "captacaoFactory" }),
+    client.readContract({ address: orchestrator.address, abi: orchestrator.abi, functionName: "tokenFactory" }),
+    client.readContract({ address: orchestrator.address, abi: orchestrator.abi, functionName: "captacaoFactory" }),
   ]);
   const [tokenRegistrado, ofertaRegistrada] = await Promise.all([
     client.readContract({ address: tokenFactoryAddress, abi: participacaoTokenFactoryAbi, functionName: "isOferta", args: [token] }),
@@ -323,7 +323,7 @@ export async function confirmarPublicacao(offeringId: string): Promise<Confirmar
     .update({
       contract_address: oferta,
       token_address: token,
-      onchain_emissor_wallet: emissor,
+      onchain_emissor_wallet: issuer,
       sync_status: "confirmada",
       onchain_confirmed_at: new Date().toISOString(),
     })
@@ -368,7 +368,7 @@ async function marcarDivergente(
  */
 async function descreverMotivoDoRevert(
   client: ReturnType<typeof publicClient>,
-  orquestrador: OrquestradorContract,
+  orquestrador: OrchestratorContract,
   txHash: `0x${string}`,
   blockNumber: bigint,
 ): Promise<string> {
@@ -473,13 +473,13 @@ export async function verificarConsistencia(offeringId: string): Promise<Verific
     return { status: "error", message: describeOnChainError(e) };
   }
 
-  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIDADE_ON_CHAIN;
-  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIDADE_ON_CHAIN;
-  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIDADE_ON_CHAIN;
+  const metaMinimaEsperada = BigInt(offering.target_min_cents) * UNIT_ON_CHAIN;
+  const metaMaximaEsperada = BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN;
+  const precoPorCotaEsperado = BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN;
   const prazoEsperado = BigInt(Math.floor(new Date(offering.closes_at as string).getTime() / 1000));
 
   const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
-  const centsFromChain = (valorWei: bigint) => Number(valorWei / UNIDADE_ON_CHAIN);
+  const centsFromChain = (valorWei: bigint) => Number(valorWei / UNIT_ON_CHAIN);
 
   const diffs: string[] = [];
   if (onchain.metaMinima !== metaMinimaEsperada) {

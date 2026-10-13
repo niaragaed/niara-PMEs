@@ -4,30 +4,30 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
-import type { Oferta } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/ofertas";
 
 type OrderSide = "buy" | "sell";
 type Step = "form" | "resumo" | "confirmado";
 
 // Taxa estimada só para exibição na simulação — nunca cobrada de verdade,
 // rotulada "a definir" (ver ptBr.negociar.boleta.taxa).
-const TAXA_ESTIMADA = 0.005;
+const ESTIMATED_FEE = 0.005;
 
 // Saldo simulado inicial da sessão — só em memória (useState), nunca
 // persistido em localStorage/sessionStorage, mesma regra de LGPD das
 // demais simulações do projeto (carteira em /perfil, dados de /ativos).
-const SALDO_SIMULADO_INICIAL = 50_000;
+const INITIAL_SIMULATED_BALANCE = 50_000;
 
-export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () => void }) {
-  const t = ptBr.negociar.boleta;
+export function OrderTicket({ offering: oferta, onClose }: { offering: Offering; onClose: () => void }) {
+  const t = ptBr.trade.orderTicket;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const [side, setSide] = useState<OrderSide>("buy");
-  const [quantidade, setQuantidade] = useState("");
-  const [preco, setPreco] = useState(String(oferta.precoSimulado));
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState(String(oferta.simulatedPrice));
   const [step, setStep] = useState<Step>("form");
-  const [erro, setErro] = useState<string | null>(null);
-  const [saldo, setSaldo] = useState(SALDO_SIMULADO_INICIAL);
+  const [error, setError] = useState<string | null>(null);
+  const [balance, setBalance] = useState(INITIAL_SIMULATED_BALANCE);
 
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -41,39 +41,39 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  const qtyNum = Number(quantidade);
-  const precoNum = Number(preco);
-  const total = Math.round(qtyNum * precoNum * 100) / 100;
-  const taxa = Math.round(total * TAXA_ESTIMADA * 100) / 100;
+  const qtyNum = Number(quantity);
+  const priceNumber = Number(price);
+  const total = Math.round(qtyNum * priceNumber * 100) / 100;
+  const fee = Math.round(total * ESTIMATED_FEE * 100) / 100;
 
   function handleSideChange(next: OrderSide) {
     setSide(next);
-    setErro(null);
+    setError(null);
   }
 
-  function handleRevisar(event: FormEvent) {
+  function handleReview(event: FormEvent) {
     event.preventDefault();
-    if (!quantidade.trim() || !Number.isFinite(qtyNum) || qtyNum <= 0) {
-      setErro(t.erros.quantidadeInvalida);
+    if (!quantity.trim() || !Number.isFinite(qtyNum) || qtyNum <= 0) {
+      setError(t.errors.invalidQuantity);
       return;
     }
-    if (!preco.trim() || !Number.isFinite(precoNum) || precoNum <= 0) {
-      setErro(t.erros.precoInvalido);
+    if (!price.trim() || !Number.isFinite(priceNumber) || priceNumber <= 0) {
+      setError(t.errors.invalidPrice);
       return;
     }
-    setErro(null);
+    setError(null);
     setStep("resumo");
   }
 
-  function handleConfirmar() {
-    setSaldo((atual) => (side === "buy" ? atual - (total + taxa) : atual + (total - taxa)));
+  function handleConfirm() {
+    setBalance((current) => (side === "buy" ? current - (total + fee) : current + (total - fee)));
     setStep("confirmado");
   }
 
-  function handleNovaOrdem() {
-    setQuantidade("");
-    setPreco(String(oferta.precoSimulado));
-    setErro(null);
+  function handleNewOrder() {
+    setQuantity("");
+    setPrice(String(oferta.simulatedPrice));
+    setError(null);
     setStep("form");
   }
 
@@ -89,7 +89,7 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
-          aria-label={t.fecharAria}
+          aria-label={t.closeAria}
           className="rounded-full p-1 text-ink-muted transition-colors hover:bg-surface-alt hover:text-ink"
         >
           <X className="h-5 w-5" aria-hidden="true" />
@@ -99,8 +99,8 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
       <p className="mt-3 rounded-md bg-salmon-100 px-3 py-2 text-xs text-on-salmon-muted">{t.demoBanner}</p>
 
       {step === "form" && (
-        <form onSubmit={handleRevisar} className="mt-4 flex flex-col gap-4">
-          <div role="group" aria-label={t.ladoGroupLabel} className="grid grid-cols-2 gap-2">
+        <form onSubmit={handleReview} className="mt-4 flex flex-col gap-4">
+          <div role="group" aria-label={t.sideGroupLabel} className="grid grid-cols-2 gap-2">
             <button
               type="button"
               aria-pressed={side === "buy"}
@@ -111,7 +111,7 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
                   : "border-border text-ink-muted hover:text-ink"
               }`}
             >
-              {t.comprar}
+              {t.buy}
             </button>
             <button
               type="button"
@@ -123,21 +123,21 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
                   : "border-border text-ink-muted hover:text-ink"
               }`}
             >
-              {t.vender}
+              {t.sell}
             </button>
           </div>
 
           <div>
             <label htmlFor="boleta-quantidade" className="mb-1 block text-xs text-ink-muted">
-              {t.quantidade}
+              {t.quantity}
             </label>
             <input
               id="boleta-quantidade"
               type="number"
               min="0"
               step="1"
-              value={quantidade}
-              onChange={(event) => setQuantidade(event.target.value)}
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
               placeholder="0"
               className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm tabular-nums text-ink focus:outline-none focus:ring-2 focus:ring-salmon"
             />
@@ -145,37 +145,37 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
 
           <div>
             <label htmlFor="boleta-preco" className="mb-1 block text-xs text-ink-muted">
-              {t.preco}
+              {t.price}
             </label>
             <input
               id="boleta-preco"
               type="number"
               min="0"
               step="any"
-              value={preco}
-              onChange={(event) => setPreco(event.target.value)}
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
               className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm tabular-nums text-ink focus:outline-none focus:ring-2 focus:ring-salmon"
             />
           </div>
 
           <dl className="space-y-1.5 border-t border-border pt-3 text-xs">
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.totalEstimado}</dt>
+              <dt className="text-ink-muted">{t.totalEstimated}</dt>
               <dd className="font-medium text-ink">{formatBRL(Number.isFinite(total) ? total : 0)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.taxa}</dt>
-              <dd className="text-ink-muted">{formatBRL(Number.isFinite(taxa) ? taxa : 0)}</dd>
+              <dt className="text-ink-muted">{t.fee}</dt>
+              <dd className="text-ink-muted">{formatBRL(Number.isFinite(fee) ? fee : 0)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.saldoSimulado}</dt>
-              <dd className="text-ink-muted">{formatBRL(saldo)}</dd>
+              <dt className="text-ink-muted">{t.simulatedBalance}</dt>
+              <dd className="text-ink-muted">{formatBRL(balance)}</dd>
             </div>
           </dl>
 
-          {erro && (
+          {error && (
             <p role="alert" className="text-xs text-on-surface-negative">
-              {erro}
+              {error}
             </p>
           )}
 
@@ -183,34 +183,34 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
             type="submit"
             className="mt-1 inline-flex items-center justify-center rounded-full bg-salmon px-4 py-2.5 text-sm font-semibold text-on-salmon transition-colors hover:bg-salmon-600"
           >
-            {t.revisarBotao}
+            {t.reviewButton}
           </button>
         </form>
       )}
 
       {step === "resumo" && (
         <div className="mt-4 flex flex-col gap-4">
-          <h3 className="text-sm font-semibold text-ink">{t.resumoTitle}</h3>
+          <h3 className="text-sm font-semibold text-ink">{t.summaryTitle}</h3>
           <dl className="space-y-2 rounded-md border border-border p-4 text-sm">
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.ladoGroupLabel}</dt>
-              <dd className="font-medium text-ink">{side === "buy" ? t.comprar : t.vender}</dd>
+              <dt className="text-ink-muted">{t.sideGroupLabel}</dt>
+              <dd className="font-medium text-ink">{side === "buy" ? t.buy : t.sell}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.quantidade}</dt>
+              <dt className="text-ink-muted">{t.quantity}</dt>
               <dd className="text-ink">{qtyNum}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.preco}</dt>
-              <dd className="text-ink">{formatBRL(precoNum)}</dd>
+              <dt className="text-ink-muted">{t.price}</dt>
+              <dd className="text-ink">{formatBRL(priceNumber)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.totalEstimado}</dt>
+              <dt className="text-ink-muted">{t.totalEstimated}</dt>
               <dd className="font-semibold text-ink">{formatBRL(total)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-muted">{t.taxa}</dt>
-              <dd className="text-ink-muted">{formatBRL(taxa)}</dd>
+              <dt className="text-ink-muted">{t.fee}</dt>
+              <dd className="text-ink-muted">{formatBRL(fee)}</dd>
             </div>
           </dl>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -219,14 +219,14 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
               onClick={() => setStep("form")}
               className="flex-1 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-salmon"
             >
-              {t.voltarEditarBotao}
+              {t.backToEditButton}
             </button>
             <button
               type="button"
-              onClick={handleConfirmar}
+              onClick={handleConfirm}
               className="flex-1 rounded-full bg-salmon px-4 py-2.5 text-sm font-semibold text-on-salmon transition-colors hover:bg-salmon-600"
             >
-              {t.confirmarBotao}
+              {t.confirmButton}
             </button>
           </div>
         </div>
@@ -235,14 +235,14 @@ export function OrderTicket({ oferta, onClose }: { oferta: Oferta; onClose: () =
       {step === "confirmado" && (
         <div className="mt-4 flex flex-col gap-4">
           <p role="status" className="rounded-md border border-value-positive/40 bg-value-positive/10 px-4 py-3 text-sm text-military">
-            {t.resultado(side, qtyNum, oferta.nome)}
+            {t.result(side, qtyNum, oferta.name)}
           </p>
           <button
             type="button"
-            onClick={handleNovaOrdem}
+            onClick={handleNewOrder}
             className="rounded-full border border-border px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-salmon"
           >
-            {t.novaOrdemBotao}
+            {t.newOrderButton}
           </button>
         </div>
       )}

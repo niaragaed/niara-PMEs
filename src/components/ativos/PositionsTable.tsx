@@ -3,42 +3,42 @@ import { formatBRL, formatSignedPercent } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS, type Position } from "@/lib/mock/ativos";
 
-function variacaoPercent(position: Position): number {
-  const investido = position.cotas * position.precoMedio;
-  return investido === 0 ? 0 : ((position.valorAtual - investido) / investido) * 100;
+function changePercent(position: Position): number {
+  const invested = position.shares * position.averagePrice;
+  return invested === 0 ? 0 : ((position.currentValue - invested) / invested) * 100;
 }
 
 export function PositionsTable() {
   return (
     <div className="overflow-x-auto rounded-lg border border-panel-border bg-panel">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <caption className="sr-only">{ptBr.ativos.tabela.title}</caption>
+        <caption className="sr-only">{ptBr.assets.table.title}</caption>
         <thead>
           <tr className="border-b border-panel-border text-xs uppercase tracking-wide text-on-military-muted">
             <th scope="col" className="px-4 py-3 font-medium">
-              {ptBr.ativos.tabela.colAtivo}
+              {ptBr.assets.table.colAsset}
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              {ptBr.ativos.tabela.colCategoria}
+              {ptBr.assets.table.colCategory}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.ativos.tabela.colCotas}
+              {ptBr.assets.table.colShares}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.ativos.tabela.colPrecoMedio}
+              {ptBr.assets.table.colAveragePrice}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.ativos.tabela.colValorAtual}
+              {ptBr.assets.table.colCurrentValue}
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              {ptBr.ativos.tabela.colVariacao}
+              {ptBr.assets.table.colChange}
             </th>
           </tr>
         </thead>
         <tbody>
           {MOCK_POSITIONS.map((position) => {
-            const variacao = variacaoPercent(position);
-            const valueClassName = variacao >= 0 ? "text-value-positive" : "text-value-negative";
+            const change = changePercent(position);
+            const valueClassName = change >= 0 ? "text-value-positive" : "text-value-negative";
 
             return (
               <tr key={position.symbol} className="border-b border-panel-border last:border-0">
@@ -50,14 +50,14 @@ export function PositionsTable() {
                       style={{ backgroundColor: CATEGORY_COLOR_VAR[position.category] }}
                       aria-hidden="true"
                     />
-                    {ptBr.ativos.categorias[position.category]}
+                    {ptBr.assets.categories[position.category]}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right text-on-military">{position.cotas}</td>
-                <td className="px-4 py-3 text-right text-on-military">{formatBRL(position.precoMedio)}</td>
-                <td className="px-4 py-3 text-right text-on-military">{formatBRL(position.valorAtual)}</td>
+                <td className="px-4 py-3 text-right text-on-military">{position.shares}</td>
+                <td className="px-4 py-3 text-right text-on-military">{formatBRL(position.averagePrice)}</td>
+                <td className="px-4 py-3 text-right text-on-military">{formatBRL(position.currentValue)}</td>
                 <td className={`px-4 py-3 text-right font-medium ${valueClassName}`}>
-                  {formatSignedPercent(variacao)}
+                  {formatSignedPercent(change)}
                 </td>
               </tr>
             );

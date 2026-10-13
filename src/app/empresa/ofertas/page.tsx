@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { OfertasPage, type OfferingRow } from "@/components/empresa/OfertasPage";
+import { OfferingsPage, type OfferingRow } from "@/components/empresa/OfertasPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: `${ptBr.empresaOfertas.meta.title} · Niara PMEs`,
-  description: ptBr.empresaOfertas.meta.description,
+  title: `${ptBr.companyOfferings.meta.title} · Niara PMEs`,
+  description: ptBr.companyOfferings.meta.description,
   robots: { index: false, follow: false },
 };
 
@@ -89,5 +89,5 @@ export default async function Page() {
     };
   });
 
-  return <OfertasPage offerings={rows} />;
+  return <OfferingsPage offerings={rows} />;
 }

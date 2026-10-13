@@ -24,10 +24,10 @@ export function maskCNPJ(value: string): string {
     .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 
-export type TipoPessoa = "pf" | "pj";
+export type PersonType = "pf" | "pj";
 
-export function maskDocumento(value: string, tipo: TipoPessoa): string {
-  return tipo === "pf" ? maskCPF(value) : maskCNPJ(value);
+export function maskDocument(value: string, type: PersonType): string {
+  return type === "pf" ? maskCPF(value) : maskCNPJ(value);
 }
 
 // Máscara de EXIBIÇÃO PÚBLICA do CNPJ (página pública da oferta) — oculta
@@ -46,7 +46,7 @@ export function maskCEP(value: string): string {
   return digits.replace(/(\d{5})(\d{1,3})$/, "$1-$2");
 }
 
-export function maskTelefone(value: string): string {
+export function maskPhone(value: string): string {
   const digits = onlyDigits(value).slice(0, 11);
   if (digits.length <= 10) {
     return digits
@@ -58,7 +58,7 @@ export function maskTelefone(value: string): string {
     .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
 }
 
-export function maskDataNascimento(value: string): string {
+export function maskBirthDate(value: string): string {
   const digits = onlyDigits(value).slice(0, 8);
   return digits
     .replace(/(\d{2})(\d)/, "$1/$2")
@@ -73,20 +73,20 @@ export function isValidCNPJ(value: string): boolean {
   return onlyDigits(value).length === 14;
 }
 
-export function isValidDocumento(value: string, tipo: TipoPessoa): boolean {
-  return tipo === "pf" ? isValidCPF(value) : isValidCNPJ(value);
+export function isValidDocument(value: string, type: PersonType): boolean {
+  return type === "pf" ? isValidCPF(value) : isValidCNPJ(value);
 }
 
 export function isValidCEP(value: string): boolean {
   return onlyDigits(value).length === 8;
 }
 
-export function isValidTelefone(value: string): boolean {
+export function isValidPhone(value: string): boolean {
   const length = onlyDigits(value).length;
   return length === 10 || length === 11;
 }
 
-export function isValidDataNascimento(value: string): boolean {
+export function isValidBirthDate(value: string): boolean {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
   if (!match) return false;
   const day = Number(match[1]);

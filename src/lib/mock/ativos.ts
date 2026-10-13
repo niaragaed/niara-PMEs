@@ -11,9 +11,9 @@ export type Position = {
   name: string;
   category: TokenCategory;
   region: Region;
-  cotas: number;
-  precoMedio: number;
-  valorAtual: number;
+  shares: number;
+  averagePrice: number;
+  currentValue: number;
 };
 
 export type MonthlyEvolution = {
@@ -35,45 +35,45 @@ export const MOCK_POSITIONS: Position[] = [
     name: "Token PMEs",
     category: "pmes",
     region: "sudeste",
-    cotas: 120,
-    precoMedio: 125,
-    valorAtual: 16850,
+    shares: 120,
+    averagePrice: 125,
+    currentValue: 16850,
   },
   {
     symbol: "AGR01",
     name: "Token Agro",
     category: "agro",
     region: "centro-oeste",
-    cotas: 200,
-    precoMedio: 45,
-    valorAtual: 9540,
+    shares: 200,
+    averagePrice: 45,
+    currentValue: 9540,
   },
   {
     symbol: "IMO01",
     name: "Token Imobiliário",
     category: "imobiliario",
     region: "sul",
-    cotas: 80,
-    precoMedio: 210,
-    valorAtual: 17640,
+    shares: 80,
+    averagePrice: 210,
+    currentValue: 17640,
   },
   {
     symbol: "AUT01",
     name: "Token Auto",
     category: "auto",
     region: "sudeste",
-    cotas: 150,
-    precoMedio: 32,
-    valorAtual: 4416,
+    shares: 150,
+    averagePrice: 32,
+    currentValue: 4416,
   },
   {
     symbol: "DIV01",
     name: "Títulos de dívida",
     category: "divida",
     region: "nordeste",
-    cotas: 40,
-    precoMedio: 86,
-    valorAtual: 3556,
+    shares: 40,
+    averagePrice: 86,
+    currentValue: 3556,
   },
 ];
 

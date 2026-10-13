@@ -15,25 +15,25 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
-import { getEventosOnChain, getResumoOnChain, type EventoOnChain, type ResumoOnChain } from "@/lib/web3/events";
+import { getEventsOnChain, getSummaryOnChain, type EventoOnChain, type OnChainSummary } from "@/lib/web3/events";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
-import { linkExplorerSolanaConta } from "@/lib/solana/config";
+import { solanaExplorerAccountLink } from "@/lib/solana/config";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-export type OrigemMovimentacao = "onchain" | "offchain";
+export type TransactionOrigin = "onchain" | "offchain";
 
-export type Movimentacao = {
+export type Transaction = {
   id: string;
   timestamp: number; // epoch seconds, para ordenar e formatar igual nos dois lados
-  origem: OrigemMovimentacao;
+  origem: TransactionOrigin;
   tipo: string; // já traduzido, pronto pra exibir
   ator: string | null; // nome (off-chain) ou endereço truncado (on-chain)
   valor: string | null; // já formatado (BRL ou token), pronto pra exibir
   link: string | null; // link externo (Sepolia Etherscan), quando existir
 };
 
-export type ResumoMovimentacoes = {
-  onChain: ResumoOnChain | null;
+export type TransactionsSummary = {
+  onChain: OnChainSummary | null;
   totalAportesMockCents: number; // status paid/settled, mesma regra de computeResumoMock antigo
   investidoresUnicosMock: number;
 };
@@ -42,16 +42,16 @@ function epoch(iso: string): number {
   return Math.floor(new Date(iso).getTime() / 1000);
 }
 
-function centavosParaBRL(cents: number): string {
+function centsToBRL(cents: number): string {
   return formatBRL(cents / 100);
 }
 
-function eventoOnChainParaMovimentacao(evento: EventoOnChain, resumo: ResumoOnChain | null): Movimentacao {
-  const t = ptBr.socios.tabelaReal;
-  const decimals = resumo?.mockBrlDecimals ?? 18;
-  const symbol = resumo?.mockBrlSymbol ?? "mBRL";
+function onChainEventToTransaction(evento: EventoOnChain, summary: OnChainSummary | null): Transaction {
+  const t = ptBr.partners.realTable;
+  const decimals = summary?.mockBrlDecimals ?? 18;
+  const symbol = summary?.mockBrlSymbol ?? "mBRL";
 
-  const valor =
+  const value =
     evento.valorWei !== null
       ? `${Number(formatUnits(evento.valorWei, decimals)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} ${symbol}`
       : evento.cotas !== null
@@ -62,18 +62,18 @@ function eventoOnChainParaMovimentacao(evento: EventoOnChain, resumo: ResumoOnCh
     id: `onchain-${evento.txHash}-${evento.tipo}`,
     timestamp: evento.timestamp ?? 0,
     origem: "onchain",
-    tipo: t.tipos[evento.tipo],
+    tipo: t.types[evento.tipo],
     ator: evento.investidor ? `${evento.investidor.slice(0, 6)}…${evento.investidor.slice(-4)}` : null,
-    valor,
+    valor: value,
     link: `https://sepolia.etherscan.io/tx/${evento.txHash}`,
   };
 }
 
-type NomeUnicoOuLista<T> = T | T[] | null;
+type SingleNameOrList<T> = T | T[] | null;
 
-function primeiro<T>(valor: NomeUnicoOuLista<T>): T | null {
-  if (!valor) return null;
-  return Array.isArray(valor) ? (valor[0] ?? null) : valor;
+function first<T>(value: SingleNameOrList<T>): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 type InvestorRow = { id: string; full_name: string; created_at: string };
@@ -81,28 +81,28 @@ type IssuerRow = { id: string; legal_name: string; created_at: string };
 type OfferingRow = {
   id: string;
   created_at: string;
-  issuers: NomeUnicoOuLista<{ legal_name: string }>;
+  issuers: SingleNameOrList<{ legal_name: string }>;
 };
 type InvestmentRow = {
   id: string;
   amount_cents: number;
   status: "reserved" | "paid" | "settled" | "refunded" | "cancelled";
   created_at: string;
-  investors: NomeUnicoOuLista<{ full_name: string }>;
-  offerings: NomeUnicoOuLista<{ issuers: NomeUnicoOuLista<{ legal_name: string }> }>;
+  investors: SingleNameOrList<{ full_name: string }>;
+  offerings: SingleNameOrList<{ issuers: SingleNameOrList<{ legal_name: string }> }>;
 };
 type PaymentEventRow = {
   id: string;
   event_type: string;
   created_at: string;
-  investments: NomeUnicoOuLista<{
+  investments: SingleNameOrList<{
     amount_cents: number;
-    investors: NomeUnicoOuLista<{ full_name: string }>;
-    offerings: NomeUnicoOuLista<{ issuers: NomeUnicoOuLista<{ legal_name: string }> }>;
+    investors: SingleNameOrList<{ full_name: string }>;
+    offerings: SingleNameOrList<{ issuers: SingleNameOrList<{ legal_name: string }> }>;
   }>;
 };
 
-const STATUS_APORTE: Record<InvestmentRow["status"], string> = {
+const INVESTMENT_STATUS: Record<InvestmentRow["status"], string> = {
   reserved: "Reservado",
   paid: "Pago (simulado)",
   settled: "Liquidado",
@@ -110,7 +110,7 @@ const STATUS_APORTE: Record<InvestmentRow["status"], string> = {
   cancelled: "Cancelado",
 };
 
-const TIPO_EVENTO_PAGAMENTO: Record<string, string> = {
+const PAYMENT_EVENT_TYPE: Record<string, string> = {
   escrow_intent: "Escrow iniciado",
   payment_confirmed: "Pagamento confirmado (simulado)",
   release: "Recursos liberados ao emissor",
@@ -118,7 +118,7 @@ const TIPO_EVENTO_PAGAMENTO: Record<string, string> = {
   tokens_issued: "Tokens emitidos (simulado)",
 };
 
-async function listarCadastrosInvestidores(): Promise<Movimentacao[]> {
+async function listInvestorRegistrations(): Promise<Transaction[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("investors")
@@ -137,7 +137,7 @@ async function listarCadastrosInvestidores(): Promise<Movimentacao[]> {
   }));
 }
 
-async function listarCadastrosEmissores(): Promise<Movimentacao[]> {
+async function listIssuerRegistrations(): Promise<Transaction[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("issuers")
@@ -156,7 +156,7 @@ async function listarCadastrosEmissores(): Promise<Movimentacao[]> {
   }));
 }
 
-async function listarOfertasCriadas(): Promise<Movimentacao[]> {
+async function listCreatedOfferings(): Promise<Transaction[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("offerings")
@@ -169,13 +169,13 @@ async function listarOfertasCriadas(): Promise<Movimentacao[]> {
     timestamp: epoch(row.created_at),
     origem: "offchain" as const,
     tipo: "Oferta criada",
-    ator: primeiro(row.issuers)?.legal_name ?? "—",
+    ator: first(row.issuers)?.legal_name ?? "—",
     valor: null,
     link: null,
   }));
 }
 
-const prazoFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+const deadlineFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
 // cents -> mBRL (número, sem símbolo de moeda real) — mesma conversão de verificarConsistencia()
 // (UNIDADE_ON_CHAIN, src/lib/web3/gates.ts: "1 unidade MockBRL = 1 real equivalente"), mas
@@ -196,26 +196,26 @@ function formatMbrl(cents: number): string {
  * mesmo a leitura em si vindo do Supabase (espelho já confirmado contra a chain na hora da
  * publicação e a cada reconciliação, não um valor inventado).
  */
-async function listarOfertasSelfServiceConfirmadas(): Promise<Movimentacao[]> {
-  const ofertas = await loadConfirmedOnChainOfferings();
+async function listConfirmedSelfServiceOfferings(): Promise<Transaction[]> {
+  const offerings = await loadConfirmedOnChainOfferings();
 
-  return ofertas.map((oferta) => ({
-    id: `self-service-offering-${oferta.id}`,
-    timestamp: oferta.onchainConfirmedAt ? epoch(oferta.onchainConfirmedAt) : 0,
+  return offerings.map((offering) => ({
+    id: `self-service-offering-${offering.id}`,
+    timestamp: offering.onchainConfirmedAt ? epoch(offering.onchainConfirmedAt) : 0,
     origem: "onchain" as const,
-    tipo: oferta.rede === "sepolia" ? "Oferta self-service confirmada" : "Oferta self-service confirmada (Solana Devnet)",
-    ator: oferta.issuerTradeName ?? oferta.issuerLegalName,
-    valor: `Meta: ${formatMbrl(oferta.targetMinCents)}–${formatMbrl(oferta.hardCapCents)} · Preço/cota: ${
-      oferta.sharePriceCents === null ? "—" : formatMbrl(oferta.sharePriceCents)
-    } · Prazo: ${prazoFormatter.format(new Date(oferta.closesAt))}`,
+    tipo: offering.rede === "sepolia" ? "Oferta self-service confirmada" : "Oferta self-service confirmada (Solana Devnet)",
+    ator: offering.issuerTradeName ?? offering.issuerLegalName,
+    valor: `Meta: ${formatMbrl(offering.targetMinCents)}–${formatMbrl(offering.hardCapCents)} · Preço/cota: ${
+      offering.sharePriceCents === null ? "—" : formatMbrl(offering.sharePriceCents)
+    } · Prazo: ${deadlineFormatter.format(new Date(offering.closesAt))}`,
     link:
-      oferta.rede === "sepolia"
-        ? `https://sepolia.etherscan.io/address/${oferta.contractAddress}`
-        : linkExplorerSolanaConta(oferta.contractAddress),
+      offering.rede === "sepolia"
+        ? `https://sepolia.etherscan.io/address/${offering.contractAddress}`
+        : solanaExplorerAccountLink(offering.contractAddress),
   }));
 }
 
-async function listarAportes(): Promise<InvestmentRow[]> {
+async function listInvestments(): Promise<InvestmentRow[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("investments")
@@ -225,22 +225,22 @@ async function listarAportes(): Promise<InvestmentRow[]> {
   return data ?? [];
 }
 
-function aporteParaMovimentacao(row: InvestmentRow): Movimentacao {
-  const investidor = primeiro(row.investors)?.full_name ?? "—";
-  const emissor = primeiro(primeiro(row.offerings)?.issuers ?? null)?.legal_name ?? "—";
+function investmentToTransaction(row: InvestmentRow): Transaction {
+  const investor = first(row.investors)?.full_name ?? "—";
+  const issuer = first(first(row.offerings)?.issuers ?? null)?.legal_name ?? "—";
 
   return {
     id: `investment-${row.id}`,
     timestamp: epoch(row.created_at),
     origem: "offchain",
-    tipo: `Aporte — ${STATUS_APORTE[row.status]}`,
-    ator: `${investidor} — ${emissor}`,
-    valor: centavosParaBRL(row.amount_cents),
+    tipo: `Aporte — ${INVESTMENT_STATUS[row.status]}`,
+    ator: `${investor} — ${issuer}`,
+    valor: centsToBRL(row.amount_cents),
     link: null,
   };
 }
 
-async function listarEventosPagamento(): Promise<Movimentacao[]> {
+async function listPaymentEvents(): Promise<Transaction[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("payment_events")
@@ -249,29 +249,29 @@ async function listarEventosPagamento(): Promise<Movimentacao[]> {
     .returns<PaymentEventRow[]>();
 
   return (data ?? []).map((row) => {
-    const investimento = primeiro(row.investments);
-    const investidor = investimento ? primeiro(investimento.investors) : null;
-    const oferta = investimento ? primeiro(investimento.offerings) : null;
-    const emissor = oferta ? primeiro(oferta.issuers) : null;
-    const ator = [investidor?.full_name, emissor?.legal_name].filter(Boolean).join(" — ") || null;
+    const investment = first(row.investments);
+    const investor = investment ? first(investment.investors) : null;
+    const offering = investment ? first(investment.offerings) : null;
+    const issuer = offering ? first(offering.issuers) : null;
+    const actor = [investor?.full_name, issuer?.legal_name].filter(Boolean).join(" — ") || null;
 
     return {
       id: `payment-event-${row.id}`,
       timestamp: epoch(row.created_at),
       origem: "offchain" as const,
-      tipo: TIPO_EVENTO_PAGAMENTO[row.event_type] ?? row.event_type,
-      ator,
-      valor: investimento ? centavosParaBRL(investimento.amount_cents) : null,
+      tipo: PAYMENT_EVENT_TYPE[row.event_type] ?? row.event_type,
+      ator: actor,
+      valor: investment ? centsToBRL(investment.amount_cents) : null,
       link: null,
     };
   });
 }
 
-function computeResumoMock(aportes: InvestmentRow[]): { totalCents: number; investidoresUnicos: number } {
-  const contabilizados = aportes.filter((a) => a.status === "paid" || a.status === "settled");
+function computeMockSummary(investments: InvestmentRow[]): { totalCents: number; investidoresUnicos: number } {
+  const counted = investments.filter((a) => a.status === "paid" || a.status === "settled");
   return {
-    totalCents: contabilizados.reduce((total, a) => total + a.amount_cents, 0),
-    investidoresUnicos: new Set(contabilizados.map((a) => primeiro(a.investors)?.full_name)).size,
+    totalCents: counted.reduce((total, a) => total + a.amount_cents, 0),
+    investidoresUnicos: new Set(counted.map((a) => first(a.investors)?.full_name)).size,
   };
 }
 
@@ -283,58 +283,58 @@ function computeResumoMock(aportes: InvestmentRow[]): { totalCents: number; inve
  * falha isolada (ex.: RPC on-chain fora do ar) não derruba as outras — a função nunca lança, só
  * loga e segue sem aquela fonte.
  */
-export async function getMovimentacoesEResumo(): Promise<{ movimentacoes: Movimentacao[]; resumo: ResumoMovimentacoes }> {
-  const [onChainResultado, aportesResultado, ...offchainResultados] = await Promise.allSettled([
+export async function getTransactionsAndSummary(): Promise<{ movimentacoes: Transaction[]; resumo: TransactionsSummary }> {
+  const [onChainResult, investmentsResult, ...offchainResults] = await Promise.allSettled([
     (async () => {
-      const eventosOnChain = await getEventosOnChain();
-      const resumoOnChain = await getResumoOnChain(eventosOnChain);
-      return { eventosOnChain, resumoOnChain };
+      const onChainEvents = await getEventsOnChain();
+      const onChainSummary = await getSummaryOnChain(onChainEvents);
+      return { eventosOnChain: onChainEvents, resumoOnChain: onChainSummary };
     })(),
-    listarAportes(),
-    listarCadastrosInvestidores(),
-    listarCadastrosEmissores(),
-    listarOfertasCriadas(),
-    listarEventosPagamento(),
-    listarOfertasSelfServiceConfirmadas(),
+    listInvestments(),
+    listInvestorRegistrations(),
+    listIssuerRegistrations(),
+    listCreatedOfferings(),
+    listPaymentEvents(),
+    listConfirmedSelfServiceOfferings(),
   ]);
 
-  const movimentacoes: Movimentacao[] = [];
-  let resumoOnChain: ResumoOnChain | null = null;
+  const transactions: Transaction[] = [];
+  let onChainSummary: OnChainSummary | null = null;
 
-  if (onChainResultado.status === "fulfilled") {
-    const { eventosOnChain, resumoOnChain: resumo } = onChainResultado.value;
-    resumoOnChain = resumo;
-    movimentacoes.push(...eventosOnChain.map((evento) => eventoOnChainParaMovimentacao(evento, resumo)));
+  if (onChainResult.status === "fulfilled") {
+    const { eventosOnChain, resumoOnChain: summary } = onChainResult.value;
+    onChainSummary = summary;
+    transactions.push(...eventosOnChain.map((evento) => onChainEventToTransaction(evento, summary)));
   } else {
-    console.error("[socios] falha ao ler eventos on-chain (as demais fontes seguem normalmente):", onChainResultado.reason);
+    console.error("[socios] falha ao ler eventos on-chain (as demais fontes seguem normalmente):", onChainResult.reason);
   }
 
-  let aportes: InvestmentRow[] = [];
-  if (aportesResultado.status === "fulfilled") {
-    aportes = aportesResultado.value;
-    movimentacoes.push(...aportes.map(aporteParaMovimentacao));
+  let investments: InvestmentRow[] = [];
+  if (investmentsResult.status === "fulfilled") {
+    investments = investmentsResult.value;
+    transactions.push(...investments.map(investmentToTransaction));
   } else {
-    console.error("[socios] falha ao ler aportes (as demais fontes seguem normalmente):", aportesResultado.reason);
+    console.error("[socios] falha ao ler aportes (as demais fontes seguem normalmente):", investmentsResult.reason);
   }
 
-  for (const resultado of offchainResultados) {
-    if (resultado.status === "fulfilled") {
-      movimentacoes.push(...resultado.value);
+  for (const result of offchainResults) {
+    if (result.status === "fulfilled") {
+      transactions.push(...result.value);
     } else {
-      console.error("[socios] falha ao ler uma fonte off-chain (as demais seguem normalmente):", resultado.reason);
+      console.error("[socios] falha ao ler uma fonte off-chain (as demais seguem normalmente):", result.reason);
     }
   }
 
-  movimentacoes.sort((a, b) => b.timestamp - a.timestamp);
+  transactions.sort((a, b) => b.timestamp - a.timestamp);
 
-  const resumoMock = computeResumoMock(aportes);
+  const mockSummary = computeMockSummary(investments);
 
   return {
-    movimentacoes,
+    movimentacoes: transactions,
     resumo: {
-      onChain: resumoOnChain,
-      totalAportesMockCents: resumoMock.totalCents,
-      investidoresUnicosMock: resumoMock.investidoresUnicos,
+      onChain: onChainSummary,
+      totalAportesMockCents: mockSummary.totalCents,
+      investidoresUnicosMock: mockSummary.investidoresUnicos,
     },
   };
 }

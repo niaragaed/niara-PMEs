@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { DiagnosticoOnChain } from "@/components/empresa/DiagnosticoOnChain";
+import { OnChainDiagnostics } from "@/components/empresa/DiagnosticoOnChain";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,5 +29,5 @@ export default async function Page() {
     redirect("/conta?aviso=apenas-empresa");
   }
 
-  return <DiagnosticoOnChain />;
+  return <OnChainDiagnostics />;
 }

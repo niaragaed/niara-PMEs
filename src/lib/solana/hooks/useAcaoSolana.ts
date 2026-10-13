@@ -5,32 +5,32 @@
 // da confirmação real na rede — nunca ao assinar.
 import { useCallback, useMemo, useState } from "react";
 import type { Connection, Transaction } from "@solana/web3.js";
-import { conexaoSolana } from "../program";
-import { assinarEEnviar } from "../phantom";
+import { solanaConnection } from "../program";
+import { signAndSend } from "../phantom";
 
-export type StatusAcaoSolana = "idle" | "assinando" | "confirmando" | "sucesso" | "erro";
+export type SolanaActionStatus = "idle" | "assinando" | "confirmando" | "sucesso" | "erro";
 
-export function useAcaoSolana() {
-  const connection = useMemo(() => conexaoSolana(), []);
-  const [status, setStatus] = useState<StatusAcaoSolana>("idle");
+export function useSolanaAction() {
+  const connection = useMemo(() => solanaConnection(), []);
+  const [status, setStatus] = useState<SolanaActionStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [assinatura, setAssinatura] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
 
-  const executar = useCallback(
-    async (montar: (connection: Connection) => Promise<Transaction>): Promise<string | null> => {
+  const execute = useCallback(
+    async (build: (connection: Connection) => Promise<Transaction>): Promise<string | null> => {
       setStatus("assinando");
       setErrorMessage(null);
-      setAssinatura(null);
+      setSignature(null);
       try {
-        const tx = await montar(connection);
-        const sig = await assinarEEnviar(connection, tx, (s) => {
-          setAssinatura(s);
+        const tx = await build(connection);
+        const sig = await signAndSend(connection, tx, (s) => {
+          setSignature(s);
           setStatus("confirmando");
         });
         setStatus("sucesso");
         return sig;
-      } catch (erro) {
-        setErrorMessage(erro instanceof Error ? erro.message : String(erro));
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : String(error));
         setStatus("erro");
         return null;
       }
@@ -38,6 +38,6 @@ export function useAcaoSolana() {
     [connection],
   );
 
-  const ocupado = status === "assinando" || status === "confirmando";
-  return { status, errorMessage, assinatura, ocupado, executar };
+  const busy = status === "assinando" || status === "confirmando";
+  return { status, errorMessage, signature, busy, execute };
 }

@@ -9,19 +9,19 @@ import { TextField } from "@/components/perfil/FormField";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { isValidEmail } from "@/lib/masks";
 import { createClient } from "@/lib/supabase/client";
-import { resolvePosLoginDestino } from "@/app/entrar/actions";
+import { resolvePostLoginDestination } from "@/app/entrar/actions";
 import type { AuthError } from "@supabase/supabase-js";
 
-type FormErrors = { email?: string; senha?: string };
+type FormErrors = { email?: string; password?: string };
 
 // Só cobre os erros que signInWithPassword pode retornar — criação de conta
 // (signUp) não acontece mais nesta tela, ver CadastroPage.tsx.
-function mapAuthError(error: AuthError, t: typeof ptBr.entrar.erros): string {
+function mapAuthError(error: AuthError, t: typeof ptBr.signIn.errors): string {
   switch (error.code) {
     case "invalid_credentials":
-      return t.credenciaisInvalidas;
+      return t.invalidCredentials;
     default:
-      return t.generico;
+      return t.generic;
   }
 }
 
@@ -42,40 +42,40 @@ function GoogleIcon() {
 // Tela só de LOGIN (signInWithPassword) — criar conta é um fluxo à parte,
 // ver "Criar conta" abaixo, que apenas navega para /cadastro (a tela
 // dedicada de criação de conta + cadastro completo).
-export function EntrarPage({
-  isCaptacaoIntent,
-  avisoLoginNecessario,
+export function SignInPage({
+  isFundraisingIntent,
+  loginRequiredNotice,
 }: {
-  isCaptacaoIntent: boolean;
-  avisoLoginNecessario?: boolean;
+  isFundraisingIntent: boolean;
+  loginRequiredNotice?: boolean;
 }) {
-  const t = ptBr.entrar;
+  const t = ptBr.signIn;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
   const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   function validate(): boolean {
     const nextErrors: FormErrors = {};
-    if (!isValidEmail(email)) nextErrors.email = t.erros.emailInvalido;
-    if (senha.length < 6) nextErrors.senha = t.erros.senhaCurta;
+    if (!isValidEmail(email)) nextErrors.email = t.errors.invalidEmail;
+    if (password.length < 6) nextErrors.password = t.errors.shortPassword;
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
 
-  async function handleEntrar(event: FormEvent) {
+  async function handleSignIn(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
     if (!validate()) return;
 
     setPending(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setFormError(mapAuthError(error, t.erros));
+      setFormError(mapAuthError(error, t.errors));
       setPending(false);
       return;
     }
@@ -86,14 +86,14 @@ export function EntrarPage({
       // /socios — senão cairiam no "completar cadastro" de /perfil. Para quem não é sócio,
       // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver dados de
       // investidor/empresa — cobre o caso de quem criou a conta mas não terminou o cadastro.
-      const destino = await resolvePosLoginDestino();
-      router.push(destino);
+      const destination = await resolvePostLoginDestination();
+      router.push(destination);
     } catch {
       // O login em si já foi concluído (signInWithPassword não deu erro) — uma falha aqui é
       // de rede/navegação, não de credencial. Sem este catch, uma falha transitória nessa
       // etapa deixava o botão travado em "Entrando…" para sempre, sem nenhuma mensagem: nada
       // chamava setPending(false) fora do branch de erro de login.
-      setFormError(t.erros.generico);
+      setFormError(t.errors.generic);
       setPending(false);
     }
   }
@@ -118,12 +118,12 @@ export function EntrarPage({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={isCaptacaoIntent ? t.tituloCaptacao : t.titulo}
+      aria-label={isFundraisingIntent ? t.fundraisingTitle : t.title}
       className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-military lg:flex-row lg:overflow-hidden"
     >
       <Link
         href="/"
-        aria-label={t.fecharAriaLabel}
+        aria-label={t.closeAriaLabel}
         className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-military/60 text-on-military transition-colors hover:bg-military/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-salmon"
       >
         <X className="h-5 w-5" aria-hidden="true" />
@@ -134,19 +134,19 @@ export function EntrarPage({
       <div className="flex w-full flex-1 items-center justify-center overflow-y-auto p-6 sm:p-10 lg:w-1/2 lg:p-16">
         <div className="w-full max-w-md">
           <h1 className="text-2xl font-semibold text-on-military sm:text-3xl">
-            {isCaptacaoIntent ? t.tituloCaptacao : t.titulo}
+            {isFundraisingIntent ? t.fundraisingTitle : t.title}
           </h1>
           <p className="mt-2 text-sm text-on-military-muted">
-            {isCaptacaoIntent ? t.subtituloCaptacao : t.subtitulo}
+            {isFundraisingIntent ? t.fundraisingSubtitle : t.subtitle}
           </p>
 
-          {avisoLoginNecessario && (
+          {loginRequiredNotice && (
             <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
-              {t.avisoLoginNecessario}
+              {t.loginRequiredNotice}
             </p>
           )}
 
-          <form onSubmit={handleEntrar} noValidate className="mt-8 flex flex-col gap-3">
+          <form onSubmit={handleSignIn} noValidate className="mt-8 flex flex-col gap-3">
             <TextField
               id="entrar-email"
               label={t.email.label}
@@ -160,12 +160,12 @@ export function EntrarPage({
 
             <TextField
               id="entrar-senha"
-              label={t.senha.label}
+              label={t.password.label}
               type="password"
-              value={senha}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => setSenha(event.target.value)}
-              error={errors.senha}
-              placeholder={t.senha.placeholder}
+              value={password}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+              error={errors.password}
+              placeholder={t.password.placeholder}
               autoComplete="current-password"
             />
 
@@ -180,19 +180,19 @@ export function EntrarPage({
               disabled={pending}
               className="flex w-full items-center justify-center gap-2 rounded-md bg-salmon px-4 py-2.5 text-sm font-medium text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {pending ? t.entrarPendente : t.entrarBotao}
+              {pending ? t.signInPending : t.signInButton}
             </button>
 
             <Link
               href="/cadastro"
               className="flex w-full items-center justify-center gap-2 rounded-md border border-panel-border bg-military px-4 py-2.5 text-sm font-medium text-on-military hover:bg-military-600/40"
             >
-              {t.criarContaBotao}
+              {t.createAccountButton}
             </Link>
 
             <div className="flex items-center gap-3 py-1 text-xs text-on-military-muted">
               <span className="h-px flex-1 bg-panel-border" aria-hidden="true" />
-              {t.ou}
+              {t.or}
               <span className="h-px flex-1 bg-panel-border" aria-hidden="true" />
             </div>
 
@@ -200,16 +200,16 @@ export function EntrarPage({
               type="button"
               disabled
               aria-disabled="true"
-              title={ptBr.common.emBreve}
+              title={ptBr.common.comingSoon}
               className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-panel-border bg-military px-4 py-2.5 text-sm font-medium text-on-military-muted"
             >
               <GoogleIcon />
-              {t.google.continuarBotao}
-              <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
+              {t.google.continueButton}
+              <span className="text-xs font-normal">({ptBr.common.comingSoon})</span>
             </button>
           </form>
 
-          <p className="mt-6 text-[11px] text-on-military-muted">{t.termosNota}</p>
+          <p className="mt-6 text-[11px] text-on-military-muted">{t.termsNote}</p>
         </div>
       </div>
     </div>

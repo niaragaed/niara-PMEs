@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { OfertaDetailPage } from "@/components/negociar/OfertaDetailPage";
-import { SelfServiceOfertaDetailPage } from "@/components/negociar/SelfServiceOfertaDetailPage";
+import { OfferingDetailPage } from "@/components/negociar/OfertaDetailPage";
+import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfertaDetailPage";
 import { ptBr } from "@/lib/i18n/pt-br";
-import { getOfertaBySlug } from "@/lib/mock/ofertas";
+import { getOfferingBySlug } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
-import { getOfertaAssetPaths } from "@/lib/negociar/ofertaAssets";
+import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
-import { resolveSocio } from "@/lib/auth/resolveSocio";
+import { resolvePartner } from "@/lib/auth/resolveSocio";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 
 type PageProps = {
@@ -16,12 +16,12 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const oferta = getOfertaBySlug(slug);
+  const offering = getOfferingBySlug(slug);
 
-  if (oferta) {
+  if (offering) {
     return {
-      title: `${oferta.nome} · Niara PMEs`,
-      description: oferta.empresa.resumo,
+      title: `${offering.name} · Niara PMEs`,
+      description: offering.company.summary,
     };
   }
 
@@ -33,32 +33,32 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: `${confirmedOffering.issuerTradeName ?? confirmedOffering.issuerLegalName} · Niara PMEs` };
   }
 
-  return { title: `${ptBr.negociar.oferta.naoEncontrada.title} · Niara PMEs` };
+  return { title: `${ptBr.trade.offering.notFound.title} · Niara PMEs` };
 }
 
 export default async function Page({ params }: PageProps) {
   await requireLogin();
 
   const { slug } = await params;
-  const oferta = getOfertaBySlug(slug);
+  const offering = getOfferingBySlug(slug);
 
-  if (oferta) {
+  if (offering) {
     // Fotos reais só existem (por ora) para as 10 ofertas PME ligadas a uma oferta real em
     // Sepolia — ver src/lib/negociar/ofertaAssets.ts. Para as demais categorias nem vale a pena
     // checar o filesystem: nunca vai haver arquivo, OfertaBanner já mostra o placeholder sozinho.
-    const assets = oferta.categoria === "pmes" ? getOfertaAssetPaths(oferta.slug) : { bannerUrl: null, logoUrl: null };
-    const onChainIndex = oferta.categoria === "pmes" ? getOnChainIndexBySlug(oferta.slug) : null;
+    const assets = offering.category === "pmes" ? getOfferingAssetPaths(offering.slug) : { bannerUrl: null, logoUrl: null };
+    const onChainIndex = offering.category === "pmes" ? getOnChainIndexBySlug(offering.slug) : null;
     // Só importa quando onChainIndex !== null (decide o botão "Encerrar oferta" do painel
     // on-chain) — resolver sempre é mais simples que condicionar, e resolveSocio() não redireciona.
-    const { autorizado: isSocio } = await resolveSocio();
+    const { autorizado: isPartner } = await resolvePartner();
 
     return (
-      <OfertaDetailPage
-        oferta={oferta}
+      <OfferingDetailPage
+        offering={offering}
         bannerUrl={assets.bannerUrl}
         logoUrl={assets.logoUrl}
         onChainIndex={onChainIndex}
-        isSocio={isSocio}
+        isPartner={isPartner}
       />
     );
   }
@@ -71,17 +71,17 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  const { autorizado: isSocio } = await resolveSocio();
+  const { autorizado: isPartner } = await resolvePartner();
   // isEmissor só é possível pra ofertas self-service (têm issuer_id no Supabase) — as 10 legadas
   // nunca têm conta de emissor neste app, então nem chegam a este ramo.
   const { role, accountId } = await resolveAccount();
-  const isEmissor = role === "issuer" && accountId === confirmedOffering.issuerAccountId;
+  const isIssuer = role === "issuer" && accountId === confirmedOffering.issuerAccountId;
 
   return (
-    <SelfServiceOfertaDetailPage
-      oferta={{ ...confirmedOffering, category: confirmedOffering.category }}
-      isSocio={isSocio}
-      isEmissor={isEmissor}
+    <SelfServiceOfferingDetailPage
+      offering={{ ...confirmedOffering, category: confirmedOffering.category }}
+      isPartner={isPartner}
+      isIssuer={isIssuer}
     />
   );
 }

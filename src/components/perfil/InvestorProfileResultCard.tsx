@@ -1,13 +1,13 @@
 "use client";
 
 import { RefreshCw, TrendingUp } from "lucide-react";
-import { usePerfil } from "./PerfilContext";
+import { useProfile } from "./PerfilContext";
 import { SCORE_MAX, SCORE_MIN } from "@/lib/investor-profile";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export function InvestorProfileResultCard({ onRetake }: { onRetake: () => void }) {
-  const { investorProfile } = usePerfil();
-  const t = ptBr.perfil.investidor;
+  const { investorProfile } = useProfile();
+  const t = ptBr.profile.investor;
   const details = t.categoryDetails[investorProfile.category];
   const percent = ((investorProfile.score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)) * 100;
   const date = new Date(investorProfile.completedAt).toLocaleDateString("pt-BR", {
@@ -22,17 +22,17 @@ export function InvestorProfileResultCard({ onRetake }: { onRetake: () => void }
         <div className="inline-flex items-center gap-2 rounded-full border border-salmon/40 bg-salmon/10 px-3 py-1.5">
           <TrendingUp className="h-4 w-4 text-salmon" aria-hidden="true" />
           <span className="text-sm font-semibold text-on-military">
-            {t.categorias[investorProfile.category]}
+            {t.categories[investorProfile.category]}
           </span>
         </div>
-        <span className="text-xs text-on-military-muted">{t.avaliadoEm(date)}</span>
+        <span className="text-xs text-on-military-muted">{t.evaluatedOn(date)}</span>
       </div>
 
       <div className="mt-6">
         <div className="flex justify-between text-[10px] uppercase tracking-wide text-on-military-muted">
-          <span>{t.categorias.conservador}</span>
-          <span>{t.categorias.moderado}</span>
-          <span>{t.categorias.arrojado}</span>
+          <span>{t.categories.conservador}</span>
+          <span>{t.categories.moderado}</span>
+          <span>{t.categories.arrojado}</span>
         </div>
         <div className="relative mt-2">
           <div
@@ -54,26 +54,26 @@ export function InvestorProfileResultCard({ onRetake }: { onRetake: () => void }
       <dl className="mt-6 flex flex-col gap-4 border-t border-panel-border pt-5 text-sm">
         <div>
           <dt className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-            {t.resultado.oQueSignifica}
+            {t.result.whatItMeans}
           </dt>
           <dd className="mt-1 text-on-military-muted">{details.summary}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-            {t.resultado.reacaoRisco}
+            {t.result.riskReaction}
           </dt>
           <dd className="mt-1 text-on-military-muted">{details.riskReaction}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-            {t.resultado.classesAtivos}
+            {t.result.assetClasses}
           </dt>
           <dd className="mt-1 text-on-military-muted">{details.assetClasses}</dd>
         </div>
       </dl>
 
       <p className="mt-6 rounded-md border border-salmon/30 bg-salmon/10 px-3 py-2 text-xs text-on-military-muted">
-        {t.resultado.disclaimer}
+        {t.result.disclaimer}
       </p>
 
       <button
@@ -82,7 +82,7 @@ export function InvestorProfileResultCard({ onRetake }: { onRetake: () => void }
         className="mt-6 inline-flex items-center gap-1.5 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon"
       >
         <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-        {t.resultado.refazer}
+        {t.result.redo}
       </button>
     </div>
   );

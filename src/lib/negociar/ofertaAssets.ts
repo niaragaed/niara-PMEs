@@ -2,7 +2,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 
-export type OfertaAssetPaths = {
+export type OfferingAssetPaths = {
   bannerUrl: string | null;
   logoUrl: string | null;
 };
@@ -13,7 +13,7 @@ export type OfertaAssetPaths = {
 // via CSS, não precisa vir pronto no arquivo). Soltar os arquivos reais (gerados no Gemini) nessas
 // pastas é suficiente para trocar o placeholder pela imagem de verdade — nenhuma mudança de
 // código, só um novo commit/deploy (public/ é empacotado no build, não é lido em runtime).
-export function getOfertaAssetPaths(slug: string): OfertaAssetPaths {
+export function getOfferingAssetPaths(slug: string): OfferingAssetPaths {
   const dir = path.join(process.cwd(), "public", "negociar", "pmes", slug);
   const bannerFsPath = path.join(dir, "banner.jpg");
   const logoFsPath = path.join(dir, "logo.png");

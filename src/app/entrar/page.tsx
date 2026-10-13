@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { EntrarPage } from "@/components/entrar/EntrarPage";
+import { SignInPage } from "@/components/entrar/EntrarPage";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
-  title: `${ptBr.entrar.meta.title} · Niara PMEs`,
+  title: `${ptBr.signIn.meta.title} · Niara PMEs`,
 };
 
 type PageProps = {
@@ -11,8 +11,8 @@ type PageProps = {
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const { intent, aviso } = await searchParams;
+  const { intent, aviso: notice } = await searchParams;
   return (
-    <EntrarPage isCaptacaoIntent={intent === "captacao"} avisoLoginNecessario={aviso === "login-necessario"} />
+    <SignInPage isFundraisingIntent={intent === "captacao"} loginRequiredNotice={notice === "login-necessario"} />
   );
 }

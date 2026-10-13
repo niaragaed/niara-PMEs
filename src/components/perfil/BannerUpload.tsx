@@ -29,7 +29,7 @@ export function BannerUpload({
   const [justDid, setJustDid] = useState<"enviada" | "removida" | null>(null);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
-  const t = ptBr.perfil.dadosCadastro.bannerEmpresa;
+  const t = ptBr.profile.registrationData.companyBanner;
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -105,7 +105,7 @@ export function BannerUpload({
             className="inline-flex items-center gap-1.5 rounded-md border border-panel-border px-3 py-1.5 text-xs font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-            {isPending ? t.enviando : bannerUrl ? t.changeLabel : t.sendLabel}
+            {isPending ? t.sending : bannerUrl ? t.changeLabel : t.sendLabel}
           </button>
           {bannerUrl && (
             <button
@@ -133,8 +133,8 @@ export function BannerUpload({
             {error}
           </p>
         )}
-        {justDid === "enviada" && !error && <p className="text-xs text-value-positive">{t.sucessoEnviada}</p>}
-        {justDid === "removida" && !error && <p className="text-xs text-value-positive">{t.sucessoRemovida}</p>}
+        {justDid === "enviada" && !error && <p className="text-xs text-value-positive">{t.successSent}</p>}
+        {justDid === "removida" && !error && <p className="text-xs text-value-positive">{t.successRemoved}</p>}
       </div>
     </div>
   );

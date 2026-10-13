@@ -9,9 +9,9 @@
 import { useSyncExternalStore } from "react";
 import { utils } from "@anchor-lang/core";
 import { PublicKey, type Connection, type Transaction } from "@solana/web3.js";
-import { descreverErroSolana } from "./errors";
+import { describeSolanaError } from "./errors";
 
-type EventoPhantom = "connect" | "disconnect" | "accountChanged";
+type PhantomEvent = "connect" | "disconnect" | "accountChanged";
 
 export type ProviderPhantom = {
   isPhantom?: boolean;
@@ -20,9 +20,9 @@ export type ProviderPhantom = {
   connect: (opts?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
   signTransaction: (tx: Transaction) => Promise<Transaction>;
-  signMessage?: (mensagem: Uint8Array, encoding?: "utf8") => Promise<{ signature: Uint8Array; publicKey: PublicKey }>;
-  on?: (evento: EventoPhantom, cb: (arg?: unknown) => void) => void;
-  removeListener?: (evento: EventoPhantom, cb: (arg?: unknown) => void) => void;
+  signMessage?: (message: Uint8Array, encoding?: "utf8") => Promise<{ signature: Uint8Array; publicKey: PublicKey }>;
+  on?: (evento: PhantomEvent, cb: (arg?: unknown) => void) => void;
+  removeListener?: (evento: PhantomEvent, cb: (arg?: unknown) => void) => void;
 };
 
 declare global {
@@ -39,79 +39,79 @@ export function providerPhantom(): ProviderPhantom | null {
 
 // ── estado da conexão (store externo, lido com useSyncExternalStore) ─────────────────────────────
 
-type EstadoCarteira = { disponivel: boolean; endereco: string | null; iniciado: boolean };
+type WalletState = { available: boolean; address: string | null; started: boolean };
 
-const SERVIDOR: EstadoCarteira = { disponivel: false, endereco: null, iniciado: false };
-let estado: EstadoCarteira = SERVIDOR;
-const ouvintes = new Set<() => void>();
-let iniciado = false;
+const SERVER: WalletState = { available: false, address: null, started: false };
+let state: WalletState = SERVER;
+const listeners = new Set<() => void>();
+let started = false;
 
-function definir(novo: Partial<EstadoCarteira>) {
-  estado = { ...estado, ...novo };
-  ouvintes.forEach((cb) => cb());
+function set(patch: Partial<WalletState>) {
+  state = { ...state, ...patch };
+  listeners.forEach((cb) => cb());
 }
 
-function iniciar() {
-  if (iniciado || typeof window === "undefined") return;
-  iniciado = true;
+function start() {
+  if (started || typeof window === "undefined") return;
+  started = true;
   const p = providerPhantom();
-  estado = { disponivel: Boolean(p), endereco: p?.publicKey?.toBase58() ?? null, iniciado: true };
+  state = { available: Boolean(p), address: p?.publicKey?.toBase58() ?? null, started: true };
   if (!p) return;
-  p.on?.("connect", () => definir({ endereco: p.publicKey?.toBase58() ?? null }));
-  p.on?.("disconnect", () => definir({ endereco: null }));
-  p.on?.("accountChanged", (nova) => {
-    const chave = nova as PublicKey | null | undefined;
-    definir({ endereco: chave ? chave.toBase58() : null });
+  p.on?.("connect", () => set({ address: p.publicKey?.toBase58() ?? null }));
+  p.on?.("disconnect", () => set({ address: null }));
+  p.on?.("accountChanged", (newKey) => {
+    const chave = newKey as PublicKey | null | undefined;
+    set({ address: chave ? chave.toBase58() : null });
   });
   // Reconexão silenciosa: só funciona se o usuário já tiver autorizado este site antes — nunca abre
   // pop-up sozinho.
   p.connect({ onlyIfTrusted: true }).then(
-    (r) => definir({ endereco: r.publicKey.toBase58() }),
+    (r) => set({ address: r.publicKey.toBase58() }),
     () => undefined,
   );
 }
 
-function assinar(cb: () => void) {
-  iniciar();
-  ouvintes.add(cb);
+function sign(cb: () => void) {
+  start();
+  listeners.add(cb);
   return () => {
-    ouvintes.delete(cb);
+    listeners.delete(cb);
   };
 }
 
-export function useCarteiraSolana() {
-  const atual = useSyncExternalStore(
-    assinar,
+export function useSolanaWallet() {
+  const current = useSyncExternalStore(
+    sign,
     () => {
-      iniciar();
-      return estado;
+      start();
+      return state;
     },
-    () => SERVIDOR,
+    () => SERVER,
   );
 
-  async function conectar(): Promise<string> {
+  async function connect(): Promise<string> {
     const p = providerPhantom();
     if (!p) throw new Error("Nenhuma carteira Solana encontrada. Instale a Phantom.");
     const r = await p.connect();
-    const endereco = r.publicKey.toBase58();
-    definir({ endereco });
-    return endereco;
+    const address = r.publicKey.toBase58();
+    set({ address });
+    return address;
   }
 
-  async function desconectar() {
+  async function disconnect() {
     await providerPhantom()?.disconnect();
-    definir({ endereco: null });
+    set({ address: null });
   }
 
-  return { ...atual, conectar, desconectar };
+  return { ...current, connect, disconnect };
 }
 
 // ── envio de transação ──────────────────────────────────────────────────────────────────────────
 
-export type TransacaoAssinada = {
-  assinada: Transaction;
+export type SignedTransaction = {
+  signed: Transaction;
   /** Assinatura do pagador em base58 — o identificador da transação na Solana, já conhecido antes do envio. */
-  assinatura: string;
+  signature: string;
   blockhash: string;
   lastValidBlockHeight: number;
 };
@@ -122,7 +122,7 @@ export type TransacaoAssinada = {
  * reprovaria a transação (meta máxima, teto, prazo…) aparece como mensagem legível ANTES da
  * carteira abrir, nunca como uma transação falha paga pelo usuário.
  */
-export async function simularEAssinar(connection: Connection, tx: Transaction): Promise<TransacaoAssinada> {
+export async function simulateAndSign(connection: Connection, tx: Transaction): Promise<SignedTransaction> {
   const p = providerPhantom();
   if (!p?.publicKey) throw new Error("Conecte a carteira Solana (Phantom) para continuar.");
   try {
@@ -132,45 +132,45 @@ export async function simularEAssinar(connection: Connection, tx: Transaction): 
     tx.feePayer = new PublicKey(p.publicKey.toBase58());
     tx.recentBlockhash = blockhash;
 
-    const simulacao = await connection.simulateTransaction(tx);
-    if (simulacao.value.err) {
-      throw Object.assign(new Error("simulação falhou"), { logs: simulacao.value.logs ?? [], err: simulacao.value.err });
+    const simulation = await connection.simulateTransaction(tx);
+    if (simulation.value.err) {
+      throw Object.assign(new Error("simulação falhou"), { logs: simulation.value.logs ?? [], err: simulation.value.err });
     }
 
-    const assinada = await p.signTransaction(tx);
-    const sig = assinada.signature;
+    const signed = await p.signTransaction(tx);
+    const sig = signed.signature;
     if (!sig) throw new Error("A carteira não devolveu a assinatura da transação.");
-    return { assinada, assinatura: utils.bytes.bs58.encode(sig), blockhash, lastValidBlockHeight };
-  } catch (erro) {
-    throw new Error(descreverErroSolana(erro));
+    return { signed, signature: utils.bytes.bs58.encode(sig), blockhash, lastValidBlockHeight };
+  } catch (error) {
+    throw new Error(describeSolanaError(error));
   }
 }
 
 /** Envia pelo RPC da devnet e espera a confirmação ("confirmed"). Lança com mensagem traduzida. */
-export async function enviarEConfirmar(connection: Connection, t: TransacaoAssinada): Promise<string> {
+export async function sendAndConfirm(connection: Connection, t: SignedTransaction): Promise<string> {
   try {
-    await connection.sendRawTransaction(t.assinada.serialize(), { preflightCommitment: "confirmed" });
-    const resultado = await connection.confirmTransaction(
-      { signature: t.assinatura, blockhash: t.blockhash, lastValidBlockHeight: t.lastValidBlockHeight },
+    await connection.sendRawTransaction(t.signed.serialize(), { preflightCommitment: "confirmed" });
+    const result = await connection.confirmTransaction(
+      { signature: t.signature, blockhash: t.blockhash, lastValidBlockHeight: t.lastValidBlockHeight },
       "confirmed",
     );
-    if (resultado.value.err) {
-      const detalhe = await connection.getTransaction(t.assinatura, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
-      throw Object.assign(new Error("transação falhou"), { logs: detalhe?.meta?.logMessages ?? [], err: resultado.value.err });
+    if (result.value.err) {
+      const detail = await connection.getTransaction(t.signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+      throw Object.assign(new Error("transação falhou"), { logs: detail?.meta?.logMessages ?? [], err: result.value.err });
     }
-    return t.assinatura;
-  } catch (erro) {
-    throw new Error(descreverErroSolana(erro));
+    return t.signature;
+  } catch (error) {
+    throw new Error(describeSolanaError(error));
   }
 }
 
 /** Simula, assina, envia e confirma. `aoAssinar` é chamado assim que a carteira devolve a assinatura. */
-export async function assinarEEnviar(
+export async function signAndSend(
   connection: Connection,
   tx: Transaction,
-  aoAssinar?: (assinatura: string) => void,
+  onSign?: (signature: string) => void,
 ): Promise<string> {
-  const assinada = await simularEAssinar(connection, tx);
-  aoAssinar?.(assinada.assinatura);
-  return enviarEConfirmar(connection, assinada);
+  const signed = await simulateAndSign(connection, tx);
+  onSign?.(signed.signature);
+  return sendAndConfirm(connection, signed);
 }

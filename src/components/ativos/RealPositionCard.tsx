@@ -21,33 +21,33 @@ import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { BadgeCheck } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
-import { useMinhaPosicaoOnChain, useOfertaOnChainTermos } from "@/lib/web3/hooks/useOfertaOnChain";
+import { useMyOnChainPosition, useOnChainOfferingTerms } from "@/lib/web3/hooks/useOfertaOnChain";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { formatToken } from "@/lib/web3/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export function RealPositionCard() {
-  const t = ptBr.ativos.posicaoReal;
+  const t = ptBr.assets.realPosition;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 
   // Continua sempre a primeira oferta da lista LEGADA (env var) — mesma simplificação
   // deliberada de antes da Fase 4, sub-etapa 5.2: este cartão nunca tentou "adivinhar" qual
   // oferta mostrar, e não é o lugar de decidir isso entre legado/self-service.
-  const enderecos = getOnChainAddresses()?.ofertas[0] ?? null;
-  const termos = useOfertaOnChainTermos(enderecos);
-  const posicao = useMinhaPosicaoOnChain(enderecos);
+  const addresses = getOnChainAddresses()?.offerings[0] ?? null;
+  const terms = useOnChainOfferingTerms(addresses);
+  const position = useMyOnChainPosition(addresses);
 
   // Sem os 3 endereços configurados, o cartão simplesmente não aparece — não há posição real
   // para mostrar (mesma regra de "nunca quebra" de OnChainInvestPage.tsx).
-  if (!termos.configurado) return null;
+  if (!terms.configured) return null;
 
   return (
     <div className="rounded-lg bg-panel p-5 ring-2 ring-salmon sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-3 py-1 text-xs font-semibold text-on-salmon">
           <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          {t.selo}
+          {t.badge}
         </span>
         <Link
           href="/investir/onchain"
@@ -57,39 +57,39 @@ export function RealPositionCard() {
         </Link>
       </div>
 
-      <p className="mt-3 text-xs text-on-military-muted">{t.explicacao}</p>
+      <p className="mt-3 text-xs text-on-military-muted">{t.explanation}</p>
 
       {!connection.isConnected ? (
         <div className="mt-4 flex flex-col gap-2">
-          <p className="text-sm text-on-military-muted">{t.conectarPrompt}</p>
+          <p className="text-sm text-on-military-muted">{t.connectPrompt}</p>
           <ConnectWallet />
         </div>
       ) : !isOnSepolia ? (
-        <p className="mt-4 text-sm text-on-military">{t.redeErrada}</p>
-      ) : posicao.aportado === BigInt(0) ? (
-        <p className="mt-4 text-sm text-on-military-muted">{t.semPosicao}</p>
+        <p className="mt-4 text-sm text-on-military">{t.wrongNetwork}</p>
+      ) : position.invested === BigInt(0) ? (
+        <p className="mt-4 text-sm text-on-military-muted">{t.noPosition}</p>
       ) : (
         <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <dt className="text-xs text-on-military-muted">{t.aportado}</dt>
+            <dt className="text-xs text-on-military-muted">{t.invested}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
-              {formatToken(posicao.aportado, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(position.invested, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.cotas}</dt>
+            <dt className="text-xs text-on-military-muted">{t.shares}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
               {formatToken(
-                posicao.saldoParticipacaoToken,
-                termos.participacaoTokenDecimals,
-                termos.participacaoTokenSymbol,
+                position.participationTokenBalance,
+                terms.participationTokenDecimals,
+                terms.participationTokenSymbol,
               )}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.estadoLabel}</dt>
+            <dt className="text-xs text-on-military-muted">{t.stateLabel}</dt>
             <dd className="mt-0.5 text-sm font-semibold text-on-military">
-              {termos.estado ? ptBr.investirOnChain.termos.estados[termos.estado] : "—"}
+              {terms.state ? ptBr.investOnChain.terms.states[terms.state] : "—"}
             </dd>
           </div>
         </dl>

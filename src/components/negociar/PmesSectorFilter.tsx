@@ -1,23 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PmesOnChainCard } from "./PmesOnChainCard";
-import { SelfServicePmesCard } from "./SelfServicePmesCard";
+import { SmesOnChainCard } from "./PmesOnChainCard";
+import { SelfServiceSmesCard } from "./SelfServicePmesCard";
 import { ptBr } from "@/lib/i18n/pt-br";
-import type { Oferta } from "@/lib/mock/ofertas";
+import type { Offering } from "@/lib/mock/ofertas";
 
 // Duas origens na mesma vitrine (ver CLAUDE.md "Fase 4" → unificação da vitrine PMEs): as 10
 // legadas (empresa fictícia, PmesOnChainCard) e as self-service já confirmadas on-chain (dados
 // reais do emissor, SelfServicePmesCard). União discriminada por `origin` em vez de forçar os
 // dois formatos num tipo só — os dados self-service não têm (nem deveriam ganhar) os campos
 // fictícios do mock `Oferta` (financeiro, indicadores fundamentalistas etc.).
-export type PmesCardData =
-  | { origin: "legado"; oferta: Oferta; bannerUrl: string | null; logoUrl: string | null }
+export type SmesCardData =
+  | { origin: "legado"; offering: Offering; bannerUrl: string | null; logoUrl: string | null }
   | {
       origin: "selfService";
       id: string;
-      nome: string;
-      setor: string | null;
+      name: string;
+      sector: string | null;
       bannerUrl: string | null;
       logoUrl: string | null;
       hardCapCents: number;
@@ -26,12 +26,12 @@ export type PmesCardData =
       rede: "sepolia" | "solana-devnet";
     };
 
-function getSetor(item: PmesCardData): string | null {
-  return item.origin === "legado" ? item.oferta.empresa.setor : item.setor;
+function getSector(item: SmesCardData): string | null {
+  return item.origin === "legado" ? item.offering.company.sector : item.sector;
 }
 
-function getKey(item: PmesCardData): string {
-  return item.origin === "legado" ? item.oferta.slug : item.id;
+function getKey(item: SmesCardData): string {
+  return item.origin === "legado" ? item.offering.slug : item.id;
 }
 
 // Filtro por setor da vitrine de Token PMEs (legadas + self-service — ver CategoryPage.tsx).
@@ -40,60 +40,60 @@ function getKey(item: PmesCardData): string {
 // setores que já existem em `items`, nunca uma lista fixa — evita desalinhar do dado real se uma
 // oferta trocar de setor no futuro. Itens sem setor (self-service que não preencheu) nunca geram
 // um botão de filtro vazio, mas continuam aparecendo na vitrine sem filtro nenhum selecionado.
-export function PmesSectorFilter({ items }: { items: PmesCardData[] }) {
-  const t = ptBr.negociar.categoriaTemplate.filtroSetor;
+export function SmesSectorFilter({ items }: { items: SmesCardData[] }) {
+  const t = ptBr.trade.categoryTemplate.sectorFilter;
 
-  const setores = useMemo(() => {
-    const unicos = new Set(items.map(getSetor).filter((setor): setor is string => Boolean(setor)));
-    return Array.from(unicos).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const sectors = useMemo(() => {
+    const unique = new Set(items.map(getSector).filter((sector): sector is string => Boolean(sector)));
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [items]);
 
-  const [setorSelecionado, setSetorSelecionado] = useState<string | null>(null);
+  const [selectedSector, setSelectedSector] = useState<string | null>(null);
 
-  const itensFiltrados = setorSelecionado ? items.filter((item) => getSetor(item) === setorSelecionado) : items;
+  const filteredItems = selectedSector ? items.filter((item) => getSector(item) === selectedSector) : items;
 
   return (
     <div>
       <div role="group" aria-label={t.ariaLabel} className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          aria-pressed={setorSelecionado === null}
-          onClick={() => setSetorSelecionado(null)}
+          aria-pressed={selectedSector === null}
+          onClick={() => setSelectedSector(null)}
           className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-            setorSelecionado === null
+            selectedSector === null
               ? "bg-salmon text-on-salmon"
               : "border border-panel-border bg-military-600/40 text-on-military-muted hover:border-salmon hover:text-on-military"
           }`}
         >
-          {t.todos}
+          {t.all}
         </button>
-        {setores.map((setor) => (
+        {sectors.map((sector) => (
           <button
-            key={setor}
+            key={sector}
             type="button"
-            aria-pressed={setorSelecionado === setor}
-            onClick={() => setSetorSelecionado(setor)}
+            aria-pressed={selectedSector === sector}
+            onClick={() => setSelectedSector(sector)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              setorSelecionado === setor
+              selectedSector === sector
                 ? "bg-salmon text-on-salmon"
                 : "border border-panel-border bg-military-600/40 text-on-military-muted hover:border-salmon hover:text-on-military"
             }`}
           >
-            {setor}
+            {sector}
           </button>
         ))}
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {itensFiltrados.map((item) =>
+        {filteredItems.map((item) =>
           item.origin === "legado" ? (
-            <PmesOnChainCard key={getKey(item)} oferta={item.oferta} bannerUrl={item.bannerUrl} logoUrl={item.logoUrl} />
+            <SmesOnChainCard key={getKey(item)} offering={item.offering} bannerUrl={item.bannerUrl} logoUrl={item.logoUrl} />
           ) : (
-            <SelfServicePmesCard
+            <SelfServiceSmesCard
               key={getKey(item)}
               id={item.id}
-              nome={item.nome}
-              setor={item.setor}
+              name={item.name}
+              sector={item.sector}
               bannerUrl={item.bannerUrl}
               logoUrl={item.logoUrl}
               hardCapCents={item.hardCapCents}

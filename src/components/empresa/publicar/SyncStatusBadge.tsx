@@ -20,7 +20,7 @@ export function SyncStatusBadge({ status }: { status: SyncStatus }) {
   if (status === "nao_onchain") return null;
 
   const Icon = ICONS[status];
-  const label = ptBr.empresaOfertas.onchainStatus[status].titulo;
+  const label = ptBr.companyOfferings.onchainStatus[status].title;
 
   return (
     <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${STYLES[status]}`}>

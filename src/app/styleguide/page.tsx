@@ -64,42 +64,42 @@ export default function StyleguidePage() {
         <p className="text-ink-muted">{ptBr.styleguide.subtitle}</p>
       </header>
 
-      <Section title={ptBr.styleguide.coresBase}>
+      <Section title={ptBr.styleguide.colorsBase}>
         <SwatchGrid swatches={baseSwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.verdeMilitar}>
+      <Section title={ptBr.styleguide.militaryGreen}>
         <SwatchGrid swatches={militarySwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.salmao}>
+      <Section title={ptBr.styleguide.salmon}>
         <SwatchGrid swatches={salmonSwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.acentos}>
+      <Section title={ptBr.styleguide.accents}>
         <SwatchGrid swatches={accentSwatches} />
       </Section>
 
-      <Section title={ptBr.styleguide.fundosAlternados}>
+      <Section title={ptBr.styleguide.alternatingBackgrounds}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg bg-military-100 p-6">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.fundoSalvia}</p>
+            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.sageBackground}</p>
           </div>
           <div className="rounded-lg bg-salmon-100 p-6">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.fundoPessego}</p>
-            <p className="mt-2 text-sm text-ink-peach">{ptBr.styleguide.fundoPessegoSubtitulo}</p>
+            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.peachBackground}</p>
+            <p className="mt-2 text-sm text-ink-peach">{ptBr.styleguide.peachBackgroundSubtitle}</p>
           </div>
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.tipografia}>
+      <Section title={ptBr.styleguide.typography}>
         <div className="flex flex-col gap-4">
           <h1 className="text-4xl font-semibold tracking-tight text-ink">Niara PMEs</h1>
-          <p className="max-w-2xl text-base text-ink-muted">{ptBr.styleguide.tipografiaAmostra}</p>
+          <p className="max-w-2xl text-base text-ink-muted">{ptBr.styleguide.typographySample}</p>
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.raiosSombras}>
+      <Section title={ptBr.styleguide.radiiAndShadows}>
         <div className="flex flex-wrap items-end gap-6">
           <div className="flex flex-col items-center gap-2">
             <div className="h-16 w-16 rounded-sm border border-border bg-surface shadow-soft" />
@@ -120,19 +120,19 @@ export default function StyleguidePage() {
         </div>
       </Section>
 
-      <Section title={ptBr.styleguide.botoes}>
+      <Section title={ptBr.styleguide.buttons}>
         <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-full bg-salmon px-6 py-3 text-sm font-medium text-ink transition-colors hover:bg-salmon-600"
           >
-            {ptBr.styleguide.botaoPrimario}
+            {ptBr.styleguide.primaryButton}
           </button>
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-full border border-military px-6 py-3 text-sm font-medium text-military transition-colors hover:bg-military-100"
           >
-            {ptBr.styleguide.botaoSecundario}
+            {ptBr.styleguide.secondaryButton}
           </button>
           <button
             type="button"
@@ -140,7 +140,7 @@ export default function StyleguidePage() {
             aria-disabled="true"
             className="inline-flex cursor-not-allowed items-center justify-center rounded-full bg-salmon/50 px-6 py-3 text-sm font-medium text-ink/60"
           >
-            {ptBr.styleguide.botaoDesabilitado}
+            {ptBr.styleguide.disabledButton}
           </button>
         </div>
       </Section>
@@ -148,12 +148,12 @@ export default function StyleguidePage() {
       <Section title={ptBr.styleguide.cards}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-border bg-surface p-6 shadow-soft">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.cardTitulo}</p>
-            <p className="mt-2 text-sm text-ink-muted">{ptBr.styleguide.cardTexto}</p>
+            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.cardTitle}</p>
+            <p className="mt-2 text-sm text-ink-muted">{ptBr.styleguide.cardText}</p>
           </div>
           <div className="rounded-lg border border-border bg-surface-alt p-6">
-            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.cardTitulo}</p>
-            <p className="mt-2 text-sm text-ink-muted">{ptBr.styleguide.cardTexto}</p>
+            <p className="text-lg font-semibold text-ink">{ptBr.styleguide.cardTitle}</p>
+            <p className="mt-2 text-sm text-ink-muted">{ptBr.styleguide.cardText}</p>
           </div>
         </div>
       </Section>

@@ -11,9 +11,9 @@
 // nenhum listener manual de window.ethereum é necessário nem adicionado aqui.
 import { useSyncExternalStore } from "react";
 import { useBalance, useConnection, useGasPrice } from "wagmi";
-import { ORQUESTRADOR_CHAIN_ID } from "../orquestrador";
-import { useEmissorAutorizado } from "./useEmissorAutorizado";
-import { avaliarGateProvider, avaliarGateRede, avaliarGateSaldo, avaliarGateTitularidade } from "../gates";
+import { ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
+import { useAuthorizedIssuer } from "./useEmissorAutorizado";
+import { evaluateGateProvider, evaluateGateNetwork, evaluateGateBalance, evaluateGateOwnership } from "../gates";
 
 function subscribeToProvider() {
   // Presença de window.ethereum não muda de forma observável — não há evento para assinar,
@@ -29,40 +29,40 @@ function getProviderServerSnapshot() {
   return true;
 }
 
-export function usePublicarOnChainGates(walletVinculada: string | null) {
+export function usePublishOnChainGates(linkedWallet: string | null) {
   const hasProvider = useSyncExternalStore(subscribeToProvider, getProviderSnapshot, getProviderServerSnapshot);
   const connection = useConnection();
 
-  const naRedeCerta = connection.isConnected && connection.chainId === ORQUESTRADOR_CHAIN_ID;
+  const onRightNetwork = connection.isConnected && connection.chainId === ORCHESTRATOR_CHAIN_ID;
 
   const balance = useBalance({
     address: connection.address,
-    chainId: ORQUESTRADOR_CHAIN_ID,
-    query: { enabled: naRedeCerta },
+    chainId: ORCHESTRATOR_CHAIN_ID,
+    query: { enabled: onRightNetwork },
   });
 
   const gasPrice = useGasPrice({
-    chainId: ORQUESTRADOR_CHAIN_ID,
+    chainId: ORCHESTRATOR_CHAIN_ID,
     // Refetch periódico: a Fase 2 mostrou o preço do gás variar de ~1 gwei a dezenas dentro da
     // mesma sessão — um valor lido uma vez ao abrir a tela pode já estar desatualizado minutos
     // depois, se o emissor demorar para revisar o checklist antes de assinar.
-    query: { enabled: naRedeCerta, refetchInterval: 15_000 },
+    query: { enabled: onRightNetwork, refetchInterval: 15_000 },
   });
 
-  const gateAutorizado = useEmissorAutorizado(connection.address);
+  const gateAuthorized = useAuthorizedIssuer(connection.address);
 
-  const gateProvider = avaliarGateProvider(hasProvider);
-  const gateRede = avaliarGateRede(connection.isConnected, connection.chainId, ORQUESTRADOR_CHAIN_ID);
-  const gateSaldo = avaliarGateSaldo({
-    isConnected: naRedeCerta,
-    saldoWei: balance.data?.value,
-    precoGasWei: gasPrice.data,
-    saldoCarregando: balance.isLoading,
-    saldoComErro: balance.isError,
-    precoGasCarregando: gasPrice.isLoading,
-    precoGasComErro: gasPrice.isError,
+  const gateProvider = evaluateGateProvider(hasProvider);
+  const gateNetwork = evaluateGateNetwork(connection.isConnected, connection.chainId, ORCHESTRATOR_CHAIN_ID);
+  const gateBalance = evaluateGateBalance({
+    isConnected: onRightNetwork,
+    balanceWei: balance.data?.value,
+    gasPriceWei: gasPrice.data,
+    balanceLoading: balance.isLoading,
+    balanceError: balance.isError,
+    gasPriceLoading: gasPrice.isLoading,
+    gasPriceError: gasPrice.isError,
   });
-  const gateTitularidade = avaliarGateTitularidade(connection.address, walletVinculada);
+  const gateOwnership = evaluateGateOwnership(connection.address, linkedWallet);
 
-  return { connection, gateProvider, gateRede, gateSaldo, gateAutorizado, gateTitularidade };
+  return { connection, gateProvider, gateNetwork, gateBalance, gateAuthorized, gateOwnership };
 }

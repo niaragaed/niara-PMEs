@@ -12,14 +12,14 @@
 // de saber qual MockBRL esta oferta específica usa. 2º estágio, só depois do 1º resolver: lê
 // decimals/symbol/saldo/allowance DESSE MockBRL, nunca de um endereço herdado de fora.
 import { useConnection, useReadContracts } from "wagmi";
-import { getMockBrlContractAt, getOnChainContracts, type OfertaOnChainEnderecos } from "../contracts";
+import { getMockBrlContractAt, getOnChainContracts, type OnChainOfferingAddresses } from "../contracts";
 import { describeOnChainError } from "../errors";
 
-const ESTADO_LABELS = ["Aberta", "EncerradaSucesso", "EncerradaFalha"] as const;
-export type EstadoOferta = (typeof ESTADO_LABELS)[number];
+const STATE_LABELS = ["Aberta", "EncerradaSucesso", "EncerradaFalha"] as const;
+export type OfferingState = (typeof STATE_LABELS)[number];
 
-export type OfertaOnChainTermos = {
-  configurado: boolean;
+export type OnChainOfferingTerms = {
+  configured: boolean;
   isLoading: boolean;
   /**
    * `true` só quando TODAS as leituras abaixo (os dois estágios) terminaram com sucesso — mesmo
@@ -28,24 +28,24 @@ export type OfertaOnChainTermos = {
    * `false`, os campos abaixo podem estar no valor de fallback (0/false) — NUNCA usar para decidir
    * um investimento (gate de `investirDesabilitado` em RealOnChainInvestPanel.tsx depende disto).
    */
-  pronto: boolean;
+  ready: boolean;
   /** Mensagem em pt-BR já traduzida (ex.: RPC fora do ar) — `null` quando não há erro. */
   errorMessage: string | null;
-  estado: EstadoOferta | null;
-  totalArrecadado: bigint;
-  metaMinima: bigint;
-  metaMaxima: bigint;
-  precoPorCota: bigint;
-  prazo: bigint;
-  tetoPorInvestidor: bigint;
-  taxaBps: bigint;
-  recursosLiberados: boolean;
+  state: OfferingState | null;
+  totalRaised: bigint;
+  minTarget: bigint;
+  maxTarget: bigint;
+  pricePerShare: bigint;
+  deadline: bigint;
+  capPerInvestor: bigint;
+  feeBps: bigint;
+  fundsReleased: boolean;
   /** Endereço do MockBRL desta oferta específica, lido de `moeda()` — nunca uma constante. */
   mockBrlAddress: `0x${string}` | null;
   mockBrlDecimals: number;
   mockBrlSymbol: string;
-  participacaoTokenDecimals: number;
-  participacaoTokenSymbol: string;
+  participationTokenDecimals: number;
+  participationTokenSymbol: string;
   refetch: () => void;
 };
 
@@ -57,8 +57,8 @@ const ESTAGIO2_CONTRACT_COUNT = 2;
  * `enderecos` identifica a oferta (par token/oferta, ver contracts.ts) — `null` enquanto nenhuma
  * estiver selecionada/configurada.
  */
-export function useOfertaOnChainTermos(enderecos: OfertaOnChainEnderecos | null): OfertaOnChainTermos {
-  const contracts = getOnChainContracts(enderecos);
+export function useOnChainOfferingTerms(addresses: OnChainOfferingAddresses | null): OnChainOfferingTerms {
+  const contracts = getOnChainContracts(addresses);
 
   // Estágio 1: tudo que NÃO depende de saber o MockBRL ainda — inclui `moeda()` em si.
   const {
@@ -112,37 +112,37 @@ export function useOfertaOnChainTermos(enderecos: OfertaOnChainEnderecos | null)
   // "funcionar" (sem isError na query) enquanto uma chamada individual dentro dele falha
   // (`status: "failure"`, ex.: um contrato que não responde àquela função). `pronto` exige todas
   // as leituras dos DOIS estágios com sucesso, não só ausência de erro na query como um todo.
-  const estagio1Completo =
+  const stage1Complete =
     Boolean(contracts) &&
     Array.from({ length: ESTAGIO1_CONTRACT_COUNT }, (_, i) => i).every((i) => data?.[i]?.status === "success");
-  const estagio2Completo =
+  const stage2Complete =
     Boolean(mockBrlContract) &&
     Array.from({ length: ESTAGIO2_CONTRACT_COUNT }, (_, i) => i).every(
       (i) => mockBrlData?.[i]?.status === "success",
     );
-  const pronto = estagio1Completo && estagio2Completo && !isLoading && !isError && !mockBrlIsLoading && !mockBrlIsError;
+  const ready = stage1Complete && stage2Complete && !isLoading && !isError && !mockBrlIsLoading && !mockBrlIsError;
 
-  const estadoRaw = data?.[0]?.status === "success" ? (data[0].result as number) : null;
+  const stateRaw = data?.[0]?.status === "success" ? (data[0].result as number) : null;
 
   return {
-    configurado: Boolean(contracts),
+    configured: Boolean(contracts),
     isLoading: isLoading || mockBrlIsLoading,
-    pronto,
+    ready,
     errorMessage: isError ? describeOnChainError(error) : mockBrlIsError ? describeOnChainError(mockBrlError) : null,
-    estado: estadoRaw === null ? null : ESTADO_LABELS[estadoRaw],
-    totalArrecadado: data?.[1]?.status === "success" ? (data[1].result as bigint) : BigInt(0),
-    metaMinima: data?.[2]?.status === "success" ? (data[2].result as bigint) : BigInt(0),
-    metaMaxima: data?.[3]?.status === "success" ? (data[3].result as bigint) : BigInt(0),
-    precoPorCota: data?.[4]?.status === "success" ? (data[4].result as bigint) : BigInt(0),
-    prazo: data?.[5]?.status === "success" ? (data[5].result as bigint) : BigInt(0),
-    tetoPorInvestidor: data?.[6]?.status === "success" ? (data[6].result as bigint) : BigInt(0),
-    taxaBps: data?.[7]?.status === "success" ? (data[7].result as bigint) : BigInt(0),
-    recursosLiberados: data?.[8]?.status === "success" ? (data[8].result as boolean) : false,
+    state: stateRaw === null ? null : STATE_LABELS[stateRaw],
+    totalRaised: data?.[1]?.status === "success" ? (data[1].result as bigint) : BigInt(0),
+    minTarget: data?.[2]?.status === "success" ? (data[2].result as bigint) : BigInt(0),
+    maxTarget: data?.[3]?.status === "success" ? (data[3].result as bigint) : BigInt(0),
+    pricePerShare: data?.[4]?.status === "success" ? (data[4].result as bigint) : BigInt(0),
+    deadline: data?.[5]?.status === "success" ? (data[5].result as bigint) : BigInt(0),
+    capPerInvestor: data?.[6]?.status === "success" ? (data[6].result as bigint) : BigInt(0),
+    feeBps: data?.[7]?.status === "success" ? (data[7].result as bigint) : BigInt(0),
+    fundsReleased: data?.[8]?.status === "success" ? (data[8].result as boolean) : false,
     mockBrlAddress,
     mockBrlDecimals: mockBrlData?.[0]?.status === "success" ? (mockBrlData[0].result as number) : 18,
     mockBrlSymbol: mockBrlData?.[1]?.status === "success" ? (mockBrlData[1].result as string) : "mBRL",
-    participacaoTokenDecimals: data?.[10]?.status === "success" ? (data[10].result as number) : 18,
-    participacaoTokenSymbol: data?.[11]?.status === "success" ? (data[11].result as string) : "",
+    participationTokenDecimals: data?.[10]?.status === "success" ? (data[10].result as number) : 18,
+    participationTokenSymbol: data?.[11]?.status === "success" ? (data[11].result as string) : "",
     refetch: () => {
       void refetchEstagio1();
       void refetchEstagio2();
@@ -150,21 +150,21 @@ export function useOfertaOnChainTermos(enderecos: OfertaOnChainEnderecos | null)
   };
 }
 
-export type MinhaPosicaoOnChain = {
+export type MyOnChainPosition = {
   isLoading: boolean;
   /** Mesmo princípio de `OfertaOnChainTermos.pronto` — ver ali. */
-  pronto: boolean;
+  ready: boolean;
   errorMessage: string | null;
-  aportado: bigint;
-  jaResgatouCotas: boolean;
-  jaFoiReembolsado: boolean;
-  saldoMockBrl: bigint;
+  invested: bigint;
+  alreadyRedeemedShares: boolean;
+  alreadyRefunded: boolean;
+  mockBrlBalance: bigint;
   allowanceMockBrl: bigint;
-  saldoParticipacaoToken: bigint;
+  participationTokenBalance: bigint;
   refetch: () => void;
 };
 
-const POSICAO_ESTAGIO1_COUNT = 4;
+const STAGE1_POSITION_COUNT = 4;
 
 /**
  * Posição do investidor conectado nesta oferta + saldos das duas carteiras de token. Desligado
@@ -177,9 +177,9 @@ const POSICAO_ESTAGIO1_COUNT = 4;
  * fora: é exatamente esse tipo de confiança entre hooks que já causou o incidente de allowance
  * lida contra o MockBRL errado (ver CLAUDE.md).
  */
-export function useMinhaPosicaoOnChain(enderecos: OfertaOnChainEnderecos | null): MinhaPosicaoOnChain {
+export function useMyOnChainPosition(addresses: OnChainOfferingAddresses | null): MyOnChainPosition {
   const { address, isConnected } = useConnection();
-  const contracts = getOnChainContracts(enderecos);
+  const contracts = getOnChainContracts(addresses);
   const baseEnabled = Boolean(contracts) && isConnected && Boolean(address);
 
   // Estágio 1: aportadoPor/cotasResgatadas/reembolsado (não dependem de MockBRL) + moeda() (pra
@@ -226,28 +226,28 @@ export function useMinhaPosicaoOnChain(enderecos: OfertaOnChainEnderecos | null)
     query: { enabled: Boolean(mockBrlContract) && baseEnabled, refetchInterval: 10_000 },
   });
 
-  const estagio1Completo =
+  const stage1Complete =
     baseEnabled &&
-    Array.from({ length: POSICAO_ESTAGIO1_COUNT }, (_, i) => i).every((i) => data?.[i]?.status === "success");
+    Array.from({ length: STAGE1_POSITION_COUNT }, (_, i) => i).every((i) => data?.[i]?.status === "success");
   // 3 leituras no estágio 2 (balanceOf/allowance do MockBRL + balanceOf do ParticipacaoToken),
   // mas só 2 dependem do MockBRL — contadas juntas por simplicidade, todas vêm da mesma query.
-  const estagio2Completo =
+  const stage2Complete =
     Boolean(mockBrlContract) &&
     baseEnabled &&
     [0, 1, 2].every((i) => estagio2Data?.[i]?.status === "success");
-  const pronto =
-    estagio1Completo && estagio2Completo && !isLoading && !isError && !estagio2Loading && !estagio2IsError;
+  const ready =
+    stage1Complete && stage2Complete && !isLoading && !isError && !estagio2Loading && !estagio2IsError;
 
   return {
     isLoading: isLoading || estagio2Loading,
-    pronto,
+    ready,
     errorMessage: isError ? describeOnChainError(error) : estagio2IsError ? describeOnChainError(estagio2Error) : null,
-    aportado: data?.[0]?.status === "success" ? (data[0].result as bigint) : BigInt(0),
-    jaResgatouCotas: data?.[1]?.status === "success" ? (data[1].result as boolean) : false,
-    jaFoiReembolsado: data?.[2]?.status === "success" ? (data[2].result as boolean) : false,
-    saldoMockBrl: estagio2Data?.[0]?.status === "success" ? (estagio2Data[0].result as bigint) : BigInt(0),
+    invested: data?.[0]?.status === "success" ? (data[0].result as bigint) : BigInt(0),
+    alreadyRedeemedShares: data?.[1]?.status === "success" ? (data[1].result as boolean) : false,
+    alreadyRefunded: data?.[2]?.status === "success" ? (data[2].result as boolean) : false,
+    mockBrlBalance: estagio2Data?.[0]?.status === "success" ? (estagio2Data[0].result as bigint) : BigInt(0),
     allowanceMockBrl: estagio2Data?.[1]?.status === "success" ? (estagio2Data[1].result as bigint) : BigInt(0),
-    saldoParticipacaoToken: estagio2Data?.[2]?.status === "success" ? (estagio2Data[2].result as bigint) : BigInt(0),
+    participationTokenBalance: estagio2Data?.[2]?.status === "success" ? (estagio2Data[2].result as bigint) : BigInt(0),
     refetch: () => {
       void refetchEstagio1();
       void refetchEstagio2();

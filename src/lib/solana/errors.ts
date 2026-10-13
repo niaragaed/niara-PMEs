@@ -5,11 +5,11 @@
 // usado no cliente (phantom.ts) e no servidor (verificação de publicação).
 import idlJson from "./idl/niara_pmes_solana.json";
 
-type ErroIdl = { code: number; name: string; msg?: string };
-const ERROS_PROGRAMA: ErroIdl[] = (idlJson as { errors?: ErroIdl[] }).errors ?? [];
+type IdlError = { code: number; name: string; msg?: string };
+const PROGRAM_ERRORS: IdlError[] = (idlJson as { errors?: IdlError[] }).errors ?? [];
 
 /** Mensagens mais completas para os erros que o usuário encontra no fluxo normal. */
-const MENSAGENS: Record<string, string> = {
+const MESSAGES: Record<string, string> = {
   AporteNaoMultiploDoPreco: "O aporte precisa ser um múltiplo exato do preço por cota.",
   ExcedeMetaMaxima: "Esse aporte ultrapassa a meta máxima da oferta.",
   ExcedeTetoInvestidor: "Esse aporte ultrapassa o teto por investidor desta oferta.",
@@ -25,72 +25,72 @@ const MENSAGENS: Record<string, string> = {
   PrecoNaoDivideMetaMaxima: "O valor por cota precisa dividir exatamente a meta máxima.",
 };
 
-function porNome(nome: string): string | null {
-  if (MENSAGENS[nome]) return MENSAGENS[nome];
-  return ERROS_PROGRAMA.find((e) => e.name === nome)?.msg ?? null;
+function byName(nome: string): string | null {
+  if (MESSAGES[nome]) return MESSAGES[nome];
+  return PROGRAM_ERRORS.find((e) => e.name === nome)?.msg ?? null;
 }
 
-function porCodigo(codigo: number): string | null {
-  const erro = ERROS_PROGRAMA.find((e) => e.code === codigo);
-  return erro ? porNome(erro.name) : null;
+function byCode(code: number): string | null {
+  const error = PROGRAM_ERRORS.find((e) => e.code === code);
+  return error ? byName(error.name) : null;
 }
 
-function textoDe(erro: unknown): string {
-  if (erro instanceof Error) return erro.message;
-  if (typeof erro === "string") return erro;
+function textOf(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
   try {
-    return JSON.stringify(erro);
+    return JSON.stringify(error);
   } catch {
-    return String(erro);
+    return String(error);
   }
 }
 
-function logsDe(erro: unknown): string[] {
-  const logs = (erro as { logs?: unknown })?.logs;
+function logsOf(error: unknown): string[] {
+  const logs = (error as { logs?: unknown })?.logs;
   return Array.isArray(logs) ? logs.map(String) : [];
 }
 
-export function descreverErroSolana(erro: unknown): string {
-  const codigoCarteira = (erro as { code?: number })?.code;
-  const texto = textoDe(erro);
+export function describeSolanaError(error: unknown): string {
+  const walletCode = (error as { code?: number })?.code;
+  const text = textOf(error);
 
-  if (codigoCarteira === 4001 || /user rejected|rejected the request/i.test(texto)) {
+  if (walletCode === 4001 || /user rejected|rejected the request/i.test(text)) {
     return "Assinatura recusada na carteira.";
   }
 
-  const logs = logsDe(erro);
-  const tudo = [texto, ...logs].join("\n");
+  const logs = logsOf(error);
+  const everything = [text, ...logs].join("\n");
 
   // Log padrão do Anchor: "AnchorError ... Error Code: Nome. Error Number: 6xxx. Error Message: ..."
-  const anchor = /Error Code: (\w+)\./.exec(tudo);
+  const anchor = /Error Code: (\w+)\./.exec(everything);
   if (anchor) {
-    const msg = porNome(anchor[1]);
+    const msg = byName(anchor[1]);
     if (msg) return msg;
   }
 
   // InstructionError com código customizado (sem log do Anchor).
-  const custom = (erro as { err?: { InstructionError?: [number, { Custom?: number } | string] } })?.err?.InstructionError?.[1];
+  const custom = (error as { err?: { InstructionError?: [number, { Custom?: number } | string] } })?.err?.InstructionError?.[1];
   if (custom && typeof custom === "object" && typeof custom.Custom === "number") {
-    const msg = porCodigo(custom.Custom);
+    const msg = byCode(custom.Custom);
     if (msg) return msg;
   }
-  const hexCustom = /custom program error: 0x([0-9a-f]+)/i.exec(tudo);
+  const hexCustom = /custom program error: 0x([0-9a-f]+)/i.exec(everything);
   if (hexCustom) {
-    const msg = porCodigo(parseInt(hexCustom[1], 16));
+    const msg = byCode(parseInt(hexCustom[1], 16));
     if (msg) return msg;
   }
 
-  if (/Program Tokenkeg\S+ failed: custom program error: 0x1\b|insufficient funds/i.test(tudo) && /Tokenkeg/.test(tudo)) {
+  if (/Program Tokenkeg\S+ failed: custom program error: 0x1\b|insufficient funds/i.test(everything) && /Tokenkeg/.test(everything)) {
     return "Saldo de MockBRL insuficiente — use o faucet acima.";
   }
-  if (/no record of a prior credit|insufficient lamports|insufficient funds for rent/i.test(tudo)) {
+  if (/no record of a prior credit|insufficient lamports|insufficient funds for rent/i.test(everything)) {
     return "Saldo de SOL insuficiente para pagar a taxa da rede — obtenha SOL de teste em faucet.solana.com (devnet).";
   }
-  if (/block height exceeded|blockhash not found|expired/i.test(tudo)) {
+  if (/block height exceeded|blockhash not found|expired/i.test(everything)) {
     return "A transação expirou antes de ser confirmada — tente de novo.";
   }
-  if (/failed to fetch|network|timeout|429/i.test(tudo)) {
+  if (/failed to fetch|network|timeout|429/i.test(everything)) {
     return "Não foi possível falar com a rede Solana (devnet) agora — tente de novo em alguns segundos.";
   }
-  return texto.length > 300 ? `${texto.slice(0, 300)}…` : texto;
+  return text.length > 300 ? `${text.slice(0, 300)}…` : text;
 }

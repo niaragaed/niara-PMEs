@@ -6,42 +6,42 @@
 // rede atual de uma wallet, se houver uma conectada) — apontar para outra rede exigiria editar
 // aquela constante, não é um efeito colateral de qual chain o MetaMask do usuário está.
 import { useReadContract } from "wagmi";
-import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID } from "../orquestrador";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
 import { describeOnChainError } from "../errors";
 
-export type EmissorAutorizadoResult = {
+export type AuthorizedIssuerResult = {
   /** `false` só quando `NEXT_PUBLIC_ORQUESTRADOR_ADDRESS` está ausente/mal formado. */
-  contratoConfigurado: boolean;
+  contractConfigured: boolean;
   /**
    * `null` enquanto carregando ou se a leitura falhou — nunca um `false` "inventado" quando a
    * causa real é a leitura não ter acontecido. Só é `true`/`false` quando a chain respondeu.
    */
-  autorizado: boolean | null;
+  authorized: boolean | null;
   isLoading: boolean;
   /** Mensagem em pt-BR já traduzida (ex.: RPC fora do ar) — `null` quando não há erro. */
   errorMessage: string | null;
 };
 
-export function useEmissorAutorizado(endereco: `0x${string}` | undefined): EmissorAutorizadoResult {
-  const contract = getOrquestradorContract();
+export function useAuthorizedIssuer(address: `0x${string}` | undefined): AuthorizedIssuerResult {
+  const contract = getOrchestratorContract();
 
   const { data, isLoading, isError, error } = useReadContract({
     address: contract?.address,
     abi: contract?.abi,
-    chainId: ORQUESTRADOR_CHAIN_ID,
+    chainId: ORCHESTRATOR_CHAIN_ID,
     functionName: "emissoresAutorizados",
-    args: endereco ? [endereco] : undefined,
-    query: { enabled: Boolean(contract && endereco) },
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(contract && address) },
   });
   // O ABI garante `outputs: [{ type: "bool" }]` (ver abis/ofertaOrquestrador.ts) — a
   // inferência de tipo do wagmi cai para `{}` quando address/abi são opcionais (caso
   // `contract` seja `null`), então o valor é sempre booleano de fato; só o tipo estático não
   // consegue provar isso sozinho aqui.
-  const autorizado = data as boolean | undefined;
+  const authorized = data as boolean | undefined;
 
   return {
-    contratoConfigurado: contract !== null,
-    autorizado: isError ? null : (autorizado ?? null),
+    contractConfigured: contract !== null,
+    authorized: isError ? null : (authorized ?? null),
     isLoading,
     errorMessage: isError ? describeOnChainError(error) : null,
   };

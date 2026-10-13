@@ -3,7 +3,7 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
-import type { FinanceiroMensal } from "@/lib/mock/ofertas";
+import type { MonthlyFinancials } from "@/lib/mock/ofertas";
 
 type TooltipEntry = { value?: unknown; name?: string | number };
 
@@ -30,14 +30,14 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
   );
 }
 
-export function FinanceiroChart({ serie }: { serie: FinanceiroMensal[] }) {
-  const t = ptBr.negociar.oferta.financeiro;
+export function FinancialChart({ series }: { series: MonthlyFinancials[] }) {
+  const t = ptBr.trade.offering.financial;
 
   return (
     <div>
       <div className="h-56" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={serie} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <LineChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
             <XAxis
               dataKey="mes"
@@ -57,7 +57,7 @@ export function FinanceiroChart({ serie }: { serie: FinanceiroMensal[] }) {
             <Line
               type="monotone"
               dataKey="receita"
-              name={t.seriesReceita}
+              name={t.revenueSeries}
               stroke="var(--color-salmon)"
               strokeWidth={2}
               dot={false}
@@ -65,7 +65,7 @@ export function FinanceiroChart({ serie }: { serie: FinanceiroMensal[] }) {
             <Line
               type="monotone"
               dataKey="caixa"
-              name={t.seriesCaixa}
+              name={t.cashSeries}
               stroke="var(--color-military)"
               strokeWidth={2}
               dot={false}

@@ -7,12 +7,12 @@
 // on-chain E da gravação server-side ter voltado — "pendente" nunca é tratado como "publicada".
 import { useCallback, useState } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
-import { getOrquestradorContract, ORQUESTRADOR_CHAIN_ID } from "../orquestrador";
-import { GAS_LIMITE_PUBLICACAO } from "../gates";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
+import { PUBLICATION_GAS_LIMIT } from "../gates";
 import { describeOnChainError } from "../errors";
-import { registrarTentativa, confirmarPublicacao } from "@/app/empresa/ofertas/onchain-actions";
+import { registerAttempt, confirmPublication } from "@/app/empresa/ofertas/onchain-actions";
 
-export type PublicarStatus =
+export type PublishStatus =
   | "idle"
   | "assinando"
   | "registrando"
@@ -23,64 +23,64 @@ export type PublicarStatus =
   | "divergente"
   | "erro";
 
-export type PublicarState = {
-  status: PublicarStatus;
+export type PublishState = {
+  status: PublishStatus;
   txHash: `0x${string}` | null;
   errorMessage: string | null;
   contractAddress: string | null;
   tokenAddress: string | null;
 };
 
-const IDLE: PublicarState = { status: "idle", txHash: null, errorMessage: null, contractAddress: null, tokenAddress: null };
+const IDLE: PublishState = { status: "idle", txHash: null, errorMessage: null, contractAddress: null, tokenAddress: null };
 
-export type PublicarArgs = {
+export type PublishArgs = {
   offeringId: string;
-  nome: string;
-  simbolo: string;
-  empresa: string;
+  name: string;
+  symbol: string;
+  company: string;
   cnpjRef: `0x${string}`;
-  serie: string;
-  metaMinimaWei: bigint;
-  metaMaximaWei: bigint;
-  precoPorCotaWei: bigint;
+  series: string;
+  minTargetWei: bigint;
+  maxTargetWei: bigint;
+  pricePerShareWei: bigint;
   windowDays: number;
 };
 
-export function usePublicarOfertaOnChain() {
-  const [state, setState] = useState<PublicarState>(IDLE);
+export function usePublishOfferingOnChain() {
+  const [state, setState] = useState<PublishState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
-  const publicar = useCallback(
-    async (args: PublicarArgs) => {
-      const orquestrador = getOrquestradorContract();
-      if (!orquestrador || !publicClient) {
+  const publish = useCallback(
+    async (args: PublishArgs) => {
+      const orchestrator = getOrchestratorContract();
+      if (!orchestrator || !publicClient) {
         setState({ ...IDLE, status: "erro", errorMessage: "Contrato não configurado." });
         return;
       }
 
-      const prazoUnixSeconds = Math.floor(Date.now() / 1000) + args.windowDays * 24 * 60 * 60;
+      const deadlineUnixSeconds = Math.floor(Date.now() / 1000) + args.windowDays * 24 * 60 * 60;
 
       setState({ ...IDLE, status: "assinando" });
       let hash: `0x${string}`;
       try {
         hash = await writeContractAsync({
-          address: orquestrador.address,
-          abi: orquestrador.abi,
-          chainId: ORQUESTRADOR_CHAIN_ID,
+          address: orchestrator.address,
+          abi: orchestrator.abi,
+          chainId: ORCHESTRATOR_CHAIN_ID,
           functionName: "criarOfertaCompleta",
           args: [
-            args.nome,
-            args.simbolo,
-            args.empresa,
+            args.name,
+            args.symbol,
+            args.company,
             args.cnpjRef,
-            args.serie,
-            args.metaMinimaWei,
-            args.metaMaximaWei,
-            args.precoPorCotaWei,
-            BigInt(prazoUnixSeconds),
+            args.series,
+            args.minTargetWei,
+            args.maxTargetWei,
+            args.pricePerShareWei,
+            BigInt(deadlineUnixSeconds),
           ],
-          gas: GAS_LIMITE_PUBLICACAO,
+          gas: PUBLICATION_GAS_LIMIT,
         });
       } catch (error) {
         // Cobre rejeição na MetaMask e revert já na simulação/estimativa de gas (describeOnChainError
@@ -92,7 +92,7 @@ export function usePublicarOfertaOnChain() {
       // Registrado ANTES de esperar confirmação — cobre "usuário fecha a aba logo após assinar":
       // o hash já fica salvo, e a reconciliação (próxima visita a esta tela) resolve sozinha.
       setState({ status: "registrando", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
-      const reg = await registrarTentativa({ offeringId: args.offeringId, txHash: hash, prazoUnixSeconds });
+      const reg = await registerAttempt({ offeringId: args.offeringId, txHash: hash, prazoUnixSeconds: deadlineUnixSeconds });
       if (reg.status === "error") {
         setState({ status: "erro", txHash: hash, errorMessage: reg.message, contractAddress: null, tokenAddress: null });
         return;
@@ -108,7 +108,7 @@ export function usePublicarOfertaOnChain() {
         return;
       }
 
-      const conf = await confirmarPublicacao(args.offeringId);
+      const conf = await confirmPublication(args.offeringId);
       if (conf.status === "confirmada") {
         setState({ status: "confirmada", txHash: hash, errorMessage: null, contractAddress: conf.contractAddress, tokenAddress: conf.tokenAddress });
       } else if (conf.status === "pendente") {
@@ -126,5 +126,5 @@ export function usePublicarOfertaOnChain() {
 
   const reset = useCallback(() => setState(IDLE), []);
 
-  return { ...state, publicar, reset };
+  return { ...state, publicar: publish, reset };
 }

@@ -18,7 +18,7 @@ const ICON_DIMS: Record<ChipSize, string> = {
 
 // Ícone decorativo isolado, na cor da categoria — usado ao lado de um
 // título/heading visível (ex.: cabeçalho da categoria, card do hub).
-export function CategoryChip({ categoria, size = "md" }: { categoria: TokenCategory; size?: ChipSize }) {
+export function CategoryChip({ category: categoria, size = "md" }: { category: TokenCategory; size?: ChipSize }) {
   const meta = CATEGORY_META[categoria];
   const Icon = meta.icon;
 
@@ -36,8 +36,8 @@ export function CategoryChip({ categoria, size = "md" }: { categoria: TokenCateg
 // Chip + nome da categoria, como metadado visível de um card (ex.: vitrine
 // de ofertas) — diferente de CategoryChip, o texto aqui é a única indicação
 // da categoria, então não pode ser decorativo/aria-hidden.
-export function CategoryBadge({ categoria, size = "sm" }: { categoria: TokenCategory; size?: "sm" | "md" }) {
-  const meta = CATEGORY_META[categoria];
+export function CategoryBadge({ category, size = "sm" }: { category: TokenCategory; size?: "sm" | "md" }) {
+  const meta = CATEGORY_META[category];
   const Icon = meta.icon;
   const badgeDims = size === "md" ? "h-8 w-8" : "h-6 w-6";
   const iconDims = size === "md" ? "h-4 w-4" : "h-3.5 w-3.5";
@@ -51,7 +51,7 @@ export function CategoryBadge({ categoria, size = "sm" }: { categoria: TokenCate
       >
         <Icon className={iconDims} style={{ color: meta.iconVar }} />
       </span>
-      {ptBr.ativos.categorias[categoria]}
+      {ptBr.assets.categories[category]}
     </span>
   );
 }

@@ -31,7 +31,7 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const router = useRouter();
-  const t = ptBr.nav.contaMenu;
+  const t = ptBr.nav.accountMenu;
 
   const closeNow = useCallback(() => setOpen(false), []);
 
@@ -82,7 +82,7 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={t.abrirMenu}
+        aria-label={t.openMenu}
         onClick={() => setOpen((current) => !current)}
         className="flex h-9 items-center gap-2 rounded-full border border-border bg-surface-alt py-1 pl-3 pr-1 transition-colors hover:border-salmon"
       >
@@ -98,7 +98,7 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
         <div
           id={panelId}
           role="menu"
-          aria-label={t.abrirMenu}
+          aria-label={t.openMenu}
           className="absolute right-0 top-full z-40 mt-3 w-56 animate-dropdown rounded-lg border border-border bg-surface p-2 shadow-soft-lg"
         >
           <button
@@ -109,7 +109,7 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
             className="flex w-full items-center gap-2.5 rounded-md p-2.5 text-left text-sm text-ink transition-colors hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ArrowRightLeft className="h-4 w-4 text-ink-muted" aria-hidden="true" />
-            {t.entrarOutraConta}
+            {t.signInOtherAccount}
           </button>
           <button
             type="button"
@@ -119,7 +119,7 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
             className="flex w-full items-center gap-2.5 rounded-md p-2.5 text-left text-sm text-ink transition-colors hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LogOut className="h-4 w-4 text-ink-muted" aria-hidden="true" />
-            {pending ? t.saindo : t.sair}
+            {pending ? t.signingOut : t.signOut}
           </button>
         </div>
       )}

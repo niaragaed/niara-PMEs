@@ -109,7 +109,7 @@ export async function loadActiveOfferingsByCategory(
 
       return {
         id: row.id,
-        category: category,
+        category,
         issuerLegalName: issuerRow.legal_name,
         issuerTradeName: issuerRow.trade_name,
         sector: issuerRow.sector,
