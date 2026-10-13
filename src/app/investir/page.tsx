@@ -81,9 +81,9 @@ export default async function Page() {
     closesAt: offering.closes_at,
   }));
 
-  // "Minhas reservas" mostra reserved (aguardando pagamento) e paid (pago,
-  // simulado) — sempre filtrado por investor_id = accountId (o investidor
-  // logado), nunca aportes de outro investidor.
+  // "My reservations" shows reserved (awaiting payment) and paid (paid,
+  // simulated) — always filtered by investor_id = accountId (the signed-in
+  // investor), never another investor's investments.
   const { data: myReservationsData } = await admin
     .from("investments")
     .select("id, offering_id, amount_cents, status, payment_ref, created_at")

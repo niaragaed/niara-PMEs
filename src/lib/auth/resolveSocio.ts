@@ -1,11 +1,11 @@
 import "server-only";
 
-// Resolve se o usuário logado é um "sócio" (acesso interno, ver /socios) — separado por
-// completo de resolveAccount() (investor|issuer) em resolveInvestor.ts, nunca reaproveitado
-// nem confundido com ele. Controle de acesso é só uma allowlist de e-mail lida de variável de
-// ambiente (NIARA_SOCIOS_EMAILS, separada por vírgula) — nunca hardcodada no código, porque
-// este repositório é público. Autenticação em si continua sendo o mesmo Supabase Auth de
-// sempre (signInWithPassword) — isto aqui só decide quem, já logado, pode ver a página.
+// Resolves whether the signed-in user is a "partner" (internal access, see /socios) — completely
+// separate from resolveAccount() (investor|issuer) in resolveInvestor.ts, never reused
+// nor mixed up with it. Access control is just an email allowlist read from an environment
+// variable (NIARA_SOCIOS_EMAILS, comma-separated) — never hard-coded, because
+// this repository is public. Authentication itself is still the same Supabase Auth as
+// always (signInWithPassword) — this only decides who, already signed in, can see the page.
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type ResolvedPartner = {

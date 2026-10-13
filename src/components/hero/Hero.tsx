@@ -2,11 +2,11 @@ import Link from "next/link";
 import { HeroParallaxLayers } from "./HeroParallaxLayers";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Hero centrado no texto, sem elemento central 3D: o astronauta foi
-// removido (ver CLAUDE.md). No lugar, HeroParallaxLayers desenha um motivo
-// decorativo sutil (planeta anelado da logo + glow suave) atrás do texto.
-// Fundo sálvia CHEIO (bg-military) — mesmo padrão de texto claro
-// (on-military) das demais seções verdes / faixa CTA final.
+// A text-centered hero, with no central 3D element: the astronaut was
+// removed (see CLAUDE.md). In its place, HeroParallaxLayers draws a subtle
+// decorative motif (the logo's ringed planet + a soft glow) behind the text.
+// SOLID sage background (bg-military) — the same light-text pattern
+// (on-military) as the other green sections / the final CTA band.
 export async function Hero() {
   const dict = await getDictionary();
   return (

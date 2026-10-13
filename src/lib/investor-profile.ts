@@ -1,8 +1,9 @@
-// Lógica pura do questionário de perfil de investidor (suitability) — sem
-// React, sem storage. Equivalente à API (Análise do Perfil do Investidor)
-// exigida pela CVM antes de recomendar ou permitir certas operações. O
-// conteúdo das perguntas vive em ptBr.perfil.investidor.quiz (dicionário de
-// i18n), este arquivo só deriva a pontuação e a categoria a partir dele.
+// Pure logic of the investor profile quiz (suitability) — no
+// React, no storage. Equivalent to the API (Investor Profile Analysis)
+// required by the CVM before recommending or allowing certain operations. The
+// questions' content lives in dict.profile.investor.quiz (the i18n dictionary);
+// this file only derives the score and the category from it. The answer weights are the same in
+// both languages, so the scoring reads the Portuguese dictionary regardless of the locale.
 
 import { pt } from "@/lib/i18n/pt-br";
 
@@ -34,8 +35,8 @@ export function categorizeScore(score: number): InvestorCategory {
   return "arrojado";
 }
 
-// Resultado padrão exibido na demonstração antes de qualquer reavaliação —
-// nenhum questionário real foi respondido para chegar nele.
+// The default result shown in the demo before any re-evaluation —
+// no real quiz was answered to arrive at it.
 export const DEFAULT_INVESTOR_PROFILE: InvestorProfileResult = {
   category: "arrojado",
   score: SCORE_MAX,

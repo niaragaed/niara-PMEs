@@ -11,15 +11,15 @@ import {
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { localize } from "@/lib/i18n/locale";
 
-// Card unificado das 10 ofertas PME que têm uma oferta real e ativa em Sepolia por trás — cada
-// uma é uma empresa fictícia de demonstração (mesmo padrão de conteúdo de ShowcaseCard), mas o
-// investimento é real em blockchain (ver OfertaDetailPage.tsx + RealOnChainInvestPanel.tsx).
-// Mesmo idioma visual de RealOfferCard.tsx/antiga RealOnChainCard.tsx (selo sólido + anel
-// salmão) — a distinção real/fictício é ainda mais crítica aqui do que nos outros cards, porque
-// "real" significa transação de blockchain de verdade, não só uma linha real no banco. A prévia
-// de termos usa sempre as constantes fixas do contrato (nunca `oferta.termos`, que é derivado
-// delas só para consistência de tipo) e é rotulada em mBRL — nunca "R$", já que MockBRL é moeda
-// de teste sem lastro.
+// Unified card for the 10 SME offerings that have a real, active offering on Sepolia behind
+// them — each one is a fictitious demo company (the same content pattern as ShowcaseCard), but
+// the investment is real on the blockchain (see OfertaDetailPage.tsx + RealOnChainInvestPanel.tsx).
+// The same visual language as RealOfferCard.tsx/the former RealOnChainCard.tsx (solid badge +
+// salmon ring) — the real/fictitious distinction is even more critical here than in the other
+// cards, because "real" means an actual blockchain transaction, not just a real row in the
+// database. The terms preview always uses the contract's fixed constants (never `offering.terms`,
+// which is derived from them only for type consistency) and is labeled in mBRL — never "R$",
+// since MockBRL is a test currency with no backing.
 export function SmesOnChainCard({
   offering,
   bannerUrl,

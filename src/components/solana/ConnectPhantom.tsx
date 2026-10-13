@@ -1,9 +1,9 @@
 "use client";
 
-// Conexão da carteira Solana (Phantom) — par do ConnectWallet.tsx (MetaMask/Sepolia), mesmo visual.
-// Não existe "rede errada" aqui: a Phantom só assina, e o envio vai sempre pelo RPC da devnet
-// configurado no site (ver src/lib/solana/phantom.ts) — por isso o selo mostra a rede do PROGRAMA,
-// não a rede selecionada dentro da Phantom.
+// Solana wallet connection (Phantom) — the counterpart of ConnectWallet.tsx (MetaMask/Sepolia), same
+// look. There's no "wrong network" here: Phantom only signs, and sending always goes through the
+// devnet RPC configured on the site (see src/lib/solana/phantom.ts) — that's why the badge shows the
+// PROGRAM's network, not the network selected inside Phantom.
 import { useEffect, useState } from "react";
 import { Check, Copy, Loader2, LogOut, Wallet } from "lucide-react";
 import { useSolanaWallet } from "@/lib/solana/phantom";

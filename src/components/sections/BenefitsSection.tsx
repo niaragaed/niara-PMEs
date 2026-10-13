@@ -3,9 +3,9 @@ import { RevealGroup, RevealItem } from "@/components/motion/RevealGroup";
 import { SectionCard } from "./SectionCard";
 import { getDictionary } from "@/lib/i18n/server";
 
-// 3.1 — Benefícios da tokenização às PMEs. Fundo pêssego CHEIO: título em
-// on-salmon, subtítulo em on-salmon-muted (ink-peach não tem contraste
-// suficiente sobre o salmon cheio, ver CLAUDE.md).
+// 3.1 — Benefits of tokenization for SMEs. SOLID peach background: title in
+// on-salmon, subtitle in on-salmon-muted (ink-peach doesn't have enough contrast
+// on the solid salmon, see CLAUDE.md).
 export async function BenefitsSection() {
   const dict = await getDictionary();
   return (

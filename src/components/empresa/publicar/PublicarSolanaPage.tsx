@@ -1,12 +1,13 @@
 "use client";
 
-// Publicação self-service da oferta na Solana Devnet — par do PublicarOnChainPage.tsx (Sepolia),
-// mesmo desenho: 6 gates reais (Phantom detectada, conectada, saldo de SOL, emissor autorizado no
-// programa, titularidade, termo), botão só habilitado com todos ok, e nunca "publicada" antes da
-// confirmação do servidor (confirmarPublicacaoSolana) contra a própria rede.
+// Self-service publication of the offering on Solana Devnet — the counterpart of
+// PublicarOnChainPage.tsx (Sepolia), same design: 6 real gates (Phantom detected, connected, SOL
+// balance, issuer authorized in the program, ownership, terms), the button only enabled when all
+// are ok, and never "published" before the server's confirmation (confirmPublicationSolana)
+// against the network itself.
 //
-// Não existe gate de "rede certa": a Phantom só assina e o site envia sempre pela devnet (ver
-// src/lib/solana/phantom.ts).
+// There's no "right network" gate: Phantom only signs and the site always sends through devnet
+// (see src/lib/solana/phantom.ts).
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
@@ -52,7 +53,7 @@ type Props = {
 
 const bytes = (text: string) => new TextEncoder().encode(text).length;
 
-/** Corta no limite de BYTES (UTF-8) do programa sem quebrar um caractere no meio. */
+/** Cuts at the program's BYTE limit (UTF-8) without breaking a character in the middle. */
 function cutBytes(text: string, max: number): string {
   let output = "";
   for (const ch of text) {
@@ -62,8 +63,8 @@ function cutBytes(text: string, max: number): string {
   return output.trim();
 }
 
-// Tamanhos de conta criados por criar_oferta: Oferta (8 + INIT_SPACE = 410), mint SPL (82) e
-// conta de token SPL do escrow (165). Margem de 30%, como o gate de gás da Sepolia.
+// Sizes of the accounts created by criar_oferta: Oferta (8 + INIT_SPACE = 410), SPL mint (82) and
+// the escrow's SPL token account (165). A 30% margin, like the Sepolia gas gate.
 const ACCOUNT_SIZES = [410, 82, 165];
 const FEE_LAMPORTS = 10_000;
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -133,7 +134,7 @@ export function PublishSolanaPage({
     refetchInterval: 20_000,
   });
 
-  // ── reconciliação ao (re)abrir a tela — mesma lógica da Sepolia ─────────────────────────────
+  // ── reconciliation when (re)opening the screen — same logic as Sepolia ─────────────────────────
   const [reconciled, setReconciled] = useState<ConfirmPublicationState | null>(null);
   const [verifying, setVerifying] = useState(syncStatus === "pendente");
   useEffect(() => {

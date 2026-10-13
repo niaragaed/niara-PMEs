@@ -1,8 +1,8 @@
 import "server-only";
 
-// Client Supabase para uso em Server Components/Actions. Usa a chave
-// pública (anon/publishable) e o cookie da requisição para manter a sessão
-// do usuário — respeita RLS, diferente do client admin (service_role).
+// Supabase client for use in Server Components/Actions. Uses the
+// public key (anon/publishable) and the request's cookie to keep the user's
+// session — respects RLS, unlike the admin client (service_role).
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -23,10 +23,10 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Chamado a partir de um Server Component — não é possível
-            // escrever cookies aqui. Seguro ignorar quando há um
-            // middleware (ou Server Action) responsável por refrescar a
-            // sessão do usuário.
+            // Called from a Server Component — cookies can't be
+            // written here. Safe to ignore when there's a
+            // middleware (or Server Action) responsible for refreshing the
+            // user's session.
           }
         },
       },

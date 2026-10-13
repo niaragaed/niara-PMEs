@@ -1,10 +1,10 @@
 import { Reveal } from "@/components/motion/Reveal";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Fundo pêssego CHEIO (não verde): a seção anterior (Tokens) e a faixa CTA
-// final já são verde/pêssego/verde — se esta também fosse verde, ficaria
-// verde→[aviso neutro]→verde colado na faixa CTA. Salmão aqui mantém a
-// alternância de ritmo (ver CLAUDE.md).
+// SOLID peach background (not green): the previous section (Tokens) and the final CTA band
+// are already green/peach/green — if this one were green too, it would be
+// green→[neutral notice]→green right next to the CTA band. Salmon here keeps the
+// alternating rhythm (see CLAUDE.md).
 export async function AudiencesSection() {
   const dict = await getDictionary();
   const { companies, investors } = dict.sections.audiences;

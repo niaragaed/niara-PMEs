@@ -10,9 +10,9 @@ function formatEpoch(timestamp: number): string {
   return dateFormatter.format(new Date(timestamp * 1000));
 }
 
-// Timeline única com TODAS as movimentações do site (on-chain real + off-chain/Supabase),
-// pedido explícito do usuário: uma tabela só, sem separar por seção — cada linha carrega seu
-// próprio OrigemBadge pra quem quiser saber de onde veio, mas a lista/ordenação é uma só.
+// A single timeline with ALL the activity on the site (real on-chain + off-chain/Supabase), an
+// explicit user request: one table only, not split into sections — each row carries its
+// own OriginBadge for anyone who wants to know where it came from, but there's one list/ordering.
 export async function TransactionsTable({ transactions }: { transactions: Transaction[] }) {
   const dict = await getDictionary();
   const t = dict.partners.transactions;

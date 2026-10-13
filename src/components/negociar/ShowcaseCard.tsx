@@ -4,8 +4,8 @@ import type { Offering } from "@/lib/mock/ofertas";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { localize } from "@/lib/i18n/locale";
 
-// Card de "vitrine (demonstração)" — reutilizado no hub e no template de
-// categoria. Card branco sobre o fundo military cheio das telas /negociar.
+// "Showcase (demo)" card — reused on the hub and in the category
+// template. A white card on the solid military background of the /negociar screens.
 export async function ShowcaseCard({ offering }: { offering: Offering }) {
   const dict = await getDictionary();
   const locale = await getLocale();

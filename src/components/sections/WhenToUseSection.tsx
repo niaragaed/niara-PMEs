@@ -3,8 +3,8 @@ import { RevealGroup, RevealItem } from "@/components/motion/RevealGroup";
 import { SectionCard } from "./SectionCard";
 import { getDictionary } from "@/lib/i18n/server";
 
-// 3.2 — Quando posso usar a Tokenização? Fundo sálvia CHEIO, título em
-// on-military (claro, mesmo padrão da faixa CTA final).
+// 3.2 — When can I use tokenization? SOLID sage background, title in
+// on-military (light, the same pattern as the final CTA band).
 export async function WhenToUseSection() {
   const dict = await getDictionary();
   return (

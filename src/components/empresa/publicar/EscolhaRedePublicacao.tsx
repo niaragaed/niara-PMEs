@@ -2,10 +2,10 @@ import Link from "next/link";
 import { getDictionary } from "@/lib/i18n/server";
 
 /**
- * Seletor de rede da publicação — só aparece enquanto a oferta não tem nenhuma tentativa
- * registrada (`sync_status='nao_onchain'`). É navegação simples (`?rede=solana`), sem estado: a
- * rede só passa a valer de verdade quando registrarTentativa/registrarTentativaSolana gravam a
- * tentativa, e a partir daí a página segue a rede da linha (migration 0017).
+ * Network selector for the publication — only shows up while the offering has no recorded
+ * attempt (`sync_status='nao_onchain'`). It's simple navigation (`?rede=solana`), stateless: the
+ * network only really takes effect when registerAttempt/registerAttemptSolana record the attempt,
+ * and from then on the page follows the row's network (migration 0017).
  */
 export async function PublicationNetworkChoice({ offeringId, current }: { offeringId: string; current: "sepolia" | "solana" }) {
   const dict = await getDictionary();

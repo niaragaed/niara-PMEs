@@ -12,9 +12,9 @@ export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
   const QUESTIONS = t.questions;
   const { setInvestorProfile } = useProfile();
   const [step, setStep] = useState(0);
-  // respostas ficam só neste estado em memória — nunca são persistidas
-  // individualmente; só o resultado final vai para o contexto (também em
-  // memória, sem localStorage).
+  // answers only live in this in-memory state — they're never persisted
+  // individually; only the final result goes to the context (also in
+  // memory, no localStorage).
   const [answers, setAnswers] = useState<Array<number | null>>(() => QUESTIONS.map(() => null));
 
   const question = QUESTIONS[step];

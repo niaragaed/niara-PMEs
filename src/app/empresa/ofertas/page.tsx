@@ -42,9 +42,9 @@ export default async function Page() {
   const offerings = data ?? [];
   const offeringIds = offerings.map((offering) => offering.id as string);
 
-  // Pago até agora (paid + settled) e refs de token emitido por oferta —
-  // derivados aqui em JS a partir de investments/payment_events; nenhum dos
-  // dois vem direto da tabela offerings.
+  // Paid so far (paid + settled) and issued token refs per offering —
+  // derived here in JS from investments/payment_events; neither of them comes
+  // straight from the offerings table.
   const paidCentsByOffering = new Map<string, number>();
   const tokenRefsByOffering = new Map<string, string[]>();
 

@@ -1,11 +1,11 @@
-// Montagem das transações do niara-pmes-solana. Cada função devolve uma Transaction pronta para
-// assinarEEnviar() (phantom.ts) — nenhuma assina nem envia sozinha.
+// Building the niara-pmes-solana transactions. Each function returns a Transaction ready for
+// signAndSend() (phantom.ts) — none of them signs or sends on its own.
 //
-// Todas as contas que dependem de dados on-chain (emissor da oferta, cofre, mint de cotas,
-// carteira do protocolo) vêm da leitura da oferta feita pelo chamador e são passadas
-// explicitamente, em vez de deixar o resolvedor do Anchor buscar de novo na rede. O programa
-// confere cada uma (seeds/`address = oferta.cofre` etc.) — passar uma conta errada só faz a
-// transação falhar, nunca desviar valor.
+// Every account that depends on on-chain data (the offering's issuer, vault, shares mint,
+// protocol wallet) comes from the offering read done by the caller and is passed
+// explicitly, instead of letting the Anchor resolver fetch it again from the network. The program
+// checks each one (seeds/`address = oferta.cofre` etc.) — passing a wrong account only makes the
+// transaction fail, it never diverts value.
 import { BN } from "@anchor-lang/core";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { minutes, issuerPda, pdaMintMbrl, offeringPda, smesProgram, type SolanaOffering } from "./program";
@@ -78,7 +78,7 @@ export type CreateOfferingParams = {
   name: string;
   symbol: string;
   company: string;
-  /** keccak256(CNPJ) em hex 0x… — o mesmo `cnpjRef` da publicação na Sepolia. */
+  /** keccak256(CNPJ) in hex 0x… — the same `cnpjRef` as the Sepolia publication. */
   cnpjRefHex: string;
   series: string;
   minTarget: bigint;
@@ -88,8 +88,8 @@ export type CreateOfferingParams = {
 };
 
 /**
- * `indiceOferta` = `Emissor.total_ofertas` lido agora: é a seed da próxima oferta deste emissor.
- * Devolve também o endereço que a oferta vai ter, para o chamador mostrar/conferir depois.
+ * `offeringIndex` = `Emissor.total_ofertas` read now: it's the seed of this issuer's next offering.
+ * Also returns the address the offering will have, for the caller to show/check later.
  */
 export async function txCreateOffering(
   connection: Connection,

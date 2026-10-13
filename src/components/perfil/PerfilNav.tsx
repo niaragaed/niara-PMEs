@@ -31,7 +31,7 @@ export function ProfileNav({ showMyOfferings }: { showMyOfferings: boolean }) {
         </ul>
       </nav>
 
-      {/* Mobile/tablet: abas horizontais roláveis */}
+      {/* Mobile/tablet: horizontal scrollable tabs */}
       <div
         role="tablist"
         aria-label={dict.profile.nav.ariaLabel}

@@ -1,30 +1,30 @@
 "use client";
 
-// Painel de investimento real em Sepolia — extraído de OnChainInvestPage.tsx para ser
-// reutilizável também dentro da página de detalhe das ofertas PMEs unificadas
-// (OfertaDetailPage.tsx, ver CLAUDE.md "Tela /negociar").
+// Real investment panel on Sepolia — extracted from OnChainInvestPage.tsx so it can also be
+// reused inside the detail page of the unified SME offerings (OfertaDetailPage.tsx, see
+// CLAUDE.md "/negociar screens").
 //
-// Desde a Fase 4 (sub-etapa 5.2): recebe o par de endereços da oferta diretamente
-// (`tokenAddress`/`ofertaAddress`), não mais um `ofertaIndex` numa lista fixa — a oferta pode vir
-// tanto da lista legada (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) quanto do Supabase (ofertas self-service
-// já confirmadas, `loadConfirmedOnChainOfferings`). Este componente não sabe nem precisa saber a
-// origem.
+// Since Phase 4 (sub-step 5.2): it receives the offering's address pair directly
+// (`tokenAddress`/`offeringAddress`), no longer an `offeringIndex` in a fixed list — the offering
+// can come either from the legacy list (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) or from Supabase
+// (self-service offerings already confirmed, `loadConfirmedOnChainOfferings`). This component
+// doesn't know, nor needs to know, the source.
 //
-// O chamador é responsável por remontar este componente ao trocar de oferta
-// (`key={...}`, único por oferta) — isso reseta de graça todo o estado local (quantidade, status
-// de invest/encerrar/resgatar, campo do faucet), sem precisar de resets manuais.
+// The caller is responsible for remounting this component when switching offerings
+// (`key={...}`, unique per offering) — that resets all local state for free (quantity, status of
+// invest/close/redeem, the faucet field), with no manual resets needed.
 //
-// `isSocio` (resolvido no servidor via resolveSocio()) e `isEmissor` (resolvido no servidor
-// comparando resolveAccount() contra o issuer_id da oferta — só possível pra ofertas self-service,
-// que têm esse vínculo no Supabase; sempre `false` pras 10 legadas, que não têm conta de emissor
-// nenhuma neste app) juntos só decidem o BOTÃO "Encerrar oferta" nesta interface — o contrato
-// OfertaCaptacao.encerrar() continua permissionless de verdade (qualquer carteira poderia chamar
-// via Etherscan/outro dApp, a qualquer momento que a oferta for elegível); é uma restrição de
-// PRODUTO, não uma mudança na regra on-chain, e proposital na direção oposta: o permissionless do
-// contrato existe justamente para nenhum investidor ficar refém da plataforma ou da empresa pra
-// recuperar o aporte numa captação que não fechou — esta tela só decide quem vê um atalho
-// conveniente pra isso, nunca quem PODE. Nenhuma das duas props deve ser usada pra decidir
-// mostrar/esconder o resto do painel.
+// `isPartner` (resolved on the server via resolveSocio()) and `isIssuer` (resolved on the server
+// by comparing resolveAccount() against the offering's issuer_id — only possible for self-service
+// offerings, which have that link in Supabase; always `false` for the 10 legacy ones, which have
+// no issuer account at all in this app) together only decide the "Close offering" BUTTON in this
+// interface — the OfertaCaptacao.encerrar() contract stays truly permissionless (any wallet could
+// call it via Etherscan/another dApp, whenever the offering is eligible); it's a PRODUCT
+// restriction, not a change to the on-chain rule, and deliberately the other way around: the
+// contract is permissionless precisely so that no investor is held hostage by the platform or the
+// company to get their investment back from a fundraising that didn't close — this screen only
+// decides who sees a convenient shortcut for that, never who CAN. Neither prop should be used to
+// decide whether to show/hide the rest of the panel.
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
@@ -148,8 +148,8 @@ export function RealOnChainInvestPanel({
   const isOnSepolia = connection.chainId === sepolia.id;
   const canOperate = connection.isConnected && isOnSepolia;
 
-  // Referência estável (mesmo objeto entre renders enquanto os endereços não mudarem) — evita
-  // recriar os 6 hooks/callbacks abaixo a cada render só por causa de um objeto novo.
+  // Stable reference (the same object across renders while the addresses don't change) — avoids
+  // recreating the 6 hooks/callbacks below on every render just because of a new object.
   const addresses = useMemo(() => ({ token: tokenAddress, offering: offeringAddress }), [tokenAddress, offeringAddress]);
 
   const terms = useOnChainOfferingTerms(addresses);
@@ -180,11 +180,11 @@ export function RealOnChainInvestPanel({
   const insufficientBalance = investmentValue > position.mockBrlBalance;
   const invalidValue = investmentValue <= BigInt(0);
 
-  // Gate rígido: nunca decidir com leitura não confiável. Enquanto `termos`/`posicao` não
-  // terminaram com sucesso, os campos acima (capacidadeRestante, saldoInsuficiente etc.) podem
-  // estar calculados a partir do valor de fallback 0 — incidente real (ver CLAUDE.md): um
-  // metaMaxima=0 por leitura falha já apareceu como "capacidade zero" (falso), e um
-  // allowanceMockBrl obsoleto/não confirmado já fez o fluxo pular o approve por engano.
+  // Strict gate: never decide with an unreliable read. While `terms`/`position` haven't finished
+  // successfully, the fields above (remainingCapacity, insufficientBalance etc.) may be computed
+  // from the fallback value 0 — a real incident (see CLAUDE.md): a metaMaxima=0 from a failed
+  // read once showed up as "zero capacity" (false), and a stale/unconfirmed allowanceMockBrl once
+  // made the flow skip the approve by mistake.
   const readsReady = terms.ready && position.ready;
 
   const investDisabled =
@@ -198,8 +198,9 @@ export function RealOnChainInvestPanel({
     (invest.status !== "idle" && invest.status !== "success" && invest.status !== "error");
 
   async function handleInvest() {
-    // invest.investir() não recebe mais allowance de fora — lê direto da chain no momento em que
-    // roda, para nunca decidir pular o approve com um valor obsoleto (ver useOnChainActions.ts).
+    // invest.invest() no longer receives an allowance from outside — it reads it straight from the
+    // chain at the moment it runs, so it never decides to skip the approve with a stale value (see
+    // useOnChainActions.ts).
     await invest.invest(investmentValue);
     terms.refetch();
     position.refetch();

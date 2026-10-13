@@ -8,8 +8,8 @@ import { intlLocale } from "@/lib/i18n/locale";
 
 type TooltipEntry = { value?: unknown; name?: string | number };
 
-// Tipo próprio em vez dos genéricos do Recharts — mesmo padrão de
-// PortfolioEvolutionChart.tsx (evita conflito de variância na prop `content`).
+// Own type instead of Recharts' generics — the same pattern as
+// PortfolioEvolutionChart.tsx (avoids a variance conflict on the `content` prop).
 type ChartTooltipProps = {
   active?: boolean;
   label?: string | number;

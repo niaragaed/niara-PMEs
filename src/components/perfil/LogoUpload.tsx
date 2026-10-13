@@ -8,13 +8,13 @@ import { useDictionary } from "@/lib/i18n/client";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
 
-// Diferente do AvatarUpload (foto de perfil, 100% local/simulada), a logo é
-// da empresa, pública, e o envio é real: sobe pro Storage e grava em
-// issuers.logo_path via server action. A validação aqui é só cortesia de UX
-// — a autoridade é o servidor (uploadIssuerLogo, src/app/perfil/actions.ts).
-// `onUrlChange` é opcional — usado só por PersonalDataSection para manter a
-// "Prévia do card" (CardPreview.tsx) sincronizada em tempo real, sem tornar
-// este componente controlado (o estado de verdade continua local aqui).
+// Unlike AvatarUpload (profile photo, 100% local/simulated), the logo belongs to
+// the company, is public, and the upload is real: it goes to Storage and is stored in
+// issuers.logo_path via a server action. The validation here is just a UX courtesy
+// — the authority is the server (uploadIssuerLogo, src/app/perfil/actions.ts).
+// `onUrlChange` is optional — used only by PersonalDataSection to keep the
+// "Card preview" (CardPreview.tsx) in sync in real time, without making
+// this component controlled (the real state stays local here).
 export function LogoUpload({
   initialLogoUrl,
   onUrlChange,
@@ -84,9 +84,9 @@ export function LogoUpload({
       <div className="mt-3 flex items-center gap-4">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-panel-border bg-military-600/40">
           {logoUrl ? (
-            // object-cover de propósito — mesmo recorte do card circular público (CardPreview.tsx
-            // reforça isso compondo banner+logo juntos; aqui é só a logo sozinha).
-            // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image
+            // object-cover on purpose — the same crop as the public round card (CardPreview.tsx
+            // reinforces this by composing banner+logo together; here it's just the logo alone).
+            // eslint-disable-next-line @next/next/no-img-element -- comes from the public Supabase Storage bucket, doesn't go through the next/image optimizer
             <img src={logoUrl} alt={t.logoAlt} className="h-full w-full object-cover" />
           ) : (
             <Building2 className="h-8 w-8 text-on-military-muted" aria-hidden="true" />

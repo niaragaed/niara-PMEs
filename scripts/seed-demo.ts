@@ -1,32 +1,29 @@
-// Seed de dados de demonstração para pitch/due diligence técnica — cria
-// uma conta emissor + uma oferta ativa + uma conta investidor prontas
-// para logar e demonstrar o ciclo de captação (reservar → KYC → pagar →
-// fechar) sem digitar cadastro na hora. Ver
-// C:\Users\felip\.claude\plans\velvet-cuddling-hinton.md para o raciocínio
-// completo por trás de cada escolha abaixo.
+// Seeds demo data for a pitch/technical due diligence — creates an issuer account + an active
+// offering + an investor account ready to sign in and demonstrate the fundraising cycle
+// (reserve → KYC → pay → close) without typing a registration on the spot. See
+// C:\Users\felip\.claude\plans\velvet-cuddling-hinton.md for the full reasoning behind each choice
+// below.
 //
-// Roda fora do Next porque os Server Actions reais (createAccount,
-// createOffering etc.) assumem uma requisição HTTP autenticada
-// (resolveAccount() lê cookies via getUser()), que não existe aqui — este
-// script usa o mesmo createAdminClient() dos Server Actions e o admin API
-// do Supabase Auth direto, gravando as linhas de domínio manualmente.
+// Runs outside Next because the real Server Actions (createAccount, createOffering etc.) assume an
+// authenticated HTTP request (resolveAccount() reads cookies via getUser()), which doesn't exist
+// here — this script uses the same admin client as the Server Actions and the Supabase Auth admin
+// API directly, writing the domain rows by hand.
 //
-// REGRA DE HONESTIDADE: só roda com NIARA_ENV=demo, e toda linha criada
-// grava is_demo=true — mesma marca que o resto do app já usa para dado
-// fictício (ver src/app/investir/actions.ts, src/app/empresa/ofertas/actions.ts).
+// HONESTY RULE: it only runs with NIARA_ENV=demo, and every row created stores is_demo=true — the
+// same mark the rest of the app already uses for fictitious data (see src/app/investir/actions.ts,
+// src/app/empresa/ofertas/actions.ts). The demo company's data below is stored in Portuguese, as
+// a Brazilian issuer would type it.
 //
-// Idempotente por CONTA (lookup por email/user_id antes de criar — rodar
-// de novo não duplica as duas contas nem troca as credenciais), mas NÃO
-// por OFERTA — cada execução cria uma oferta ativa nova para o emissor
-// demo, mesmo que uma oferta anterior já tenha sido fechada num ensaio
-// anterior. Não existe hoje um jeito de "resetar" uma oferta que já mudou
-// de estado sem mexer no histórico de aportes (settle_offering só aceita
-// oferta 'active'), e forçar isso iria contra o desenho de livro-razão do
-// schema — a escolha é sempre partir de uma oferta nova e limpa.
+// Idempotent per ACCOUNT (lookup by email/user_id before creating — running it again doesn't
+// duplicate the two accounts nor change the credentials), but NOT per OFFERING — each run creates a
+// new active offering for the demo issuer, even if a previous offering was already closed in an
+// earlier rehearsal. There's currently no way to "reset" an offering that has already changed state
+// without touching the investment history (settle_offering only accepts an 'active' offering), and
+// forcing that would go against the schema's ledger design — the choice is always to start from a
+// new, clean offering.
 //
-// Uso: npm run seed:demo (lê .env.local; precisa de
-// NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY apontando pro
-// projeto Supabase certo).
+// Usage: npm run seed:demo (reads .env.local; needs NEXT_PUBLIC_SUPABASE_URL and
+// SUPABASE_SERVICE_ROLE_KEY pointing at the right Supabase project).
 
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -35,13 +32,12 @@ import { randomBytes } from "node:crypto";
 import { createClient as createSupabaseClient, type User } from "@supabase/supabase-js";
 import { reaisToCents } from "@/lib/money";
 
-// Não reaproveita createAdminClient() de src/lib/supabase/admin.ts aqui —
-// esse módulo importa "server-only", que sob Node puro (fora do bundler do
-// Next) lança incondicionalmente (`throw new Error(...)` em
-// node_modules/server-only/index.js, verificado rodando este script: o
-// no-op só vale para bundle de browser via campo "browser" do
-// package.json, não para execução Node normal). A lógica em si é a mesma
-// duas linhas de lá — duplicada aqui de propósito, não por descuido.
+// Doesn't reuse createAdminClient() from src/lib/supabase/admin.ts here — that module imports
+// "server-only", which under plain Node (outside Next's bundler) throws unconditionally
+// (`throw new Error(...)` in node_modules/server-only/index.js, checked by running this script: the
+// no-op only applies to a browser bundle via the package.json "browser" field, not to a normal Node
+// run). The logic itself is the same two lines from there — duplicated here on purpose, not by
+// oversight.
 function createAdminClient() {
   return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -80,8 +76,8 @@ async function getOrCreateAuthUser(
   email: string,
   password: string,
 ): Promise<User> {
-  // supabase-js não tem getUserByEmail no admin API — lista e procura
-  // localmente. Só duas contas de demo, uma página já basta.
+  // supabase-js has no getUserByEmail in the admin API — it lists and searches
+  // locally. Only two demo accounts, one page is enough.
   const { data: list, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
   if (listError) throw new Error(`seed-demo: failed to list users: ${listError.message}`);
 
@@ -97,7 +93,7 @@ async function main() {
   const admin = createAdminClient();
   const password = demoPassword();
 
-  // --- Emissor ---------------------------------------------------------
+  // --- Issuer -------------------------------------------------------------
   const issuerUser = await getOrCreateAuthUser(admin, DEMO_ISSUER_EMAIL, password);
 
   const { data: existingIssuer } = await admin
@@ -115,10 +111,10 @@ async function main() {
         user_id: issuerUser.id,
         legal_name: "Cafeteria Ponto Certo Comércio de Alimentos Ltda.",
         trade_name: "Ponto Certo",
-        // Fictício, distinto do CNPJ de "Padaria Bela Vista" usado no
-        // catálogo 100% mock de /ativos e /negociar — de propósito, para
-        // nunca haver colisão entre uma oferta REAL do banco e uma
-        // oferta fictícia mostrada ao lado dela.
+        // Fictitious, distinct from the "Padaria Bela Vista" CNPJ used in the
+        // 100% mock catalog of /ativos and /negociar — on purpose, so there's
+        // never a collision between a REAL offering in the database and a
+        // fictitious offering shown next to it.
         tax_id: "11.222.333/0001-44",
         annual_revenue_cents: centsOrThrow("2.400.000,00", "demo issuer revenue").toString(),
         sector: "Alimentação e bebidas",
@@ -140,11 +136,11 @@ async function main() {
     issuerId = issuer.id;
   }
 
-  // --- Oferta ativa (sempre nova, ver comentário de topo) ---------------
+  // --- Active offering (always new, see the top comment) -----------------
   const baseCapCents = centsOrThrow("500.000,00", "demo offering base cap");
   const hardCapCents = centsOrThrow("600.000,00", "demo offering hard cap"); // +20% do base, dentro do teto de 25%
   const targetMinCents = centsOrThrow("300.000,00", "demo offering minimum target");
-  const sharePriceCents = centsOrThrow("100,00", "demo offering value per share"); // 500.000,00 / 100,00 = 5.000 cotas
+  const sharePriceCents = centsOrThrow("100,00", "demo offering value per share"); // 500.000,00 / 100,00 = 5,000 shares
 
   const opensAt = new Date();
   const closesAt = new Date(opensAt.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 dias, bem dentro do teto de 180
@@ -167,7 +163,7 @@ async function main() {
     .single();
   if (offeringError || !offering) throw new Error(`seed-demo: failed to create offering: ${offeringError?.message}`);
 
-  // --- Investidor --------------------------------------------------------
+  // --- Investor -----------------------------------------------------------
   const investorUser = await getOrCreateAuthUser(admin, DEMO_INVESTOR_EMAIL, password);
 
   const { data: existingInvestor } = await admin
@@ -186,9 +182,9 @@ async function main() {
         full_name: "Investidor Demonstração",
         tax_id: "123.456.789-00",
         phone: "11912345678",
-        // Investidor qualificado (sem teto de R$20k/ano) de propósito —
-        // um valor redondo escolhido ao vivo no pitch não pode esbarrar
-        // no teto de varejo e travar a demonstração sem aviso prévio.
+        // Qualified investor (no R$20k/year cap) on purpose —
+        // a round amount picked live during the pitch must not hit
+        // the retail cap and block the demo without warning.
         annual_limit_cents: null,
         addr_cep: "04538-132",
         addr_street: "Avenida Brigadeiro Faria Lima",

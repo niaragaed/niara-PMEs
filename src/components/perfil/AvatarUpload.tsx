@@ -13,8 +13,8 @@ export function AvatarUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
   const t = dict.profile.registrationData.avatar;
 
-  // a foto nunca sai do navegador — só criamos um object URL local, que
-  // precisa ser revogado ao trocar de imagem ou desmontar o componente
+  // the photo never leaves the browser — we only create a local object URL, which
+  // has to be revoked when switching images or unmounting the component
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -54,7 +54,7 @@ export function AvatarUpload() {
     <div className="flex items-center gap-4">
       <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-panel-border bg-military-600/40">
         {previewUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- object URL local; não passa pelo otimizador do next/image
+          // eslint-disable-next-line @next/next/no-img-element -- local object URL; does not go through the next/image optimizer
           <img src={previewUrl} alt={t.photoAlt} className="h-full w-full object-cover" />
         ) : (
           <User className="h-8 w-8 text-on-military-muted" aria-hidden="true" />

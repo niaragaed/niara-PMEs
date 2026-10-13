@@ -1,16 +1,16 @@
 import { formatUnits } from "viem";
 
-// Formatação compartilhada de valores on-chain (bigint em unidade bruta do contrato) para
-// exibição em pt-BR — usada por qualquer componente que leia dados reais em Sepolia
-// (RealOnChainInvestPanel.tsx, RealPositionCard.tsx). Nunca duplicar esta lógica localmente.
+// Shared formatting of on-chain values (a bigint in the contract's raw unit) for display, in
+// pt-BR number format (BRL product) — used by any component that reads real data on Sepolia
+// (RealOnChainInvestPanel.tsx, RealPositionCard.tsx). Never duplicate this logic locally.
 //
-// `maximumFractionDigits` tem default 2 (preserva o comportamento de todo call site
-// existente — cotas/mBRL nesta demo sempre têm valores grandes o bastante para 2 casas serem
-// suficientes). 🔴 Bug real encontrado na Fase 3: usar o default de 2 casas para exibir custo
-// de gás em ETH (tipicamente 0,001–0,02 ETH nesta demo) arredonda para "0" — o valor
-// continuava correto no bigint usado pela comparação do gate, só o texto mostrado é que
-// mentia. `formatEth` abaixo já passa a precisão certa; ao formatar ETH em qualquer lugar
-// novo, usar `formatEth`, nunca `formatToken(..., "ETH")` com o default.
+// `maximumFractionDigits` defaults to 2 (keeps the behavior of every existing call site —
+// shares/mBRL in this demo always have values large enough for 2 decimals to be enough).
+// 🔴 A real bug found in Phase 3: using the 2-decimal default to display a gas cost in ETH
+// (typically 0.001–0.02 ETH in this demo) rounds it to "0" — the value stayed correct in the
+// bigint used by the gate's comparison, only the displayed text lied. `formatEth` below already
+// passes the right precision; when formatting ETH anywhere new, use `formatEth`, never
+// `formatToken(..., "ETH")` with the default.
 export function formatToken(value: bigint, decimals: number, symbol: string, maximumFractionDigits = 2): string {
   const formatted = Number(formatUnits(value, decimals)).toLocaleString("pt-BR", {
     maximumFractionDigits,
@@ -18,7 +18,7 @@ export function formatToken(value: bigint, decimals: number, symbol: string, max
   return `${formatted} ${symbol}`;
 }
 
-/** ETH precisa de mais de 2 casas decimais para não arredondar custo de gás para "0". */
+/** ETH needs more than 2 decimals so a gas cost isn't rounded to "0". */
 export function formatEth(valueWei: bigint): string {
   return formatToken(valueWei, 18, "ETH", 6);
 }

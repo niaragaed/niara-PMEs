@@ -10,13 +10,13 @@ import { localize } from "@/lib/i18n/locale";
 type OrderSide = "buy" | "sell";
 type Step = "form" | "review" | "confirmed";
 
-// Taxa estimada só para exibição na simulação — nunca cobrada de verdade,
-// rotulada "a definir" (ver ptBr.negociar.boleta.taxa).
+// Estimated fee for display in the simulation only — never actually charged,
+// labeled "to be defined" (see dict.trade.orderTicket.fee).
 const ESTIMATED_FEE = 0.005;
 
-// Saldo simulado inicial da sessão — só em memória (useState), nunca
-// persistido em localStorage/sessionStorage, mesma regra de LGPD das
-// demais simulações do projeto (carteira em /perfil, dados de /ativos).
+// The session's initial simulated balance — only in memory (useState), never
+// persisted in localStorage/sessionStorage, the same LGPD rule as the
+// project's other simulations (wallet in /perfil, /ativos data).
 const INITIAL_SIMULATED_BALANCE = 50_000;
 
 export function OrderTicket({ offering, onClose }: { offering: Offering; onClose: () => void }) {

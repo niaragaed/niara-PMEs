@@ -34,10 +34,9 @@ export function OfferingDetailPage({
   const locale = useLocale();
   const [ticketOpen, setTicketOpen] = useState(false);
   const t = dict.trade.offering;
-  // Fase 4, sub-etapa 5.2: RealOnChainInvestPanel não aceita mais índice, só o par de endereços
-  // — esta tela continua só com as 10 ofertas legadas (env var), nunca ofertas self-service (ver
-  // PLANO_FASE_3_PUBLICACAO_ONCHAIN.md — /negociar/token-pmes fica fora desta sub-etapa de
-  // propósito), então o índice ainda resolve direto contra a lista legada.
+  // Phase 4, sub-step 5.2: RealOnChainInvestPanel no longer accepts an index, only the address pair
+  // — this screen still only has the 10 legacy offerings (env var), never self-service offerings,
+  // so the index still resolves directly against the legacy list.
   const legacyAddresses = onChainIndex !== null ? (getOnChainAddresses()?.offerings[onChainIndex] ?? null) : null;
   const isOnChain = legacyAddresses !== null;
 

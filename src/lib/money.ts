@@ -1,11 +1,12 @@
-// Conversão exata de reais (string, formato pt-BR) para centavos (bigint) —
-// nunca passa por float. String parseada e escalada por 100 via BigInt.
-// Compartilhado entre a Server Action de onboarding (receita bruta, ver
-// src/app/cadastro/actions.ts) e a de ofertas (valor/meta, ver
-// src/app/empresa/ofertas/actions.ts).
+// Exact conversion of reais (string, pt-BR format) to cents (bigint) —
+// never goes through a float. The string is parsed and scaled by 100 via BigInt.
+// Shared by the onboarding Server Action (gross revenue, see
+// src/app/cadastro/actions.ts) and the offerings one (value/target, see
+// src/app/empresa/ofertas/actions.ts). Money inputs keep the pt-BR format in both interface
+// languages (it's a BRL amount, and this parser is the source of truth).
 
-// Formato aceito: "5.000.000,00" ou "5000000,00" ou "5000000" (ponto de
-// milhar opcional, vírgula decimal opcional com 1-2 casas).
+// Accepted format: "5.000.000,00" or "5000000,00" or "5000000" (optional thousands
+// dot, optional decimal comma with 1-2 places).
 export const MONEY_FORMAT = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+(,\d{1,2})?$/;
 
 export function reaisToCents(value: string): bigint | null {
@@ -19,8 +20,8 @@ export function reaisToCents(value: string): bigint | null {
   }
 }
 
-// Inverso exato de reaisToCents — BigInt inteiro, nunca divisão em float
-// (evita erro de arredondamento, ex.: 500000000n -> "5.000.000,00", nunca
+// The exact inverse of reaisToCents — integer BigInt, never a float division
+// (avoids rounding errors, e.g. 500000000n -> "5.000.000,00", never
 // "4999999,99").
 export function centsToReais(cents: bigint): string {
   const negative = cents < BigInt(0);

@@ -15,8 +15,8 @@ import { useDictionary } from "@/lib/i18n/client";
 
 type FormErrors = { email?: string; password?: string };
 
-// Só cobre os erros que signInWithPassword pode retornar — criação de conta
-// (signUp) não acontece mais nesta tela, ver CadastroPage.tsx.
+// Only covers the errors signInWithPassword can return — account creation
+// (signUp) no longer happens on this screen, see CadastroPage.tsx.
 function mapAuthError(error: AuthError, t: Dictionary["signIn"]["errors"]): string {
   switch (error.code) {
     case "invalid_credentials":
@@ -26,9 +26,9 @@ function mapAuthError(error: AuthError, t: Dictionary["signIn"]["errors"]): stri
   }
 }
 
-// Ícone da Google — não existe em lucide-react (ícones genéricos, sem
-// logos de marca); inline e aria-hidden porque o botão que o usa está
-// desabilitado ("Em breve", ver regra "nada simulado pode parecer real").
+// Google icon — it doesn't exist in lucide-react (generic icons, no brand
+// logos); inline and aria-hidden because the button that uses it is
+// disabled ("Coming soon", see the "nothing simulated may look real" rule).
 function GoogleIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -40,9 +40,9 @@ function GoogleIcon() {
   );
 }
 
-// Tela só de LOGIN (signInWithPassword) — criar conta é um fluxo à parte,
-// ver "Criar conta" abaixo, que apenas navega para /cadastro (a tela
-// dedicada de criação de conta + cadastro completo).
+// SIGN-IN only screen (signInWithPassword) — creating an account is a separate flow,
+// see "Create account" below, which only navigates to /cadastro (the
+// dedicated account creation + full registration screen).
 export function SignInPage({
   isFundraisingIntent,
   loginRequiredNotice,
@@ -84,17 +84,17 @@ export function SignInPage({
 
     try {
       router.refresh();
-      // Sócios (conta sem linha em investors/issuers, ver resolveSocio()) vão direto para
-      // /socios — senão cairiam no "completar cadastro" de /perfil. Para quem não é sócio,
-      // /perfil redireciona pra /cadastro sozinho se a conta ainda não tiver dados de
-      // investidor/empresa — cobre o caso de quem criou a conta mas não terminou o cadastro.
+      // Partners (an account with no row in investors/issuers, see resolveSocio()) go straight to
+      // /socios — otherwise they'd fall into /perfil's "complete registration". For non-partners,
+      // /perfil redirects to /cadastro on its own if the account doesn't have investor/company data
+      // yet — covers whoever created the account but didn't finish registering.
       const destination = await resolvePostLoginDestination();
       router.push(destination);
     } catch {
-      // O login em si já foi concluído (signInWithPassword não deu erro) — uma falha aqui é
-      // de rede/navegação, não de credencial. Sem este catch, uma falha transitória nessa
-      // etapa deixava o botão travado em "Entrando…" para sempre, sem nenhuma mensagem: nada
-      // chamava setPending(false) fora do branch de erro de login.
+      // The sign-in itself has already completed (signInWithPassword returned no error) — a failure
+      // here is a network/navigation one, not a credential one. Without this catch, a transient
+      // failure at this stage left the button stuck on "Signing in…" forever, with no message:
+      // nothing called setPending(false) outside the sign-in error branch.
       setFormError(t.errors.generic);
       setPending(false);
     }

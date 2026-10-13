@@ -1,21 +1,22 @@
 "use client";
 
-// Painel de investimento real na Solana devnet — par do RealOnChainInvestPanel.tsx (Sepolia),
-// contra o programa `niara-pmes-solana` (niaragaed/niara-pmes-solana). Mesmas regras da oferta
-// (Res. CVM 88), mesmo ciclo: faucet de MockBRL → aportar → encerrar → resgatar cotas (ou
-// reembolso, se a captação falhar) → liberar ao emissor.
+// Real investment panel on Solana devnet — the counterpart of RealOnChainInvestPanel.tsx
+// (Sepolia), against the `niara-pmes-solana` program (niaragaed/niara-pmes-solana). Same offering
+// rules (CVM Res. 88), same cycle: MockBRL faucet → invest → close → redeem shares (or a refund,
+// if the fundraising fails) → release to the issuer.
 //
-// Diferenças de mecânica (não de regra) em relação à Sepolia:
-//   - Não existe `approve`: o aporte é uma transferência SPL assinada pelo próprio investidor dentro
-//     da instrução `aportar` — uma assinatura só.
-//   - Cotas resgatadas ficam numa conta de token CONGELADA pelo programa (intransferíveis), o
-//     equivalente da DenyAllTransferPolicy da EVM.
-//   - Reembolso de captação que não atingiu a meta mínima está exposto aqui (na Sepolia o contrato
-//     tem a função, mas a tela ainda não).
+// Mechanical differences (not rule differences) from Sepolia:
+//   - There's no `approve`: the investment is an SPL transfer signed by the investor themselves
+//     inside the `aportar` instruction — a single signature.
+//   - Redeemed shares sit in a token account FROZEN by the program (non-transferable), the
+//     equivalent of the EVM's DenyAllTransferPolicy.
+//   - The refund of a fundraising that didn't reach the minimum target is exposed here (on Sepolia
+//     the contract has the function, but the screen doesn't yet).
 //
-// Mesma regra de produto do painel da Sepolia para os botões "Encerrar" (sócios ou empresa
-// emissora) e "Liberar recursos" (só sócios): no programa as duas instruções são permissionless;
-// a restrição é só de interface. O chamador remonta este componente ao trocar de oferta (`key`).
+// Same product rule as the Sepolia panel for the "Close" (partners or the issuing company) and
+// "Release funds" (partners only) buttons: in the program both instructions are permissionless;
+// the restriction is interface-only. The caller remounts this component when switching offerings
+// (`key`).
 import { useMemo, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Coins, ExternalLink } from "lucide-react";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
@@ -30,7 +31,7 @@ import { useDictionary } from "@/lib/i18n/client";
 
 const MBRL = "mBRL";
 
-/** Relógio em segundos, arredondado a 15 s (snapshot estável entre renders; 0 no servidor). */
+/** A clock in seconds, rounded to 15 s (a stable snapshot across renders; 0 on the server). */
 function useNow(): number {
   return useSyncExternalStore(
     (cb) => {

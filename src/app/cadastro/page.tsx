@@ -20,9 +20,9 @@ export default async function Page() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Sem sessão: esta é a própria tela de criação de conta agora (passo 1 —
-  // email/senha novos, ver CadastroPage.tsx) — não redireciona mais pra
-  // /entrar, que virou só login.
+  // No session: this is now the account creation screen itself (step 1 —
+  // new email/password, see CadastroPage.tsx) — it no longer redirects to
+  // /entrar, which became sign-in only.
   if (!user) {
     return <SignUpPage initialStep="account" email="" />;
   }
@@ -32,8 +32,8 @@ export default async function Page() {
     redirect("/conta");
   }
 
-  // Já tem sessão (voltou pra completar um cadastro que ficou pela metade,
-  // ou entrou via /entrar) — pula direto pro passo de tipo, sem pedir
-  // email/senha de novo.
+  // Already has a session (came back to finish a half-done registration, or
+  // signed in via /entrar) — jumps straight to the type step, without asking
+  // for email/password again.
   return <SignUpPage initialStep="type" email={user.email ?? ""} />;
 }

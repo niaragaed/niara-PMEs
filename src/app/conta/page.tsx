@@ -4,9 +4,9 @@ type PageProps = {
   searchParams: Promise<{ aviso?: "apenas-empresa" | "apenas-investidor"; onboarding?: string }>;
 };
 
-// /conta virou um redirect fino para /perfil (que hoje concentra os dados de
-// conta/cadastro reais). Mantido como rota — evita link morto caso algo
-// ainda aponte para /conta — só repassa o aviso ?aviso= e o ?onboarding=.
+// /conta became a thin redirect to /perfil (which now holds the real
+// account/registration data). Kept as a route — avoids a dead link in case
+// something still points to /conta — it only passes on ?aviso= and ?onboarding=.
 export default async function AccountPage({ searchParams }: PageProps) {
   const { aviso: notice, onboarding } = await searchParams;
   const params = new URLSearchParams();

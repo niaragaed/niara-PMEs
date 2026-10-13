@@ -30,8 +30,8 @@ const EMPTY_FORM: FormData = {
 
 export function ContactForm() {
   const dict = useDictionary();
-  // Dados do formulário servem só para montar o mailto no navegador —
-  // nunca são persistidos nem enviados a servidor.
+  // The form data only serves to build the mailto link in the browser —
+  // it's never persisted nor sent to a server.
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const t = dict.contact.form;

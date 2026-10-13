@@ -10,17 +10,17 @@ import { CATEGORY_META } from "@/lib/categories";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Página de detalhe para uma oferta PME self-service (publicada pelo próprio emissor via
-// OfertaOrquestrador, já confirmada on-chain) — irmã enxuta de OfertaDetailPage.tsx, não uma
-// generalização dela com condicionais. OfertaDetailPage.tsx é construída inteira em torno do tipo
-// mock `Oferta` (financeiro simulado, indicadores fundamentalistas fictícios, termos fixos) — uma
-// oferta self-service é uma empresa REAL (dados que o próprio emissor preencheu em /perfil), sem
-// nada disso. Forçar esses campos aqui exigiria fabricar indicadores/financeiro fictícios para uma
-// empresa de verdade — o inverso exato da regra "nada simulado pode parecer real" do projeto.
-// Por isso este componente só mostra: banner/logo reais, dados públicos reais do emissor, termos +
-// investimento ao vivo da chain (RealOnChainInvestPanel, 100% real), documentos placeholder
-// genéricos (mesma lista "Em breve" de todas as ofertas, não específica de nenhuma empresa) e os
-// riscos genéricos da Res. CVM 88 (texto idêntico ao de OfertaDetailPage.tsx, não fictício).
+// Detail page for a self-service SME offering (published by the issuer itself via
+// OfertaOrquestrador, already confirmed on-chain) — a lean sibling of OfertaDetailPage.tsx, not a
+// generalization of it with conditionals. OfertaDetailPage.tsx is built entirely around the
+// `Offering` mock type (simulated financials, fictitious fundamental indicators, fixed terms) — a
+// self-service offering is a REAL company (data the issuer itself filled in on /perfil), with none
+// of that. Forcing those fields here would require making up fictitious indicators/financials
+// for a real company — the exact opposite of the project's "nothing simulated may look real" rule.
+// That's why this component only shows: the real banner/logo, the issuer's real public data, the
+// terms + live investment from the chain (RealOnChainInvestPanel, 100% real), generic placeholder
+// documents (the same "Coming soon" list for every offering, not specific to any company) and the
+// generic CVM Res. 88 risks (text identical to OfertaDetailPage.tsx's, not fictitious).
 export async function SelfServiceOfferingDetailPage({
   offering,
   isPartner = false,
@@ -28,8 +28,8 @@ export async function SelfServiceOfferingDetailPage({
 }: {
   offering: ConfirmedOnChainOffering & { category: NonNullable<ConfirmedOnChainOffering["category"]> };
   isPartner?: boolean;
-  /** `true` só quando o emissor logado (resolveAccount()) é o dono desta oferta específica — ver
-   * [slug]/page.tsx. Libera o botão "Encerrar oferta" pra empresa, além dos sócios (ver
+  /** `true` only when the signed-in issuer (resolveAccount()) owns this specific offering — see
+   * [slug]/page.tsx. Unlocks the "Close offering" button for the company, besides the partners (see
    * RealOnChainInvestPanel.tsx). */
   isIssuer?: boolean;
 }) {

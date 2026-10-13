@@ -55,8 +55,8 @@ export async function PartnersDashboard({
           <SignOutButton />
         </div>
 
-        {/* Resumo + timeline única (on-chain real + off-chain/Supabase), streamed via Suspense
-            (ver page.tsx) */}
+        {/* Summary + single timeline (real on-chain + off-chain/Supabase), streamed via Suspense
+            (see page.tsx) */}
         {transactionsSlot}
       </div>
     </main>

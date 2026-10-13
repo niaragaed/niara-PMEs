@@ -31,7 +31,7 @@ export async function DocsNav() {
         </ul>
       </nav>
 
-      {/* Mobile/tablet: abas horizontais roláveis */}
+      {/* Mobile/tablet: horizontal scrollable tabs */}
       <div
         role="tablist"
         aria-label={dict.docs.nav.ariaLabel}

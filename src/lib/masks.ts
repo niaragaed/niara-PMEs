@@ -1,7 +1,7 @@
-// Máscaras e validações de formato para a tela /perfil. Validação aqui é só
-// de formato/comprimento (ex.: CPF com 11 dígitos) — não checa dígitos
-// verificadores, já que é o suficiente para uma tela de demonstração sem
-// backend real.
+// Format masks and validations for the /perfil screen. Validation here is only
+// about format/length (e.g. a CPF with 11 digits) — it doesn't check the check
+// digits, since that's enough for a demo screen with no real
+// backend.
 
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, "");
@@ -30,11 +30,11 @@ export function maskDocument(value: string, type: PersonType): string {
   return type === "pf" ? maskCPF(value) : maskCNPJ(value);
 }
 
-// Máscara de EXIBIÇÃO PÚBLICA do CNPJ (página pública da oferta) — oculta
-// filial + dígitos verificadores de verdade (não só os 2 últimos), só a raiz
-// (8 primeiros dígitos, identifica a empresa) fica visível. Espera 14
-// dígitos (chamar só quando issuers.publish_cnpj = true e tax_id já foi lido
-// do banco); fora disso retorna "" para nunca vazar um valor parcial.
+// PUBLIC DISPLAY mask for the CNPJ (the public offering page) — hides the
+// branch + the actual check digits (not just the last 2), only the root
+// (the first 8 digits, which identify the company) stays visible. Expects 14
+// digits (call it only when issuers.publish_cnpj = true and tax_id has already been read
+// from the database); otherwise it returns "" so a partial value never leaks.
 export function maskCnpjPublic(value: string): string {
   const digits = onlyDigits(value);
   if (digits.length !== 14) return "";

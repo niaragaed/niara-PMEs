@@ -28,9 +28,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  // Ofertas self-service não têm slug legível — o "slug" na URL é o próprio uuid de
-  // offerings.id (ver src/lib/web3/confirmedOfferings.ts). Só tenta essa segunda consulta
-  // quando a primeira (mock, síncrona) não achou nada.
+  // Self-service offerings have no readable slug — the "slug" in the URL is the
+  // offerings.id uuid itself (see src/lib/web3/confirmedOfferings.ts). Only tries this second
+  // query when the first one (mock, synchronous) found nothing.
   const confirmedOffering = await loadConfirmedOnChainOfferingById(slug);
   if (confirmedOffering) {
     return { title: `${confirmedOffering.issuerTradeName ?? confirmedOffering.issuerLegalName} · Niara PMEs` };
@@ -46,13 +46,14 @@ export default async function Page({ params }: PageProps) {
   const offering = getOfferingBySlug(slug);
 
   if (offering) {
-    // Fotos reais só existem (por ora) para as 10 ofertas PME ligadas a uma oferta real em
-    // Sepolia — ver src/lib/negociar/ofertaAssets.ts. Para as demais categorias nem vale a pena
-    // checar o filesystem: nunca vai haver arquivo, OfertaBanner já mostra o placeholder sozinho.
+    // Real photos only exist (for now) for the 10 SME offerings linked to a real offering on
+    // Sepolia — see src/lib/negociar/ofertaAssets.ts. For the other categories it's not even worth
+    // checking the filesystem: there will never be a file, OfferingBanner already shows the
+    // placeholder on its own.
     const assets = offering.category === "pmes" ? getOfferingAssetPaths(offering.slug) : { bannerUrl: null, logoUrl: null };
     const onChainIndex = offering.category === "pmes" ? getOnChainIndexBySlug(offering.slug) : null;
-    // Só importa quando onChainIndex !== null (decide o botão "Encerrar oferta" do painel
-    // on-chain) — resolver sempre é mais simples que condicionar, e resolveSocio() não redireciona.
+    // Only matters when onChainIndex !== null (decides the on-chain panel's "Close offering"
+    // button) — always resolving is simpler than branching, and resolveSocio() doesn't redirect.
     const { authorized: isPartner } = await resolvePartner();
 
     return (
@@ -66,17 +67,17 @@ export default async function Page({ params }: PageProps) {
     );
   }
 
-  // Não é uma oferta mock (legada) — tenta resolver como oferta self-service (slug = uuid de
-  // offerings.id). loadConfirmedOnChainOfferingById() nunca lança: devolve null pra uuid
-  // inválido, oferta inexistente, não confirmada, ou sem categoria.
+  // Not a mock (legacy) offering — tries to resolve it as a self-service offering (slug = the
+  // offerings.id uuid). loadConfirmedOnChainOfferingById() never throws: it returns null for an
+  // invalid uuid, a nonexistent offering, an unconfirmed one, or one without a category.
   const confirmedOffering = await loadConfirmedOnChainOfferingById(slug);
   if (!confirmedOffering || !confirmedOffering.category) {
     notFound();
   }
 
   const { authorized: isPartner } = await resolvePartner();
-  // isEmissor só é possível pra ofertas self-service (têm issuer_id no Supabase) — as 10 legadas
-  // nunca têm conta de emissor neste app, então nem chegam a este ramo.
+  // isIssuer is only possible for self-service offerings (they have issuer_id in Supabase) — the 10
+  // legacy ones never have an issuer account in this app, so they don't even reach this branch.
   const { role, accountId } = await resolveAccount();
   const isIssuer = role === "issuer" && accountId === confirmedOffering.issuerAccountId;
 

@@ -52,11 +52,11 @@ export function IndicatorHelp({ name, explanation, isOpen, onOpenChange }: Indic
         <div
           id={popoverId}
           role="tooltip"
-          // Ancorado pela borda direita do botão (não centralizado): um popover
-          // centralizado sobre um card perto da borda direita da grade poderia
-          // ultrapassar a viewport no mobile e criar scroll horizontal na
-          // página. Ancorando à direita, ele só se estende para a esquerda —
-          // no pior caso é parcialmente cortado, nunca cria overflow.
+          // Anchored to the button's right edge (not centered): a centered popover
+          // over a card near the grid's right edge could go past the viewport on
+          // mobile and create horizontal scroll on the page. Anchored to the
+          // right, it only extends to the left — in the worst case it's partially
+          // clipped, it never creates overflow.
           className="animate-dropdown absolute right-0 top-full z-20 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-md border border-border bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-soft-lg"
         >
           {explanation}

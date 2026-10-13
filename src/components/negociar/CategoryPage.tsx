@@ -14,22 +14,22 @@ import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Template reutilizado pelas 5 rotas de categoria (/negociar/token-pmes,
-// token-agro, token-imobiliario, token-auto, titulos-de-divida) — muda só
-// o ícone/acento/conteúdo, via `categoria`.
+// Template reused by the 5 category routes (/negociar/token-pmes,
+// token-agro, token-imobiliario, token-auto, titulos-de-divida) — only
+// the icon/accent/content changes, via `category`.
 //
-// REGRA DE OURO: visitante anônimo (sem sessão) vê exatamente a tela de
-// sempre — só os exemplos fictícios, nenhuma query ao banco. As ofertas
-// REAIS desta categoria só são buscadas quando resolveAccount() confirma
-// role === "investor"; sem isso, ofertasReais fica [] e a seção nem
-// renderiza. Este componente segue sendo público (nenhum redirect) —
-// diferente de /investir, que exige login para a rota inteira.
+// GOLDEN RULE: an anonymous visitor (no session) sees exactly the usual
+// screen — only the fictitious examples, no database query. The REAL
+// offerings of this category are only fetched when resolveAccount() confirms
+// role === "investor"; without that, realOfferings stays [] and the section isn't even
+// rendered. This component remains public (no redirect) —
+// unlike /investir, which requires signing in for the whole route.
 //
-// Um issuer logado NÃO entra no ramo acima (role !== "investor"), mas vê a
-// PRÓPRIA oferta ativa nesta categoria (ofertasProprias), filtrada no banco
-// por issuer_id = accountId (loadActiveOfferingsByCategory) — nunca ofertas
-// de outras empresas. As duas listas (ofertasReais/ofertasProprias) nunca
-// têm conteúdo ao mesmo tempo, já que role é ou "investor" ou "issuer".
+// A signed-in issuer does NOT enter the branch above (role !== "investor"), but sees their
+// OWN active offering in this category (ownOfferings), filtered in the database
+// by issuer_id = accountId (loadActiveOfferingsByCategory) — never other
+// companies' offerings. The two lists (realOfferings/ownOfferings) never
+// have content at the same time, since role is either "investor" or "issuer".
 export async function CategoryPage({ category }: { category: TokenCategory }) {
   const dict = await getDictionary();
   const t = dict.trade.categories[category];
@@ -41,16 +41,16 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
   const ownOfferings =
     role === "issuer" && accountId ? await loadActiveOfferingsByCategory(category, accountId) : [];
 
-  // Botão "Publicar oferta" (só na categoria pmes, ver JSX abaixo) — visível só para o emissor
-  // logado (nunca investidor/visitante). Leva sempre para /empresa/ofertas ("Minhas ofertas") —
-  // simplificado de propósito: a lista de lá já mostra o estado de cada oferta e o link certo por
-  // oferta (ver OfertasPage.tsx), então não vale a pena este botão tentar adivinhar/pular direto
-  // para uma oferta específica.
+  // "Publish offering" button (only in the pmes category, see the JSX below) — visible only to the
+  // signed-in issuer (never an investor/visitor). Always leads to /empresa/ofertas ("My
+  // offerings") — simplified on purpose: the list there already shows each offering's state and
+  // the right link per offering (see OfertasPage.tsx), so it's not worth this button trying to
+  // guess/jump straight to a specific offering.
   const publishOfferingHref = role === "issuer" && accountId ? "/empresa/ofertas" : null;
 
-  // getOnChainIndexBySlug/getOfertaAssetPaths precisam rodar aqui (server —
-  // o último é fs-based) mesmo com o filtro de setor sendo client-side
-  // (PmesSectorFilter.tsx): resolve tudo antes e passa a lista já pronta.
+  // getOnChainIndexBySlug/getOfferingAssetPaths need to run here (server —
+  // the latter is fs-based) even though the sector filter is client-side
+  // (PmesSectorFilter.tsx): everything is resolved first and the list is passed ready.
   const smesCardsLegacy: SmesCardData[] =
     category === "pmes"
       ? offerings.flatMap((offering) => {
@@ -61,10 +61,10 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
         })
       : [];
 
-  // Ofertas PME self-service (emissor publicou a própria oferta on-chain — ver CLAUDE.md "Fase
-  // 4", unificação da vitrine). loadConfirmedOnChainOfferings() não filtra por categoria (é
-  // reaproveitado por /investir/onchain, que lista todas) — o filtro é feito aqui, só quando esta
-  // página é a de PMEs.
+  // Self-service SME offerings (an issuer published their own offering on-chain — see CLAUDE.md
+  // "Phase 4", showcase unification). loadConfirmedOnChainOfferings() doesn't filter by category
+  // (it's reused by /investir/onchain, which lists all of them) — the filter is applied here, only
+  // when this page is the SMEs one.
   const smesCardsSelfService: SmesCardData[] =
     category === "pmes"
       ? (await loadConfirmedOnChainOfferings())

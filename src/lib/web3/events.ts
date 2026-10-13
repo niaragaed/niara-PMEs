@@ -1,22 +1,21 @@
 import "server-only";
 
-// Leitura de eventos reais do(s) contrato(s) OfertaCaptacao em Sepolia — usado só pelo painel
-// interno /socios. Roda inteiramente no servidor (viem getLogs direto via RPC), não depende de
-// carteira conectada nem do wagmi (diferente dos hooks de src/lib/web3/hooks/, que são para o
-// investidor logado com MetaMask). Eventos confirmados direto no .sol antes de escrever isto
-// (niara-contracts-PMEs/src/captacao/OfertaCaptacao.sol) — nomes reais: Aporte, OfertaEncerrada,
+// Reads real events from the OfertaCaptacao contract(s) on Sepolia — used only by the internal
+// /socios dashboard. Runs entirely on the server (viem getLogs straight via RPC), doesn't depend
+// on a connected wallet nor on wagmi (unlike the hooks in src/lib/web3/hooks/, which are for the
+// investor signed in with MetaMask). Events confirmed directly in the .sol before writing this
+// (niara-contracts-PMEs/src/captacao/OfertaCaptacao.sol) — real names: Aporte, OfertaEncerrada,
 // OfertaCancelada, CotasResgatadas, RecursosLiberados, Reembolso.
 //
-// 🔴 Cache incremental em Supabase (onchain_events_cache/onchain_sync_state,
-// supabase/migrations/0012_onchain_events_cache.sql): antes disso, toda chamada reescaneava
-// getLogs desde FROM_BLOCK até o bloco atual — um intervalo que só cresce a cada dia, até
-// estourar o timeout de 60s da função serverless (Vercel) e/ou o limite de faixa de blocos por
-// chamada de RPCs mais restritivos (Alchemy Free: só 10 blocos por eth_getLogs, contra 1.000 do
-// RPC público antigo — reproduzido em produção). Agora só o intervalo NOVO desde o último bloco
-// sincronizado é escaneado a cada chamada; a primeira sincronização (sem nenhuma linha em
-// onchain_sync_state ainda) continua sendo o escaneamento completo — rodar
-// `npm run backfill:onchain` uma vez (fora do Next, sem o teto de 60s) em vez de deixar a
-// primeira visita à página pagar essa conta inteira.
+// 🔴 Incremental cache in Supabase (onchain_events_cache/onchain_sync_state,
+// supabase/migrations/0012_onchain_events_cache.sql): before it, every call rescanned getLogs from
+// FROM_BLOCK to the current block — a range that only grows each day, until it blew the
+// serverless function's 60s timeout (Vercel) and/or the per-call block range limit of more
+// restrictive RPCs (Alchemy Free: only 10 blocks per eth_getLogs, against 1,000 on the old public
+// RPC — reproduced in production). Now only the NEW range since the last synced block is scanned
+// on each call; the first sync (with no row in onchain_sync_state yet) is still the full scan —
+// run `npm run backfill:onchain` once (outside Next, without the 60s cap) instead of letting the
+// first visit to the page pay that whole bill.
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOnChainAddresses } from "./addresses";
 import { mockBrlAbi } from "./abis/mockBrl";
@@ -90,9 +89,9 @@ async function readSyncState(): Promise<SyncState | null> {
   return data ? { lastSyncedBlock: BigInt(data.last_synced_block), mockBrlAddress: data.mock_brl_address } : null;
 }
 
-// Só devolve eventos de ofertas que ainda estão configuradas em
-// NEXT_PUBLIC_OFERTAS_ONCHAIN hoje — evita misturar, para sempre, eventos de uma geração de
-// contratos antiga (pré-redeploy) com a atual, caso a tabela algum dia acumule as duas.
+// Only returns events from offerings still configured in
+// NEXT_PUBLIC_OFERTAS_ONCHAIN today — avoids mixing, forever, events from an old contract
+// generation (pre-redeploy) with the current one, in case the table ever accumulates both.
 async function readCachedEvents(validAddresses: Set<string>): Promise<OnChainEvent[]> {
   const admin = createAdminClient();
   const { data, error } = await admin
@@ -122,31 +121,30 @@ async function updateSyncState(currentBlock: bigint, mockBrlAddress: `0x${string
   if (error) throw error;
 }
 
-// Com CHUNK_SIZE=10 blocos e RPC_CONCURRENCY=1 + RPC_THROTTLE_MS=150 (eventsCore.ts), cada janela
-// de 10 blocos leva ~300-500ms (rede + throttle). 3000 blocos ≈ 300 janelas ≈ 90-150s no pior
-// caso — ainda alto demais para o maxDuration=60s da página. 1500 blocos ≈ 150 janelas ≈ 45-75s:
-// ainda arriscado perto do limite. Fica em 800 blocos (~80 janelas, ~25-40s) com boa margem de
-// segurança mesmo em cold start ou rede mais lenta — se um dia RPC_THROTTLE_MS ou CHUNK_SIZE
-// mudarem, revisar esta conta junto.
+// With CHUNK_SIZE=10 blocks and RPC_CONCURRENCY=1 + RPC_THROTTLE_MS=150 (eventsCore.ts), each
+// 10-block window takes ~300-500ms (network + throttle). 3000 blocks ≈ 300 windows ≈ 90-150s in the
+// worst case — still too high for the page's maxDuration=60s. 1500 blocks ≈ 150 windows ≈ 45-75s:
+// still risky near the limit. It stays at 800 blocks (~80 windows, ~25-40s) with a good safety
+// margin even on a cold start or a slower network — if RPC_THROTTLE_MS or CHUNK_SIZE ever change,
+// revisit this math too.
 const MAX_BLOCKS_PER_EXECUTION = BigInt(800);
 
 /**
- * Lê todos os eventos de todas as ofertas configuradas (NEXT_PUBLIC_OFERTAS_ONCHAIN), mais
- * recentes primeiro. Retorna lista vazia (nunca lança) se nenhuma oferta estiver configurada. Só
- * escaneia via RPC o intervalo de blocos NOVO desde a última sincronização (ver cabeçalho do
- * arquivo) — o resto vem do cache em Supabase. Uma falha ao gravar o cache não derruba a
- * resposta (loga e segue) — na pior hipótese, a próxima chamada reescaneia o mesmo intervalo de
- * novo (idempotente via UPSERT com unique key), nunca perde dado nem quebra a página.
+ * Reads all events of all configured offerings (NEXT_PUBLIC_OFERTAS_ONCHAIN), most recent first.
+ * Returns an empty list (never throws) if no offering is configured. Only scans via RPC the NEW
+ * block range since the last sync (see the file header) — the rest comes from the Supabase cache.
+ * A failure to write the cache doesn't take down the response (it logs and carries on) — in the
+ * worst case, the next call rescans the same range again (idempotent via UPSERT with a unique
+ * key), it never loses data nor breaks the page.
  *
- * Correção redeploy: antes, o piso da primeira sincronização era um bloco fixo (`FROM_BLOCK`)
- * mantido à mão no código, e nada detectava se a infra fosse redeployada — o cache continuaria
- * escaneando a partir do último bloco salvo, que pertencia aos contratos ANTIGOS, perdendo em
- * silêncio todo o histórico do início da vida dos contratos NOVOS. Agora onchain_sync_state
- * também guarda o endereço do MockBRL de quando aquele bloco foi sincronizado
- * (`mock_brl_address`, ver migration 0013): se ele não bate com o endereço atual, entende-se
- * que houve um redeploy, e o bloco de partida é recalculado automaticamente via
- * `encontrarBlocoDeploy` (busca binária por `eth_getCode`, sem depender de nenhum artefato de
- * deploy nem de constante atualizada manualmente).
+ * Redeploy fix: before, the first sync's floor was a fixed block (`FROM_BLOCK`) maintained by
+ * hand in the code, and nothing detected whether the infra had been redeployed — the cache would
+ * keep scanning from the last saved block, which belonged to the OLD contracts, silently losing
+ * all the history from the start of the NEW contracts' life. Now onchain_sync_state also stores
+ * the MockBRL address from when that block was synced (`mock_brl_address`, see migration 0013):
+ * if it doesn't match the current address, a redeploy is assumed, and the starting block is
+ * recomputed automatically via `findDeployBlock` (a binary search with `eth_getCode`, without
+ * depending on any deploy artifact nor on a manually updated constant).
  */
 export async function getEventsOnChain(): Promise<OnChainEvent[]> {
   const addresses = getOnChainAddresses();
@@ -160,12 +158,12 @@ export async function getEventsOnChain(): Promise<OnChainEvent[]> {
     readCachedEvents(validAddresses),
   ]);
 
-  // syncState.mockBrlAddress === null significa "coluna recém-criada pela migration 0013, nunca
-  // gravada ainda" — NÃO é redeploy, é só ausência de dado histórico. Tratar null como "mudou"
-  // dispararia um falso positivo em todo projeto pré-existente logo após rodar a migration
-  // (fazendo reescanear dezenas de milhares de blocos de uma vez e estourar rate limit do RPC).
-  // Só é redeploy de verdade quando JÁ existe um endereço anterior salvo e ele é diferente do
-  // atual.
+  // syncState.mockBrlAddress === null means "column just created by migration 0013, never
+  // written yet" — it is NOT a redeploy, only missing historical data. Treating null as "changed"
+  // would trigger a false positive on every pre-existing project right after running the migration
+  // (making it rescan tens of thousands of blocks at once and blow the RPC rate limit). It's only
+  // a real redeploy when there's ALREADY a previous address saved and it differs from the current
+  // one.
   const redeployDetected =
     syncState !== null && syncState.mockBrlAddress !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
 
@@ -186,15 +184,14 @@ export async function getEventsOnChain(): Promise<OnChainEvent[]> {
     return cachedEvents;
   }
 
-  // Teto de blocos por execução: sem isso, um intervalo pendente grande (ex.: ninguém visitou
-  // /socios por muitas horas, ou o cron ficou fora do ar) faz uma única chamada tentar escanear
-  // tudo de uma vez — e como cada janela de RPC é sequencial e pequena (10 blocos, ver
-  // eventsCore.ts), isso já estourou o timeout de 60s da Vercel mais de uma vez em produção. Com
-  // o teto, cada execução avança no máximo MAX_BLOCOS_POR_EXECUCAO blocos e para aí — o resto
-  // fica para a PRÓXIMA chamada (visita ao /socios ou o cron em /api/cron/sync-onchain). Nunca
-  // estoura o timeout, custe o backlog o que custar; só demora mais chamadas para se atualizar
-  // por completo, o que é um trade-off muito melhor que timeout e perda silenciosa dos dados
-  // on-chain na tela.
+  // A per-run block cap: without it, a large pending range (e.g. nobody visited /socios for many
+  // hours, or the cron was down) makes a single call try to scan everything at once — and since
+  // each RPC window is sequential and small (10 blocks, see eventsCore.ts), that already blew
+  // Vercel's 60s timeout more than once in production. With the cap, each run advances at most the
+  // per-run limit of blocks and stops there — the rest is left for the NEXT call (a visit to /socios
+  // or the cron at /api/cron/sync-onchain). It never hits the timeout, whatever the backlog; it
+  // just takes more calls to fully catch up, which is a much better trade-off than a timeout and a
+  // silent loss of the on-chain data on screen.
   const targetBlock = currentBlock - syncedAte > MAX_BLOCKS_PER_EXECUTION ? syncedAte + MAX_BLOCKS_PER_EXECUTION : currentBlock;
 
   const newEvents = await fetchOnChainEventsRange(client, addresses.offerings, syncedAte + BigInt(1), targetBlock);
@@ -216,21 +213,21 @@ export type OnChainSummary = {
   totalRaisedWei: bigint;
   uniqueWallets: number;
   feeBpsByOffering: number[];
-  // Soma real de `RecursosLiberados.taxa` (mBRL efetivamente transferidos ao protocoloWallet),
-  // não um valor projetado/derivado de taxaBps × arrecadado — só conta o que já foi de fato
-  // liberado on-chain via `liberarParaEmissor()`.
+  // The real sum of `RecursosLiberados.taxa` (mBRL actually transferred to protocoloWallet),
+  // not a value projected/derived from taxaBps × raised — it only counts what has actually been
+  // released on-chain via `liberarParaEmissor()`.
   feeReceivedWei: bigint;
 };
 
 /**
- * Resumo agregado — total arrecadado (soma de todos os Aporte, todas as ofertas), carteiras
- * únicas que já aportaram, a taxaBps vigente de cada oferta (lida direto do contrato, nunca
- * assumida — hoje é 0 na maioria das ofertas, mas isto lê o valor real, não hardcoda) e a
- * receita real de taxa já recebida pelo protocolo (soma de `RecursosLiberados.taxa` entre todas
- * as ofertas — só conta o que `liberarParaEmissor()` já transferiu de fato, nunca uma
- * projeção). Não faz getLogs (só readContract, sem limite de faixa de blocos) — não precisa do
- * cache acima; a soma da taxa vem de `eventos`, que já é o resultado cacheado de
- * `getEventosOnChain()`.
+ * Aggregate summary — total raised (sum of every Aporte, all offerings), unique wallets that have
+ * invested, each offering's current taxaBps (read straight from the contract, never assumed —
+ * today it's 0 on most offerings, but this reads the real value, it doesn't hard-code it) and the
+ * real fee revenue already received by the protocol (sum of `RecursosLiberados.taxa` across all
+ * offerings — it only counts what `liberarParaEmissor()` has actually transferred, never a
+ * projection). Doesn't call getLogs (only readContract, with no block range limit) — it doesn't
+ * need the cache above; the fee sum comes from `events`, which is already the cached result of
+ * `getEventsOnChain()`.
  */
 export async function getSummaryOnChain(events: OnChainEvent[]): Promise<OnChainSummary | null> {
   const addresses = getOnChainAddresses();

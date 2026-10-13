@@ -53,9 +53,9 @@ function display(value: string, notProvided: string): string {
   return value.trim() || notProvided;
 }
 
-// Telefone é salvo/validado só como DDD + número (sem código de país, ver
-// masks.ts); o "+55" é acrescentado aqui só para exibição, mesmo prefixo
-// fixo mostrado no campo em modo de edição (TextField prefix="+55").
+// The phone is stored/validated only as area code + number (no country code, see
+// masks.ts); the "+55" is added here for display only, the same fixed prefix
+// shown in the field in edit mode (TextField prefix="+55").
 function displayPhone(value: string, notProvided: string): string {
   return value.trim() ? `+55 ${value.trim()}` : notProvided;
 }
@@ -130,9 +130,9 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
   const dict = useDictionary();
   const personType = personTypeOf(profile.role);
 
-  // CPF/CNPJ, data de nascimento e endereço são dados sensíveis (LGPD) —
-  // vivem em estado local só enquanto a seção está em edição; o valor de
-  // referência é sempre o que veio do banco via `profile` (prop), nunca
+  // CPF/CNPJ, date of birth and address are sensitive data (LGPD) —
+  // they live in local state only while the section is being edited; the
+  // reference value is always what came from the database via `profile` (prop), never
   // localStorage/cookies.
   const [draft, setDraft] = useState<FormData>(() => toFormData(profile, personType));
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -141,9 +141,9 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
   const [justSaved, setJustSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Espelha o estado de LogoUpload/BannerUpload (via onUrlChange) só para
-  // alimentar a "Prévia do card" (CardPreview) em tempo real — nenhuma
-  // fonte de verdade nova, os dois uploads continuam donos do próprio estado.
+  // Mirrors LogoUpload/BannerUpload's state (via onUrlChange) only to
+  // feed the "Card preview" (CardPreview) in real time — no new
+  // source of truth, both uploads remain the owners of their own state.
   const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(
     profile.role === "issuer" ? profile.logoUrl : null,
   );

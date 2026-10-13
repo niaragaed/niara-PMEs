@@ -10,13 +10,13 @@ function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso));
 }
 
-// Card de oferta REAL (offerings.status = 'active'), mostrado a um
-// investidor logado navegando as ofertas ativas de outras empresas nesta
-// categoria (CategoryPage.tsx, seção "ofertasReais"). Visualmente distinto
-// do ShowcaseCard fictício de propósito: selo sólido + anel salmão em volta
-// do card, para ninguém confundir os dois na mesma tela (REGRA DE
-// HONESTIDADE). A própria oferta do issuer logado usa um card à parte
-// (MyOfferCard.tsx), com selo neutro de demonstração — nunca este.
+// Card for a REAL offering (offerings.status = 'active'), shown to a
+// signed-in investor browsing other companies' active offerings in this
+// category (CategoryPage.tsx, "realOfferings" section). Visually distinct
+// from the fictitious ShowcaseCard on purpose: a solid badge + a salmon ring around
+// the card, so nobody confuses the two on the same screen (HONESTY
+// RULE). The signed-in issuer's own offering uses a separate card
+// (MyOfferCard.tsx), with a neutral demo badge — never this one.
 export async function RealOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
   const dict = await getDictionary();
   const t = dict.trade.realOffering;
@@ -32,7 +32,7 @@ export async function RealOfferCard({ offering }: { offering: ActiveOfferingSumm
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-surface-alt">
           {offering.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image
+            // eslint-disable-next-line @next/next/no-img-element -- comes from the public Supabase Storage bucket, doesn't go through the next/image optimizer
             <img src={offering.logoUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <Building2 className="h-5 w-5 text-ink-muted" aria-hidden="true" />
