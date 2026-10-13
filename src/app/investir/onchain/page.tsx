@@ -14,14 +14,15 @@ export async function generateMetadata(): Promise<Metadata> {
 };
 }
 
-// Lido a cada requisição: a lista de ofertas da Solana vem do próprio programa (getProgramAccounts),
-// não de uma env var — uma oferta nova publicada pelo emissor aparece sem redeploy.
+// Read on every request: the list of Solana offerings comes from the program itself
+// (getProgramAccounts), not from an env var — a new offering published by an issuer shows up
+// without a redeploy.
 export const dynamic = "force-dynamic";
 
 /**
- * Ofertas do programa niara-pmes-solana (devnet), lidas no servidor. Nunca quebra a página: RPC
- * fora do ar ou programa ainda não publicado nesta rede = lista vazia, e o seletor mostra só as
- * ofertas da Sepolia. Abertas primeiro, depois as mais recentes.
+ * Offerings from the niara-pmes-solana program (devnet), read on the server. Never breaks the
+ * page: RPC down or program not deployed on this network yet = an empty list, and the selector
+ * only shows the Sepolia offerings. Open ones first, then the most recent.
  */
 async function loadSolanaOfferings(): Promise<ServerSolanaOption[]> {
   try {
@@ -35,12 +36,12 @@ async function loadSolanaOfferings(): Promise<ServerSolanaOption[]> {
   }
 }
 
-// Diferente de /investir (Supabase, exige login como investidor — ver src/app/investir/page.tsx),
-// esta rota não depende de conta na plataforma: é dirigida inteiramente pela carteira conectada
-// (MetaMask na Sepolia, Phantom na Solana Devnet). Decisão deliberada — qualquer carteira pode
-// demonstrar o fluxo completo sem precisar de cadastro/login na Niara PMEs. `isSocio` só decide se
-// os botões "Encerrar oferta"/"Liberar recursos" ficam habilitados nesta interface — não afeta o
-// resto da página. `?rede=solana` abre direto na primeira oferta da Solana.
+// Unlike /investir (Supabase, requires signing in as an investor — see src/app/investir/page.tsx),
+// this route doesn't depend on a platform account: it's driven entirely by the connected wallet
+// (MetaMask on Sepolia, Phantom on Solana Devnet). Deliberate decision — any wallet can
+// demonstrate the full flow without signing up/in to Niara PMEs. `isPartner` only decides whether
+// the "Close offering"/"Release funds" buttons are enabled in this interface — it doesn't affect
+// the rest of the page. `?rede=solana` opens straight on the first Solana offering.
 export default async function Page({ searchParams }: { searchParams: Promise<{ rede?: string }> }) {
   const { rede: network } = await searchParams;
   const [{ authorized: isPartner }, confirmedOfferings, solanaOfferings] = await Promise.all([

@@ -1,9 +1,9 @@
 "use client";
 
-// Fase 3, sub-etapa 4 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — os 6 gates calculados de
-// verdade (termo agora real, não mais stub), botão habilitado quando todos passam, assinatura
-// real via usePublicarOfertaOnChain. Nunca finge sucesso: "pendente" é sempre mostrado como
-// "ainda não publicada", com link pro Etherscan, até confirmarPublicacao() voltar "confirmada".
+// Phase 3, sub-step 4 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — the 6 gates actually computed
+// (the terms are real now, no longer a stub), the button enabled when all of them pass, real
+// signing via usePublicarOfertaOnChain. Never fakes success: "pendente" is always shown as "not
+// published yet", with a link to Etherscan, until confirmPublication() comes back "confirmada".
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
@@ -77,12 +77,12 @@ export function PublishOnChainPage({
   });
   const [accepted, setAccepted] = useState(false);
 
-  // Reconciliação ao (re)abrir a tela: se já havia uma tentativa pendente de uma visita
-  // anterior (ex.: fechou a aba logo após assinar), confere de novo contra a chain sem exigir
-  // clique. Roda uma única vez por carregamento da página.
+  // Reconciliation when (re)opening the screen: if there was already a pending attempt from a
+  // previous visit (e.g. closed the tab right after signing), checks it again against the chain
+  // without requiring a click. Runs a single time per page load.
   const [reconciled, setReconciled] = useState<ConfirmPublicationState | null>(null);
-  // Valor inicial já reflete se vamos verificar ao montar — evita chamar setVerificando(true)
-  // de forma síncrona dentro do efeito abaixo (o efeito só precisa desligar ao terminar).
+  // The initial value already reflects whether we'll check on mount — avoids calling the setter
+  // synchronously inside the effect below (the effect only needs to turn it off when done).
   const [verifying, setVerifying] = useState(syncStatus === "pendente");
   useEffect(() => {
     if (syncStatus === "pendente") {
@@ -100,12 +100,12 @@ export function PublishOnChainPage({
     setVerifying(false);
   }
 
-  // Sub-etapa 5 (reconciliação contínua, ver onchain-actions.ts): roda ao (re)abrir a tela
-  // sempre que já existe um contract_address para comparar — oferta confirmada (checagem de
-  // rotina) ou divergente com endereço já gravado (um drift anterior, possivelmente já corrigido
-  // no Supabase desde a última visita). Nunca roda para 'pendente'/'divergente' sem endereço —
-  // esses não têm contrato nenhum ainda para ler, e continuam resolvidos por
-  // confirmarPublicacao()/"Reprocessar" acima.
+  // Sub-step 5 (continuous reconciliation, see onchain-actions.ts): runs when (re)opening the
+  // screen whenever there's already a contract_address to compare — a confirmed offering (routine
+  // check) or a divergent one with an address already stored (a previous drift, possibly already
+  // fixed in Supabase since the last visit). Never runs for 'pendente'/'divergente' without an
+  // address — those have no contract to read yet, and are still resolved by
+  // confirmPublication()/"Reprocess" above.
   const shouldVerifyConsistency = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
   const [consistency, setConsistency] = useState<CheckConsistencyState | null>(null);
   const [verifyingConsistency, setVerifyingConsistency] = useState(shouldVerifyConsistency);
@@ -125,9 +125,9 @@ export function PublishOnChainPage({
     setVerifyingConsistency(false);
   }
 
-  // Prioridade de exibição: ação em andamento nesta sessão (hook) > reconciliação de publicação
-  // pendente (reconciliado) > verificação de consistência (consistencia) > estado persistido que
-  // a página já carregou (props).
+  // Display priority: an action in progress in this session (hook) > reconciliation of a pending
+  // publication (reconciled) > consistency check (consistency) > persisted state the page already
+  // loaded (props).
   const displayStatus: string =
     hook.status !== "idle"
       ? hook.status
@@ -157,10 +157,10 @@ export function PublishOnChainPage({
     (reconciled?.status === "error" ? reconciled.message : null) ??
     (consistency && "reason" in consistency ? consistency.reason : null) ??
     (consistency?.status === "error" ? consistency.message : null);
-  // Distingue as duas causas possíveis de 'divergente' (ver onchain-actions.ts): com endereço já
-  // gravado, é drift de consistência (recuperável por verificarConsistencia, sem tocar em
-  // nenhuma transação); sem endereço, é uma falha de confirmarPublicacao que nunca chegou a
-  // confirmar (recuperável só por "Reprocessar").
+  // Tells apart the two possible causes of 'divergente' (see onchain-actions.ts): with an address
+  // already stored, it's consistency drift (recoverable by checkConsistency, without touching any
+  // transaction); without an address, it's a confirmPublication failure that never got to confirm
+  // (recoverable only by "Reprocess").
   const divergentIsConsistencyDrift = Boolean(displayContract);
 
   // ── Gate 1 — MetaMask detectada ────────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ export function PublishOnChainPage({
     detail: gateProvider.status === "rejected" ? tg.provider.rejected : null,
   };
 
-  // ── Gate 2 — rede Sepolia ───────────────────────────────────────────────────────────────
+  // ── Gate 2 — Sepolia network ────────────────────────────────────────────────────────────
   let networkDetail: string | null = null;
   if (networkGate.status === "rejected") {
     networkDetail = networkGate.reason === "nao_conectado" ? tg.network.notConnected : tg.network.wrongNetwork(networkGate.connectedChainId);
@@ -208,7 +208,7 @@ export function PublishOnChainPage({
   }
   const rowAuthorized: GateRow = { id: "authorized", label: tg.authorized.label, status: authorizedStatus, detail: authorizedDetail };
 
-  // ── Gate 5 — carteira conectada == issuers.wallet_address ──────────────────────────────
+  // ── Gate 5 — connected wallet == issuers.wallet_address ────────────────────────────────
   let ownershipDetail: string | null = null;
   if (ownershipGate.status === "rejected") {
     if (ownershipGate.reason === "sem_carteira_vinculada") ownershipDetail = tg.ownership.noLinkedWallet;
@@ -222,7 +222,7 @@ export function PublishOnChainPage({
     detail: ownershipDetail,
   };
 
-  // ── Gate 6 — termo de publicação (real a partir desta etapa) ───────────────────────────
+  // ── Gate 6 — publication terms (real from this step on) ────────────────────────────────
   const validData = data.name.trim().length > 0 && data.symbol.trim().length > 0 && data.series.trim().length > 0;
   const gate6Ok = accepted && validData;
   const rowTerm: GateRow = { id: "terms", label: tg.term.label, status: gate6Ok ? "ok" : "rejected", detail: gate6Ok ? null : tg.term.rejected };

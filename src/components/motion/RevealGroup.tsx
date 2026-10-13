@@ -8,10 +8,10 @@ const container: Variants = {
   visible: { transition: { staggerChildren: 0.12 } },
 };
 
-// Container que revela os filhos (RevealItem) em sequência ao entrar na
-// viewport — usado para grades de cards (passos, diferenciais etc.). Sempre
-// anima — decisão deliberada do usuário: não respeitamos mais
-// prefers-reduced-motion aqui (ver CLAUDE.md).
+// A container that reveals its children (RevealItem) in sequence when entering the
+// viewport — used for card grids (steps, highlights etc.). Always
+// animates — a deliberate user decision: we no longer respect
+// prefers-reduced-motion here (see CLAUDE.md).
 export function RevealGroup({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <motion.div

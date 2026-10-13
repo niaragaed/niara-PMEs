@@ -4,22 +4,22 @@ import { BadgeCheck } from "lucide-react";
 import { OfferingBanner } from "./OfertaBanner";
 import { useDictionary } from "@/lib/i18n/client";
 
-// Card de vitrine para uma oferta PME self-service (publicada pelo próprio emissor via
-// OfertaOrquestrador, ver CLAUDE.md "Tela /empresa/ofertas" → Fase 3) já confirmada on-chain —
-// irmã de PmesOnChainCard.tsx (as 10 legadas, empresa fictícia), mas deliberadamente um
-// componente separado em vez de generalizar o mesmo card com condicionais: os dados de empresa
-// aqui são REAIS (preenchidos pelo próprio emissor), nunca os campos fictícios do mock `Oferta`
-// (financeiro, indicadores fundamentalistas etc. — ver SelfServiceOfertaDetailPage.tsx).
+// Showcase card for a self-service SME offering (published by the issuer itself via
+// OfertaOrquestrador, see CLAUDE.md "/empresa/ofertas screen" → Phase 3) already confirmed
+// on-chain — a sibling of PmesOnChainCard.tsx (the 10 legacy ones, fictitious company), but
+// deliberately a separate component instead of generalizing the same card with conditionals: the
+// company data here is REAL (filled in by the issuer), never the fictitious fields of the
+// `Offering` mock (financials, fundamental indicators etc. — see SelfServiceOfertaDetailPage.tsx).
 //
-// Meta/preço/cotas SÃO mostrados aqui (diferente de uma versão anterior deste card, que omitia os
-// três por cautela) — são reais e seguros de mostrar sem leitura on-chain por card:
-// hardCapCents/sharePriceCents vêm de offerings.hard_cap_cents/share_price_cents, a mesma coluna
-// que confirmarPublicacao()/verificarConsistencia() (onchain-actions.ts) já conferem contra o
-// metaMaxima/precoPorCota minerados on-chain — para qualquer oferta com sync_status='confirmada',
-// este valor já bateu com a chain na hora da confirmação (e seguirá sendo checado a cada
-// reconciliação, ver "Reconciliação contínua" no CLAUDE.md). 1 unidade de MockBRL = 1 "real
-// equivalente" (comentário de UNIDADE_ON_CHAIN, src/lib/web3/gates.ts) — daí cents/100 → mBRL,
-// mesma conversão já usada nas mensagens de diff de verificarConsistencia().
+// Target/price/shares ARE shown here (unlike an earlier version of this card, which left all three
+// out out of caution) — they're real and safe to show without an on-chain read per card:
+// hardCapCents/sharePriceCents come from offerings.hard_cap_cents/share_price_cents, the same
+// column that confirmPublication()/checkConsistency() (onchain-actions.ts) already check against
+// the metaMaxima/precoPorCota mined on-chain — for any offering with sync_status='confirmada',
+// this value already matched the chain at confirmation time (and will keep being checked on each
+// reconciliation, see "Continuous reconciliation" in CLAUDE.md). 1 MockBRL unit = 1 "real
+// equivalent" (UNIT_ON_CHAIN's comment, src/lib/web3/gates.ts) — hence cents/100 → mBRL, the same
+// conversion already used in checkConsistency()'s diff messages.
 function formatMbrl(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 }

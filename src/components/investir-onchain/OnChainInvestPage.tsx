@@ -14,23 +14,22 @@ type OfferingOption = { key: string; label: string; proveniencia: string } & (
   | { rede: "solana-devnet"; offeringAddress: string }
 );
 
-/** Oferta do programa niara-pmes-solana, já lida no servidor (page.tsx). */
+/** An offering from the niara-pmes-solana program, already read on the server (page.tsx). */
 export type ServerSolanaOption = { address: string; company: string; open: boolean; opening: number };
 
-// Fase 4, sub-etapa 5.2 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md): o seletor passa a unir DUAS
-// origens de oferta — a lista legada (NEXT_PUBLIC_OFERTAS_ONCHAIN, 10 ofertas de reserva criadas
-// por script administrativo) e as ofertas self-service já confirmadas no Supabase
-// (`confirmedOfferings`, lida no servidor por page.tsx via loadConfirmedOnChainOfferings()).
-// Nenhuma das duas é "mais real" que a outra — toda a plataforma é demonstração, MockBRL sem
-// lastro para as duas. 🔴 Mas os dois lados NÃO compartilham o mesmo MockBRL — incidente real
-// corrigido (ver CLAUDE.md, "Tela /investir/onchain"): a afirmação anterior deste comentário
-// ("OfertaCaptacao.moeda() bate para ambas") nunca foi verificada linha a linha e estava errada.
-// As 10 ofertas legadas de fato compartilham um único MockBRL; as self-service usam o MockBRL
-// próprio do OfertaOrquestrador, diferente. Por isso cada oferta resolve seu próprio MockBRL
-// on-chain (ver RealOnChainInvestPanel/useOfertaOnChain/useOnChainActions), nunca uma constante
-// global — a única diferença que ESTE seletor precisa expor é a linha de proveniência do
-// conteúdo (empresa inventada à mão vs. dados que o próprio emissor preencheu), não uma
-// separação estrutural.
+// Phase 4, sub-step 5.2 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md): the selector now joins TWO
+// offering sources — the legacy list (NEXT_PUBLIC_OFERTAS_ONCHAIN, 10 backup offerings created by
+// an admin script) and the self-service offerings already confirmed in Supabase
+// (`confirmedOfferings`, read on the server by page.tsx via loadConfirmedOnChainOfferings()).
+// Neither is "more real" than the other — the whole platform is a demo, with unbacked MockBRL for
+// both. 🔴 But the two sides do NOT share the same MockBRL — a real incident, fixed (see
+// CLAUDE.md, "/investir/onchain screen"): this comment's previous claim ("OfertaCaptacao.moeda()
+// matches for both") was never checked line by line and was wrong. The 10 legacy offerings do
+// share a single MockBRL; the self-service ones use OfertaOrquestrador's own, different MockBRL.
+// That's why each offering resolves its own MockBRL on-chain (see
+// RealOnChainInvestPanel/useOfertaOnChain/useOnChainActions), never a global constant — the only
+// difference THIS selector needs to expose is the content's provenance line (a hand-made company
+// vs. data the issuer itself filled in), not a structural separation.
 function buildOptions(
   confirmedOfferings: ConfirmedOnChainOffering[],
   solanaOfferings: ServerSolanaOption[],
@@ -64,10 +63,10 @@ function buildOptions(
       : [],
   );
 
-  // Solana: a lista vem do próprio programa; as que têm linha confirmada no Supabase (publicadas
-  // pelo emissor no site) ganham o nome da empresa cadastrada, as demais (criadas pelo script de
-  // administração do niara-pmes-solana) são as empresas fictícias de demonstração, com o nome
-  // gravado on-chain.
+  // Solana: the list comes from the program itself; the ones with a confirmed row in Supabase
+  // (published by the issuer on the site) get the registered company's name, the others (created
+  // by the niara-pmes-solana admin script) are the fictitious demo companies, with the name
+  // stored on-chain.
   const selfServiceSolana = new Map(
     confirmedOfferings.filter((o) => o.rede === "solana-devnet").map((o) => [o.contractAddress, o]),
   );
@@ -109,10 +108,10 @@ export function OnChainInvestPage({
     setSelectedKey(event.target.value);
   }
 
-  // Sem nenhuma opção disponível (nem legada nem self-service confirmada), não há o que mostrar.
-  // Não existe mais um check de "MockBRL global configurado" aqui — cada oferta resolve o seu
-  // próprio MockBRL on-chain (ver RealOnChainInvestPanel), então a única coisa que pode faltar
-  // neste nível é a lista de ofertas em si.
+  // With no option available (neither legacy nor confirmed self-service), there's nothing to show.
+  // There's no longer a "global MockBRL configured" check here — each offering resolves its own
+  // MockBRL on-chain (see RealOnChainInvestPanel), so the only thing that can be missing at this
+  // level is the list of offerings itself.
   if (options.length === 0 || !selected) {
     return (
       <main className="flex flex-1 flex-col bg-military">

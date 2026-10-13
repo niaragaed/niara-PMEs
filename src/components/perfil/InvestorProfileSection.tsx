@@ -6,10 +6,10 @@ import { InvestorProfileResultCard } from "./InvestorProfileResultCard";
 import { useDictionary } from "@/lib/i18n/client";
 
 type InvestorProfileSectionProps = {
-  // true só na primeira visita a /perfil logo após criar a conta
-  // (?onboarding=1 vindo de /cadastro) — abre o questionário direto em vez
-  // do resultado padrão "Arrojado" e rola a seção até a viewport, já que
-  // ela não é a primeira da página.
+  // true only on the first visit to /perfil right after creating the account
+  // (?onboarding=1 coming from /cadastro) — opens the quiz directly instead
+  // of the default "Arrojado" result and scrolls the section into the viewport, since
+  // it isn't the first one on the page.
   openAutomatically?: boolean;
 };
 
@@ -22,15 +22,15 @@ export function InvestorProfileSection({ openAutomatically }: InvestorProfileSec
   useEffect(() => {
     if (openAutomatically) {
       sectionRef.current?.scrollIntoView({ block: "start" });
-      // Remove o ?onboarding=1 da URL depois de já ter aberto o
-      // questionário — sem isso, um F5 nesta mesma página reabriria o
-      // questionário do zero (o estado de "retaking" é recalculado a
-      // partir da prop a cada montagem).
+      // Removes ?onboarding=1 from the URL after the quiz has been
+      // opened — without this, an F5 on this same page would reopen the
+      // quiz from scratch (the "retaking" state is recomputed
+      // from the prop on every mount).
       const url = new URL(window.location.href);
       url.searchParams.delete("onboarding");
       window.history.replaceState(null, "", url);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- só na montagem
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- on mount only
   }, []);
 
   return (

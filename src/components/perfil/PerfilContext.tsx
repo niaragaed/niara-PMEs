@@ -3,8 +3,8 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_INVESTOR_PROFILE, type InvestorProfileResult } from "@/lib/investor-profile";
 
-// Estado só em memória (React), nunca em localStorage/sessionStorage — some
-// ao recarregar a página, como o resto da tela de perfil.
+// State only in memory (React), never in localStorage/sessionStorage — it's gone
+// when the page reloads, like the rest of the profile screen.
 type ProfileContextValue = {
   investorProfile: InvestorProfileResult;
   setInvestorProfile: (result: InvestorProfileResult) => void;

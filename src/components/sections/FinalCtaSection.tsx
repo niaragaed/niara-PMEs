@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Faixa CTA final, fundo verde-sálvia sólido — precisa sobrescrever a cor
-// de heading padrão (ink, definida globalmente) para ficar legível.
+// Final CTA band, solid sage background — needs to override the default heading
+// color (ink, defined globally) to be readable.
 export async function FinalCtaSection() {
   const dict = await getDictionary();
   return (

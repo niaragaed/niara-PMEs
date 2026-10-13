@@ -17,18 +17,18 @@ export async function generateMetadata(): Promise<Metadata> {
 };
 }
 
-// 60s (máximo do plano Hobby da Vercel) em vez do padrão de 10s — a leitura on-chain
-// (dentro de getMovimentacoes(), via getEventosOnChain/getResumoOnChain no <Suspense> abaixo)
-// escaneia uma janela de blocos que só cresce com o tempo e, sem NEXT_PUBLIC_SEPOLIA_RPC_URL
-// dedicada, sofre rate limit no RPC público; sem isto, a Vercel mata a função no meio da
-// execução (sem erro nenhum pro navegador, só a requisição pendurada para sempre) antes mesmo do
-// Suspense conseguir entregar o resto da página. Não substitui uma RPC dedicada — só evita o
-// pior caso.
+// 60s (the Vercel Hobby plan's maximum) instead of the default 10s — the on-chain read
+// (inside getTransactionsAndSummary(), via getEventsOnChain/getSummaryOnChain in the <Suspense>
+// below) scans a block window that only grows over time and, without a dedicated
+// NEXT_PUBLIC_SEPOLIA_RPC_URL, gets rate limited on the public RPC; without this, Vercel kills the
+// function mid-run (no error at all for the browser, just the request hanging forever) before the
+// Suspense even manages to deliver the rest of the page. Doesn't replace a dedicated RPC — it only
+// avoids the worst case.
 export const maxDuration = 60;
 
-// Área interna, não é o mesmo fluxo de /entrar (investidor/emissor) — ver
-// src/lib/auth/resolveSocio.ts. Autenticado mas fora da allowlist = acesso negado, sem
-// redirect (fica na própria página, mensagem clara).
+// Internal area, not the same flow as /entrar (investor/issuer) — see
+// src/lib/auth/resolveSocio.ts. Signed in but outside the allowlist = access denied, without a
+// redirect (stays on the page itself, with a clear message).
 export default async function Page() {
   const dict = await getDictionary();
   const { userId, email, authorized } = await resolvePartner();

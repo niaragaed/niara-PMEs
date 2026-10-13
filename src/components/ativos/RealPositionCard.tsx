@@ -1,21 +1,21 @@
 "use client";
 
-// Único cartão REAL dentro de /ativos (o resto da tela é 100% mock, ver AtivosPage.tsx) — sua
-// posição de verdade na oferta de demonstração em Sepolia, lida direto do contrato on-chain via
-// os mesmos hooks de src/lib/web3/hooks/useOfertaOnChain.ts usados em /investir/onchain. Nunca
-// entra nos cálculos de computeTotals/PortfolioSummary nem nas linhas de PositionsTable — mock e
-// real ficam sempre em superfícies separadas, nunca somados juntos.
+// The only REAL card inside /ativos (the rest of the screen is 100% mock, see AtivosPage.tsx) —
+// your actual position in the demo offering on Sepolia, read straight from the on-chain contract
+// via the same hooks in src/lib/web3/hooks/useOfertaOnChain.ts used in /investir/onchain. Never
+// goes into the computeTotals/PortfolioSummary calculations nor into the PositionsTable rows —
+// mock and real always stay on separate surfaces, never added together.
 //
-// Visualmente distinto de propósito (anel + selo sólido salmão), mesmo padrão já usado em
-// RealOfferCard.tsx (src/components/negociar/) para diferenciar oferta real de fictícia — aqui
-// adaptado ao cartão escuro (bg-panel) já usado no resto de /ativos, em vez do cartão branco de
-// /negociar.
+// Visually distinct on purpose (ring + solid salmon badge), the same pattern already used in
+// RealOfferCard.tsx (src/components/negociar/) to tell a real offering from a fictitious one —
+// here adapted to the dark card (bg-panel) already used in the rest of /ativos, instead of the
+// white card of /negociar.
 //
-// Simplificação deliberada: quando várias ofertas estão configuradas ao mesmo tempo
-// (NEXT_PUBLIC_OFERTAS_ONCHAIN, ver src/lib/web3/addresses.ts — demo presencial com várias
-// ofertas de reserva), este cartão sempre mostra a posição na PRIMEIRA da lista (índice 0,
-// padrão dos hooks) — não tenta adivinhar "qual oferta o usuário está demonstrando agora".
-// Quem quiser ver/trocar a oferta específica usa o seletor dentro de /investir/onchain.
+// Deliberate simplification: when several offerings are configured at the same time
+// (NEXT_PUBLIC_OFERTAS_ONCHAIN, see src/lib/web3/addresses.ts — an in-person demo with several
+// backup offerings), this card always shows the position in the FIRST one of the list (index 0,
+// the hooks' default) — it doesn't try to guess "which offering the user is demonstrating now".
+// Whoever wants to see/switch the specific offering uses the selector inside /investir/onchain.
 import Link from "next/link";
 import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
@@ -32,15 +32,15 @@ export function RealPositionCard() {
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 
-  // Continua sempre a primeira oferta da lista LEGADA (env var) — mesma simplificação
-  // deliberada de antes da Fase 4, sub-etapa 5.2: este cartão nunca tentou "adivinhar" qual
-  // oferta mostrar, e não é o lugar de decidir isso entre legado/self-service.
+  // Still always the first offering of the LEGACY list (env var) — the same deliberate
+  // simplification as before Phase 4, sub-step 5.2: this card never tried to "guess" which
+  // offering to show, and it isn't the place to decide that between legacy/self-service.
   const addresses = getOnChainAddresses()?.offerings[0] ?? null;
   const terms = useOnChainOfferingTerms(addresses);
   const position = useMyOnChainPosition(addresses);
 
-  // Sem os 3 endereços configurados, o cartão simplesmente não aparece — não há posição real
-  // para mostrar (mesma regra de "nunca quebra" de OnChainInvestPage.tsx).
+  // Without the 3 addresses configured, the card simply doesn't show up — there's no real
+  // position to show (the same "never breaks" rule as OnChainInvestPage.tsx).
   if (!terms.configured) return null;
 
   return (

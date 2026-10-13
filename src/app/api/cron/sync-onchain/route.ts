@@ -2,18 +2,18 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { getEventsOnChain } from "@/lib/web3/events";
 
-// Endpoint disparado pelo Vercel Cron (ver vercel.json) para manter o cache on-chain de /socios
-// sempre em dia, sem depender de alguém visitar a página. Reaproveita a MESMA função incremental
-// que a página já usa (getEventosOnChain) — ela já respeita o teto de blocos por execução
-// (MAX_BLOCOS_POR_EXECUCAO em events.ts), então mesmo com um backlog grande (ex.: cron fora do ar
-// por um tempo) esta rota nunca estoura o timeout: ela só avança o quanto der e, se sobrar,
-// a próxima execução do cron continua de onde parou.
+// Endpoint fired by Vercel Cron (see vercel.json) to keep the /socios on-chain cache up to date,
+// without depending on someone visiting the page. Reuses the SAME incremental function the page
+// already uses (getEventsOnChain) — it already respects the per-run block cap (the per-run limit
+// in events.ts), so even with a large backlog (e.g. the cron was down for a while) this route
+// never hits the timeout: it only advances as far as it can and, if anything is left, the next
+// cron run picks up where it stopped.
 export const maxDuration = 60;
 
 function authorized(request: Request): boolean {
   const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  // Sem CRON_SECRET configurado, recusa por padrão — nunca deixa a rota aberta sem querer.
+  // Without CRON_SECRET configured, refuses by default — never leaves the route open by accident.
   if (!secret) return false;
   return auth === `Bearer ${secret}`;
 }

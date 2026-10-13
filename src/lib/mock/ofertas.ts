@@ -1,8 +1,9 @@
-// Dados fictícios de demonstração para as telas /negociar (hub, categorias,
-// detalhe da oferta e boleta). Nenhuma empresa, CNPJ, valor financeiro ou
-// termo de oferta aqui é real — tudo é ilustrativo, escolhido só para ser
-// internamente coerente (ex.: metaCaptacao ≈ valorPorToken × quantidade).
-// Nenhuma promessa de retorno é feita: não há campo de rendimento/projeção.
+// Fictitious demo data for the /negociar screens (hub, categories,
+// offering detail and order ticket). No company, CNPJ, financial value or
+// offering term here is real — everything is illustrative, chosen only to be
+// internally consistent (e.g. fundraisingTarget ≈ valuePerToken × quantity).
+// No promise of return is made: there's no yield/projection field. Display text is written in
+// both languages next to the data (LocalizedText); company names are proper names and stay as they are.
 
 import type { TokenCategory } from "@/lib/mock/ativos";
 import type { LocalizedText } from "@/lib/i18n/locale";
@@ -23,10 +24,10 @@ export type MonthlyFinancials = {
   cash: number;
 };
 
-// Indicadores fundamentalistas (demonstração — ver `INDICADORES_DEMONSTRACAO`
-// abaixo). Estrutura em grupos, espelhando `ptBr.negociar.oferta.indicadores.
-// grupos` — cada chave de item aqui precisa ter a chave correspondente em
-// `itens` no dicionário i18n (nome + explicação do popover "?" vivem lá).
+// Fundamental indicators (demo — see `DEMO_INDICATORS`
+// below). Structured in groups, mirroring `dict.trade.offering.indicators.
+// groups` — every item key here must have the matching key in
+// `items` in the i18n dictionary (the name + the "?" popover explanation live there).
 export type FundamentalIndicatorValues = {
   valuation: {
     pe: number;
@@ -101,10 +102,10 @@ export type Offering = {
   simulatedPrice: number;
 };
 
-// Mesmo conjunto de indicadores fictícios para todas as ofertas nesta fase
-// (não há análise fundamentalista real de nenhuma empresa) — o campo
-// `indicadores` fica por oferta no tipo acima para permitir personalizar
-// valores por oferta no futuro sem mudar a modelagem.
+// The same set of fictitious indicators for every offering at this stage
+// (there's no real fundamental analysis of any company) — the
+// `indicators` field is per offering in the type above to allow customizing
+// values per offering in the future without changing the model.
 const DEMO_INDICATORS: FundamentalIndicatorValues = {
   valuation: {
     pe: 15.87,
@@ -150,11 +151,11 @@ const DEMO_INDICATORS: FundamentalIndicatorValues = {
   },
 };
 
-// Construtor determinístico (sem aleatoriedade) da série mensal de
-// receita/caixa de cada oferta a partir de um valor-base e uma taxa de
-// crescimento — evita autorar 60 números um a um, mantendo a mesma garantia
-// de coerência interna (série cresce suavemente até bater com os totais
-// anuais declarados em `financeiro`).
+// A deterministic (no randomness) builder of each offering's monthly
+// revenue/cash series from a base value and a growth
+// rate — avoids authoring 60 numbers one by one, keeping the same guarantee
+// of internal consistency (the series grows smoothly to match the annual totals
+// declared in `financial`).
 function buildMonthlySeries(baseRevenue: number, baseCash: number, growth: number): MonthlyFinancials[] {
   return Array.from({ length: 6 }, (_, index) => ({
     month: index,
@@ -163,12 +164,12 @@ function buildMonthlySeries(baseRevenue: number, baseCash: number, growth: numbe
   }));
 }
 
-// Termos das 10 ofertas PME que têm uma oferta real e ativa em Sepolia por trás (ver
-// src/lib/mock/ofertasOnChain.ts) — os números aqui são espelhados de
-// src/lib/web3/demoConstants.ts, os mesmos valores fixos das 10 ofertas reais, para que a
-// pré-visualização estática nunca discorde da leitura ao vivo do contrato (ver
-// RealOnChainInvestPanel.tsx). Campos que mudam com o tempo (estado, total arrecadado, prazo
-// exato) nunca vêm daqui — sempre de useOfertaOnChainTermos(), direto da chain.
+// Terms of the 10 SME offerings that have a real, active offering on Sepolia behind them (see
+// src/lib/mock/ofertasOnChain.ts) — the numbers here are mirrored from
+// src/lib/web3/demoConstants.ts, the same fixed values as the 10 real offerings, so that the
+// static preview never disagrees with the live read of the contract (see
+// RealOnChainInvestPanel.tsx). Fields that change over time (state, total raised, exact
+// deadline) never come from here — always from useOnChainOfferingTerms(), straight from the chain.
 function buildFixedOnChainTerms(): Offering["terms"] {
   return {
     tokenType: "equity",
@@ -700,8 +701,8 @@ export function getOfferingsByCategory(category: TokenCategory): Offering[] {
   return OFFERINGS.filter((offering) => offering.category === category);
 }
 
-// Vitrine do hub "Ativos e tokens": uma oferta de cada uma de três
-// categorias diferentes, para mostrar variedade sem repetir categoria.
+// The "Assets and tokens" hub showcase: one offering from each of three
+// different categories, to show variety without repeating a category.
 export const SHOWCASE_HUB_SLUGS = ["pme-padaria-bela-vista", "agro-cerrado-norte", "imo-residencial-aurora"];
 
 // The generic list of disclosure documents (disabled placeholders, the same for every offering —

@@ -2,7 +2,7 @@
 import type { OfferingNetwork } from "@/lib/web3/confirmedOfferings";
 import { useDictionary } from "@/lib/i18n/client";
 
-/** Selo da rede onde a oferta vive — sempre explícito, nunca implícito (mesma regra do Register). */
+/** Badge for the network where the offering lives — always explicit, never implied (same rule as Register). */
 export function NetworkBadge({ rede: network, background = "dark" }: { rede: OfferingNetwork; background?: "dark" | "light" }) {
   const dict = useDictionary();
   const t = dict.solana;

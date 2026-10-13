@@ -11,18 +11,18 @@ function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso));
 }
 
-// Card da PRÓPRIA oferta ativa do issuer logado, na categoria correspondente
-// (CategoryPage.tsx, seção "ofertasProprias" — visível só para o dono,
-// nunca para outros investidores). Mesmo layout visual de PmesOnChainCard.tsx
-// (banner + logo circular sobreposta, via OfertaBanner) para o dono
-// reconhecer como a própria oferta ficaria ao lado das 10 PMEs reais em
-// Sepolia — mas com um selo deliberadamente NEUTRO (nunca o anel salmão +
-// BadgeCheck das ofertas reais/on-chain): esta é uma oferta real no banco
-// (grava de verdade, aceita reserva de outros investidores em /investir),
-// mas sem nenhuma relação com blockchain. O selo existe para que o dono
-// nunca confunda esta pré-visualização com "Real — Sepolia" (REGRA DE
-// HONESTIDADE, aqui no sentido de não deixar dois conceitos reais
-// diferentes parecerem o mesmo tipo de "real").
+// Card for the signed-in issuer's OWN active offering, in the matching category
+// (CategoryPage.tsx, "ownOfferings" section — visible only to the owner,
+// never to other investors). The same visual layout as PmesOnChainCard.tsx
+// (banner + overlapping round logo, via OfferingBanner) so the owner
+// recognizes how their own offering would look next to the 10 real SMEs on
+// Sepolia — but with a deliberately NEUTRAL badge (never the salmon ring +
+// BadgeCheck of real/on-chain offerings): this is a real offering in the database
+// (it actually writes, accepts reservations from other investors in /investir),
+// but with no relation to blockchain. The badge exists so the owner
+// never mistakes this preview for "Real — Sepolia" (HONESTY
+// RULE, here in the sense of not letting two different real concepts
+// look like the same kind of "real").
 export async function MyOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
   const dict = await getDictionary();
   const t = dict.trade.myOfferingCard;

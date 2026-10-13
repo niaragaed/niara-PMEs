@@ -37,7 +37,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# estado local do harness do Claude Code (não é fonte do projeto)
+# local Claude Code harness state (not project source)
 /.claude/
 
 # typescript

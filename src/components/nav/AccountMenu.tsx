@@ -10,7 +10,7 @@ import { useDictionary } from "@/lib/i18n/client";
 function AccountAvatar({ account }: { account: HeaderAccount }) {
   if (account.role === "issuer" && account.logoUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image
+      // eslint-disable-next-line @next/next/no-img-element -- comes from the public Supabase Storage bucket, doesn't go through the next/image optimizer
       <img src={account.logoUrl} alt="" className="h-full w-full object-cover" />
     );
   }
@@ -18,13 +18,13 @@ function AccountAvatar({ account }: { account: HeaderAccount }) {
   return <Icon className="h-4 w-4 text-ink-muted" aria-hidden="true" />;
 }
 
-// Substitui o link estático "Entrar" do Header quando há sessão — mostra a
-// logo da empresa (issuer) ou um ícone genérico (investidor: a foto de
-// perfil dele é 100% local/simulada, nunca salva — ver AvatarUpload.tsx —
-// então não há nada persistido pra mostrar aqui com confiança entre
-// navegações). Mesmo padrão de interação de NavDropdown.tsx (Esc + clique
-// fora fecham), mas abre só no clique — é uma ação de conta, não navegação,
-// não faz sentido abrir no hover.
+// Replaces the Header's static "Sign in" link when there's a session — shows the
+// company's logo (issuer) or a generic icon (investor: their profile
+// photo is 100% local/simulated, never saved — see AvatarUpload.tsx —
+// so there's nothing persisted to show here reliably across
+// navigations). Same interaction pattern as NavDropdown.tsx (Esc + click
+// outside close it), but it only opens on click — it's an account action, not navigation,
+// so opening on hover makes no sense.
 export function AccountMenu({ account }: { account: HeaderAccount }) {
   const dict = useDictionary();
   const [open, setOpen] = useState(false);
@@ -54,9 +54,9 @@ export function AccountMenu({ account }: { account: HeaderAccount }) {
     };
   }, [open, closeNow]);
 
-  // router.refresh() é o que faz o Header (Server Component, ver
-  // headerAccount.ts) reconsultar a sessão e voltar a mostrar "Entrar" — sem
-  // isso, o avatar continuaria aparecendo até a próxima navegação normal.
+  // router.refresh() is what makes the Header (a Server Component, see
+  // headerAccount.ts) re-check the session and show "Sign in" again — without
+  // it, the avatar would keep showing until the next normal navigation.
   async function handleSignOut() {
     setPending(true);
     const supabase = createClient();

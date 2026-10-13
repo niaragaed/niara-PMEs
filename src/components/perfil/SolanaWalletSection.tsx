@@ -1,8 +1,8 @@
 "use client";
 
-// Carteira Solana (Phantom) no /perfil — par da WalletSection (MetaMask). Vincular exige assinar
-// uma mensagem (signMessage, sem transação e sem custo) que prova a posse da carteira — ver
-// src/app/perfil/solana-actions.ts. É esta carteira que pode publicar ofertas na Solana Devnet.
+// Solana wallet (Phantom) on /perfil — the counterpart of WalletSection (MetaMask). Linking requires
+// signing a message (signMessage, no transaction and no cost) that proves ownership of the wallet —
+// see src/app/perfil/solana-actions.ts. This is the wallet that can publish offerings on Solana Devnet.
 import { useState, useTransition } from "react";
 import { Link2, Link2Off, RefreshCw } from "lucide-react";
 import { utils } from "@anchor-lang/core";

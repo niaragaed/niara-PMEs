@@ -1,7 +1,7 @@
 import { getDictionary } from "@/lib/i18n/server";
 
-// Fallback do <Suspense> em page.tsx enquanto MovimentacoesSection busca a timeline (on-chain +
-// off-chain) — pode demorar sem uma RPC dedicada (NEXT_PUBLIC_SEPOLIA_RPC_URL), ver
+// The <Suspense> fallback in page.tsx while TransactionsSection fetches the timeline (on-chain +
+// off-chain) — it can take a while without a dedicated RPC (NEXT_PUBLIC_SEPOLIA_RPC_URL), see
 // src/lib/web3/events.ts.
 export async function TransactionsSkeleton() {
   const dict = await getDictionary();

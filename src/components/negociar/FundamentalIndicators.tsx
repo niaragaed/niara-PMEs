@@ -17,7 +17,7 @@ function formatIndicator(value: number, unit: "number" | "percent"): string {
 export function FundamentalIndicators({ indicators }: { indicators: FundamentalIndicatorValues }) {
   const dict = useDictionary();
   const t = dict.trade.offering.indicators;
-  // Só um popover de explicação aberto por vez, entre todos os grupos/cards.
+  // Only one explanation popover open at a time, across all groups/cards.
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   return (

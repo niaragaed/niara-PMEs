@@ -12,8 +12,8 @@ const ICONS: Record<string, LucideIcon> = {
   "/negociar/token-imobiliario": Home,
 };
 
-// 3.3 — Conheça os Tokens. Fundo pêssego CHEIO, título em on-salmon; cada
-// card linka para a rota-stub do token correspondente.
+// 3.3 — Meet the Tokens. SOLID peach background, title in on-salmon; each
+// card links to the matching token's route.
 export async function TokensSection() {
   const dict = await getDictionary();
   return (

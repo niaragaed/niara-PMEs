@@ -23,9 +23,9 @@ import { createClient } from "@/lib/supabase/client";
 import type { AuthError } from "@supabase/supabase-js";
 import { useDictionary } from "@/lib/i18n/client";
 
-// Mesma lista de UFS de PersonalDataSection.tsx (/perfil) — duplicada aqui
-// deliberadamente por ora, sem extrair um módulo compartilhado, para não
-// mexer no arquivo de /perfil (ver discussão de escopo desta parte).
+// The same list of states (UFs) as PersonalDataSection.tsx (/perfil) — duplicated here
+// deliberately for now, without extracting a shared module, so as not to
+// touch the /perfil file (see this part's scope discussion).
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
   "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
@@ -35,9 +35,9 @@ type Step = "account" | "type" | "data";
 
 type AccountErrors = { email?: string; password?: string };
 
-// Só cobre os erros que signUp pode retornar — mesmo léxico de erros de
-// EntrarPage.tsx (ptBr.entrar.erros), reaproveitado aqui em vez de duplicar
-// as strings (o signUp em si só existe nesta tela agora, ver EntrarPage.tsx).
+// Only covers the errors signUp can return — the same error vocabulary as
+// EntrarPage.tsx (dict.signIn.errors), reused here instead of duplicating
+// the strings (signUp itself only exists on this screen now, see EntrarPage.tsx).
 function mapSignUpError(error: AuthError, dict: Dictionary): string {
   const t = dict.signIn.errors;
   switch (error.code) {
@@ -108,15 +108,15 @@ function validate(data: FormData, personType: PersonType, dict: Dictionary): For
   return errors;
 }
 
-// Tela dedicada de criação de conta + cadastro completo — três passos:
-// (1) email/senha novos (signUp, só aqui — EntrarPage.tsx virou só login);
-// (2) tipo de cadastro; (3) dados completos -> /perfil. Página normal (sem
-// X/Esc de fechar): não pode dar pra sair no meio e cair logado sem
-// cadastro. `initialStep`/`email` vêm do server component (page.tsx): quem
-// já tem sessão (voltou pra completar um cadastro pela metade, ou entrou
-// via /entrar) pula direto pro passo "type", sem repetir o passo "account".
-// O vídeo à esquerda é o mesmo componente/conteúdo de /entrar (VideoCover),
-// persistente entre os três passos.
+// Dedicated account creation + full registration screen — three steps:
+// (1) new email/password (signUp, only here — EntrarPage.tsx became sign-in only);
+// (2) registration type; (3) full data -> /perfil. A normal page (no
+// X/Esc to close): it must not be possible to leave midway and end up signed in
+// without a registration. `initialStep`/`email` come from the server component (page.tsx):
+// whoever already has a session (came back to finish a half-done registration, or signed in
+// via /entrar) jumps straight to the "type" step, without repeating the "account" step.
+// The video on the left is the same component/content as /entrar (VideoCover),
+// persistent across the three steps.
 export function SignUpPage({ initialStep, email }: { initialStep: Step; email: string }) {
   const dict = useDictionary();
   const t = dict.signUp;
@@ -233,8 +233,8 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
             };
 
       const result = await createAccount(personType === "pf" ? "investor" : "issuer", payload);
-      // Sucesso redireciona dentro da própria action (redirect() lança e
-      // interrompe a execução) — só chega aqui em caso de erro.
+      // Success redirects inside the action itself (redirect() throws and
+      // stops execution) — it only gets here on an error.
       setServerState(result);
       if (result.fieldErrors) {
         setErrors((current) => ({ ...current, ...result.fieldErrors }));

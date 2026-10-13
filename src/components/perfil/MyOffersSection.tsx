@@ -12,10 +12,10 @@ function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso));
 }
 
-// Resumo, não-CRUD: só lê as ofertas REAIS da empresa logada (via
-// loadMyOfferingsSummary, filtrado por accountId no servidor) e linka para
-// /empresa/ofertas, onde criação/ativação/fechamento acontecem de verdade.
-// Só renderizado para issuers (ver PerfilPage) — investidor não tem ofertas.
+// A summary, not CRUD: it only reads the signed-in company's REAL offerings (via
+// loadMyOfferingsSummary, filtered by accountId on the server) and links to
+// /empresa/ofertas, where creation/activation/closing actually happen.
+// Only rendered for issuers (see PerfilPage) — an investor has no offerings.
 export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] }) {
   const dict = useDictionary();
   const t = dict.profile.myOfferings;

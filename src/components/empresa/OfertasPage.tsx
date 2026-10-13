@@ -23,16 +23,16 @@ export type OfferingRow = {
   opens_at: string;
   closes_at: string;
   created_at: string;
-  /** Publicação on-chain (Fase 3) — ortogonal a `status` (ver CLAUDE.md, "Tela /empresa/ofertas"):
-   * uma oferta publicada em Sepolia continua com status='draft' do ponto de vista do Supabase. */
+  /** On-chain publication (Phase 3) — orthogonal to `status` (see CLAUDE.md, "/empresa/ofertas screen"):
+   * an offering published on Sepolia stays status='draft' from Supabase's point of view. */
   sync_status: "nao_onchain" | "pendente" | "confirmada" | "divergente";
   contract_address: string | null;
   token_address: string | null;
-  /** Rede da publicação on-chain (migration 0017). */
+  /** Network of the on-chain publication (migration 0017). */
   rede: "sepolia" | "solana-devnet";
-  /** Soma de investments pagos/liquidados desta oferta — derivado, não vem da tabela offerings. */
+  /** Sum of this offering's paid/settled investments — derived, it doesn't come from the offerings table. */
   paidCents: number;
-  /** Refs (MOCK-TX-...) dos eventos tokens_issued já gravados para esta oferta. */
+  /** Refs (MOCK-TX-...) of the tokens_issued events already recorded for this offering. */
   tokenRefs: string[];
 };
 
@@ -60,11 +60,11 @@ const EMPTY_FORM: FormState = {
 
 const quotasFormatter = new Intl.NumberFormat("pt-BR");
 
-// Preview ao vivo do número de cotas — null enquanto qualquer um dos dois
-// valores estiver vazio/inválido/zero (nunca divide por zero). O aviso de
-// não-divisibilidade só aparece quando os dois valores estiverem preenchidos
-// e válidos; o CHECK do banco (offerings_share_price_cents_check) continua
-// sendo o backstop real, isto aqui é só UX.
+// Live preview of the number of shares — null while either of the two
+// values is empty/invalid/zero (never divides by zero). The
+// non-divisibility notice only shows up when both values are filled in
+// and valid; the database CHECK (offerings_share_price_cents_check) remains
+// the real backstop, this is just UX.
 function computeQuotasPreview(
   baseCapReais: string,
   sharePriceReais: string,
@@ -76,8 +76,8 @@ function computeQuotasPreview(
   return { quotas: baseCapCents / sharePriceCents, exact: baseCapCents % sharePriceCents === BigInt(0) };
 }
 
-// Mesmo padrão de PublicarOnChainPage.tsx — helper pequeno, duplicado em vez de extraído
-// para um módulo compartilhado (só 2 usos, ver convenção de não abstrair sem necessidade).
+// Same pattern as PublicarOnChainPage.tsx — a small helper, duplicated instead of extracted
+// into a shared module (only 2 uses, see the convention of not abstracting without need).
 function explorerAddress(network: OfferingRow["rede"], address: string) {
   if (network === "solana-devnet") return solanaExplorerAccountLink(address);
   return `https://sepolia.etherscan.io/address/${address}`;

@@ -42,12 +42,12 @@ export default async function Page({ params }: PageProps) {
     redirect("/entrar");
   }
 
-  // Mesmo gate de /investir para investidor. Exceção deliberada: o issuer
-  // DONO desta oferta específica (offerings.issuer_id === accountId) também
-  // pode ver a página — sem botão de reserva (ver OfferingDetailPage). Uma
-  // empresa que não é dona desta oferta continua redirecionada, mesmo
-  // padrão de /investir — isOfferingOwner só confirma "é dele?", nunca lista
-  // ofertas de outras empresas.
+  // Same investor gate as /investir. Deliberate exception: the issuer that
+  // OWNS this specific offering (offerings.issuer_id === accountId) can also
+  // see the page — without the reserve button (see OfferingDetailPage). A
+  // company that doesn't own this offering is still redirected, same
+  // pattern as /investir — isOfferingOwner only confirms "is it theirs?", it
+  // never lists other companies' offerings.
   const { role, accountId } = await resolveAccount();
   const isOwner = role === "issuer" && accountId !== null && (await isOfferingOwner(offeringId, accountId));
 

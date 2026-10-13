@@ -26,7 +26,7 @@ export function TextField({
   inputMode?: "text" | "numeric" | "tel" | "email" | "decimal";
   placeholder?: string;
   disabled?: boolean;
-  /** Segmento fixo e não editável exibido dentro do campo, antes do valor (ex.: "+55"). */
+  /** A fixed, non-editable segment shown inside the field, before the value (e.g. "+55"). */
   prefix?: string;
 }): ReactNode {
   const errorId = `${id}-error`;

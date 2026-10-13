@@ -17,8 +17,8 @@ const ICON_DIMS: Record<ChipSize, string> = {
   lg: "h-7 w-7",
 };
 
-// Ícone decorativo isolado, na cor da categoria — usado ao lado de um
-// título/heading visível (ex.: cabeçalho da categoria, card do hub).
+// A standalone decorative icon, in the category's color — used next to a
+// visible title/heading (e.g. the category header, the hub card).
 export function CategoryChip({ category: cat, size = "md" }: { category: TokenCategory; size?: ChipSize }) {
   const meta = CATEGORY_META[cat];
   const Icon = meta.icon;
@@ -34,9 +34,9 @@ export function CategoryChip({ category: cat, size = "md" }: { category: TokenCa
   );
 }
 
-// Chip + nome da categoria, como metadado visível de um card (ex.: vitrine
-// de ofertas) — diferente de CategoryChip, o texto aqui é a única indicação
-// da categoria, então não pode ser decorativo/aria-hidden.
+// Chip + category name, as visible metadata of a card (e.g. the offerings
+// showcase) — unlike CategoryChip, the text here is the only indication
+// of the category, so it can't be decorative/aria-hidden.
 export function CategoryBadge({ category, size = "sm" }: { category: TokenCategory; size?: "sm" | "md" }) {
   const dict = useDictionary();
   const meta = CATEGORY_META[category];

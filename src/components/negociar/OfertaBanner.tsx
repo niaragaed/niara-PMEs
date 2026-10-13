@@ -2,16 +2,16 @@ import Image from "next/image";
 import { CATEGORY_META } from "@/lib/categories";
 import type { TokenCategory } from "@/lib/mock/ativos";
 
-// `bannerUrl`/`logoUrl` vêm de duas origens diferentes: as 10 PMEs on-chain
-// (getOfertaAssetPaths, src/lib/negociar/ofertaAssets.ts) resolvem sempre um
-// path LOCAL em public/negociar/pmes/<slug>/, que o next/image otimiza sem
-// nenhuma configuração extra; já o banner/logo do emissor cadastrado (0010/
-// 0011, issuerLogoUrl/issuerBannerUrl) é uma URL REMOTA do bucket público do
-// Supabase Storage — usar next/image nela exigiria configurar
-// `images.remotePatterns` em next.config.ts, que este projeto deliberadamente
-// não tem (mesmo padrão de LogoUpload.tsx/RealOfferCard.tsx: conteúdo de
-// Storage sempre via <img> puro, nunca next/image). Detectar por prefixo
-// http(s) evita duplicar o componente só por causa da origem da imagem.
+// `bannerUrl`/`logoUrl` come from two different sources: the 10 on-chain SMEs
+// (getOfferingAssetPaths, src/lib/negociar/ofertaAssets.ts) always resolve a
+// LOCAL path in public/negociar/pmes/<slug>/, which next/image optimizes with no
+// extra configuration; the registered issuer's banner/logo (0010/
+// 0011, issuerLogoUrl/issuerBannerUrl), on the other hand, is a REMOTE URL from the public
+// Supabase Storage bucket — using next/image on it would require configuring
+// `images.remotePatterns` in next.config.ts, which this project deliberately
+// doesn't have (same pattern as LogoUpload.tsx/RealOfferCard.tsx: Storage content
+// always via a plain <img>, never next/image). Detecting by the http(s)
+// prefix avoids duplicating the component just because of the image's source.
 function isRemoteUrl(url: string): boolean {
   return url.startsWith("http://") || url.startsWith("https://");
 }
@@ -38,13 +38,13 @@ const PLACEHOLDER_ICON_DIMS: Record<OfferingBannerSize, string> = {
   hero: "h-14 w-14",
 };
 
-// Banner de foto + logo circular sobreposto de uma oferta — usado tanto no card da grade PMEs
-// (PmesOnChainCard.tsx, size="card") quanto no topo de qualquer página de detalhe de oferta
-// (OfertaDetailPage.tsx, size="hero", todas as categorias). `bannerUrl`/`logoUrl` já vêm
-// resolvidos no servidor (ver src/lib/negociar/ofertaAssets.ts) — ficam `null` quando não há
-// arquivo real (hoje só as 10 ofertas PMEs reais em Sepolia têm fotos geradas no Gemini; as
-// outras categorias nunca têm), caso em que mostra um placeholder com os mesmos tokens de
-// cor/ícone já usados por CategoryChip/CategoryBadge para a categoria da própria oferta.
+// An offering's photo banner + overlapping round logo — used both in the SME grid card
+// (PmesOnChainCard.tsx, size="card") and at the top of any offering detail page
+// (OfertaDetailPage.tsx, size="hero", all categories). `bannerUrl`/`logoUrl` come already
+// resolved on the server (see src/lib/negociar/ofertaAssets.ts) — they're `null` when there's no
+// real file (today only the 10 real SME offerings on Sepolia have photos generated with Gemini;
+// the other categories never do), in which case it shows a placeholder with the same color/icon
+// tokens already used by CategoryChip/CategoryBadge for the offering's own category.
 export function OfferingBanner({
   bannerUrl,
   logoUrl,
@@ -68,7 +68,7 @@ export function OfferingBanner({
     >
       {bannerUrl ? (
         isRemoteUrl(bannerUrl) ? (
-          // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image (ver comentário acima)
+          // eslint-disable-next-line @next/next/no-img-element -- comes from the public Supabase Storage bucket, doesn't go through the next/image optimizer (see the comment above)
           <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
         ) : (
           <Image src={bannerUrl} alt="" fill sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover" />
@@ -84,7 +84,7 @@ export function OfferingBanner({
       >
         {logoUrl ? (
           isRemoteUrl(logoUrl) ? (
-            // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image (ver comentário acima)
+            // eslint-disable-next-line @next/next/no-img-element -- comes from the public Supabase Storage bucket, doesn't go through the next/image optimizer (see the comment above)
             <img src={logoUrl} alt={`${tradeName} — logo`} className="h-full w-full object-cover" />
           ) : (
             <Image src={logoUrl} alt={`${tradeName} — logo`} fill sizes="80px" className="object-cover" />

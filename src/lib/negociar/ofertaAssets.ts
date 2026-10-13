@@ -7,12 +7,12 @@ export type OfferingAssetPaths = {
   logoUrl: string | null;
 };
 
-// Só chamado de Server Components (page.tsx / CategoryPage.tsx / HubPage.tsx) — fs.existsSync
-// não roda em "use client". Convenção de caminho: public/negociar/pmes/<slug>/banner.jpg (foto,
-// recomendado ~3:1) e logo.png (selo circular, com transparência — o recorte circular é feito
-// via CSS, não precisa vir pronto no arquivo). Soltar os arquivos reais (gerados no Gemini) nessas
-// pastas é suficiente para trocar o placeholder pela imagem de verdade — nenhuma mudança de
-// código, só um novo commit/deploy (public/ é empacotado no build, não é lido em runtime).
+// Only called from Server Components (page.tsx / CategoryPage.tsx / HubPage.tsx) — fs.existsSync
+// doesn't run in "use client". Path convention: public/negociar/pmes/<slug>/banner.jpg (a photo,
+// ~3:1 recommended) and logo.png (a round badge, with transparency — the round crop is done
+// via CSS, it doesn't need to come ready in the file). Dropping the real files (generated with
+// Gemini) into these folders is enough to swap the placeholder for the real image — no code
+// change, just a new commit/deploy (public/ is bundled in the build, it isn't read at runtime).
 export function getOfferingAssetPaths(slug: string): OfferingAssetPaths {
   const dir = path.join(process.cwd(), "public", "negociar", "pmes", slug);
   const bannerFsPath = path.join(dir, "banner.jpg");

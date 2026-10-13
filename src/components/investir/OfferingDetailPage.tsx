@@ -149,7 +149,7 @@ export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffe
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-panel-border bg-panel">
               {offering.issuer.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image
+                // eslint-disable-next-line @next/next/no-img-element -- comes from the public Supabase Storage bucket, doesn't go through the next/image optimizer
                 <img src={offering.issuer.logoUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <Building2 className="h-6 w-6 text-on-military-muted" aria-hidden="true" />

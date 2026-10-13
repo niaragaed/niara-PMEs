@@ -1,7 +1,7 @@
-// Registry que escolhe, por variável de ambiente, qual implementação de
-// cada porta (src/lib/ports.ts) o resto do app usa. Sem a env definida (ou
-// com um valor desconhecido), o default é sempre o mock — nunca falha
-// "silenciosamente" para uma implementação real por engano.
+// Registry that picks, by environment variable, which implementation of
+// each port (src/lib/ports.ts) the rest of the app uses. Without the env set (or
+// with an unknown value), the default is always the mock — it never falls back
+// "silently" to a real implementation by mistake.
 import { mockChainRegistry, mockKycProvider, mockPaymentGateway } from "./mocks";
 import type { ChainRegistry, KycProvider, PaymentGateway } from "./ports";
 

@@ -7,11 +7,11 @@ import type { Offering } from "@/lib/mock/ofertas";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 import { intlLocale, localize, type Locale } from "@/lib/i18n/locale";
 
-// Duas origens na mesma vitrine (ver CLAUDE.md "Fase 4" → unificação da vitrine PMEs): as 10
-// legadas (empresa fictícia, PmesOnChainCard) e as self-service já confirmadas on-chain (dados
-// reais do emissor, SelfServicePmesCard). União discriminada por `origin` em vez de forçar os
-// dois formatos num tipo só — os dados self-service não têm (nem deveriam ganhar) os campos
-// fictícios do mock `Oferta` (financeiro, indicadores fundamentalistas etc.).
+// Two sources in the same showcase (see CLAUDE.md "Phase 4" → SME showcase unification): the 10
+// legacy ones (fictitious company, PmesOnChainCard) and the self-service ones already confirmed
+// on-chain (the issuer's real data, SelfServicePmesCard). A union discriminated by `origin`
+// instead of forcing both shapes into one type — the self-service data doesn't have (nor should
+// it get) the fictitious fields of the `Offering` mock (financials, fundamental indicators etc.).
 export type SmesCardData =
   | { origin: "legado"; offering: Offering; bannerUrl: string | null; logoUrl: string | null }
   | {
@@ -35,12 +35,13 @@ function getKey(item: SmesCardData): string {
   return item.origin === "legado" ? item.offering.slug : item.id;
 }
 
-// Filtro por setor da vitrine de Token PMEs (legadas + self-service — ver CategoryPage.tsx).
-// `bannerUrl`/`logoUrl` já vêm resolvidos do servidor — este componente só filtra a lista já
-// pronta, client-side (poucos itens, não justifica nova consulta). As opções vêm sempre dos
-// setores que já existem em `items`, nunca uma lista fixa — evita desalinhar do dado real se uma
-// oferta trocar de setor no futuro. Itens sem setor (self-service que não preencheu) nunca geram
-// um botão de filtro vazio, mas continuam aparecendo na vitrine sem filtro nenhum selecionado.
+// Sector filter for the SME Token showcase (legacy + self-service — see CategoryPage.tsx).
+// `bannerUrl`/`logoUrl` come already resolved from the server — this component only filters the
+// ready list, client-side (few items, not worth a new query). The options always come from the
+// sectors that already exist in `items`, never a fixed list — avoids drifting from the real data
+// if an offering changes sector in the future. Items without a sector (self-service that didn't
+// fill it in) never produce an empty filter button, but still show up in the showcase when no
+// filter is selected.
 export function SmesSectorFilter({ items }: { items: SmesCardData[] }) {
   const dict = useDictionary();
   const locale = useLocale();

@@ -8,9 +8,9 @@ function formatToken(valueWei: bigint, decimals: number, symbol: string): string
   return `${Number(formatUnits(valueWei, decimals)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} ${symbol}`;
 }
 
-// Resumo agregado acima da timeline única — os mesmos números que antes viviam em duas seções
-// separadas (resumo on-chain + resumo mock) agora ficam lado a lado, já que a tabela abaixo não
-// separa mais por origem.
+// Aggregate summary above the single timeline — the same numbers that used to live in two separate
+// sections (on-chain summary + mock summary) now sit side by side, since the table below no
+// longer splits by origin.
 export async function SummaryCards({ summary }: { summary: TransactionsSummary }) {
   const dict = await getDictionary();
   const t = dict.partners;

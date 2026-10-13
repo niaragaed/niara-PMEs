@@ -5,10 +5,10 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import type { NavItem } from "@/lib/nav-items";
 
-// Painel flutuante do dropdown (desktop). Abre no hover e no foco/clique;
-// fecha com Escape, clique fora, ou quando o foco sai do componente. O
-// fechamento por hover tem um pequeno atraso para o mouse poder cruzar o
-// vão entre o botão e o painel sem o menu sumir no meio do caminho.
+// The dropdown's floating panel (desktop). Opens on hover and on focus/click;
+// closes with Escape, a click outside, or when focus leaves the component.
+// Closing on hover has a small delay so the mouse can cross the
+// gap between the button and the panel without the menu vanishing halfway.
 export function NavDropdown({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

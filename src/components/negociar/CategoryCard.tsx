@@ -4,8 +4,8 @@ import { CATEGORY_META } from "@/lib/categories";
 import type { TokenCategory } from "@/lib/mock/ativos";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Card branco de categoria no hub "Ativos e tokens" — chip com ícone na cor
-// da categoria, nome, 1 linha de descrição e link para a página da categoria.
+// White category card on the "Assets and tokens" hub — a chip with the icon in the
+// category's color, the name, a one-line description and a link to the category page.
 export async function CategoryCard({ category }: { category: TokenCategory }) {
   const dict = await getDictionary();
   const meta = CATEGORY_META[category];

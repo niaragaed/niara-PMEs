@@ -1,17 +1,17 @@
 "use client";
 
-// Fase 3, sub-etapa 4 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — dados que viram argumentos da
-// transação (nome/símbolo/série do token, nunca persistidos no Supabase — a chain é a fonte
-// deles a partir daqui) + o termo de honestidade (gate 6). Componente controlado: todo estado
-// vive no pai (PublicarOnChainPage), este arquivo só recebe/edita valores e nunca decide
-// sozinho se o gate passa.
+// Phase 3, sub-step 4 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — data that becomes transaction
+// arguments (the token's name/symbol/series, never persisted in Supabase — the chain is their
+// source from here on) + the honesty terms (gate 6). A controlled component: all state lives in
+// the parent (PublicarOnChainPage), this file only receives/edits values and never decides on its
+// own whether the gate passes.
 import type { ChangeEvent } from "react";
 import { TextField } from "@/components/perfil/FormField";
 import { useDictionary } from "@/lib/i18n/client";
 
 export type DataToken = { name: string; symbol: string; series: string };
 
-/** Textos do formulário e do termo — os da Sepolia por padrão; a Solana passa os seus. */
+/** Copy for the form and the terms — Sepolia's by default; Solana passes its own. */
 export type TermTexts = {
   form: { title: string; notice: string; name: string; symbol: string; series: string };
   termText: { title: string; intro: string; items: readonly string[]; checkbox: string };

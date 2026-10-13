@@ -1,21 +1,20 @@
-// Preenche o cache incremental de eventos on-chain (onchain_events_cache/onchain_sync_state,
-// ver supabase/migrations/0012_onchain_events_cache.sql e src/lib/web3/events.ts) de uma vez só,
-// escaneando desde o bloco de deploy — a leitura "cara" que antes acontecia na primeira visita a
-// /socios depois de qualquer redeploy, e que sozinha já estourava o timeout de 60s da função
-// serverless da Vercel. Rodar este script localmente (sem esse teto) evita que esse custo caia
-// em cima de uma requisição HTTP de verdade. Chamadas seguintes de getEventosOnChain() só
-// escaneiam o que for novo desde o último bloco salvo aqui.
+// Fills the incremental on-chain event cache (onchain_events_cache/onchain_sync_state,
+// see supabase/migrations/0012_onchain_events_cache.sql and src/lib/web3/events.ts) in one go,
+// scanning from the deploy block — the "expensive" read that used to happen on the first visit to
+// /socios after any redeploy, and that alone already blew the Vercel serverless function's 60s
+// timeout. Running this script locally (without that cap) keeps that cost from landing on a real
+// HTTP request. Subsequent getEventsOnChain() calls only scan what's new since the last block
+// saved here.
 //
-// Não reaproveita src/lib/web3/events.ts nem src/lib/supabase/admin.ts diretamente — os dois
-// importam "server-only", que sob Node puro (fora do bundler do Next, como aqui via tsx) lança
-// incondicionalmente (mesmo gotcha já documentado em scripts/seed-demo.ts). Em vez disso, usa
-// src/lib/web3/eventsCore.ts (núcleo puro, sem "server-only", extraído justamente para ser
-// reaproveitado por este script) e monta o client admin do Supabase manualmente, como
-// seed-demo.ts já faz.
+// Doesn't reuse src/lib/web3/events.ts nor src/lib/supabase/admin.ts directly — both import
+// "server-only", which under plain Node (outside Next's bundler, as here via tsx) throws
+// unconditionally (the same gotcha already documented in scripts/seed-demo.ts). Instead, it uses
+// src/lib/web3/eventsCore.ts (the pure core, without "server-only", extracted precisely to be
+// reused by this script) and builds the Supabase admin client by hand, as seed-demo.ts already does.
 //
-// Uso: npm run backfill:onchain (lê .env.local; precisa de NEXT_PUBLIC_SUPABASE_URL,
-// SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_MOCKBRL_ADDRESS e NEXT_PUBLIC_OFERTAS_ONCHAIN
-// apontando pro projeto/contratos certos — os mesmos já usados pelo app).
+// Usage: npm run backfill:onchain (reads .env.local; needs NEXT_PUBLIC_SUPABASE_URL,
+// SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_MOCKBRL_ADDRESS and NEXT_PUBLIC_OFERTAS_ONCHAIN
+// pointing at the right project/contracts — the same ones already used by the app).
 
 import { config } from "dotenv";
 config({ path: ".env.local" });

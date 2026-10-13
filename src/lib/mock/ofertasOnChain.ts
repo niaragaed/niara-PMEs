@@ -1,8 +1,8 @@
-// ORDEM EXATA das 10 ofertas reais em Sepolia — a POSIÇÃO de cada slug nesta lista é o índice
-// usado em NEXT_PUBLIC_OFERTAS_ONCHAIN (ver src/lib/web3/addresses.ts). Nunca reordenar esta
-// lista sem também reordenar aquela variável de ambiente (e vice-versa) — não há verificação
-// automática entre os dois lados, só esta lista como ponto único de verdade no frontend. Cada
-// slug precisa existir em `OFERTAS` (src/lib/mock/ofertas.ts) com `categoria === "pmes"`.
+// The EXACT ORDER of the 10 real offerings on Sepolia — the POSITION of each slug in this list is
+// the index used in NEXT_PUBLIC_OFERTAS_ONCHAIN (see src/lib/web3/addresses.ts). Never reorder this
+// list without also reordering that environment variable (and vice versa) — there's no automatic
+// check between the two sides, only this list as the single source of truth on the frontend. Each
+// slug must exist in `OFFERINGS` (src/lib/mock/ofertas.ts) with `category === "pmes"`.
 export const ONCHAIN_SMES_SLUGS_IN_ORDER: readonly string[] = [
   "pme-padaria-bela-vista",
   "pme-clinica-vitalis",
@@ -32,7 +32,7 @@ if (process.env.NODE_ENV !== "production") {
     );
   }
 
-  // A checagem contra OFERTAS (categoria === "pmes" para cada slug) fica em ofertas.ts, não
-  // aqui — importar OFERTAS neste módulo criaria um ciclo (ofertas.ts usa
-  // getOnChainIndexBySlug indiretamente via a UI, não precisa deste arquivo para se validar).
+  // The check against OFFERINGS (category === "pmes" for each slug) lives in ofertas.ts, not
+  // here — importing OFFERINGS in this module would create a cycle (ofertas.ts uses
+  // getOnChainIndexBySlug indirectly via the UI, it doesn't need this file to validate itself).
 }

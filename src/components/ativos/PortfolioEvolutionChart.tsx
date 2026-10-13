@@ -11,9 +11,9 @@ type TooltipEntry = {
   name?: string | number;
 };
 
-// Tipo próprio em vez dos genéricos do Recharts (`TooltipProps<...>`) —
-// evita conflitos de variância entre o tipo esperado por `content` e o
-// componente customizado.
+// Own type instead of Recharts' generics (`TooltipProps<...>`) —
+// avoids variance conflicts between the type expected by `content` and the
+// custom component.
 type ChartTooltipProps = {
   active?: boolean;
   label?: string | number;

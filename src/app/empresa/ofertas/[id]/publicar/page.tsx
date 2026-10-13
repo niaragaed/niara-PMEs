@@ -10,18 +10,18 @@ import { createClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n/server";
 
-// Mesmos três tetos travados no banco (supabase/migrations/0001_core.sql: cap_le_15m,
-// additional_lot, window_le_180d) e de novo no próprio OfertaOrquestrador — a Res. 88 é checada
-// duas vezes, em dois sistemas, por desenho (a chain não confia cegamente no que o Supabase
-// mandou). Espelhados aqui só para o gate de pré-validação abaixo; nunca a fonte de verdade (essa
-// é a chain, que quem realmente vai rejeitar a transação).
+// The same three caps locked in the database (supabase/migrations/0001_core.sql: cap_le_15m,
+// additional_lot, window_le_180d) and again in OfertaOrquestrador itself — Res. 88 is checked
+// twice, in two systems, by design (the chain doesn't blindly trust what Supabase sent). Mirrored
+// here only for the pre-validation gate below; never the source of truth (that's the chain, which
+// is what actually rejects the transaction).
 const MAX_CAP_CENTS = 1_500_000_000; // R$15.000.000
 const MAX_DEADLINE_DAYS = 180;
 
-// Fase 3 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — Server Component: valida dono +
-// elegibilidade (status), lê a carteira vinculada (issuers.wallet_address) e os dados que vão
-// virar argumentos da transação, entregando tudo pronto para o Client Component. Nenhuma
-// escrita acontece aqui.
+// Phase 3 (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — Server Component: checks owner +
+// eligibility (status), reads the linked wallet (issuers.wallet_address) and the data that will
+// become the transaction's arguments, handing everything ready to the Client Component. No write
+// happens here.
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getDictionary();
   return {
@@ -60,9 +60,9 @@ export default async function Page({
 
   const admin = createAdminClient();
 
-  // Lista branca explícita — mesma regra de ouro do resto do projeto (nunca select('*')).
-  // base_cap_cents entra aqui só para o gate de limites da Res. 88 abaixo (lote adicional é
-  // hard_cap_cents em relação a base_cap_cents, não um valor absoluto).
+  // Explicit allowlist — the same golden rule as the rest of the project (never select('*')).
+  // base_cap_cents comes in only for the Res. 88 limits gate below (the additional lot is
+  // hard_cap_cents relative to base_cap_cents, not an absolute value).
   const { data: offering } = await admin
     .from("offerings")
     .select(
@@ -108,15 +108,14 @@ export default async function Page({
     (new Date(offering.closes_at as string).getTime() - new Date(offering.opens_at as string).getTime()) / MS_PER_DAY,
   );
 
-  // Gate de pré-validação (Fase 3, correção pós-incidente — ver CLAUDE.md, "Tela /empresa/ofertas"):
-  // os três limites da Res. 88 são conhecidos ANTES de qualquer assinatura, sem precisar de
-  // nenhuma leitura on-chain — checar aqui evita o emissor gastar gás numa transação condenada
-  // (incidente real: uma oferta com lote adicional de ~500.000% contra o limite de 25% chegou a
-  // ser assinada e revertida em Sepolia antes desta checagem existir). Só bloqueia enquanto a
-  // oferta ainda não tem NENHUMA tentativa registrada (`sync_status === 'nao_onchain'`) — uma
-  // oferta já `pendente`/`divergente` precisa continuar chegando em PublicarOnChainPage.tsx para a
-  // reconciliação normal (confirmarPublicacao) rodar e gravar o motivo decodificado do revert,
-  // nunca ficar presa atrás deste bloqueio estático.
+  // Pre-validation gate (Phase 3, post-incident fix — see CLAUDE.md, "/empresa/ofertas screen"):
+  // the three Res. 88 limits are known BEFORE any signature, without any on-chain read —
+  // checking here keeps the issuer from spending gas on a doomed transaction (real incident: an
+  // offering with an additional lot of ~500,000% against the 25% limit got signed and reverted on
+  // Sepolia before this check existed). It only blocks while the offering has NO recorded attempt
+  // yet (`sync_status === 'nao_onchain'`) — an offering already `pendente`/`divergente` must keep
+  // reaching PublicarOnChainPage.tsx so the normal reconciliation (confirmPublication) runs and
+  // records the decoded revert reason, never stuck behind this static block.
   const baseCapCents = offering.base_cap_cents as number;
   const hardCapCents = offering.hard_cap_cents as number;
   const maxAllowedLotCents = baseCapCents + Math.floor(baseCapCents / 4);
@@ -155,16 +154,17 @@ export default async function Page({
     }
   }
 
-  // CNPJ nunca vai ao cliente em texto — só o hash (bytes32), calculado aqui no servidor. O
-  // valor exato do formato (com ou sem pontuação) não importa: a única propriedade exigida é
-  // ser determinístico e não reversível a partir da chain, não bater com um formato canônico
-  // externo específico.
+  // The CNPJ never goes to the client as text — only its hash (bytes32), computed here on the
+  // server. The exact format (with or without punctuation) doesn't matter: the only required
+  // property is being deterministic and not reversible from the chain, not matching a specific
+  // external canonical format.
   const cnpjRef = keccak256(toHex(issuer?.tax_id ?? ""));
 
   const company = (issuer?.trade_name as string | null) ?? (issuer?.legal_name as string) ?? "";
 
-  // Rede (migration 0017): com tentativa registrada ou publicação gravada, a rede é a da linha e não
-  // muda mais. Sem nenhuma ('nao_onchain'), o emissor escolhe — `?rede=solana` abre a Solana.
+  // Network (migration 0017): with an attempt recorded or a publication stored, the network is the
+  // row's and no longer changes. With none ('nao_onchain'), the issuer chooses — `?rede=solana`
+  // opens Solana.
   const hasPublication = offering.sync_status !== "nao_onchain";
   const onSolana = hasPublication ? offering.rede === "solana-devnet" : chosenNetwork === "solana";
 

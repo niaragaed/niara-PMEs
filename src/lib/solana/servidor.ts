@@ -1,15 +1,15 @@
 import "server-only";
 
-// Leituras da Solana feitas NO SERVIDOR para conferir uma publicação self-service — equivalente da
-// parte on-chain de src/app/empresa/ofertas/onchain-actions.ts (Sepolia).
+// Solana reads done ON THE SERVER to check a self-service publication — the equivalent of the
+// on-chain part of src/app/empresa/ofertas/onchain-actions.ts (Sepolia).
 //
-// Mesma regra de ouro do lado EVM: nada aqui confia no que o cliente diz. A autenticidade da
-// publicação sai de duas leituras independentes da própria rede:
-//   1. o evento `OfertaCriada` nos logs da transação, aceito SÓ quando quem estava executando no
-//      momento do "Program data:" era o programa niara-pmes-solana (pilha de invoke) — outro
-//      programa não consegue forjar um evento citando o nosso endereço;
-//   2. a conta da oferta, lida direto da rede, com dono = o programa (o runtime da Solana só deixa o
-//      próprio programa criar e escrever contas que ele possui).
+// Same golden rule as the EVM side: nothing here trusts what the client says. The publication's
+// authenticity comes from two independent reads of the network itself:
+//   1. the `OfertaCriada` event in the transaction logs, accepted ONLY when whatever was executing
+//      at the moment of the "Program data:" was the niara-pmes-solana program (invoke stack) —
+//      another program can't forge an event citing our address;
+//   2. the offering account, read straight from the network, with owner = the program (the Solana
+//      runtime only lets the program itself create and write the accounts it owns).
 import { PublicKey } from "@solana/web3.js";
 import { solanaConnection, normalizeOffering, smesProgram, type SolanaOffering } from "./program";
 import { SMES_SOLANA_PROGRAM_ID } from "./config";
@@ -34,7 +34,7 @@ export type PublicationTxRead =
   | { status: "failed"; reason: string }
   | { status: "ok"; events: OfferingCreatedEvent[]; blockTime: number | null };
 
-/** "Program data:" emitidos pelo NOSSO programa (topo da pilha de invoke no momento do log). */
+/** "Program data:" lines emitted by OUR program (the top of the invoke stack at the time of the log). */
 function programData(logs: string[]): string[] {
   const id = SMES_SOLANA_PROGRAM_ID.toBase58();
   const stack: string[] = [];
@@ -45,7 +45,7 @@ function programData(logs: string[]): string[] {
       stack.push(invoke[1]);
       continue;
     }
-    // Ancorado num endereço base58: "Program log: success…" não pode desempilhar.
+    // Anchored on a base58 address: "Program log: success…" must not pop the stack.
     if (/^Program [1-9A-HJ-NP-Za-km-z]{32,44} (success|failed)/.test(line)) {
       stack.pop();
       continue;
@@ -64,9 +64,9 @@ export async function readPublicationTx(signature: string, messages: SolanaError
   const tx = await connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
 
   if (!tx) {
-    // Distingue "ainda não chegou" de "nunca vai chegar": sem status nenhum E com o blockhash da
-    // transação já vencido, ela não entra mais na rede. Quem decide o que fazer com isso é o
-    // chamador (ver confirmarPublicacaoSolana).
+    // Tells "hasn't arrived yet" apart from "will never arrive": with no status at all AND the
+    // transaction's blockhash already expired, it won't land on the network anymore. What to do
+    // with that is up to the caller (see confirmPublicationSolana).
     const status = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
     return { status: "not-found", alreadyExpired: status.value === null };
   }
@@ -104,12 +104,12 @@ export async function readPublicationTx(signature: string, messages: SolanaError
   return { status: "ok", events, blockTime: tx.blockTime ?? null };
 }
 
-/** Altura de bloco atual da rede — compara com o lastValidBlockHeight de uma tentativa. */
+/** The network's current block height — compared with an attempt's lastValidBlockHeight. */
 export async function currentBlockHeight(): Promise<number> {
   return solanaConnection().getBlockHeight("confirmed");
 }
 
-/** Conta da oferta lida da rede, só se o dono for o programa niara-pmes-solana. */
+/** The offering account read from the network, only if its owner is the niara-pmes-solana program. */
 export async function readVerifiedOfferingAccount(address: string): Promise<SolanaOffering | null> {
   const connection = solanaConnection();
   const key = new PublicKey(address);

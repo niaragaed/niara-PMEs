@@ -1,12 +1,11 @@
-// Portas (interfaces) da arquitetura hexagonal (ports & adapters) do
-// backend da Niara PMEs. Puro TypeScript — nenhuma implementação aqui, só
-// os contratos que os adapters (mock ou reais) precisam cumprir. Ver
-// src/lib/mocks.ts (implementação mock) e src/lib/adapters.ts (registry
-// que escolhe a implementação por variável de ambiente).
+// Ports (interfaces) of the Niara PMEs backend's hexagonal architecture (ports & adapters).
+// Pure TypeScript — no implementation here, only the contracts the adapters (mock or real)
+// must fulfill. See src/lib/mocks.ts (mock implementation) and src/lib/adapters.ts (the registry
+// that picks the implementation by environment variable).
 
 /**
- * Status possíveis de uma intenção de escrow (pagamento retido até
- * liberação para o emissor da oferta, ou devolução ao investidor).
+ * Possible statuses of an escrow intent (payment held until it's
+ * released to the offering's issuer, or returned to the investor).
  */
 export type EscrowStatus =
   | "pending"
@@ -16,14 +15,14 @@ export type EscrowStatus =
   | "failed";
 
 export interface EscrowIntent {
-  /** Referência externa do gateway de pagamento (idempotente). */
+  /** The payment gateway's external reference (idempotent). */
   ref: string;
   status: EscrowStatus;
 }
 
 /**
- * Porta de pagamento: abre e resolve um escrow off-chain entre investidor e
- * emissor da oferta. Nenhuma implementação real move dinheiro nesta etapa.
+ * Payment port: opens and resolves an off-chain escrow between the investor and the
+ * offering's issuer. No implementation moves real money at this stage.
  */
 export interface PaymentGateway {
   createEscrowIntent(params: {
@@ -40,19 +39,19 @@ export interface PaymentGateway {
 }
 
 /**
- * Status possíveis de uma submissão de KYC (Conheça seu Cliente).
+ * Possible statuses of a KYC (Know Your Customer) submission.
  */
 export type KycStatus = "pending" | "in_review" | "approved" | "rejected";
 
 export interface KycSubmissionResult {
-  /** Referência externa do provedor de KYC. */
+  /** The KYC provider's external reference. */
   ref: string;
   status: KycStatus;
 }
 
 /**
- * Porta de KYC: envia documentos/dados de um usuário para verificação de
- * identidade e consulta o status dessa verificação junto ao provedor.
+ * KYC port: sends a user's documents/data for identity verification and checks the status of
+ * that verification with the provider.
  */
 export interface KycProvider {
   submit(params: {
@@ -64,20 +63,20 @@ export interface KycProvider {
 }
 
 /**
- * Status possíveis de uma emissão de tokens on-chain.
+ * Possible statuses of an on-chain token issuance.
  */
 export type ChainIssuanceStatus = "pending" | "confirmed" | "failed";
 
 export interface ChainIssuanceResult {
-  /** Hash/referência externa da transação (ou equivalente mock). */
+  /** The transaction's hash/external reference (or a mock equivalent). */
   ref: string;
   status: ChainIssuanceStatus;
 }
 
 /**
- * Porta de registro on-chain: emite tokens representando a participação de
- * uma oferta. Só terá implementação real quando os smart contracts das
- * PMEs estiverem prontos — por ora existe apenas como contrato/porta.
+ * On-chain registry port: issues tokens representing a stake in an offering. It will only have
+ * a real implementation once the SME smart contracts are ready — for now it exists only as a
+ * contract/port.
  */
 export interface ChainRegistry {
   issueTokens(params: {
