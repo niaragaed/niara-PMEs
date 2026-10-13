@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { OfferingsPage, type OfferingRow } from "@/components/empresa/OfertasPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { pt } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${pt.companyOfferings.meta.title} · Niara PMEs`,
-  description: pt.companyOfferings.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.companyOfferings.meta.title} · Niara PMEs`,
+  description: dict.companyOfferings.meta.description,
   robots: { index: false, follow: false },
 };
+}
 
 export default async function Page() {
   const supabase = await createClient();

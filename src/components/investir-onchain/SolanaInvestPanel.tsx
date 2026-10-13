@@ -25,7 +25,8 @@ import { useSolanaAction, type SolanaActionStatus } from "@/lib/solana/hooks/use
 import { txInvest, txClose, txFaucet, txRelease, txRefund, txRedeem } from "@/lib/solana/instrucoes";
 import { DECIMALS_MBRL_SOLANA, FAUCET_MAX_MBRL_SOLANA, UNIT_MBRL_SOLANA, solanaExplorerAccountLink, linkExplorerSolanaTx } from "@/lib/solana/config";
 import { formatDeadline, formatToken } from "@/lib/web3/format";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useDictionary } from "@/lib/i18n/client";
 
 const MBRL = "mBRL";
 
@@ -55,7 +56,8 @@ function fmt(value: bigint) {
 }
 
 function Return({ status, errorMessage, signature, success }: { status: SolanaActionStatus; errorMessage: string | null; signature: string | null; success: string }) {
-  const t = pt.solana.invest;
+  const dict = useDictionary();
+  const t = dict.solana.invest;
   return (
     <>
       {status === "sucesso" && (
@@ -79,8 +81,8 @@ function Return({ status, errorMessage, signature, success }: { status: SolanaAc
   );
 }
 
-function buttonLabel(status: SolanaActionStatus, defaultLabel: string) {
-  const t = pt.solana.invest;
+function buttonLabel(dict: Dictionary, status: SolanaActionStatus, defaultLabel: string) {
+  const t = dict.solana.invest;
   if (status === "assinando") return t.signing;
   if (status === "confirmando") return t.confirming;
   return defaultLabel;
@@ -95,8 +97,9 @@ export function SolanaInvestPanel({
   isPartner?: boolean;
   isEmissor?: boolean;
 }) {
-  const t = pt.investOnChain;
-  const ts = pt.solana.invest;
+  const dict = useDictionary();
+  const t = dict.investOnChain;
+  const ts = dict.solana.invest;
   const carteira = useSolanaWallet();
   const investidor = carteira.address;
   const leitura = useSolanaOffering(offeringAddress, investidor);
@@ -295,7 +298,7 @@ export function SolanaInvestPanel({
               className="flex items-center gap-2 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Coins className="h-4 w-4" aria-hidden="true" />
-              {buttonLabel(faucet.status, t.faucet.button)}
+              {buttonLabel(dict, faucet.status, t.faucet.button)}
             </button>
           </div>
           <Return {...faucet} success={t.faucet.success} />
@@ -348,7 +351,7 @@ export function SolanaInvestPanel({
                 onClick={handleInvestir}
                 className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {buttonLabel(investir.status, t.invest.button)}
+                {buttonLabel(dict, investir.status, t.invest.button)}
               </button>
               <Return {...investir} success={t.invest.status.success} />
             </>
@@ -393,7 +396,7 @@ export function SolanaInvestPanel({
             onClick={handleEncerrar}
             className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {buttonLabel(encerrar.status, t.close.button)}
+            {buttonLabel(dict, encerrar.status, t.close.button)}
           </button>
           {!(isSocio || isIssuer) && <p className="mt-3 text-xs text-on-military-muted">{t.close.restricted}</p>}
           {(isSocio || isIssuer) && !podeEncerrarAgora && <p className="mt-3 text-xs text-on-military-muted">{ts.closeNotYet}</p>}
@@ -410,7 +413,7 @@ export function SolanaInvestPanel({
             onClick={handleResgatar}
             className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {buttonLabel(resgatar.status, t.redeem.button)}
+            {buttonLabel(dict, resgatar.status, t.redeem.button)}
           </button>
           <Return {...resgatar} success={t.redeem.success} />
         </Card>
@@ -425,7 +428,7 @@ export function SolanaInvestPanel({
             onClick={handleReembolsar}
             className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {buttonLabel(reembolsar.status, ts.refund.button)}
+            {buttonLabel(dict, reembolsar.status, ts.refund.button)}
           </button>
           <Return {...reembolsar} success={ts.refund.success} />
         </Card>
@@ -445,7 +448,7 @@ export function SolanaInvestPanel({
                 onClick={handleLiberar}
                 className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {buttonLabel(liberar.status, t.release.button)}
+                {buttonLabel(dict, liberar.status, t.release.button)}
               </button>
               {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.release.restricted}</p>}
               <Return {...liberar} success={ts.releaseSuccess} />

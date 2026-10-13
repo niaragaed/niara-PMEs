@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { BadgeCheck } from "lucide-react";
 import { SignOutButton } from "@/components/conta/SignOutButton";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
 export function KpiCard({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
@@ -13,8 +13,9 @@ export function KpiCard({ label, value, note }: { label: string; value: string; 
   );
 }
 
-export function OriginBadge({ real }: { real: boolean }) {
-  const t = pt.partners.origin;
+export async function OriginBadge({ real }: { real: boolean }) {
+  const dict = await getDictionary();
+  const t = dict.partners.origin;
   return real ? (
     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-2.5 py-0.5 text-xs font-semibold text-on-salmon">
       <BadgeCheck className="h-3 w-3" aria-hidden="true" />
@@ -27,14 +28,15 @@ export function OriginBadge({ real }: { real: boolean }) {
   );
 }
 
-export function PartnersDashboard({
+export async function PartnersDashboard({
   email,
   transactionsSlot,
 }: {
   email: string;
   transactionsSlot: ReactNode;
 }) {
-  const t = pt.partners;
+  const dict = await getDictionary();
+  const t = dict.partners;
 
   return (
     <main className="flex flex-1 flex-col bg-military">

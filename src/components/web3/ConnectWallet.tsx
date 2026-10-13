@@ -5,7 +5,7 @@ import { AlertTriangle, Check, Copy, Loader2, LogOut, Wallet } from "lucide-reac
 import { useConnect, useConnectors, useConnection, useDisconnect, useSwitchChain } from "wagmi";
 import { UserRejectedRequestError } from "viem";
 import { sepolia } from "wagmi/chains";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 // Quanto tempo a reconexão automática do wagmi (reconnectOnMount) pode ficar em "Conectando…"
 // antes de o botão ser liberado para conexão manual — ver comentário em isPending.
@@ -44,7 +44,8 @@ export function ConnectWallet({
   connectLabel,
   connectButtonClassName,
 }: { connectLabel?: string; connectButtonClassName?: string } = {}) {
-  const t = pt.profile.wallet;
+  const dict = useDictionary();
+  const t = dict.profile.wallet;
   const hasProvider = useSyncExternalStore(
     subscribeToProvider,
     getProviderSnapshot,

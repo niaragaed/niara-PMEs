@@ -7,12 +7,15 @@ import { PartnersDashboard } from "@/components/socios/SociosDashboard";
 import { TransactionsSection } from "@/components/socios/MovimentacoesSection";
 import { TransactionsSkeleton } from "@/components/socios/MovimentacoesSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${pt.partners.meta.title} · Niara PMEs`,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.partners.meta.title} · Niara PMEs`,
   robots: { index: false, follow: false },
 };
+}
 
 // 60s (máximo do plano Hobby da Vercel) em vez do padrão de 10s — a leitura on-chain
 // (dentro de getMovimentacoes(), via getEventosOnChain/getResumoOnChain no <Suspense> abaixo)
@@ -27,14 +30,15 @@ export const maxDuration = 60;
 // src/lib/auth/resolveSocio.ts. Autenticado mas fora da allowlist = acesso negado, sem
 // redirect (fica na própria página, mensagem clara).
 export default async function Page() {
+  const dict = await getDictionary();
   const { userId, email, autorizado } = await resolvePartner();
 
   if (!userId) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-military px-4 py-16">
         <div className="w-full max-w-sm rounded-lg border border-panel-border bg-panel p-6">
-          <h1 className="text-xl font-semibold text-on-military">{pt.partners.login.title}</h1>
-          <p className="mt-1 text-sm text-on-military-muted">{pt.partners.login.subtitle}</p>
+          <h1 className="text-xl font-semibold text-on-military">{dict.partners.login.title}</h1>
+          <p className="mt-1 text-sm text-on-military-muted">{dict.partners.login.subtitle}</p>
           <PartnersLoginForm />
         </div>
       </main>
@@ -47,8 +51,8 @@ export default async function Page() {
         <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg border border-panel-border bg-panel p-6 text-center">
           <AlertTriangle className="h-8 w-8 text-salmon" aria-hidden="true" />
           <div>
-            <h1 className="text-xl font-semibold text-on-military">{pt.partners.denied.title}</h1>
-            <p className="mt-1 text-sm text-on-military-muted">{pt.partners.denied.subtitle}</p>
+            <h1 className="text-xl font-semibold text-on-military">{dict.partners.denied.title}</h1>
+            <p className="mt-1 text-sm text-on-military-muted">{dict.partners.denied.subtitle}</p>
           </div>
           <SignOutButton />
         </div>

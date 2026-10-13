@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Play } from "lucide-react";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 const YOUTUBE_ID = "m7lSSzq6xg4";
 const YOUTUBE_URL = `https://youtu.be/${YOUTUBE_ID}`;
@@ -12,7 +12,8 @@ const THUMB_MAXRES = `https://img.youtube.com/vi/${YOUTUBE_ID}/maxresdefault.jpg
 const THUMB_FALLBACK = `https://img.youtube.com/vi/${YOUTUBE_ID}/hqdefault.jpg`;
 
 export function VideoCover() {
-  const t = pt.signIn.video;
+  const dict = useDictionary();
+  const t = dict.signIn.video;
   const [thumbSrc, setThumbSrc] = useState(THUMB_MAXRES);
 
   return (

@@ -1,11 +1,12 @@
 import { Mail } from "lucide-react";
 import { ContactForm } from "./ContatoForm";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
 const CONTACT_EMAIL = "niaragaed@gmail.com";
 
-export function ContactPage() {
-  const t = pt.contact;
+export async function ContactPage() {
+  const dict = await getDictionary();
+  const t = dict.contact;
 
   return (
     <main className="flex flex-1 flex-col bg-military px-4 py-16 sm:px-6">

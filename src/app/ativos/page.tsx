@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { AssetsPage } from "@/components/ativos/AtivosPage";
-import { pt } from "@/lib/i18n/pt-br";
 import { requireLogin } from "@/lib/auth/resolveInvestor";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${pt.assets.meta.title} · Niara PMEs`,
-  description: pt.assets.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.assets.meta.title} · Niara PMEs`,
+  description: dict.assets.meta.description,
 };
+}
 
 export default async function Page() {
   await requireLogin();

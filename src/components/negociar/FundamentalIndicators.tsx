@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { IndicatorHelp } from "./IndicatorHelp";
-import { pt } from "@/lib/i18n/pt-br";
 import type { FundamentalIndicatorValues } from "@/lib/mock/ofertas";
+import { useDictionary } from "@/lib/i18n/client";
 
 const GROUPS = ["valuation", "eficiencia", "rentabilidade", "dividendos", "endividamento", "crescimento"] as const;
 
@@ -15,7 +15,8 @@ function formatIndicator(value: number, unit: "numero" | "percentual"): string {
 }
 
 export function FundamentalIndicators({ indicators }: { indicators: FundamentalIndicatorValues }) {
-  const t = pt.trade.offering.indicators;
+  const dict = useDictionary();
+  const t = dict.trade.offering.indicators;
   // Só um popover de explicação aberto por vez, entre todos os grupos/cards.
   const [openKey, setOpenKey] = useState<string | null>(null);
 

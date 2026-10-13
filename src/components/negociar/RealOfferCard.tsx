@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { BadgeCheck, Building2 } from "lucide-react";
-import { pt } from "@/lib/i18n/pt-br";
 import { formatBRL } from "@/lib/format";
 import type { ActiveOfferingSummary } from "@/lib/investments";
+import { getDictionary } from "@/lib/i18n/server";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -17,8 +17,9 @@ function formatDate(iso: string): string {
 // do card, para ninguém confundir os dois na mesma tela (REGRA DE
 // HONESTIDADE). A própria oferta do issuer logado usa um card à parte
 // (MyOfferCard.tsx), com selo neutro de demonstração — nunca este.
-export function RealOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
-  const t = pt.trade.realOffering;
+export async function RealOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
+  const dict = await getDictionary();
+  const t = dict.trade.realOffering;
   const nome = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (

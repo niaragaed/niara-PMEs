@@ -184,6 +184,11 @@ export const pt = {
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
     signIn: "Entrar",
+    language: {
+      ariaLabel: "Idioma do site",
+      en: "English",
+      pt: "Português",
+    },
     accountMenu: {
       openMenu: "Abrir menu da conta",
       signInOtherAccount: "Entrar com outra conta",
@@ -2019,6 +2024,24 @@ export const pt = {
       colLink: "Link",
       viewOnChain: "Ver na chain",
       empty: "Nenhuma movimentação ainda.",
+    },
+    activity: {
+      investorSignup: "Cadastro de investidor",
+      issuerSignup: "Cadastro de emissor",
+      offeringCreated: "Oferta criada",
+      selfServiceConfirmed: "Oferta self-service confirmada",
+      selfServiceConfirmedSolana: "Oferta self-service confirmada (Solana Devnet)",
+      selfServiceTerms: (target: string, price: string, deadline: string) =>
+        `Meta: ${target} · Preço/cota: ${price} · Prazo: ${deadline}`,
+      investment: (status: string) => `Aporte — ${status}`,
+      shares: (amount: string) => `${amount} cotas`,
+      paymentEvents: {
+        escrow_intent: "Escrow iniciado",
+        payment_confirmed: "Pagamento confirmado (simulado)",
+        release: "Recursos liberados ao emissor",
+        refund: "Reembolso",
+        tokens_issued: "Tokens emitidos (simulado)",
+      },
     },
   },
 } as const;

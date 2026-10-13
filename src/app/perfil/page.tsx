@@ -3,13 +3,16 @@ import { redirect } from "next/navigation";
 import { ProfilePage } from "@/components/perfil/PerfilPage";
 import { loadMyOfferingsSummary, loadProfile } from "./actions";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${pt.profile.meta.title} · Niara PMEs`,
-  description: pt.profile.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.profile.meta.title} · Niara PMEs`,
+  description: dict.profile.meta.description,
   robots: { index: false, follow: false },
 };
+}
 
 type PageProps = {
   searchParams: Promise<{ aviso?: "apenas-empresa" | "apenas-investidor"; onboarding?: string }>;

@@ -6,7 +6,7 @@ import { confirmInvestment, type ConfirmInvestmentState } from "@/app/investir/a
 import { submitKyc } from "@/app/investir/kyc-actions";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type ActiveOfferingRow = {
   id: string;
@@ -45,7 +45,8 @@ export function InvestPage({
   myReservations: MyReservationRow[];
   kycStatus: KycStatus;
 }) {
-  const t = pt.invest;
+  const dict = useDictionary();
+  const t = dict.invest;
 
   const [kycStatus, setKycStatus] = useState<KycStatus>(initialKycStatus);
   const [reservationResults, setReservationResults] = useState<Record<string, ConfirmInvestmentState>>({});

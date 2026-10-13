@@ -3,11 +3,12 @@
 import { RefreshCw, TrendingUp } from "lucide-react";
 import { useProfile } from "./PerfilContext";
 import { SCORE_MAX, SCORE_MIN } from "@/lib/investor-profile";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 export function InvestorProfileResultCard({ onRetake }: { onRetake: () => void }) {
+  const dict = useDictionary();
   const { investorProfile } = useProfile();
-  const t = pt.profile.investor;
+  const t = dict.profile.investor;
   const details = t.categoryDetails[investorProfile.category];
   const percent = ((investorProfile.score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)) * 100;
   const date = new Date(investorProfile.completedAt).toLocaleDateString("pt-BR", {

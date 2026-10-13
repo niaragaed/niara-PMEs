@@ -7,8 +7,8 @@ import { reserveInvestment, type PublicOffering, type ReserveInvestmentState } f
 import { TextField } from "@/components/perfil/FormField";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { formatBRL } from "@/lib/format";
-import { pt } from "@/lib/i18n/pt-br";
 import { DEFAULT_DOCUMENTS } from "@/lib/mock/ofertas";
+import { useDictionary } from "@/lib/i18n/client";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
 
@@ -17,7 +17,8 @@ function formatDate(iso: string): string {
 }
 
 function ReserveTicket({ offeringId, onClose }: { offeringId: string; onClose: () => void }) {
-  const t = pt.invest.form;
+  const dict = useDictionary();
+  const t = dict.invest.form;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const [amountReais, setAmountReais] = useState("");
@@ -104,7 +105,8 @@ function ReserveTicket({ offeringId, onClose }: { offeringId: string; onClose: (
 }
 
 export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffering; isOwner: boolean }) {
-  const t = pt.invest;
+  const dict = useDictionary();
+  const t = dict.invest;
   const [ticketOpen, setTicketOpen] = useState(false);
   const showTicket = ticketOpen && !isOwner;
 
@@ -157,7 +159,7 @@ export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffe
             <div>
               {offering.category && (
                 <span className="inline-block rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
-                  {pt.assets.categories[offering.category]}
+                  {dict.assets.categories[offering.category]}
                 </span>
               )}
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-on-military">
@@ -228,7 +230,7 @@ export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffe
                 <div>
                   <dt className="text-xs text-on-military-muted">{t.detail.terms.category}</dt>
                   <dd className="mt-0.5 text-sm text-on-military">
-                    {offering.category ? pt.assets.categories[offering.category] : t.detail.terms.notProvided}
+                    {offering.category ? dict.assets.categories[offering.category] : t.detail.terms.notProvided}
                   </dd>
                 </div>
                 <div>

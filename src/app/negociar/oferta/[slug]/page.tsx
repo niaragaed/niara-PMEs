@@ -2,19 +2,20 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OfferingDetailPage } from "@/components/negociar/OfertaDetailPage";
 import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfertaDetailPage";
-import { pt } from "@/lib/i18n/pt-br";
 import { getOfferingBySlug } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
 import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
 import { resolvePartner } from "@/lib/auth/resolveSocio";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
+import { getDictionary } from "@/lib/i18n/server";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const dict = await getDictionary();
   const { slug } = await params;
   const offering = getOfferingBySlug(slug);
 
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: `${confirmedOffering.issuerTradeName ?? confirmedOffering.issuerLegalName} · Niara PMEs` };
   }
 
-  return { title: `${pt.trade.offering.notFound.title} · Niara PMEs` };
+  return { title: `${dict.trade.offering.notFound.title} · Niara PMEs` };
 }
 
 export default async function Page({ params }: PageProps) {

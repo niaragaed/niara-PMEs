@@ -5,10 +5,12 @@ import { cookieToInitialState } from "wagmi";
 import { Header } from "@/components/nav/Header";
 import { Footer } from "@/components/nav/Footer";
 import { LenisProvider } from "@/components/scroll/LenisProvider";
-import { pt } from "@/lib/i18n/pt-br";
 import { config } from "@/lib/web3/config";
 import { Providers } from "./providers";
 import "./globals.css";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { I18nProvider } from "@/lib/i18n/client";
+import { htmlLang } from "@/lib/i18n/locale";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -20,23 +22,24 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Niara PMEs",
-  description:
-    "Niara PMEs — plataforma para pequenas e médias empresas estruturarem captação e dividirem capital via tokenização. Estágio institucional / demonstração.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return { title: dict.meta.title, description: dict.meta.description };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Next 16: headers() é assíncrono — precisa de await.
+  const locale = await getLocale();
+  const dict = await getDictionary();
+  // Next 16: headers() is async — it needs await.
   const initialState = cookieToInitialState(config, (await headers()).get("cookie"));
 
   return (
     <html
-      lang="pt-BR"
+      lang={htmlLang(locale)}
       className={`${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-bg text-ink">
@@ -44,17 +47,19 @@ export default async function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-ink focus:shadow-soft-lg"
         >
-          {pt.common.skipToContent}
+          {dict.common.skipToContent}
         </a>
-        <Providers initialState={initialState}>
-          <LenisProvider>
-            <Header />
-            <div id="main-content" className="flex flex-1 flex-col">
-              {children}
-            </div>
-            <Footer />
-          </LenisProvider>
-        </Providers>
+        <I18nProvider locale={locale}>
+          <Providers initialState={initialState}>
+            <LenisProvider>
+              <Header />
+              <div id="main-content" className="flex flex-1 flex-col">
+                {children}
+              </div>
+              <Footer />
+            </LenisProvider>
+          </Providers>
+        </I18nProvider>
       </body>
     </html>
   );

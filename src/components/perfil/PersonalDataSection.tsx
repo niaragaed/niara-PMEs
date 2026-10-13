@@ -8,7 +8,7 @@ import { LogoUpload } from "./LogoUpload";
 import { BannerUpload } from "./BannerUpload";
 import { CardPreview } from "./CardPreview";
 import { ReadField, SelectField, TextareaField, TextField } from "./FormField";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import {
   isValidCEP,
   isValidBirthDate,
@@ -20,6 +20,7 @@ import {
   maskPhone,
   type PersonType,
 } from "@/lib/masks";
+import { useDictionary } from "@/lib/i18n/client";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -48,15 +49,15 @@ type FormData = {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-function display(value: string): string {
-  return value.trim() || pt.profile.registrationData.notProvided;
+function display(value: string, notProvided: string): string {
+  return value.trim() || notProvided;
 }
 
 // Telefone é salvo/validado só como DDD + número (sem código de país, ver
 // masks.ts); o "+55" é acrescentado aqui só para exibição, mesmo prefixo
 // fixo mostrado no campo em modo de edição (TextField prefix="+55").
-function displayPhone(value: string): string {
-  return value.trim() ? `+55 ${value.trim()}` : pt.profile.registrationData.notProvided;
+function displayPhone(value: string, notProvided: string): string {
+  return value.trim() ? `+55 ${value.trim()}` : notProvided;
 }
 
 function personTypeOf(role: LoadedProfile["role"]): PersonType {
@@ -103,9 +104,9 @@ function toFormData(profile: LoadedProfile, personType: PersonType): FormData {
   };
 }
 
-function validate(data: FormData, personType: PersonType): FormErrors {
+function validate(data: FormData, personType: PersonType, dict: Dictionary): FormErrors {
   const errors: FormErrors = {};
-  const t = pt.profile.registrationData.errors;
+  const t = dict.profile.registrationData.errors;
 
   if (personType === "pf") {
     if (!data.fullName.trim()) errors.fullName = t.required;
@@ -126,6 +127,7 @@ function validate(data: FormData, personType: PersonType): FormErrors {
 }
 
 export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
+  const dict = useDictionary();
   const personType = personTypeOf(profile.role);
 
   // CPF/CNPJ, data de nascimento e endereço são dados sensíveis (LGPD) —
@@ -149,7 +151,8 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
     profile.role === "issuer" ? profile.bannerUrl : null,
   );
 
-  const t = pt.profile.registrationData;
+  const t = dict.profile.registrationData;
+  const notProvided = t.notProvided;
   const documentLabel = personType === "pf" ? t.fields.documentCpf : t.fields.documentCnpj;
 
   function startEdit() {
@@ -181,7 +184,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validate(draft, personType);
+    const nextErrors = validate(draft, personType, dict);
     setErrors(nextErrors);
     setServerError(null);
     if (Object.keys(nextErrors).length > 0) return;
@@ -279,16 +282,16 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
             <ReadField label={t.fields.country} value={t.fields.brazil} />
             {personType === "pf" ? (
-              <ReadField label={t.fields.fullName} value={display(draft.fullName)} />
+              <ReadField label={t.fields.fullName} value={display(draft.fullName, notProvided)} />
             ) : (
               <>
-                <ReadField label={t.fields.legalName} value={display(draft.legalName)} />
-                <ReadField label={t.fields.tradeName} value={display(draft.tradeName)} />
+                <ReadField label={t.fields.legalName} value={display(draft.legalName, notProvided)} />
+                <ReadField label={t.fields.tradeName} value={display(draft.tradeName, notProvided)} />
               </>
             )}
-            <ReadField label={documentLabel} value={display(draft.document)} mono />
+            <ReadField label={documentLabel} value={display(draft.document, notProvided)} mono />
             {personType === "pf" && (
-              <ReadField label={t.fields.birthDate} value={display(draft.birthDate)} mono />
+              <ReadField label={t.fields.birthDate} value={display(draft.birthDate, notProvided)} mono />
             )}
             {personType === "pj" && (
               <ReadField
@@ -298,7 +301,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               />
             )}
             <ReadField label={t.fields.email} value={profile.email} />
-            <ReadField label={t.fields.phone} value={displayPhone(draft.phone)} mono />
+            <ReadField label={t.fields.phone} value={displayPhone(draft.phone, notProvided)} mono />
           </div>
 
           {personType === "pj" && (
@@ -308,8 +311,8 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               </h3>
               <p className="mt-1 text-[11px] text-on-military-muted">{t.publicSectionNote}</p>
               <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                <ReadField label={t.fields.sector} value={display(draft.sector)} />
-                <ReadField label={t.fields.businessSummary} value={display(draft.businessSummary)} />
+                <ReadField label={t.fields.sector} value={display(draft.sector, notProvided)} />
+                <ReadField label={t.fields.businessSummary} value={display(draft.businessSummary, notProvided)} />
                 <ReadField
                   label={t.publishCnpj.statusLabel}
                   value={draft.publishCnpj ? t.publishCnpj.showing : t.publishCnpj.notShowing}
@@ -323,16 +326,16 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
               {t.addressSection}
             </h3>
             <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-              <ReadField label={t.fields.cep} value={display(draft.cep)} mono />
-              <ReadField label={t.fields.street} value={display(draft.street)} />
-              <ReadField label={t.fields.number} value={display(draft.number)} />
-              <ReadField label={t.fields.complement} value={display(draft.complement)} />
-              <ReadField label={t.fields.district} value={display(draft.district)} />
+              <ReadField label={t.fields.cep} value={display(draft.cep, notProvided)} mono />
+              <ReadField label={t.fields.street} value={display(draft.street, notProvided)} />
+              <ReadField label={t.fields.number} value={display(draft.number, notProvided)} />
+              <ReadField label={t.fields.complement} value={display(draft.complement, notProvided)} />
+              <ReadField label={t.fields.district} value={display(draft.district, notProvided)} />
               <ReadField
                 label={`${t.fields.city} / ${t.fields.state}`}
                 value={
                   draft.city.trim() || draft.state.trim()
-                    ? `${display(draft.city)} / ${draft.state || "—"}`
+                    ? `${display(draft.city, notProvided)} / ${draft.state || "—"}`
                     : t.notProvided
                 }
               />

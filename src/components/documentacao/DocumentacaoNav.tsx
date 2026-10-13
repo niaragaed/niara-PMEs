@@ -1,20 +1,20 @@
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-const SECTIONS = [
-  { id: "o-que-e", label: pt.docs.nav.whatIs },
-  { id: "como-funciona", label: pt.docs.nav.howItWorks },
-  { id: "enquadramento", label: pt.docs.nav.framework },
-  { id: "modelo-receita", label: pt.docs.nav.revenueModel },
-  { id: "tecnologia", label: pt.docs.nav.technology },
-  { id: "faq", label: pt.docs.nav.faq },
-];
-
-export function DocsNav() {
+export async function DocsNav() {
+  const dict = await getDictionary();
+  const SECTIONS = [
+    { id: "o-que-e", label: dict.docs.nav.whatIs },
+    { id: "como-funciona", label: dict.docs.nav.howItWorks },
+    { id: "enquadramento", label: dict.docs.nav.framework },
+    { id: "modelo-receita", label: dict.docs.nav.revenueModel },
+    { id: "tecnologia", label: dict.docs.nav.technology },
+    { id: "faq", label: dict.docs.nav.faq },
+  ];
   return (
     <>
       {/* Desktop: sidebar sticky */}
       <nav
-        aria-label={pt.docs.nav.ariaLabel}
+        aria-label={dict.docs.nav.ariaLabel}
         className="hidden shrink-0 lg:sticky lg:top-24 lg:block lg:w-56"
       >
         <ul className="flex flex-col gap-1">
@@ -34,7 +34,7 @@ export function DocsNav() {
       {/* Mobile/tablet: abas horizontais roláveis */}
       <div
         role="tablist"
-        aria-label={pt.docs.nav.ariaLabel}
+        aria-label={dict.docs.nav.ariaLabel}
         className="-mx-4 flex gap-1 overflow-x-auto border-b border-panel-border px-4 pb-px sm:px-6 lg:hidden"
       >
         {SECTIONS.map((section) => (

@@ -1,13 +1,14 @@
+"use client";
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import { OfferingBanner } from "./OfertaBanner";
-import { pt } from "@/lib/i18n/pt-br";
 import type { Offering } from "@/lib/mock/ofertas";
 import {
   ONCHAIN_SMES_AUTHORIZED_SHARES,
   ONCHAIN_SMES_MAX_TARGET_MBRL,
   ONCHAIN_SMES_PRICE_PER_SHARE_MBRL,
 } from "@/lib/web3/demoConstants";
+import { useDictionary } from "@/lib/i18n/client";
 
 // Card unificado das 10 ofertas PME que têm uma oferta real e ativa em Sepolia por trás — cada
 // uma é uma empresa fictícia de demonstração (mesmo padrão de conteúdo de ShowcaseCard), mas o
@@ -27,7 +28,8 @@ export function SmesOnChainCard({
   bannerUrl: string | null;
   logoUrl: string | null;
 }) {
-  const t = pt.trade.smesOnChain;
+  const dict = useDictionary();
+  const t = dict.trade.smesOnChain;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-2 ring-salmon">

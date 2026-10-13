@@ -1,5 +1,6 @@
+"use client";
 import { CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type SyncStatus = "nao_onchain" | "pendente" | "confirmada" | "divergente";
 
@@ -17,10 +18,11 @@ const STYLES: Record<Exclude<SyncStatus, "nao_onchain">, string> = {
 const ICONS = { pendente: Clock, confirmada: CheckCircle2, divergente: AlertTriangle };
 
 export function SyncStatusBadge({ status }: { status: SyncStatus }) {
+  const dict = useDictionary();
   if (status === "nao_onchain") return null;
 
   const Icon = ICONS[status];
-  const label = pt.companyOfferings.onchainStatus[status].title;
+  const label = dict.companyOfferings.onchainStatus[status].title;
 
   return (
     <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${STYLES[status]}`}>

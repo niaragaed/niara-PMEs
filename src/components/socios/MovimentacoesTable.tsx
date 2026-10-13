@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
-import { pt } from "@/lib/i18n/pt-br";
 import type { Transaction } from "@/lib/socios/movimentacoes";
 import { OriginBadge } from "./SociosDashboard";
+import { getDictionary } from "@/lib/i18n/server";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
@@ -13,8 +13,9 @@ function formatEpoch(timestamp: number): string {
 // Timeline única com TODAS as movimentações do site (on-chain real + off-chain/Supabase),
 // pedido explícito do usuário: uma tabela só, sem separar por seção — cada linha carrega seu
 // próprio OrigemBadge pra quem quiser saber de onde veio, mas a lista/ordenação é uma só.
-export function TransactionsTable({ transactions: movimentacoes }: { transactions: Transaction[] }) {
-  const t = pt.partners.transactions;
+export async function TransactionsTable({ transactions }: { transactions: Transaction[] }) {
+  const dict = await getDictionary();
+  const t = dict.partners.transactions;
 
   return (
     <section className="mt-8">
@@ -33,21 +34,21 @@ export function TransactionsTable({ transactions: movimentacoes }: { transaction
             </tr>
           </thead>
           <tbody>
-            {movimentacoes.length === 0 ? (
+            {transactions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-on-military-muted">
                   {t.empty}
                 </td>
               </tr>
             ) : (
-              movimentacoes.map((mov) => (
+              transactions.map((mov) => (
                 <tr key={mov.id} className="border-b border-panel-border last:border-0">
                   <td className="px-4 py-3">
-                    <OriginBadge real={mov.origem === "onchain"} />
+                    <OriginBadge real={mov.origin === "onchain"} />
                   </td>
-                  <td className="px-4 py-3 text-on-military">{mov.tipo}</td>
-                  <td className="px-4 py-3 text-on-military-muted">{mov.ator ?? "—"}</td>
-                  <td className="px-4 py-3 text-on-military">{mov.valor ?? "—"}</td>
+                  <td className="px-4 py-3 text-on-military">{mov.type}</td>
+                  <td className="px-4 py-3 text-on-military-muted">{mov.actor ?? "—"}</td>
+                  <td className="px-4 py-3 text-on-military">{mov.value ?? "—"}</td>
                   <td className="px-4 py-3 text-on-military-muted">{formatEpoch(mov.timestamp)}</td>
                   <td className="px-4 py-3">
                     {mov.link ? (

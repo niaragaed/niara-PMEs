@@ -9,15 +9,17 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useDictionary } from "@/lib/i18n/client";
 
-function mapAuthError(error: AuthError, t: typeof pt.partners.login.errors): string {
+function mapAuthError(error: AuthError, t: Dictionary["partners"]["login"]["errors"]): string {
   if (error.code === "invalid_credentials") return t.invalidCredentials;
   return t.generic;
 }
 
 export function PartnersLoginForm() {
-  const t = pt.partners.login;
+  const dict = useDictionary();
+  const t = dict.partners.login;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
   const [email, setEmail] = useState("");

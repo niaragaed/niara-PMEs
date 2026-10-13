@@ -6,15 +6,18 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { NavDropdown } from "@/components/nav/NavDropdown";
 import { AccountMenu } from "@/components/nav/AccountMenu";
-import { NAV_ITEMS } from "@/lib/nav-items";
-import { pt } from "@/lib/i18n/pt-br";
+import { LanguageSwitcher } from "@/components/nav/LanguageSwitcher";
+import { getNavItems } from "@/lib/nav-items";
 import type { HeaderAccount } from "@/lib/nav/headerAccount";
+import { useDictionary } from "@/lib/i18n/client";
 
-// Toda a interação do Header (scroll, menu mobile) mora aqui — o Header.tsx
-// em si virou um Server Component fino, só pra resolver `account` (sessão)
-// no servidor (ver headerAccount.ts) e passar como prop, já que client
-// components não podem ler cookies/Supabase diretamente.
+// All of the Header's interaction (scroll, mobile menu) lives here — Header.tsx
+// itself became a thin Server Component, only to resolve `account` (session)
+// on the server (see headerAccount.ts) and pass it as a prop, since client
+// components can't read cookies/Supabase directly.
 export function HeaderClient({ account }: { account: HeaderAccount | null }) {
+  const dict = useDictionary();
+  const navItems = getNavItems(dict);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileAccordionOpen, setMobileAccordionOpen] = useState<string | null>(null);
@@ -42,15 +45,15 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Logo />
 
-        <nav aria-label={pt.nav.mainAriaLabel} className="hidden md:block">
+        <nav aria-label={dict.nav.mainAriaLabel} className="hidden md:block">
           <ul className="flex items-center gap-8">
-            {NAV_ITEMS.map((item) =>
+            {navItems.map((item) =>
               item.children ? (
-                <li key={item.label}>
+                <li key={item.key}>
                   <NavDropdown item={item} />
                 </li>
               ) : (
-                <li key={item.label}>
+                <li key={item.key}>
                   <Link
                     href={item.href}
                     className="text-sm text-ink-muted transition-colors hover:text-ink"
@@ -63,7 +66,8 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
           </ul>
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-4 md:flex">
+          <LanguageSwitcher />
           {account ? (
             <AccountMenu account={account} />
           ) : (
@@ -71,14 +75,14 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
               href="/entrar"
               className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
             >
-              {pt.nav.signIn}
+              {dict.nav.signIn}
             </Link>
           )}
         </div>
 
         <button
           type="button"
-          aria-label={mobileOpen ? pt.nav.closeMenu : pt.nav.openMenu}
+          aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((current) => !current)}
           className="text-ink md:hidden"
@@ -89,14 +93,17 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
 
       {mobileOpen && (
         <nav
-          aria-label={pt.nav.mobileAriaLabel}
+          aria-label={dict.nav.mobileAriaLabel}
           className="border-t border-border bg-surface px-6 py-4 md:hidden"
         >
           <ul className="flex flex-col gap-4">
-            {NAV_ITEMS.map((item) => {
+            <li>
+              <LanguageSwitcher />
+            </li>
+            {navItems.map((item) => {
               if (!item.children) {
                 return (
-                  <li key={item.label}>
+                  <li key={item.key}>
                     <Link
                       href={item.href}
                       onClick={closeMobileMenu}
@@ -108,14 +115,14 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
                 );
               }
 
-              const isAccordionOpen = mobileAccordionOpen === item.label;
+              const isAccordionOpen = mobileAccordionOpen === item.key;
               return (
-                <li key={item.label}>
+                <li key={item.key}>
                   <button
                     type="button"
                     aria-expanded={isAccordionOpen}
                     onClick={() =>
-                      setMobileAccordionOpen((current) => (current === item.label ? null : item.label))
+                      setMobileAccordionOpen((current) => (current === item.key ? null : item.key))
                     }
                     className="flex w-full items-center justify-between text-sm text-ink-muted hover:text-ink"
                   >
@@ -157,7 +164,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
                   onClick={closeMobileMenu}
                   className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
                 >
-                  {pt.nav.signIn}
+                  {dict.nav.signIn}
                 </Link>
               )}
             </li>

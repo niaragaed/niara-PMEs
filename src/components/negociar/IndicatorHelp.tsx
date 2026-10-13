@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { HelpCircle } from "lucide-react";
-import { pt } from "@/lib/i18n/pt-br";
+import { useDictionary } from "@/lib/i18n/client";
 
 type IndicatorHelpProps = {
   name: string;
@@ -12,6 +12,7 @@ type IndicatorHelpProps = {
 };
 
 export function IndicatorHelp({ name: nome, explanation, isOpen, onOpenChange }: IndicatorHelpProps) {
+  const dict = useDictionary();
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverId = useId();
 
@@ -39,7 +40,7 @@ export function IndicatorHelp({ name: nome, explanation, isOpen, onOpenChange }:
     <div ref={containerRef} className="relative inline-flex">
       <button
         type="button"
-        aria-label={pt.trade.offering.indicators.helpAria(nome)}
+        aria-label={dict.trade.offering.indicators.helpAria(nome)}
         aria-expanded={isOpen}
         aria-controls={popoverId}
         onClick={() => onOpenChange(!isOpen)}

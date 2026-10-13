@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { pt } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
 /**
  * Seletor de rede da publicação — só aparece enquanto a oferta não tem nenhuma tentativa
@@ -7,8 +7,9 @@ import { pt } from "@/lib/i18n/pt-br";
  * rede só passa a valer de verdade quando registrarTentativa/registrarTentativaSolana gravam a
  * tentativa, e a partir daí a página segue a rede da linha (migration 0017).
  */
-export function PublicationNetworkChoice({ offeringId, current }: { offeringId: string; current: "sepolia" | "solana" }) {
-  const t = pt.solana.publish.networkChoice;
+export async function PublicationNetworkChoice({ offeringId, current }: { offeringId: string; current: "sepolia" | "solana" }) {
+  const dict = await getDictionary();
+  const t = dict.solana.publish.networkChoice;
   const base = `/empresa/ofertas/${offeringId}/publicar`;
   const options = [
     { id: "sepolia" as const, href: base, label: t.sepolia },

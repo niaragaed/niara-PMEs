@@ -187,6 +187,11 @@ export const en = {
     openMenu: "Open menu",
     closeMenu: "Close menu",
     signIn: "Sign in",
+    language: {
+      ariaLabel: "Site language",
+      en: "English",
+      pt: "Português",
+    },
     accountMenu: {
       openMenu: "Open account menu",
       signInOtherAccount: "Sign in with another account",
@@ -2016,6 +2021,24 @@ export const en = {
       colLink: "Link",
       viewOnChain: "View on chain",
       empty: "No activity yet.",
+    },
+    activity: {
+      investorSignup: "Investor sign-up",
+      issuerSignup: "Issuer sign-up",
+      offeringCreated: "Offering created",
+      selfServiceConfirmed: "Self-service offering confirmed",
+      selfServiceConfirmedSolana: "Self-service offering confirmed (Solana Devnet)",
+      selfServiceTerms: (target: string, price: string, deadline: string) =>
+        `Target: ${target} · Price/share: ${price} · Deadline: ${deadline}`,
+      investment: (status: string) => `Investment — ${status}`,
+      shares: (amount: string) => `${amount} shares`,
+      paymentEvents: {
+        escrow_intent: "Escrow started",
+        payment_confirmed: "Payment confirmed (simulated)",
+        release: "Funds released to the issuer",
+        refund: "Refund",
+        tokens_issued: "Tokens issued (simulated)",
+      },
     },
   },
 } as const satisfies Dictionary;

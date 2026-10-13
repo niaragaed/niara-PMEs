@@ -5,10 +5,10 @@ import { PublishOnChainPage } from "@/components/empresa/publicar/PublicarOnChai
 import { PublishSolanaPage } from "@/components/empresa/publicar/PublicarSolanaPage";
 import { PublicationNetworkChoice } from "@/components/empresa/publicar/EscolhaRedePublicacao";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { pt } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
+import { getDictionary } from "@/lib/i18n/server";
 
 // Mesmos três tetos travados no banco (supabase/migrations/0001_core.sql: cap_le_15m,
 // additional_lot, window_le_180d) e de novo no próprio OfertaOrquestrador — a Res. 88 é checada
@@ -22,11 +22,14 @@ const MAX_DEADLINE_DAYS = 180;
 // elegibilidade (status), lê a carteira vinculada (issuers.wallet_address) e os dados que vão
 // virar argumentos da transação, entregando tudo pronto para o Client Component. Nenhuma
 // escrita acontece aqui.
-export const metadata: Metadata = {
-  title: `${pt.companyOfferings.publishOnChain.meta.title} · Niara PMEs`,
-  description: pt.companyOfferings.publishOnChain.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.companyOfferings.publishOnChain.meta.title} · Niara PMEs`,
+  description: dict.companyOfferings.publishOnChain.meta.description,
   robots: { index: false, follow: false },
 };
+}
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -37,6 +40,7 @@ export default async function Page({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ rede?: string }>;
 }) {
+  const dict = await getDictionary();
   const { id } = await params;
   const { rede: chosenNetwork } = await searchParams;
 
@@ -81,7 +85,7 @@ export default async function Page({
   const linkedWallet = (issuer?.wallet_address as string | null) ?? null;
 
   if (offering.status !== "draft") {
-    const t = pt.companyOfferings.publishOnChain;
+    const t = dict.companyOfferings.publishOnChain;
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
@@ -91,7 +95,7 @@ export default async function Page({
   }
 
   if (offering.share_price_cents === null) {
-    const t = pt.companyOfferings.publishOnChain;
+    const t = dict.companyOfferings.publishOnChain;
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
@@ -118,7 +122,7 @@ export default async function Page({
   const maxAllowedLotCents = baseCapCents + Math.floor(baseCapCents / 4);
 
   if (offering.sync_status === "nao_onchain") {
-    const t = pt.companyOfferings.publishOnChain;
+    const t = dict.companyOfferings.publishOnChain;
     const reasons: string[] = [];
     if (hardCapCents > MAX_CAP_CENTS) {
       reasons.push(t.notEligible.res88Limits.cap(formatBRL(hardCapCents / 100)));

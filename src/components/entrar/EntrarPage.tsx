@@ -6,17 +6,18 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { VideoCover } from "@/components/entrar/VideoCover";
 import { TextField } from "@/components/perfil/FormField";
-import { pt } from "@/lib/i18n/pt-br";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { isValidEmail } from "@/lib/masks";
 import { createClient } from "@/lib/supabase/client";
 import { resolvePostLoginDestination } from "@/app/entrar/actions";
 import type { AuthError } from "@supabase/supabase-js";
+import { useDictionary } from "@/lib/i18n/client";
 
 type FormErrors = { email?: string; password?: string };
 
 // Só cobre os erros que signInWithPassword pode retornar — criação de conta
 // (signUp) não acontece mais nesta tela, ver CadastroPage.tsx.
-function mapAuthError(error: AuthError, t: typeof pt.signIn.errors): string {
+function mapAuthError(error: AuthError, t: Dictionary["signIn"]["errors"]): string {
   switch (error.code) {
     case "invalid_credentials":
       return t.invalidCredentials;
@@ -49,7 +50,8 @@ export function SignInPage({
   isFundraisingIntent: boolean;
   loginRequiredNotice?: boolean;
 }) {
-  const t = pt.signIn;
+  const dict = useDictionary();
+  const t = dict.signIn;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
@@ -200,12 +202,12 @@ export function SignInPage({
               type="button"
               disabled
               aria-disabled="true"
-              title={pt.common.comingSoon}
+              title={dict.common.comingSoon}
               className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-panel-border bg-military px-4 py-2.5 text-sm font-medium text-on-military-muted"
             >
               <GoogleIcon />
               {t.google.continueButton}
-              <span className="text-xs font-normal">({pt.common.comingSoon})</span>
+              <span className="text-xs font-normal">({dict.common.comingSoon})</span>
             </button>
           </form>
 
