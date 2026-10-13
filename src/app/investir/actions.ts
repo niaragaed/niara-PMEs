@@ -1,14 +1,16 @@
 "use server";
 
-// Server Action de reserva de aporte — só INVESTIDOR reserva (status
-// 'reserved'). REGRA DE HONESTIDADE: isto GRAVA no banco de verdade,
-// investor_id nunca vem do cliente, sempre de resolveAccount() (sessão no
-// servidor). zod só valida formato/faixa básica de UX; quem barra os limites
-// da Res.88 (teto anual do investidor, hard_cap da oferta, janela/status da
-// oferta) é o BANCO via trigger (ver supabase/migrations/0001_core.sql) — a
-// action tenta o insert e traduz o erro que o trigger levantou. Nenhum desses
-// limites é replicado aqui. Escopo 3b-2: só reserva — sem confirmação de
-// pagamento, sem KYC, sem fechamento (passos seguintes).
+// Investment reservation Server Action — only an INVESTOR reserves (status 'reserved'). HONESTY
+// RULE: this actually WRITES to the database; investor_id never comes from the client, always from
+// resolveAccount() (session on the server). zod only checks format/basic UX ranges; what blocks
+// the Res. 88 limits (the investor's annual cap, the offering's hard_cap, the offering's
+// window/status) is the DATABASE via triggers (see supabase/migrations/0001_core.sql) — the action
+// attempts the insert and translates the error the trigger raised. None of those limits is
+// replicated here.
+//
+// 🔴 translateInvestmentDbError matches substrings of the Portuguese RAISE EXCEPTION messages in
+// the migrations ("teto anual do investidor", "estoura o hard_cap", ...). They are database
+// values, not interface copy — never translate them here without changing the migration too.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { PostgrestError } from "@supabase/supabase-js";
@@ -20,48 +22,41 @@ import type { TokenCategory } from "@/lib/mock/ativos";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
+import { getDictionary } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { firstFieldErrors } from "@/lib/registration-schemas";
 
 export type ReserveInvestmentState =
   | { status: "success" }
   | { status: "error"; message: string; fieldErrors?: Partial<Record<string, string>> };
 
-const reserveInvestmentSchema = z.object({
-  offeringId: z.string().uuid("Oferta inválida."),
-  amountReais: z
-    .string()
-    .trim()
-    .min(1, "Informe o valor do aporte.")
-    .regex(MONEY_FORMAT, "Use o formato 1.000,00."),
-});
-
-function translateInvestmentDbError(error: PostgrestError): ReserveInvestmentState {
-  if (error.code === "23514") {
-    if (error.message.includes("teto anual do investidor")) {
-      return {
-        status: "error",
-        message: "Este aporte passa do seu limite anual de investimento.",
-      };
-    }
-    if (error.message.includes("estoura o hard_cap")) {
-      return {
-        status: "error",
-        message: "A oferta não tem espaço para esse valor (teto atingido).",
-      };
-    }
-    if (error.message.includes("nao esta ativa") || error.message.includes("fora da janela")) {
-      return { status: "error", message: "Esta oferta não está aberta para reserva." };
-    }
-  }
-  console.error("investir: erro inesperado do banco", error);
-  return { status: "error", message: "Não foi possível concluir a reserva. Tente novamente em instantes." };
+function reserveInvestmentSchema(e: Dictionary["serverErrors"]) {
+  return z.object({
+    offeringId: z.string().uuid(e.invalidOffering),
+    amountReais: z.string().trim().min(1, e.invest.amountRequired).regex(MONEY_FORMAT, e.amountFormat),
+  });
 }
 
-// Join usado só pela checagem de defesa em profundidade de reserveInvestment
-// abaixo — resolve o user_id do issuer dono da oferta, para comparar contra
-// o userId do investidor logado (accountId não serve aqui: com
-// role==='investor', accountId é sempre investors.id, nunca igual a
-// issuers.id, mesmo quando o mesmo user_id acabasse linkado às duas
-// contas).
+function translateInvestmentDbError(error: PostgrestError, e: Dictionary["serverErrors"]): ReserveInvestmentState {
+  if (error.code === "23514") {
+    if (error.message.includes("teto anual do investidor")) {
+      return { status: "error", message: e.invest.annualLimit };
+    }
+    if (error.message.includes("estoura o hard_cap")) {
+      return { status: "error", message: e.invest.capReached };
+    }
+    if (error.message.includes("nao esta ativa") || error.message.includes("fora da janela")) {
+      return { status: "error", message: e.invest.notOpen };
+    }
+  }
+  console.error("invest: unexpected database error", error);
+  return { status: "error", message: e.invest.reserveFailed };
+}
+
+// Join used only by reserveInvestment's defense-in-depth check below — resolves the user_id of
+// the issuer that owns the offering, to compare against the signed-in investor's userId (accountId
+// doesn't work here: with role==='investor', accountId is always investors.id, never equal to
+// issuers.id, even if the same user_id ended up linked to both accounts).
 type OfferingIssuerLinkRow = {
   issuers: { user_id: string } | { user_id: string }[] | null;
 };
@@ -73,40 +68,28 @@ function firstIssuerUserId(issuers: OfferingIssuerLinkRow["issuers"]): string | 
 }
 
 export async function reserveInvestment(dataInput: unknown): Promise<ReserveInvestmentState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId, userId } = await resolveAccount();
   if (role !== "investor" || !accountId) {
-    return { status: "error", message: "Apenas investidores cadastrados podem reservar aportes." };
+    return { status: "error", message: e.investorsOnly.reserve };
   }
 
-  const parsed = reserveInvestmentSchema.safeParse(dataInput);
+  const parsed = reserveInvestmentSchema(e).safeParse(dataInput);
   if (!parsed.success) {
-    const fieldErrors: Partial<Record<string, string>> = {};
-    for (const issue of parsed.error.issues) {
-      const field = issue.path[0];
-      if (typeof field === "string" && !(field in fieldErrors)) {
-        fieldErrors[field] = issue.message;
-      }
-    }
-    return { status: "error", message: "Corrija os campos destacados.", fieldErrors };
+    return { status: "error", message: e.fixFields, fieldErrors: firstFieldErrors(parsed.error) };
   }
 
   const amountCents = reaisToCents(parsed.data.amountReais);
   if (amountCents === null) {
-    return {
-      status: "error",
-      message: "Corrija os campos destacados.",
-      fieldErrors: { amountReais: "Use o formato 1.000,00." },
-    };
+    return { status: "error", message: e.fixFields, fieldErrors: { amountReais: e.amountFormat } };
   }
 
   const admin = createAdminClient();
 
-  // Defesa em profundidade: o gate de role==='investor' acima já deveria
-  // bastar (uma conta é investidor OU empresa, nunca as duas — ver
-  // resolveInvestor.ts), mas aqui reforçamos de forma explícita, via
-  // user_id, que o investidor logado não é o dono da empresa emissora desta
-  // oferta. Nunca confia em accountId para essa comparação (tipos de conta
-  // diferentes).
+  // Defense in depth: the role==='investor' gate above should already be enough (an account is an
+  // investor OR a company, never both — see resolveInvestor.ts), but here we explicitly reinforce,
+  // via user_id, that the signed-in investor isn't the owner of the company issuing this offering.
+  // Never trusts accountId for this comparison (different account types).
   const { data: offeringLink, error: offeringLinkError } = await admin
     .from("offerings")
     .select("issuers(user_id)")
@@ -114,13 +97,13 @@ export async function reserveInvestment(dataInput: unknown): Promise<ReserveInve
     .maybeSingle();
 
   if (offeringLinkError) {
-    console.error("investir: erro ao verificar dono da oferta", offeringLinkError);
-    return { status: "error", message: "Não foi possível concluir a reserva. Tente novamente em instantes." };
+    console.error("invest: failed to check the offering owner", offeringLinkError);
+    return { status: "error", message: e.invest.reserveFailed };
   }
 
   const issuerUserId = offeringLink ? firstIssuerUserId((offeringLink as OfferingIssuerLinkRow).issuers) : null;
   if (issuerUserId !== null && issuerUserId === userId) {
-    return { status: "error", message: "Você não pode investir na sua própria oferta." };
+    return { status: "error", message: e.invest.ownOffering };
   }
 
   const { error } = await admin.from("investments").insert({
@@ -131,52 +114,48 @@ export async function reserveInvestment(dataInput: unknown): Promise<ReserveInve
   });
 
   if (error) {
-    return translateInvestmentDbError(error);
+    return translateInvestmentDbError(error, e);
   }
 
   revalidatePath("/investir");
   return { status: "success" };
 }
 
-// Confirmação de pagamento (reserved -> paid) — 3b-3. REGRA DE HONESTIDADE: o
-// escrow é MOCK (src/lib/mocks.ts, ver src/lib/adapters.ts) — o ref gravado
-// como payment_ref começa sempre com "MOCK-". A função confirm_investment
-// (supabase/migrations/0005_confirm_investment.sql) é quem decide de forma
-// atômica se a transição pode acontecer (idempotência + gate de KYC via
-// trigger); esta action não revalida nada disso em JS, só chama a RPC e
-// traduz o resultado/erro.
+// Payment confirmation (reserved -> paid) — 3b-3. HONESTY RULE: the escrow is a MOCK
+// (src/lib/mocks.ts, see src/lib/adapters.ts) — the ref stored as payment_ref always starts with
+// "MOCK-". The confirm_investment function (supabase/migrations/0005_confirm_investment.sql) is
+// what atomically decides whether the transition can happen (idempotency + KYC gate via trigger);
+// this action doesn't re-check any of that in JS, it only calls the RPC and translates the
+// result/error.
 export type ConfirmInvestmentState =
   | { status: "success"; message: string }
   | { status: "error"; message: string; kycRequired?: boolean };
 
-function translateConfirmInvestmentDbError(error: PostgrestError): ConfirmInvestmentState {
+function translateConfirmInvestmentDbError(error: PostgrestError, e: Dictionary["serverErrors"]): ConfirmInvestmentState {
   if (error.code === "23514" && error.message.includes("KYC nao aprovado")) {
-    return {
-      status: "error",
-      message: "Aprove seu KYC (demonstração) para confirmar o pagamento.",
-      kycRequired: true,
-    };
+    return { status: "error", message: e.invest.kycRequired, kycRequired: true };
   }
-  console.error("investir: erro inesperado ao confirmar pagamento", error);
-  return { status: "error", message: "Não foi possível confirmar o pagamento. Tente novamente em instantes." };
+  console.error("invest: unexpected error while confirming the payment", error);
+  return { status: "error", message: e.invest.confirmFailed };
 }
 
 export async function confirmInvestment(investmentIdInput: unknown): Promise<ConfirmInvestmentState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "investor" || !accountId) {
-    return { status: "error", message: "Apenas investidores cadastrados podem confirmar pagamento." };
+    return { status: "error", message: e.investorsOnly.confirmPayment };
   }
 
-  const parsedId = z.string().uuid("Aporte inválido.").safeParse(investmentIdInput);
+  const parsedId = z.string().uuid().safeParse(investmentIdInput);
   if (!parsedId.success) {
-    return { status: "error", message: "Aporte inválido." };
+    return { status: "error", message: e.invest.invalidInvestment };
   }
   const investmentId = parsedId.data;
 
   const admin = createAdminClient();
 
-  // Confere que o aporte é do investidor logado antes de agir — investor_id
-  // nunca vem do cliente, o id do aporte por si só não autoriza nada.
+  // Checks that the investment belongs to the signed-in investor before acting — investor_id never
+  // comes from the client, and the investment id alone doesn't authorize anything.
   const { data: investment, error: fetchError } = await admin
     .from("investments")
     .select("id, investor_id, offering_id, amount_cents, status")
@@ -184,14 +163,14 @@ export async function confirmInvestment(investmentIdInput: unknown): Promise<Con
     .maybeSingle();
 
   if (fetchError) {
-    console.error("investir: erro ao buscar aporte para confirmação", fetchError);
-    return { status: "error", message: "Não foi possível confirmar o pagamento. Tente novamente em instantes." };
+    console.error("invest: failed to fetch the investment for confirmation", fetchError);
+    return { status: "error", message: e.invest.confirmFailed };
   }
   if (!investment || investment.investor_id !== accountId) {
-    return { status: "error", message: "Aporte não encontrado." };
+    return { status: "error", message: e.invest.investmentNotFound };
   }
   if (investment.status === "paid") {
-    return { status: "success", message: "Pagamento (simulado) já confirmado." };
+    return { status: "success", message: e.invest.alreadyPaid };
   }
 
   const escrow = await payments.createEscrowIntent({
@@ -208,23 +187,22 @@ export async function confirmInvestment(investmentIdInput: unknown): Promise<Con
   });
 
   if (rpcError) {
-    return translateConfirmInvestmentDbError(rpcError);
+    return translateConfirmInvestmentDbError(rpcError, e);
   }
 
   revalidatePath("/investir");
 
   if (rpcResult === "already_paid" || rpcResult === "already_processed") {
-    return { status: "success", message: "Pagamento (simulado) já confirmado." };
+    return { status: "success", message: e.invest.alreadyPaid };
   }
-  return { status: "success", message: "Pagamento (simulado) confirmado." };
+  return { status: "success", message: e.invest.paid };
 }
 
-// Leitura pública da página de detalhe da oferta (3b-4c) — REGRA DE OURO:
-// qualquer investidor logado pode ver a oferta de qualquer empresa, então o
-// SELECT é uma LISTA BRANCA explícita, nunca select('*') do issuer. phone,
-// endereço completo, wallet_address e receita bruta NUNCA são buscados aqui
-// — não é só uma questão de não exibir no JSX, o campo nem sai do banco, o
-// que também garante que nunca aparecem no HTML servido (view-source).
+// Public read for the offering detail page (3b-4c) — GOLDEN RULE: any signed-in investor can see
+// any company's offering, so the SELECT is an explicit ALLOWLIST, never select('*') on the issuer.
+// phone, full address, wallet_address and gross revenue are NEVER fetched here — it isn't just a
+// matter of not showing them in the JSX, the field never leaves the database, which also
+// guarantees they never show up in the served HTML (view-source).
 export type PublicOfferingIssuer = {
   legalName: string;
   tradeName: string | null;
@@ -232,7 +210,7 @@ export type PublicOfferingIssuer = {
   businessSummary: string | null;
   city: string | null;
   state: string | null;
-  /** null se a empresa não optou por publicar (issuers.publish_cnpj = false) — nesse caso tax_id nem chega a ser lido do banco. */
+  /** null if the company didn't opt in to publishing it (issuers.publish_cnpj = false) — in that case tax_id isn't even read from the database. */
   cnpjMasked: string | null;
   logoUrl: string | null;
 };
@@ -286,8 +264,8 @@ export async function loadPublicOffering(offeringIdInput: unknown): Promise<Publ
 
   const admin = createAdminClient();
 
-  // Passo 1: lista branca, SEM tax_id — publish_cnpj vem junto só para
-  // decidir se o passo 2 (que lê tax_id) roda ou não.
+  // Step 1: allowlist, WITHOUT tax_id — publish_cnpj comes along only to decide whether step 2
+  // (which reads tax_id) runs or not.
   const { data, error } = await admin
     .from("offerings")
     .select(
@@ -303,8 +281,8 @@ export async function loadPublicOffering(offeringIdInput: unknown): Promise<Publ
   const issuerRow = firstIssuer(offering.issuers);
   if (!issuerRow) return null;
 
-  // Passo 2: só busca tax_id se a empresa optou por publicar — para quem
-  // não optou, o CNPJ não é lido do banco, não só "não exibido" no JSX.
+  // Step 2: only fetches tax_id if the company opted in to publishing it — for those who didn't,
+  // the CNPJ isn't read from the database, not just "not shown" in the JSX.
   let cnpjMasked: string | null = null;
   if (issuerRow.publish_cnpj) {
     const { data: taxIdRow } = await admin

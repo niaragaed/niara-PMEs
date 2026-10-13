@@ -1,13 +1,12 @@
 "use server";
 
-// Server Actions de ofertas de captação — só EMPRESA (issuer) cria/ativa.
-// REGRA DE HONESTIDADE: isto GRAVA no banco de verdade. issuer_id nunca vem
-// do cliente, sempre de resolveAccount() (sessão no servidor). zod só valida
-// FORMATO/faixas básicas de UX; quem valida as regras da Res.88 (teto de
-// R$15M, lote adicional <=25%, prazo <=180d, meta<=teto) é o banco — a
-// action tenta a operação e traduz o CHECK que estourou. Nenhuma dessas
-// regras é replicada aqui além do necessário pra não mandar lixo óbvio pro
-// banco (ex.: percentual fora de 0-25, prazo fora de 1-180).
+// Fundraising offering Server Actions — only a COMPANY (issuer) creates/activates. HONESTY RULE:
+// this actually WRITES to the database. issuer_id never comes from the client, always from
+// resolveAccount() (session on the server). zod only checks FORMAT/basic UX ranges; the Res. 88
+// rules (R$15M cap, additional lot <=25%, deadline <=180d, target<=cap) are checked by the
+// database — the action attempts the operation and translates the CHECK that failed. None of
+// these rules is replicated here beyond what's needed to avoid sending obvious garbage to the
+// database (e.g. a percentage outside 0-25, a deadline outside 1-180).
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { PostgrestError } from "@supabase/supabase-js";
@@ -15,6 +14,9 @@ import { chain } from "@/lib/adapters";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
+import { getDictionary } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { firstFieldErrors } from "@/lib/registration-schemas";
 
 export type OfferingActionState =
   | { status: "success" }
@@ -22,98 +24,69 @@ export type OfferingActionState =
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-// Mesmo conjunto de categorias do CHECK de offerings.category (0009) e do
-// tipo TokenCategory (src/lib/mock/ativos.ts) — todas selecionáveis nesta
-// demonstração; o CHECK do banco continua sendo o backstop real.
+// Same set of categories as the offerings.category CHECK (0009) and the TokenCategory type
+// (src/lib/mock/ativos.ts) — all selectable in this demo; the database CHECK remains the real
+// backstop. The values are database codes, not interface copy.
 const OFFERING_CATEGORIES = ["pmes", "agro", "imobiliario", "auto", "divida"] as const;
 
-const createOfferingSchema = z.object({
-  baseCapReais: z
-    .string()
-    .trim()
-    .min(1, "Informe o valor da oferta.")
-    .regex(MONEY_FORMAT, "Use o formato 5.000.000,00."),
-  targetMinReais: z
-    .string()
-    .trim()
-    .min(1, "Informe a meta mínima.")
-    .regex(MONEY_FORMAT, "Use o formato 5.000.000,00."),
-  additionalLotPct: z.coerce.number().int().min(0).max(25),
-  windowDays: z.coerce.number().int().min(1).max(180),
-  sharePriceReais: z
-    .string()
-    .trim()
-    .min(1, "Informe o valor por cota.")
-    .regex(MONEY_FORMAT, "Use o formato 5.000.000,00."),
-  category: z.enum(OFFERING_CATEGORIES, { message: "Selecione uma categoria." }),
-});
+function createOfferingSchema(e: Dictionary["serverErrors"]) {
+  return z.object({
+    baseCapReais: z.string().trim().min(1, e.offerings.valueRequired).regex(MONEY_FORMAT, e.moneyFormat),
+    targetMinReais: z.string().trim().min(1, e.offerings.minTargetRequired).regex(MONEY_FORMAT, e.moneyFormat),
+    additionalLotPct: z.coerce.number().int().min(0).max(25),
+    windowDays: z.coerce.number().int().min(1).max(180),
+    sharePriceReais: z.string().trim().min(1, e.offerings.valuePerShareRequired).regex(MONEY_FORMAT, e.moneyFormat),
+    category: z.enum(OFFERING_CATEGORIES, { message: e.offerings.selectCategory }),
+  });
+}
 
-// hard_cap = base + floor(base * pct / 100), tudo em BigInt/centavos
-// inteiros — nunca float. Com pct=0 o resultado é EXATAMENTE base (a soma
-// de zero não altera o valor). A divisão de BigInt trunca em direção a
-// zero, que para valores não-negativos é floor — mesma semântica da
-// divisão inteira que o CHECK "additional_lot" do banco usa
-// (base_cap_cents / 4). Matematicamente, floor(base*25/100) == floor(base/4)
-// para todo base inteiro (25/100 e 1/4 são a mesma fração exata), então com
-// pct no intervalo validado [0,25] o resultado nunca ultrapassa o teto do
-// CHECK — só reforça, não substitui, a validação do banco.
+// hard_cap = base + floor(base * pct / 100), all in BigInt/integer cents — never float. With
+// pct=0 the result is EXACTLY base (adding zero doesn't change the value). BigInt division
+// truncates toward zero, which for non-negative values is floor — the same semantics as the
+// integer division the database's "additional_lot" CHECK uses (base_cap_cents / 4).
+// Mathematically, floor(base*25/100) == floor(base/4) for every integer base (25/100 and 1/4 are
+// the same exact fraction), so with pct in the validated range [0,25] the result never exceeds
+// the CHECK's cap — it only reinforces, never replaces, the database validation.
 function computeHardCapCents(baseCapCents: bigint, additionalLotPct: number): bigint {
   return baseCapCents + (baseCapCents * BigInt(additionalLotPct)) / BigInt(100);
 }
 
-function firstFieldErrors(error: z.ZodError): Partial<Record<string, string>> {
-  const result: Partial<Record<string, string>> = {};
-  for (const issue of error.issues) {
-    const field = issue.path[0];
-    if (typeof field === "string" && !(field in result)) {
-      result[field] = issue.message;
-    }
-  }
-  return result;
-}
-
-function translateOfferingDbError(error: PostgrestError): OfferingActionState {
+function translateOfferingDbError(error: PostgrestError, e: Dictionary["serverErrors"]): OfferingActionState {
   if (error.code === "23514") {
     if (error.message.includes("cap_le_15m")) {
-      return {
-        status: "error",
-        message: "O valor da oferta (com o lote adicional) está acima do teto de R$15 milhões por oferta.",
-      };
+      return { status: "error", message: e.offerings.capAbove15m };
     }
     if (error.message.includes("additional_lot")) {
-      return { status: "error", message: "O lote adicional está acima de 25% da oferta original." };
+      return { status: "error", message: e.offerings.lotAbove25 };
     }
     if (error.message.includes("window_le_180d")) {
-      return { status: "error", message: "O prazo da oferta está acima de 180 dias." };
+      return { status: "error", message: e.offerings.windowAbove180 };
     }
     if (error.message.includes("min_le_hardcap")) {
-      return { status: "error", message: "A meta mínima não pode passar do teto da oferta." };
+      return { status: "error", message: e.offerings.minAboveCap };
     }
     if (error.message.includes("offerings_share_price_cents_check")) {
       return {
         status: "error",
-        message: "O valor da oferta precisa ser múltiplo do valor por cota.",
-        fieldErrors: { sharePriceReais: "O valor da oferta precisa ser múltiplo deste valor." },
+        message: e.offerings.notMultiple,
+        fieldErrors: { sharePriceReais: e.offerings.notMultipleField },
       };
     }
   }
-  console.error("ofertas: erro inesperado do banco", error);
-  return { status: "error", message: "Não foi possível concluir a operação. Tente novamente em instantes." };
+  console.error("offerings: unexpected database error", error);
+  return { status: "error", message: e.offerings.operationFailed };
 }
 
 export async function createOffering(dataInput: unknown): Promise<OfferingActionState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem criar ofertas." };
+    return { status: "error", message: e.issuersOnly.createOfferings };
   }
 
-  const parsed = createOfferingSchema.safeParse(dataInput);
+  const parsed = createOfferingSchema(e).safeParse(dataInput);
   if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Corrija os campos destacados.",
-      fieldErrors: firstFieldErrors(parsed.error),
-    };
+    return { status: "error", message: e.fixFields, fieldErrors: firstFieldErrors(parsed.error) };
   }
 
   const baseCapCents = reaisToCents(parsed.data.baseCapReais);
@@ -122,11 +95,11 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
   if (baseCapCents === null || targetMinCents === null || sharePriceCents === null) {
     return {
       status: "error",
-      message: "Corrija os campos destacados.",
+      message: e.fixFields,
       fieldErrors: {
-        ...(baseCapCents === null ? { baseCapReais: "Use o formato 5.000.000,00." } : {}),
-        ...(targetMinCents === null ? { targetMinReais: "Use o formato 5.000.000,00." } : {}),
-        ...(sharePriceCents === null ? { sharePriceReais: "Use o formato 5.000.000,00." } : {}),
+        ...(baseCapCents === null ? { baseCapReais: e.moneyFormat } : {}),
+        ...(targetMinCents === null ? { targetMinReais: e.moneyFormat } : {}),
+        ...(sharePriceCents === null ? { sharePriceReais: e.moneyFormat } : {}),
       },
     };
   }
@@ -151,7 +124,7 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
   });
 
   if (error) {
-    return translateOfferingDbError(error);
+    return translateOfferingDbError(error, e);
   }
 
   revalidatePath("/empresa/ofertas");
@@ -159,9 +132,10 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
 }
 
 export async function activateOffering(offeringId: string): Promise<OfferingActionState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem ativar ofertas." };
+    return { status: "error", message: e.issuersOnly.activateOfferings };
   }
 
   const admin = createAdminClient();
@@ -174,19 +148,19 @@ export async function activateOffering(offeringId: string): Promise<OfferingActi
     .maybeSingle();
 
   if (fetchError) {
-    return translateOfferingDbError(fetchError);
+    return translateOfferingDbError(fetchError, e);
   }
   if (!offering) {
-    return { status: "error", message: "Oferta não encontrada." };
+    return { status: "error", message: e.offeringNotFound };
   }
   if (offering.status !== "draft") {
-    return { status: "error", message: "Só é possível ativar ofertas em rascunho." };
+    return { status: "error", message: e.offerings.onlyDraftActivate };
   }
 
-  // Recalcula a janela a partir do prazo ORIGINAL (em dias, derivado do
-  // rascunho) — a oferta não pode nascer ativa já fora da janela só porque
-  // ficou alguns dias em draft antes de ser ativada. opens_at também vira
-  // o instante da ativação, não o da criação do rascunho.
+  // Recomputes the window from the ORIGINAL deadline (in days, derived from the draft) — the
+  // offering can't start active already outside its window just because it sat in draft for a few
+  // days before being activated. opens_at also becomes the moment of activation, not the draft's
+  // creation.
   const originalOpensAt = new Date(offering.opens_at as string);
   const originalClosesAt = new Date(offering.closes_at as string);
   const windowDays = Math.round((originalClosesAt.getTime() - originalOpensAt.getTime()) / MS_PER_DAY);
@@ -194,12 +168,11 @@ export async function activateOffering(offeringId: string): Promise<OfferingActi
   const newOpensAt = new Date();
   const newClosesAt = new Date(newOpensAt.getTime() + windowDays * MS_PER_DAY);
 
-  // UPDATE atômico: reafirma id + issuer_id + status='draft' na própria
-  // cláusula WHERE (não há trigger de transição de status em `offerings`,
-  // diferente de `investments`) — protege contra corrida entre o SELECT
-  // acima e este UPDATE (dois cliques quase simultâneos, por exemplo). Se
-  // nenhuma linha voltar, a oferta deixou de ser do issuer/deixou de estar
-  // em draft entre as duas chamadas.
+  // Atomic UPDATE: restates id + issuer_id + status='draft' in the WHERE clause itself (there's no
+  // status transition trigger on `offerings`, unlike `investments`) — protects against a race
+  // between the SELECT above and this UPDATE (two almost simultaneous clicks, for example). If no
+  // row comes back, the offering stopped belonging to the issuer/stopped being a draft between the
+  // two calls.
   const { data: updated, error: updateError } = await admin
     .from("offerings")
     .update({
@@ -213,55 +186,51 @@ export async function activateOffering(offeringId: string): Promise<OfferingActi
     .select("id");
 
   if (updateError) {
-    return translateOfferingDbError(updateError);
+    return translateOfferingDbError(updateError, e);
   }
   if (!updated || updated.length === 0) {
-    return {
-      status: "error",
-      message: "Não foi possível ativar — verifique se a oferta ainda está em rascunho.",
-    };
+    return { status: "error", message: e.offerings.activateFailed };
   }
 
   revalidatePath("/empresa/ofertas");
   return { status: "success" };
 }
 
-// Fechamento (3b-4) — settle_offering/mark_offering_settled (0002) são a
-// AUTORIDADE que decide funded/failed e ajusta os aportes; esta action só
-// chama as RPCs e, no caso funded, emite o token mock por aporte pago antes
-// de liquidar. Nenhuma regra de meta mínima é replicada aqui.
+// Closing (3b-4) — settle_offering/mark_offering_settled (0002) are the AUTHORITY that decides
+// funded/failed and adjusts the investments; this action only calls the RPCs and, in the funded
+// case, issues the mock token per paid investment before settling. No minimum target rule is
+// replicated here.
 export type CloseOfferingState =
   | { status: "success"; result: "funded" | "failed" }
   | { status: "error"; message: string };
 
-function translateCloseOfferingDbError(error: PostgrestError): CloseOfferingState {
+function translateCloseOfferingDbError(error: PostgrestError, e: Dictionary["serverErrors"]): CloseOfferingState {
   if (error.code === "23514" && error.message.includes("nao esta ativa")) {
-    return { status: "error", message: "Esta oferta já foi fechada." };
+    return { status: "error", message: e.offerings.alreadyClosed };
   }
-  console.error("ofertas: erro inesperado ao fechar captação", error);
-  return { status: "error", message: "Não foi possível fechar a captação. Tente novamente em instantes." };
+  console.error("offerings: unexpected error while closing the fundraising", error);
+  return { status: "error", message: e.offerings.closeFailed };
 }
 
-const closeOfferingSchema = z.string().uuid("Oferta inválida.");
-
 export async function closeOffering(offeringIdInput: unknown): Promise<CloseOfferingState> {
+  const e = (await getDictionary()).serverErrors;
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas cadastradas podem fechar captações." };
+    return { status: "error", message: e.issuersOnly.closeFundraising };
   }
 
-  const parsedId = closeOfferingSchema.safeParse(offeringIdInput);
+  const parsedId = z.string().uuid().safeParse(offeringIdInput);
   if (!parsedId.success) {
-    return { status: "error", message: "Oferta inválida." };
+    return { status: "error", message: e.invalidOffering };
   }
   const offeringId = parsedId.data;
 
   const admin = createAdminClient();
 
-  // Confere que a oferta é do issuer logado antes de agir — offeringId
-  // sozinho não autoriza nada. status vem junto para permitir retomar um
-  // fechamento que já chegou a 'funded' numa tentativa anterior sem
-  // re-chamar settle_offering (que só aceita oferta 'active').
+  // Checks that the offering belongs to the signed-in issuer before acting — offeringId alone
+  // doesn't authorize anything. status comes along so a close that already reached 'funded' in a
+  // previous attempt can be resumed without calling settle_offering again (it only accepts an
+  // 'active' offering).
   const { data: offering, error: fetchError } = await admin
     .from("offerings")
     .select("id, status")
@@ -270,26 +239,26 @@ export async function closeOffering(offeringIdInput: unknown): Promise<CloseOffe
     .maybeSingle();
 
   if (fetchError) {
-    console.error("ofertas: erro ao buscar oferta para fechamento", fetchError);
-    return { status: "error", message: "Não foi possível fechar a captação. Tente novamente em instantes." };
+    console.error("offerings: failed to fetch the offering for closing", fetchError);
+    return { status: "error", message: e.offerings.closeFailed };
   }
   if (!offering) {
-    return { status: "error", message: "Oferta não encontrada." };
+    return { status: "error", message: e.offeringNotFound };
   }
 
   let settleResult: "funded" | "failed";
 
   if (offering.status === "funded") {
-    // Retomada: uma tentativa anterior já resolveu a oferta como funded mas
-    // não terminou a emissão de token / mark_offering_settled. Não chama
-    // settle_offering de novo (só aceita status 'active').
+    // Resume: a previous attempt already resolved the offering as funded but didn't finish the
+    // token issuance / mark_offering_settled. Doesn't call settle_offering again (it only accepts
+    // status 'active').
     settleResult = "funded";
   } else {
     const { data: rpcResult, error: settleError } = await admin.rpc("settle_offering", {
       p_offering_id: offeringId,
     });
     if (settleError) {
-      return translateCloseOfferingDbError(settleError);
+      return translateCloseOfferingDbError(settleError, e);
     }
     settleResult = rpcResult as "funded" | "failed";
   }
@@ -299,11 +268,10 @@ export async function closeOffering(offeringIdInput: unknown): Promise<CloseOffe
     return { status: "success", result: "failed" };
   }
 
-  // funded: emite o token mock por aporte PAGO antes de liquidar. Idempotente
-  // por aporte — idempotency_key = 'tokens-'||investment.id, mesma chave em
-  // qualquer reexecução, então um retry (ou uma corrida de dois cliques) não
-  // duplica emissão: a unique constraint de payment_events barra a segunda
-  // gravação e o 23505 é tratado como "já emitido, seguir", não como erro.
+  // funded: issues the mock token per PAID investment before settling. Idempotent per investment —
+  // idempotency_key = 'tokens-'||investment.id, the same key on any re-run, so a retry (or a race
+  // between two clicks) doesn't duplicate issuance: the payment_events unique constraint blocks
+  // the second write and the 23505 is treated as "already issued, carry on", not as an error.
   const { data: paidInvestments, error: paidError } = await admin
     .from("investments")
     .select("id, investor_id, amount_cents")
@@ -311,11 +279,8 @@ export async function closeOffering(offeringIdInput: unknown): Promise<CloseOffe
     .eq("status", "paid");
 
   if (paidError) {
-    console.error("ofertas: erro ao buscar aportes pagos para emissão", paidError);
-    return {
-      status: "error",
-      message: "Não foi possível concluir a emissão de tokens. Tente novamente em instantes.",
-    };
+    console.error("offerings: failed to fetch paid investments for issuance", paidError);
+    return { status: "error", message: e.offerings.issuanceFailed };
   }
 
   for (const investment of paidInvestments ?? []) {
@@ -335,14 +300,11 @@ export async function closeOffering(offeringIdInput: unknown): Promise<CloseOffe
     });
 
     if (insertError && insertError.code !== "23505") {
-      console.error("ofertas: erro ao registrar emissão de token", insertError);
-      return {
-        status: "error",
-        message: "Não foi possível concluir a emissão de tokens. Tente novamente em instantes.",
-      };
+      console.error("offerings: failed to record the token issuance", insertError);
+      return { status: "error", message: e.offerings.issuanceFailed };
     }
-    // 23505 (idempotency_key já existe) = este aporte já teve token emitido
-    // numa tentativa anterior — segue sem duplicar, não é erro.
+    // 23505 (idempotency_key already exists) = this investment already had its token issued in a
+    // previous attempt — carry on without duplicating, it's not an error.
   }
 
   const { error: settledError } = await admin.rpc("mark_offering_settled", {
@@ -350,7 +312,7 @@ export async function closeOffering(offeringIdInput: unknown): Promise<CloseOffe
   });
 
   if (settledError) {
-    return translateCloseOfferingDbError(settledError);
+    return translateCloseOfferingDbError(settledError, e);
   }
 
   revalidatePath("/empresa/ofertas");

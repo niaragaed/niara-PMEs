@@ -1,25 +1,27 @@
 "use client";
 
-// Hook de escrita da Fase 3, sub-etapa 4 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — assina
-// criarOfertaCompleta, registra a tentativa (Server Action, ANTES de esperar confirmação — cobre
-// o caso "fecha a aba logo após assinar"), espera a confirmação e por fim pede ao servidor para
-// ler o evento minerado e gravar o resultado. Nunca mostra "success" antes da confirmação real
-// on-chain E da gravação server-side ter voltado — "pendente" nunca é tratado como "publicada".
+// Phase 3, sub-step 4 write hook (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — signs
+// criarOfertaCompleta, records the attempt (Server Action, BEFORE waiting for confirmation — covers
+// the "closes the tab right after signing" case), waits for confirmation and finally asks the
+// server to read the mined event and record the result. Never shows "success" before the real
+// on-chain confirmation AND the server-side write have come back — "pendente" is never treated as
+// "published". The "pendente" / "confirmada" / "divergente" statuses mirror offerings.sync_status.
 import { useCallback, useState } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
 import { PUBLICATION_GAS_LIMIT } from "../gates";
 import { describeOnChainError } from "../errors";
 import { registerAttempt, confirmPublication } from "@/app/empresa/ofertas/onchain-actions";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type PublishStatus =
   | "idle"
   | "signing"
-  | "registrando"
+  | "registering"
   | "confirming"
   | "confirmada"
   | "pendente"
-  | "revertida"
+  | "reverted"
   | "divergente"
   | "error";
 
@@ -50,12 +52,13 @@ export function usePublishOfferingOnChain() {
   const [state, setState] = useState<PublishState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const publish = useCallback(
     async (args: PublishArgs) => {
       const orchestrator = getOrchestratorContract();
       if (!orchestrator || !publicClient) {
-        setState({ ...IDLE, status: "error", errorMessage: "Contrato não configurado." });
+        setState({ ...IDLE, status: "error", errorMessage: messages.contractNotConfigured });
         return;
       }
 
@@ -83,16 +86,17 @@ export function usePublishOfferingOnChain() {
           gas: PUBLICATION_GAS_LIMIT,
         });
       } catch (error) {
-        // Cobre rejeição na MetaMask e revert já na simulação/estimativa de gas (describeOnChainError
-        // decodifica o erro customizado do OfertaOrquestrador se for o caso).
-        setState({ ...IDLE, status: "error", errorMessage: describeOnChainError(error) });
+        // Covers a rejection in MetaMask and a revert already at the simulation/gas estimation
+        // (describeOnChainError decodes the OfertaOrquestrador custom error if that's the case).
+        setState({ ...IDLE, status: "error", errorMessage: describeOnChainError(error, messages) });
         return;
       }
 
-      // Registrado ANTES de esperar confirmação — cobre "usuário fecha a aba logo após assinar":
-      // o hash já fica salvo, e a reconciliação (próxima visita a esta tela) resolve sozinha.
-      setState({ status: "registrando", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
-      const reg = await registerAttempt({ offeringId: args.offeringId, txHash: hash, prazoUnixSeconds: deadlineUnixSeconds });
+      // Recorded BEFORE waiting for confirmation — covers "the user closes the tab right after
+      // signing": the hash is already saved, and the reconciliation (next visit to this screen)
+      // resolves it on its own.
+      setState({ status: "registering", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
+      const reg = await registerAttempt({ offeringId: args.offeringId, txHash: hash, deadlineUnixSeconds });
       if (reg.status === "error") {
         setState({ status: "error", txHash: hash, errorMessage: reg.message, contractAddress: null, tokenAddress: null });
         return;
@@ -102,9 +106,10 @@ export function usePublishOfferingOnChain() {
       try {
         await publicClient.waitForTransactionReceipt({ hash });
       } catch (error) {
-        // RPC caiu ou timeout esperando — o hash já está salvo (sync_status='pendente'); a
-        // reconciliação resolve depois, não é um erro fatal do fluxo.
-        setState({ status: "pendente", txHash: hash, errorMessage: describeOnChainError(error), contractAddress: null, tokenAddress: null });
+        // The RPC went down or timed out while waiting — the hash is already saved
+        // (sync_status='pendente'); the reconciliation resolves it later, it's not a fatal error
+        // for the flow.
+        setState({ status: "pendente", txHash: hash, errorMessage: describeOnChainError(error, messages), contractAddress: null, tokenAddress: null });
         return;
       }
 
@@ -113,18 +118,18 @@ export function usePublishOfferingOnChain() {
         setState({ status: "confirmada", txHash: hash, errorMessage: null, contractAddress: conf.contractAddress, tokenAddress: conf.tokenAddress });
       } else if (conf.status === "pendente") {
         setState({ status: "pendente", txHash: hash, errorMessage: null, contractAddress: null, tokenAddress: null });
-      } else if (conf.status === "revertida") {
-        setState({ status: "revertida", txHash: hash, errorMessage: conf.reason, contractAddress: null, tokenAddress: null });
+      } else if (conf.status === "reverted") {
+        setState({ status: "reverted", txHash: hash, errorMessage: conf.reason, contractAddress: null, tokenAddress: null });
       } else if (conf.status === "divergente") {
         setState({ status: "divergente", txHash: hash, errorMessage: conf.reason, contractAddress: null, tokenAddress: null });
       } else {
         setState({ status: "error", txHash: hash, errorMessage: conf.message, contractAddress: null, tokenAddress: null });
       }
     },
-    [publicClient, writeContractAsync],
+    [publicClient, writeContractAsync, messages],
   );
 
   const reset = useCallback(() => setState(IDLE), []);
 
-  return { ...state, publicar: publish, reset };
+  return { ...state, publish, reset };
 }

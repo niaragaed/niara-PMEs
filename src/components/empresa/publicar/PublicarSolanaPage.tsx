@@ -251,10 +251,10 @@ export function PublishSolanaPage({
 
   const rows = [rowProvider, rowConnection, rowBalance, rowAuthorized, rowOwnership, rowTerm];
   const pendingItems = rows.filter((r) => r.status !== "ok");
-  const canEnable = pendingItems.length === 0 && (displayStatus === "idle" || displayStatus === "error" || displayStatus === "revertida");
+  const canEnable = pendingItems.length === 0 && (displayStatus === "idle" || displayStatus === "error" || displayStatus === "reverted");
 
   async function handlePublish() {
-    await hook.publicar({
+    await hook.publish({
       offeringId,
       name,
       symbol,
@@ -268,7 +268,7 @@ export function PublishSolanaPage({
     });
   }
 
-  const inProgress = displayStatus === "signing" || displayStatus === "registrando" || displayStatus === "confirming";
+  const inProgress = displayStatus === "signing" || displayStatus === "registering" || displayStatus === "confirming";
   const linkClassName = "font-mono text-xs text-salmon hover:text-salmon-600";
 
   return (
@@ -362,9 +362,9 @@ export function PublishSolanaPage({
           </div>
         )}
 
-        {(displayStatus === "revertida" || displayStatus === "error") && displayError && (
+        {(displayStatus === "reverted" || displayStatus === "error") && displayError && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
-            {displayStatus === "revertida" && <p className="font-medium">{tp.revertedTitle}</p>}
+            {displayStatus === "reverted" && <p className="font-medium">{tp.revertedTitle}</p>}
             <p className="mt-1">{displayError}</p>
           </div>
         )}
@@ -402,12 +402,12 @@ export function PublishSolanaPage({
           <div className="mt-6 flex items-center gap-3 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             {displayStatus === "signing" && tsp.signing}
-            {displayStatus === "registrando" && tsp.registering}
+            {displayStatus === "registering" && tsp.registering}
             {displayStatus === "confirming" && tsp.confirming}
           </div>
         )}
 
-        {(displayStatus === "idle" || displayStatus === "revertida" || displayStatus === "error") && (
+        {(displayStatus === "idle" || displayStatus === "reverted" || displayStatus === "error") && (
           <>
             {!linkedWallet && (
               <div className="mt-6 rounded-lg border border-salmon/40 bg-salmon/10 p-4 text-sm text-on-military">

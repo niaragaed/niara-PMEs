@@ -1,22 +1,26 @@
 "use client";
 
-// Publicação self-service da oferta na Solana Devnet — par de usePublicarOfertaOnChain.ts (Sepolia).
-// Ordem (a assinatura da transação na Solana já existe antes do envio, então dá para registrar a
-// tentativa ANTES de qualquer coisa ir para a rede):
-//   1. lê o Emissor no programa (índice da próxima oferta = seed do endereço);
-//   2. simula e pede a assinatura na Phantom (nada enviado ainda);
-//   3. registra a tentativa no servidor com a assinatura — se falhar, PARA: nada foi enviado;
-//   4. envia e espera a confirmação;
-//   5. pede ao servidor para ler a transação e a conta da oferta na rede e gravar o resultado.
-// Nunca mostra "publicada" antes do passo 5 voltar "confirmada".
+// Self-service publication of the offering on Solana Devnet — the counterpart of
+// usePublicarOfertaOnChain.ts (Sepolia). Order (on Solana the transaction signature exists before
+// sending, so the attempt can be recorded BEFORE anything goes to the network):
+//   1. reads the Emissor account in the program (index of the next offering = the address seed);
+//   2. simulates and asks Phantom for the signature (nothing sent yet);
+//   3. records the attempt on the server with the signature — if that fails, it STOPS: nothing
+//      was sent;
+//   4. sends and waits for confirmation;
+//   5. asks the server to read the transaction and the offering account on the network and record
+//      the result.
+// Never shows "published" before step 5 comes back "confirmada".
 import { useCallback, useMemo, useState } from "react";
 import { solanaConnection, readSolanaIssuer } from "../program";
 import { txCreateOffering, type CreateOfferingParams } from "../instrucoes";
 import { sendAndConfirm, simulateAndSign, useSolanaWallet } from "../phantom";
 import { confirmPublicationSolana, registerAttemptSolana } from "@/app/empresa/ofertas/solana-actions";
 import type { PublishStatus } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
+import { describeSolanaError } from "../errors";
+import { useDictionary } from "@/lib/i18n/client";
 
-/** Mesmos estados da Sepolia; `txHash` aqui é a assinatura base58 da transação. */
+/** Same states as Sepolia; `txHash` here is the transaction's base58 signature. */
 export type PublishSolanaState = {
   status: PublishStatus;
   txHash: string | null;
@@ -33,12 +37,13 @@ export function usePublishSolanaOffering() {
   const [state, setState] = useState<PublishSolanaState>(IDLE);
   const connection = useMemo(() => solanaConnection(), []);
   const wallet = useSolanaWallet();
+  const messages = useDictionary().chainErrors.solana;
 
   const publish = useCallback(
     async (args: PublishSolanaArgs) => {
       const issuerWallet = wallet.address;
       if (!issuerWallet) {
-        setState({ ...IDLE, status: "error", errorMessage: "Conecte a carteira Solana (Phantom) para publicar." });
+        setState({ ...IDLE, status: "error", errorMessage: messages.notConnectedPublish });
         return;
       }
 
@@ -48,7 +53,10 @@ export function usePublishSolanaOffering() {
       let signed;
       try {
         const issuer = await readSolanaIssuer(connection, issuerWallet);
-        if (!issuer?.authorized) throw new Error("Esta carteira não está autorizada como emissora no programa niara-pmes-solana.");
+        if (!issuer?.authorized) {
+          setState({ ...IDLE, status: "error", errorMessage: messages.issuerNotAuthorized });
+          return;
+        }
         const { tx } = await txCreateOffering(connection, issuerWallet, issuer.totalOfferings, {
           name: args.name,
           symbol: args.symbol,
@@ -62,20 +70,20 @@ export function usePublishSolanaOffering() {
         });
         signed = await simulateAndSign(connection, tx);
       } catch (error) {
-        setState({ ...IDLE, status: "error", errorMessage: error instanceof Error ? error.message : String(error) });
+        setState({ ...IDLE, status: "error", errorMessage: describeSolanaError(error, messages) });
         return;
       }
 
       const sig = signed.signature;
-      setState({ ...IDLE, status: "registrando", txHash: sig });
+      setState({ ...IDLE, status: "registering", txHash: sig });
       const reg = await registerAttemptSolana({
         offeringId: args.offeringId,
-        assinatura: sig,
-        prazoUnixSeconds: deadlineUnix,
-        ultimoBlocoValido: signed.lastValidBlockHeight,
+        signature: sig,
+        deadlineUnixSeconds: deadlineUnix,
+        lastValidBlockHeight: signed.lastValidBlockHeight,
       });
       if (reg.status === "error") {
-        // Nada foi enviado à rede — a assinatura simplesmente não é usada.
+        // Nothing was sent to the network — the signature simply isn't used.
         setState({ ...IDLE, status: "error", errorMessage: reg.message });
         return;
       }
@@ -84,9 +92,10 @@ export function usePublishSolanaOffering() {
       try {
         await sendAndConfirm(connection, signed);
       } catch (error) {
-        // A tentativa já está registrada (sync_status='pendente'): a reconciliação resolve depois —
-        // inclusive o caso "não chegou à rede", que volta a oferta para 'nao_onchain' sozinho.
-        setState({ ...IDLE, status: "pendente", txHash: sig, errorMessage: error instanceof Error ? error.message : String(error) });
+        // The attempt is already recorded (sync_status='pendente'): the reconciliation resolves it
+        // later — including the "never reached the network" case, which sends the offering back to
+        // 'nao_onchain' on its own.
+        setState({ ...IDLE, status: "pendente", txHash: sig, errorMessage: describeSolanaError(error, messages) });
         return;
       }
 
@@ -96,16 +105,16 @@ export function usePublishSolanaOffering() {
         setState({ ...base, status: "confirmada", contractAddress: conf.contractAddress, tokenAddress: conf.tokenAddress });
       } else if (conf.status === "pendente") {
         setState({ ...base, status: "pendente" });
-      } else if (conf.status === "revertida") {
-        setState({ ...base, status: "revertida", errorMessage: conf.reason });
+      } else if (conf.status === "reverted") {
+        setState({ ...base, status: "reverted", errorMessage: conf.reason });
       } else if (conf.status === "divergente") {
         setState({ ...base, status: "divergente", errorMessage: conf.reason });
       } else {
         setState({ ...base, status: "error", errorMessage: conf.message });
       }
     },
-    [wallet.address, connection],
+    [wallet.address, connection, messages],
   );
 
-  return { ...state, publicar: publish };
+  return { ...state, publish };
 }

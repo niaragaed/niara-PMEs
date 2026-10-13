@@ -1,9 +1,9 @@
 "use client";
 
-// Leitura de uma oferta do niara-pmes-solana e da posição da carteira conectada — equivalente de
-// src/lib/web3/hooks/useOfertaOnChain.ts. Mesma regra de ouro (ver CLAUDE.md, incidentes do
-// approve): `pronto` só é true quando TODAS as leituras terminaram com sucesso; enquanto isso a UI
-// não decide nada com valores de fallback.
+// Reads a niara-pmes-solana offering and the connected wallet's position — the equivalent of
+// src/lib/web3/hooks/useOfertaOnChain.ts. Same golden rule (see CLAUDE.md, the approve incidents):
+// `ready` is only true when ALL the reads finished successfully; until then the UI decides nothing
+// with fallback values.
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PublicKey } from "@solana/web3.js";
@@ -18,12 +18,13 @@ import {
   type SolanaPosition,
 } from "../program";
 import { describeSolanaError } from "../errors";
+import { useDictionary } from "@/lib/i18n/client";
 
 const INTERVAL_MS = 15_000;
 
 export type SolanaOfferingRead = {
   offering: SolanaOffering | null;
-  /** A conta da oferta não existe no programa (endereço errado ou programa diferente). */
+  /** The offering account doesn't exist in the program (wrong address or a different program). */
   nonexistent: boolean;
   position: SolanaPosition;
   mbrlBalance: bigint;
@@ -35,6 +36,7 @@ export type SolanaOfferingRead = {
 
 export function useSolanaOffering(address: string, investor: string | null): SolanaOfferingRead {
   const connection = useMemo(() => solanaConnection(), []);
+  const messages = useDictionary().chainErrors.solana;
 
   const terms = useQuery({
     queryKey: ["solana-oferta", address],
@@ -68,7 +70,7 @@ export function useSolanaOffering(address: string, investor: string | null): Sol
     mbrlBalance: position.data?.mbrlBalance ?? zero,
     shareBalance: position.data?.shareBalance ?? zero,
     ready: terms.isSuccess && Boolean(terms.data) && (!investor || position.isSuccess),
-    errorMessage: error ? describeSolanaError(error) : null,
+    errorMessage: error ? describeSolanaError(error, messages) : null,
     refetch: () => {
       void terms.refetch();
       void position.refetch();

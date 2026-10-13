@@ -1,29 +1,31 @@
 "use client";
 
-// Leitura do gate 4 da Fase 3 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — endereço em
-// `emissoresAutorizados` no OfertaOrquestrador. Independe de carteira conectada: lê qualquer
-// endereço passado como parâmetro, sempre na rede fixada em `ORQUESTRADOR_CHAIN_ID` (nunca a
-// rede atual de uma wallet, se houver uma conectada) — apontar para outra rede exigiria editar
-// aquela constante, não é um efeito colateral de qual chain o MetaMask do usuário está.
+// Phase 3 gate 4 read (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — the address in
+// `emissoresAutorizados` on OfertaOrquestrador. Independent of a connected wallet: reads any
+// address passed as a parameter, always on the network pinned in `ORCHESTRATOR_CHAIN_ID` (never a
+// wallet's current network, if one is connected) — pointing at another network would require
+// editing that constant, it isn't a side effect of which chain the user's MetaMask is on.
 import { useReadContract } from "wagmi";
 import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
 import { describeOnChainError } from "../errors";
+import { useDictionary } from "@/lib/i18n/client";
 
 export type AuthorizedIssuerResult = {
-  /** `false` só quando `NEXT_PUBLIC_ORQUESTRADOR_ADDRESS` está ausente/mal formado. */
+  /** `false` only when `NEXT_PUBLIC_ORQUESTRADOR_ADDRESS` is missing/malformed. */
   contractConfigured: boolean;
   /**
-   * `null` enquanto carregando ou se a leitura falhou — nunca um `false` "inventado" quando a
-   * causa real é a leitura não ter acontecido. Só é `true`/`false` quando a chain respondeu.
+   * `null` while loading or if the read failed — never a "made-up" `false` when the real cause is
+   * that the read didn't happen. It's only `true`/`false` when the chain answered.
    */
   authorized: boolean | null;
   isLoading: boolean;
-  /** Mensagem em pt-BR já traduzida (ex.: RPC fora do ar) — `null` quando não há erro. */
+  /** Already translated message (e.g. RPC down) — `null` when there's no error. */
   errorMessage: string | null;
 };
 
 export function useAuthorizedIssuer(address: `0x${string}` | undefined): AuthorizedIssuerResult {
   const contract = getOrchestratorContract();
+  const messages = useDictionary().chainErrors.evm;
 
   const { data, isLoading, isError, error } = useReadContract({
     address: contract?.address,
@@ -33,16 +35,16 @@ export function useAuthorizedIssuer(address: `0x${string}` | undefined): Authori
     args: address ? [address] : undefined,
     query: { enabled: Boolean(contract && address) },
   });
-  // O ABI garante `outputs: [{ type: "bool" }]` (ver abis/ofertaOrquestrador.ts) — a
-  // inferência de tipo do wagmi cai para `{}` quando address/abi são opcionais (caso
-  // `contract` seja `null`), então o valor é sempre booleano de fato; só o tipo estático não
-  // consegue provar isso sozinho aqui.
+  // The ABI guarantees `outputs: [{ type: "bool" }]` (see abis/ofertaOrquestrador.ts) — wagmi's
+  // type inference falls back to `{}` when address/abi are optional (in case `contract` is
+  // `null`), so the value is always a boolean in practice; only the static type can't prove that
+  // on its own here.
   const authorized = data as boolean | undefined;
 
   return {
     contractConfigured: contract !== null,
     authorized: isError ? null : (authorized ?? null),
     isLoading,
-    errorMessage: isError ? describeOnChainError(error) : null,
+    errorMessage: isError ? describeOnChainError(error, messages) : null,
   };
 }
