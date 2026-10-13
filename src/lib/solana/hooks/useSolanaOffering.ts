@@ -1,7 +1,7 @@
 "use client";
 
 // Reads a niara-pmes-solana offering and the connected wallet's position — the equivalent of
-// src/lib/web3/hooks/useOfertaOnChain.ts. Same golden rule (see CLAUDE.md, the approve incidents):
+// src/lib/web3/hooks/useOnChainOffering.ts. Same golden rule (see CLAUDE.md, the approve incidents):
 // `ready` is only true when ALL the reads finished successfully; until then the UI decides nothing
 // with fallback values.
 import { useMemo } from "react";

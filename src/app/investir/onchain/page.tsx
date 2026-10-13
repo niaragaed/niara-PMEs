@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { OnChainInvestPage, type ServerSolanaOption } from "@/components/investir-onchain/OnChainInvestPage";
-import { resolvePartner } from "@/lib/auth/resolveSocio";
+import { resolvePartner } from "@/lib/auth/resolvePartner";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
 import { solanaConnection, listSolanaOfferings } from "@/lib/solana/program";
 import { getDictionary } from "@/lib/i18n/server";

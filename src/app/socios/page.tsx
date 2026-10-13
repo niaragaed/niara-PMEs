@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AlertTriangle } from "lucide-react";
-import { resolvePartner } from "@/lib/auth/resolveSocio";
-import { PartnersLoginForm } from "@/components/socios/SociosLoginForm";
-import { PartnersDashboard } from "@/components/socios/SociosDashboard";
-import { TransactionsSection } from "@/components/socios/MovimentacoesSection";
-import { TransactionsSkeleton } from "@/components/socios/MovimentacoesSkeleton";
+import { resolvePartner } from "@/lib/auth/resolvePartner";
+import { PartnersLoginForm } from "@/components/socios/PartnersLoginForm";
+import { PartnersDashboard } from "@/components/socios/PartnersDashboard";
+import { TransactionsSection } from "@/components/socios/TransactionsSection";
+import { TransactionsSkeleton } from "@/components/socios/TransactionsSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
 import { getDictionary } from "@/lib/i18n/server";
 
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const maxDuration = 60;
 
 // Internal area, not the same flow as /entrar (investor/issuer) — see
-// src/lib/auth/resolveSocio.ts. Signed in but outside the allowlist = access denied, without a
+// src/lib/auth/resolvePartner.ts. Signed in but outside the allowlist = access denied, without a
 // redirect (stays on the page itself, with a clear message).
 export default async function Page() {
   const dict = await getDictionary();

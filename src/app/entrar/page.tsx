@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SignInPage } from "@/components/entrar/EntrarPage";
+import { SignInPage } from "@/components/entrar/SignInPage";
 import { getDictionary } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {

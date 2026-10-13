@@ -1,7 +1,7 @@
 "use client";
 
 // Self-service publication of the offering on Solana Devnet — the counterpart of
-// usePublicarOfertaOnChain.ts (Sepolia). Order (on Solana the transaction signature exists before
+// usePublishOfferingOnChain.ts (Sepolia). Order (on Solana the transaction signature exists before
 // sending, so the attempt can be recorded BEFORE anything goes to the network):
 //   1. reads the Emissor account in the program (index of the next offering = the address seed);
 //   2. simulates and asks Phantom for the signature (nothing sent yet);
@@ -13,10 +13,10 @@
 // Never shows "published" before step 5 comes back "confirmada".
 import { useCallback, useMemo, useState } from "react";
 import { solanaConnection, readSolanaIssuer } from "../program";
-import { txCreateOffering, type CreateOfferingParams } from "../instrucoes";
+import { txCreateOffering, type CreateOfferingParams } from "../instructions";
 import { sendAndConfirm, simulateAndSign, useSolanaWallet } from "../phantom";
 import { confirmPublicationSolana, registerAttemptSolana } from "@/app/empresa/ofertas/solana-actions";
-import type { PublishStatus } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
+import type { PublishStatus } from "@/lib/web3/hooks/usePublishOfferingOnChain";
 import { describeSolanaError } from "../errors";
 import { useDictionary } from "@/lib/i18n/client";
 

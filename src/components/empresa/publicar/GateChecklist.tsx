@@ -3,7 +3,7 @@
 // Visual list of the publication gates (Phase 3) — purely presentational: receives the rows
 // already resolved (label/status/reason, already translated) and only draws them. Every decision
 // about "what each status means" already happened before, in src/lib/web3/gates.ts + the mapping
-// in PublicarOnChainPage.tsx — this component never interprets an error as a rejection nor makes
+// in PublishOnChainPage.tsx — this component never interprets an error as a rejection nor makes
 // up text.
 import { AlertTriangle, Check, Loader2, X } from "lucide-react";
 import type { GateStatus } from "@/lib/web3/gates";

@@ -27,7 +27,7 @@ export type ServerSolanaOption = { address: string; company: string; open: boole
 // matches for both") was never checked line by line and was wrong. The 10 legacy offerings do
 // share a single MockBRL; the self-service ones use OfertaOrquestrador's own, different MockBRL.
 // That's why each offering resolves its own MockBRL on-chain (see
-// RealOnChainInvestPanel/useOfertaOnChain/useOnChainActions), never a global constant — the only
+// RealOnChainInvestPanel/useOnChainOffering/useOnChainActions), never a global constant — the only
 // difference THIS selector needs to expose is the content's provenance line (a hand-made company
 // vs. data the issuer itself filled in), not a structural separation.
 function buildOptions(

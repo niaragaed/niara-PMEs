@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { keccak256, toHex } from "viem";
-import { PublishOnChainPage } from "@/components/empresa/publicar/PublicarOnChainPage";
-import { PublishSolanaPage } from "@/components/empresa/publicar/PublicarSolanaPage";
-import { PublicationNetworkChoice } from "@/components/empresa/publicar/EscolhaRedePublicacao";
+import { PublishOnChainPage } from "@/components/empresa/publicar/PublishOnChainPage";
+import { PublishSolanaPage } from "@/components/empresa/publicar/PublishSolanaPage";
+import { PublicationNetworkChoice } from "@/components/empresa/publicar/PublicationNetworkChoice";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -114,7 +114,7 @@ export default async function Page({
   // offering with an additional lot of ~500,000% against the 25% limit got signed and reverted on
   // Sepolia before this check existed). It only blocks while the offering has NO recorded attempt
   // yet (`sync_status === 'nao_onchain'`) — an offering already `pendente`/`divergente` must keep
-  // reaching PublicarOnChainPage.tsx so the normal reconciliation (confirmPublication) runs and
+  // reaching PublishOnChainPage.tsx so the normal reconciliation (confirmPublication) runs and
   // records the decoded revert reason, never stuck behind this static block.
   const baseCapCents = offering.base_cap_cents as number;
   const hardCapCents = offering.hard_cap_cents as number;

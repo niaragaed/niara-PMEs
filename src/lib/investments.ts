@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
 import { getIssuerBannerVersion, issuerBannerUrl } from "@/lib/storage/issuer-banner";
 

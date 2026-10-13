@@ -1,5 +1,5 @@
 import { Building2, Car, Home, Landmark, Wheat, type LucideIcon } from "lucide-react";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 
 export type CategoryMeta = {
   icon: LucideIcon;

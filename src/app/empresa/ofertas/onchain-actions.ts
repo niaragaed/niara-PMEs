@@ -32,7 +32,7 @@ import { z } from "zod";
 import { decodeEventLog, decodeFunctionData, TransactionReceiptNotFoundError } from "viem";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID, type OrchestratorContract } from "@/lib/web3/orquestrador";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID, type OrchestratorContract } from "@/lib/web3/orchestrator";
 import { participacaoTokenFactoryAbi } from "@/lib/web3/abis/participacaoTokenFactory";
 import { ofertaCaptacaoFactoryAbi } from "@/lib/web3/abis/ofertaCaptacaoFactory";
 import { ofertaCaptacaoAbi } from "@/lib/web3/abis/ofertaCaptacao";
@@ -370,7 +370,7 @@ async function markDivergent(
  * from Supabase — which may already have changed since the signature) against the chain state at
  * the block where it reverted. `simulateContract` decodes custom errors into
  * `ContractFunctionRevertedError` the way `describeOnChainError` already knows how to translate —
- * the same function used in the client-side catch (usePublicarOfertaOnChain.ts), never a second
+ * the same function used in the client-side catch (usePublishOfferingOnChain.ts), never a second
  * translation logic. Never throws — always returns a string, with a fallback only if the decoding
  * itself fails (e.g. the transaction reverted for a reason that no longer reproduces).
  */

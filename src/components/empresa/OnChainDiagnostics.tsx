@@ -8,7 +8,7 @@
 // its copy is English-only (not part of the bilingual product interface).
 import { sepolia } from "wagmi/chains";
 import { useReadContracts } from "wagmi";
-import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "@/lib/web3/orquestrador";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "@/lib/web3/orchestrator";
 import { ofertaCaptacaoAbi } from "@/lib/web3/abis/ofertaCaptacao";
 import { participacaoTokenAbi } from "@/lib/web3/abis/participacaoToken";
 import { describeOnChainError } from "@/lib/web3/errors";
@@ -22,7 +22,7 @@ import { useDictionary } from "@/lib/i18n/client";
 const PSILVA_TOKEN_ADDRESS = "0x76d8e88fe48Bfab2f2EEd7196321B2886750298D" as const;
 const PSILVA_OFFERING_ADDRESS = "0x6587265f971Aa555106D64e3422Ee901A0D20546" as const;
 // Same network as the orchestrator, pinned explicitly (not inferred from anything) — see
-// src/lib/web3/orquestrador.ts.
+// src/lib/web3/orchestrator.ts.
 const PSILVA_CHAIN_ID = sepolia.id;
 
 const REFERENCE_ISSUER = "0x47d9de93F15E1ebfbEFD5F32c0076cf3090C63c6" as const;

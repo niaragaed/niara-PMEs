@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { OfferingDetailPage } from "@/components/negociar/OfertaDetailPage";
-import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfertaDetailPage";
-import { getOfferingBySlug } from "@/lib/mock/ofertas";
-import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
-import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
+import { OfferingDetailPage } from "@/components/negociar/OfferingDetailPage";
+import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfferingDetailPage";
+import { getOfferingBySlug } from "@/lib/mock/offerings";
+import { getOnChainIndexBySlug } from "@/lib/mock/onChainOfferings";
+import { getOfferingAssetPaths } from "@/lib/trade/offeringAssets";
 import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
-import { resolvePartner } from "@/lib/auth/resolveSocio";
+import { resolvePartner } from "@/lib/auth/resolvePartner";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { localize } from "@/lib/i18n/locale";
@@ -47,13 +47,13 @@ export default async function Page({ params }: PageProps) {
 
   if (offering) {
     // Real photos only exist (for now) for the 10 SME offerings linked to a real offering on
-    // Sepolia — see src/lib/negociar/ofertaAssets.ts. For the other categories it's not even worth
+    // Sepolia — see src/lib/trade/offeringAssets.ts. For the other categories it's not even worth
     // checking the filesystem: there will never be a file, OfferingBanner already shows the
     // placeholder on its own.
     const assets = offering.category === "pmes" ? getOfferingAssetPaths(offering.slug) : { bannerUrl: null, logoUrl: null };
     const onChainIndex = offering.category === "pmes" ? getOnChainIndexBySlug(offering.slug) : null;
     // Only matters when onChainIndex !== null (decides the on-chain panel's "Close offering"
-    // button) — always resolving is simpler than branching, and resolveSocio() doesn't redirect.
+    // button) — always resolving is simpler than branching, and resolvePartner() doesn't redirect.
     const { authorized: isPartner } = await resolvePartner();
 
     return (

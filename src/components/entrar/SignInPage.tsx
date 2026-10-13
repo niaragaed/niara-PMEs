@@ -16,7 +16,7 @@ import { useDictionary } from "@/lib/i18n/client";
 type FormErrors = { email?: string; password?: string };
 
 // Only covers the errors signInWithPassword can return — account creation
-// (signUp) no longer happens on this screen, see CadastroPage.tsx.
+// (signUp) no longer happens on this screen, see SignUpPage.tsx.
 function mapAuthError(error: AuthError, t: Dictionary["signIn"]["errors"]): string {
   switch (error.code) {
     case "invalid_credentials":
@@ -84,7 +84,7 @@ export function SignInPage({
 
     try {
       router.refresh();
-      // Partners (an account with no row in investors/issuers, see resolveSocio()) go straight to
+      // Partners (an account with no row in investors/issuers, see resolvePartner()) go straight to
       // /socios — otherwise they'd fall into /perfil's "complete registration". For non-partners,
       // /perfil redirects to /cadastro on its own if the account doesn't have investor/company data
       // yet — covers whoever created the account but didn't finish registering.

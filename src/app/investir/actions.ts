@@ -18,7 +18,7 @@ import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { payments } from "@/lib/adapters";
 import { CAP_OCCUPYING_STATUSES } from "@/lib/investments";
 import { maskCnpjPublic } from "@/lib/masks";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
 import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";

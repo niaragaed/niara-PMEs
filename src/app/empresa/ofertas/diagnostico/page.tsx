@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { OnChainDiagnostics } from "@/components/empresa/DiagnosticoOnChain";
+import { OnChainDiagnostics } from "@/components/empresa/OnChainDiagnostics";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createClient } from "@/lib/supabase/server";
 

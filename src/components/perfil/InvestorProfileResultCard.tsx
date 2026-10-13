@@ -1,7 +1,7 @@
 "use client";
 
 import { RefreshCw, TrendingUp } from "lucide-react";
-import { useProfile } from "./PerfilContext";
+import { useProfile } from "./ProfileContext";
 import { SCORE_MAX, SCORE_MIN } from "@/lib/investor-profile";
 import { useDictionary } from "@/lib/i18n/client";
 

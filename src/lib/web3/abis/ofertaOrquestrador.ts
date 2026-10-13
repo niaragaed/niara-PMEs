@@ -1,9 +1,8 @@
-// ABI de OfertaOrquestrador (niara-contracts-PMEs/src/orquestracao/OfertaOrquestrador.sol) —
-// canal self-service de criação de oferta pelo emissor (Fase 3, ver
-// PLANO_FASE_3_PUBLICACAO_ONCHAIN.md deste repositório). Só a superfície que o frontend
-// realmente usa (leitura do gate 4, escrita de `criarOfertaCompleta`, o evento que ela emite e
-// os erros customizados que ela pode reverter) — extraída, não escrita à mão, do artefato do
-// Foundry:
+// OfertaOrquestrador ABI (niara-contracts-PMEs/src/orquestracao/OfertaOrquestrador.sol) —
+// the self-service channel for the issuer to create an offering (Phase 3, see this repository's
+// PLANO_FASE_3_PUBLICACAO_ONCHAIN.md). Only the surface the frontend actually uses (the gate 4
+// read, the `criarOfertaCompleta` write, the event it emits and the custom errors it can revert
+// with) — extracted, not hand-written, from the Foundry artifact:
 //
 //   cd niara-contracts-PMEs && forge build
 //   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'function' && e.name === 'emissoresAutorizados'), null, 2))"
@@ -13,16 +12,16 @@
 //   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'function' && e.name === 'tokenFactory'), null, 2))"
 //   node -e "console.log(JSON.stringify(require('./out/OfertaOrquestrador.sol/OfertaOrquestrador.json').abi.find(e => e.type === 'function' && e.name === 'captacaoFactory'), null, 2))"
 //
-// `tokenFactory`/`captacaoFactory` (getters de `address public immutable`, ver o .sol) foram
-// adicionados na Fase 3 para confirmarPublicacao() poder achar as duas factories a partir do
-// próprio orquestrador — em vez de precisar de mais duas env vars — e checar que o token/oferta
-// do evento realmente foram registrados nelas (ver achado do EIP-7702, CLAUDE.md).
+// `tokenFactory`/`captacaoFactory` (getters of `address public immutable`, see the .sol) were
+// added in Phase 3 so confirmPublication() can find both factories from the orchestrator itself —
+// instead of needing two more env vars — and check that the event's token/offering were really
+// registered in them (see the EIP-7702 finding, CLAUDE.md).
 //
-// Os demais erros herdados de AccessControl/Pausable/TimelockedAccessControl (ex.:
-// AccessControlUnauthorizedAccount, EnforcedPause) não entram aqui — o gate 4 já impede o
-// emissor de chegar a um estado onde eles seriam alcançáveis pelo canal self-service; se algum
-// deles reverter mesmo assim, describeOnChainError() já tem um fallback nomeado genérico
-// (`"A transação reverteu (${errorName})."`), nunca "Execution reverted" cru.
+// The other errors inherited from AccessControl/Pausable/TimelockedAccessControl (e.g.
+// AccessControlUnauthorizedAccount, EnforcedPause) aren't included here — gate 4 already keeps the
+// issuer from reaching a state where they'd be reachable through the self-service channel; if one
+// of them reverts anyway, describeOnChainError() already has a generic named fallback
+// (chainErrors.evm.revertedNamed), never a raw "Execution reverted".
 export const ofertaOrquestradorAbi = [
   {
     type: "function",

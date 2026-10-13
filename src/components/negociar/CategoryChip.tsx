@@ -1,6 +1,6 @@
 "use client";
 import { CATEGORY_META } from "@/lib/categories";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import { useDictionary } from "@/lib/i18n/client";
 
 type ChipSize = "sm" | "md" | "lg";

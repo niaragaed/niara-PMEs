@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
-import { OfferingBanner } from "./OfertaBanner";
-import type { Offering } from "@/lib/mock/ofertas";
+import { OfferingBanner } from "./OfferingBanner";
+import type { Offering } from "@/lib/mock/offerings";
 import {
   ONCHAIN_SMES_AUTHORIZED_SHARES,
   ONCHAIN_SMES_MAX_TARGET_MBRL,
@@ -13,7 +13,7 @@ import { localize } from "@/lib/i18n/locale";
 
 // Unified card for the 10 SME offerings that have a real, active offering on Sepolia behind
 // them — each one is a fictitious demo company (the same content pattern as ShowcaseCard), but
-// the investment is real on the blockchain (see OfertaDetailPage.tsx + RealOnChainInvestPanel.tsx).
+// the investment is real on the blockchain (see OfferingDetailPage.tsx + RealOnChainInvestPanel.tsx).
 // The same visual language as RealOfferCard.tsx/the former RealOnChainCard.tsx (solid badge +
 // salmon ring) — the real/fictitious distinction is even more critical here than in the other
 // cards, because "real" means an actual blockchain transaction, not just a real row in the

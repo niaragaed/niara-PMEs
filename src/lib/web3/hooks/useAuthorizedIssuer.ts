@@ -6,7 +6,7 @@
 // wallet's current network, if one is connected) — pointing at another network would require
 // editing that constant, it isn't a side effect of which chain the user's MetaMask is on.
 import { useReadContract } from "wagmi";
-import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
+import { getOrchestratorContract, ORCHESTRATOR_CHAIN_ID } from "../orchestrator";
 import { describeOnChainError } from "../errors";
 import { useDictionary } from "@/lib/i18n/client";
 

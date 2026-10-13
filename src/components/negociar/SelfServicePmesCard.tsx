@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
-import { OfferingBanner } from "./OfertaBanner";
+import { OfferingBanner } from "./OfferingBanner";
 import { useDictionary } from "@/lib/i18n/client";
 
 // Showcase card for a self-service SME offering (published by the issuer itself via
@@ -9,7 +9,7 @@ import { useDictionary } from "@/lib/i18n/client";
 // on-chain — a sibling of PmesOnChainCard.tsx (the 10 legacy ones, fictitious company), but
 // deliberately a separate component instead of generalizing the same card with conditionals: the
 // company data here is REAL (filled in by the issuer), never the fictitious fields of the
-// `Offering` mock (financials, fundamental indicators etc. — see SelfServiceOfertaDetailPage.tsx).
+// `Offering` mock (financials, fundamental indicators etc. — see SelfServiceOfferingDetailPage.tsx).
 //
 // Target/price/shares ARE shown here (unlike an earlier version of this card, which left all three
 // out out of caution) — they're real and safe to show without an on-chain read per card:

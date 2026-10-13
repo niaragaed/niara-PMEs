@@ -21,9 +21,9 @@ import { useMemo, useState, useSyncExternalStore, type ChangeEvent, type ReactNo
 import { AlertTriangle, CheckCircle2, Coins, ExternalLink } from "lucide-react";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
 import { useSolanaWallet } from "@/lib/solana/phantom";
-import { useSolanaOffering } from "@/lib/solana/hooks/useOfertaSolana";
-import { useSolanaAction, type SolanaActionStatus } from "@/lib/solana/hooks/useAcaoSolana";
-import { txInvest, txClose, txFaucet, txRelease, txRefund, txRedeem } from "@/lib/solana/instrucoes";
+import { useSolanaOffering } from "@/lib/solana/hooks/useSolanaOffering";
+import { useSolanaAction, type SolanaActionStatus } from "@/lib/solana/hooks/useSolanaAction";
+import { txInvest, txClose, txFaucet, txRelease, txRefund, txRedeem } from "@/lib/solana/instructions";
 import { DECIMALS_MBRL_SOLANA, FAUCET_MAX_MBRL_SOLANA, UNIT_MBRL_SOLANA, solanaExplorerAccountLink, linkExplorerSolanaTx } from "@/lib/solana/config";
 import { formatDeadline, formatToken } from "@/lib/web3/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { InvestPage, type MyReservationRow, type ActiveOfferingRow } from "@/components/investir/InvestirPage";
+import { InvestPage, type MyReservationRow, type ActiveOfferingRow } from "@/components/investir/InvestPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CAP_OCCUPYING_STATUSES } from "@/lib/investments";

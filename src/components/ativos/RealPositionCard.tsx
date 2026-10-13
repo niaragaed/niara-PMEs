@@ -1,8 +1,8 @@
 "use client";
 
-// The only REAL card inside /ativos (the rest of the screen is 100% mock, see AtivosPage.tsx) —
+// The only REAL card inside /ativos (the rest of the screen is 100% mock, see AssetsPage.tsx) —
 // your actual position in the demo offering on Sepolia, read straight from the on-chain contract
-// via the same hooks in src/lib/web3/hooks/useOfertaOnChain.ts used in /investir/onchain. Never
+// via the same hooks in src/lib/web3/hooks/useOnChainOffering.ts used in /investir/onchain. Never
 // goes into the computeTotals/PortfolioSummary calculations nor into the PositionsTable rows —
 // mock and real always stay on separate surfaces, never added together.
 //
@@ -21,7 +21,7 @@ import { useConnection } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { BadgeCheck } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
-import { useMyOnChainPosition, useOnChainOfferingTerms } from "@/lib/web3/hooks/useOfertaOnChain";
+import { useMyOnChainPosition, useOnChainOfferingTerms } from "@/lib/web3/hooks/useOnChainOffering";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import { formatToken } from "@/lib/web3/format";
 import { useDictionary } from "@/lib/i18n/client";

@@ -29,7 +29,7 @@ import {
   type OnChainEventType,
 } from "./eventsCore";
 
-export type { OnChainEvent as EventoOnChain, OnChainEventType as TipoEventoOnChain } from "./eventsCore";
+export type { OnChainEvent, OnChainEventType } from "./eventsCore";
 
 const RPC_CONCURRENCY = 5;
 

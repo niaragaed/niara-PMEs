@@ -1,7 +1,7 @@
 import { Building2, Image as ImageIcon } from "lucide-react";
 
 // A preview of how the issuer's banner + logo will appear on the real card in
-// /negociar (the same visual composition as OfertaBanner.tsx size="card": banner
+// /negociar (the same visual composition as OfferingBanner.tsx size="card": banner
 // h-32 + round h-12 logo overlapping the bottom-left corner) — without
 // depending on TokenCategory (the issuer may not have any active offering
 // yet in /perfil, so there's no category to color the placeholder; it uses

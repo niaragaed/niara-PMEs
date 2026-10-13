@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DocsPage } from "@/components/documentacao/DocumentacaoPage";
+import { DocsPage } from "@/components/documentacao/DocsPage";
 import { getDictionary } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {

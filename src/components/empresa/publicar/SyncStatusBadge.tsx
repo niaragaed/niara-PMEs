@@ -5,8 +5,8 @@ import { useDictionary } from "@/lib/i18n/client";
 export type SyncStatus = "nao_onchain" | "pendente" | "confirmada" | "divergente";
 
 // Small reusable indicator of the on-chain publication status (Phase 3, sub-step 5 — see
-// PLANO_FASE_3_PUBLICACAO_ONCHAIN.md, section 4). Used on the OfertasPage.tsx card and in the
-// MyOffersSection.tsx summary (/perfil); PublicarOnChainPage.tsx doesn't use this badge — it
+// PLANO_FASE_3_PUBLICACAO_ONCHAIN.md, section 4). Used on the OfferingsPage.tsx card and in the
+// MyOffersSection.tsx summary (/perfil); PublishOnChainPage.tsx doesn't use this badge — it
 // already conveys each status with its own, more detailed panel. `nao_onchain` renders nothing: an
 // offering that never started the publication flow doesn't need an extra indicator.
 const STYLES: Record<Exclude<SyncStatus, "nao_onchain">, string> = {

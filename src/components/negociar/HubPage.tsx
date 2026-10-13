@@ -1,10 +1,10 @@
 import { CategoryCard } from "./CategoryCard";
 import { SmesOnChainCard } from "./PmesOnChainCard";
 import { ShowcaseCard } from "./ShowcaseCard";
-import type { TokenCategory } from "@/lib/mock/ativos";
-import { getOfferingBySlug, SHOWCASE_HUB_SLUGS, type Offering } from "@/lib/mock/ofertas";
-import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
-import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
+import type { TokenCategory } from "@/lib/mock/assets";
+import { getOfferingBySlug, SHOWCASE_HUB_SLUGS, type Offering } from "@/lib/mock/offerings";
+import { getOnChainIndexBySlug } from "@/lib/mock/onChainOfferings";
+import { getOfferingAssetPaths } from "@/lib/trade/offeringAssets";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { getDictionary } from "@/lib/i18n/server";
 

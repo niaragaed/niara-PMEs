@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FlaskConical } from "lucide-react";
-import { OfferingBanner } from "./OfertaBanner";
+import { OfferingBanner } from "./OfferingBanner";
 import { formatBRL } from "@/lib/format";
 import type { ActiveOfferingSummary } from "@/lib/investments";
 import { getDictionary } from "@/lib/i18n/server";

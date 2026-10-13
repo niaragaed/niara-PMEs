@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ProfilePage } from "@/components/perfil/PerfilPage";
+import { ProfilePage } from "@/components/perfil/ProfilePage";
 import { loadMyOfferingsSummary, loadProfile } from "./actions";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 import { getDictionary } from "@/lib/i18n/server";

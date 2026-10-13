@@ -1,7 +1,7 @@
 "use client";
 
 // Real investment panel on Sepolia — extracted from OnChainInvestPage.tsx so it can also be
-// reused inside the detail page of the unified SME offerings (OfertaDetailPage.tsx, see
+// reused inside the detail page of the unified SME offerings (OfferingDetailPage.tsx, see
 // CLAUDE.md "/negociar screens").
 //
 // Since Phase 4 (sub-step 5.2): it receives the offering's address pair directly
@@ -14,7 +14,7 @@
 // (`key={...}`, unique per offering) — that resets all local state for free (quantity, status of
 // invest/close/redeem, the faucet field), with no manual resets needed.
 //
-// `isPartner` (resolved on the server via resolveSocio()) and `isIssuer` (resolved on the server
+// `isPartner` (resolved on the server via resolvePartner()) and `isIssuer` (resolved on the server
 // by comparing resolveAccount() against the offering's issuer_id — only possible for self-service
 // offerings, which have that link in Supabase; always `false` for the 10 legacy ones, which have
 // no issuer account at all in this app) together only decide the "Close offering" BUTTON in this
@@ -34,7 +34,7 @@ import {
   useMyOnChainPosition,
   useOnChainOfferingTerms,
   type OfferingState,
-} from "@/lib/web3/hooks/useOfertaOnChain";
+} from "@/lib/web3/hooks/useOnChainOffering";
 import type { OnChainOfferingAddresses } from "@/lib/web3/contracts";
 import {
   useCloseOffering,

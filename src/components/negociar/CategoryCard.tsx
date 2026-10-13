@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CategoryChip } from "./CategoryChip";
 import { CATEGORY_META } from "@/lib/categories";
-import type { TokenCategory } from "@/lib/mock/ativos";
+import type { TokenCategory } from "@/lib/mock/assets";
 import { getDictionary } from "@/lib/i18n/server";
 
 // White category card on the "Assets and tokens" hub — a chip with the icon in the

@@ -10,8 +10,8 @@
 // recomputes everything on its own — no manual window.ethereum listener is needed nor added here.
 import { useSyncExternalStore } from "react";
 import { useBalance, useConnection, useGasPrice } from "wagmi";
-import { ORCHESTRATOR_CHAIN_ID } from "../orquestrador";
-import { useAuthorizedIssuer } from "./useEmissorAutorizado";
+import { ORCHESTRATOR_CHAIN_ID } from "../orchestrator";
+import { useAuthorizedIssuer } from "./useAuthorizedIssuer";
 import { evaluateGateProvider, evaluateGateNetwork, evaluateGateBalance, evaluateGateOwnership } from "../gates";
 
 function subscribeToProvider() {

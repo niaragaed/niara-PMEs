@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/ativos/derive";
+import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/assets/derive";
 import { formatBRL, formatPercent } from "@/lib/format";
-import { MOCK_POSITIONS } from "@/lib/mock/ativos";
+import { MOCK_POSITIONS } from "@/lib/mock/assets";
 import { useDictionary, useLocale } from "@/lib/i18n/client";
 
 const VIEWS: { key: AllocationView; labelKey: "viewClass" | "viewAsset" | "viewSector" }[] = [

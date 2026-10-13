@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IndicatorHelp } from "./IndicatorHelp";
-import type { FundamentalIndicatorValues } from "@/lib/mock/ofertas";
+import type { FundamentalIndicatorValues } from "@/lib/mock/offerings";
 import { useDictionary } from "@/lib/i18n/client";
 
 const GROUPS = ["valuation", "efficiency", "profitability", "dividends", "debt", "growth"] as const;

@@ -1,4 +1,4 @@
-import { DocsNav } from "./DocumentacaoNav";
+import { DocsNav } from "./DocsNav";
 import { FaqAccordion } from "./FaqAccordion";
 import { getDictionary } from "@/lib/i18n/server";
 

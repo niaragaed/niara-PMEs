@@ -1,5 +1,5 @@
 import { Mail } from "lucide-react";
-import { ContactForm } from "./ContatoForm";
+import { ContactForm } from "./ContactForm";
 import { getDictionary } from "@/lib/i18n/server";
 
 const CONTACT_EMAIL = "niaragaed@gmail.com";
