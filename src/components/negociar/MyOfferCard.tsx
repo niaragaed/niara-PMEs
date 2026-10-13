@@ -13,7 +13,7 @@ function formatDate(iso: string): string {
 
 // Card for the signed-in issuer's OWN active offering, in the matching category
 // (CategoryPage.tsx, "ownOfferings" section — visible only to the owner,
-// never to other investors). The same visual layout as PmesOnChainCard.tsx
+// never to other investors). The same visual layout as SmesOnChainCard.tsx
 // (banner + overlapping round logo, via OfferingBanner) so the owner
 // recognizes how their own offering would look next to the 10 real SMEs on
 // Sepolia — but with a deliberately NEUTRAL badge (never the salmon ring +

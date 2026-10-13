@@ -6,7 +6,7 @@
 // between the two repositories.
 //
 // The unit is always mBRL (MockBRL) — a test currency with no backing, never label it "R$" in
-// the UI (see src/lib/mock/onChainOfferings.ts and PmesOnChainCard.tsx, which consume these constants).
+// the UI (see src/lib/mock/onChainOfferings.ts and SmesOnChainCard.tsx, which consume these constants).
 export const ONCHAIN_SMES_MIN_TARGET_MBRL = 100;
 export const ONCHAIN_SMES_MAX_TARGET_MBRL = 200;
 export const ONCHAIN_SMES_PRICE_PER_SHARE_MBRL = 10;

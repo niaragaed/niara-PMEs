@@ -164,7 +164,7 @@ const deadlineFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" 
 // cents -> mBRL (a number, without a real currency symbol) — the same conversion as
 // checkConsistency() (UNIT_ON_CHAIN, src/lib/web3/gates.ts: "1 MockBRL unit = 1 real
 // equivalent"), but labeled mBRL here, never R$: the same principle already applied in
-// SelfServicePmesCard.tsx — this is MockBRL with no backing, and the other rows of this SAME
+// SelfServiceSmesCard.tsx — this is MockBRL with no backing, and the other rows of this SAME
 // table (real on-chain investments/events, see onChainEventToTransaction above) already use mBRL
 // for the "Amount" of on-chain events, so using R$ here would clash within the column itself.
 function formatMbrl(cents: number): string {

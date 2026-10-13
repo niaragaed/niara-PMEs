@@ -21,7 +21,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BASE58_SIGNATURE, NETWORK_SOLANA, UNIT_ON_CHAIN_SOLANA } from "@/lib/solana/config";
+import { BASE58_SIGNATURE, SOLANA_NETWORK, SOLANA_UNIT_ON_CHAIN } from "@/lib/solana/config";
 import { keccak256, toHex } from "viem";
 import { currentBlockHeight, readVerifiedOfferingAccount, readPublicationTx } from "@/lib/solana/server";
 import { describeSolanaError } from "@/lib/solana/errors";
@@ -78,7 +78,7 @@ export async function registerAttemptSolana(input: unknown): Promise<RegisterAtt
   const { data, error } = await admin
     .from("offerings")
     .update({
-      rede: NETWORK_SOLANA,
+      rede: SOLANA_NETWORK,
       tx_hash: signature,
       chain_id: null,
       sync_status: "pendente",
@@ -166,7 +166,7 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
     .maybeSingle();
 
   if (fetchError || !offering) return { status: "error", message: e.offeringNotFound };
-  if (offering.rede !== NETWORK_SOLANA) return { status: "error", message: e.publication.notOnSolana };
+  if (offering.rede !== SOLANA_NETWORK) return { status: "error", message: e.publication.notOnSolana };
 
   if (offering.sync_status === "confirmada") {
     return { status: "confirmada", contractAddress: offering.contract_address as string, tokenAddress: offering.token_address as string };
@@ -244,9 +244,9 @@ export async function confirmPublicationSolana(offeringId: string): Promise<Conf
   }
 
   const expected = {
-    metaMinima: BigInt(offering.target_min_cents) * UNIT_ON_CHAIN_SOLANA,
-    metaMaxima: BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN_SOLANA,
-    precoPorCota: BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN_SOLANA,
+    metaMinima: BigInt(offering.target_min_cents) * SOLANA_UNIT_ON_CHAIN,
+    metaMaxima: BigInt(offering.hard_cap_cents) * SOLANA_UNIT_ON_CHAIN,
+    precoPorCota: BigInt(offering.share_price_cents as number) * SOLANA_UNIT_ON_CHAIN,
     prazo: Math.floor(new Date(offering.closes_at as string).getTime() / 1000),
   };
   if (
@@ -322,7 +322,7 @@ export async function verifyConsistencySolana(offeringId: string): Promise<Check
     .maybeSingle();
 
   if (fetchError || !offering) return { status: "error", message: e.offeringNotFound };
-  if (offering.rede !== NETWORK_SOLANA) return { status: "error", message: e.publication.notOnSolana };
+  if (offering.rede !== SOLANA_NETWORK) return { status: "error", message: e.publication.notOnSolana };
   if (!["confirmada", "divergente"].includes(offering.sync_status as string) || !offering.contract_address) {
     return { status: "error", message: e.publication.notConfirmedYet };
   }
@@ -337,16 +337,16 @@ export async function verifyConsistencySolana(offeringId: string): Promise<Check
     return { status: "error", message: e.publication.accountNotFoundNow };
   }
 
-  const cents = (v: bigint) => Number(v / UNIT_ON_CHAIN_SOLANA);
+  const cents = (v: bigint) => Number(v / SOLANA_UNIT_ON_CHAIN);
   const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
   const diffs: string[] = [];
-  if (account.minTarget !== BigInt(offering.target_min_cents) * UNIT_ON_CHAIN_SOLANA) {
+  if (account.minTarget !== BigInt(offering.target_min_cents) * SOLANA_UNIT_ON_CHAIN) {
     diffs.push(e.publication.diffMinTarget(formatBRL(offering.target_min_cents / 100), formatBRL(cents(account.minTarget) / 100)));
   }
-  if (account.maxTarget !== BigInt(offering.hard_cap_cents) * UNIT_ON_CHAIN_SOLANA) {
+  if (account.maxTarget !== BigInt(offering.hard_cap_cents) * SOLANA_UNIT_ON_CHAIN) {
     diffs.push(e.publication.diffHardCap(formatBRL(offering.hard_cap_cents / 100), formatBRL(cents(account.maxTarget) / 100)));
   }
-  if (account.pricePerShare !== BigInt(offering.share_price_cents as number) * UNIT_ON_CHAIN_SOLANA) {
+  if (account.pricePerShare !== BigInt(offering.share_price_cents as number) * SOLANA_UNIT_ON_CHAIN) {
     diffs.push(
       e.publication.diffSharePrice(formatBRL((offering.share_price_cents as number) / 100), formatBRL(cents(account.pricePerShare) / 100)),
     );

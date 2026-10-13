@@ -20,11 +20,11 @@ import { useSolanaWallet } from "@/lib/solana/phantom";
 import { solanaConnection, readSolanaIssuer } from "@/lib/solana/program";
 import { usePublishSolanaOffering } from "@/lib/solana/hooks/usePublishSolanaOffering";
 import {
-  MAX_COMPANY_SOLANA,
-  MAX_NAME_SOLANA,
-  MAX_SERIES_SOLANA,
-  MAX_SYMBOL_SOLANA,
-  UNIT_ON_CHAIN_SOLANA,
+  SOLANA_MAX_COMPANY,
+  SOLANA_MAX_NAME,
+  SOLANA_MAX_SERIES,
+  SOLANA_MAX_SYMBOL,
+  SOLANA_UNIT_ON_CHAIN,
   solanaExplorerAccountLink,
   linkExplorerSolanaTx,
 } from "@/lib/solana/config";
@@ -103,10 +103,10 @@ export function PublishSolanaPage({
   const connection = useMemo(() => solanaConnection(), []);
   const hook = usePublishSolanaOffering();
 
-  const company = cutBytes(companyName || "Empresa", MAX_COMPANY_SOLANA);
+  const company = cutBytes(companyName || "Empresa", SOLANA_MAX_COMPANY);
   const currentYear = new Date().getFullYear();
   const [data, setData] = useState<DataToken>({
-    name: cutBytes(`${companyName} ${dict.companyOfferings.publishOnChain.form.defaultNameSuffix}`, MAX_NAME_SOLANA),
+    name: cutBytes(`${companyName} ${dict.companyOfferings.publishOnChain.form.defaultNameSuffix}`, SOLANA_MAX_NAME),
     symbol: (companyName.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
     series: `${currentYear}-A`,
   });
@@ -239,9 +239,9 @@ export function PublishSolanaPage({
     name.length > 0 &&
     symbol.length > 0 &&
     series.length > 0 &&
-    bytes(name) <= MAX_NAME_SOLANA &&
-    bytes(symbol) <= MAX_SYMBOL_SOLANA &&
-    bytes(series) <= MAX_SERIES_SOLANA;
+    bytes(name) <= SOLANA_MAX_NAME &&
+    bytes(symbol) <= SOLANA_MAX_SYMBOL &&
+    bytes(series) <= SOLANA_MAX_SERIES;
   const termOk = accepted && validData;
   const rowTerm: GateRow = {
     id: "terms",
@@ -262,9 +262,9 @@ export function PublishSolanaPage({
       company,
       cnpjRefHex: cnpjRef,
       series,
-      minTarget: BigInt(targetMinCents) * UNIT_ON_CHAIN_SOLANA,
-      maxTarget: BigInt(hardCapCents) * UNIT_ON_CHAIN_SOLANA,
-      pricePerShare: BigInt(sharePriceCents) * UNIT_ON_CHAIN_SOLANA,
+      minTarget: BigInt(targetMinCents) * SOLANA_UNIT_ON_CHAIN,
+      maxTarget: BigInt(hardCapCents) * SOLANA_UNIT_ON_CHAIN,
+      pricePerShare: BigInt(sharePriceCents) * SOLANA_UNIT_ON_CHAIN,
       windowDays,
     });
   }
