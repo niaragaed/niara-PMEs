@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useDictionary } from "@/lib/i18n/client";
 
 // Arte final (globo + anel + "NIARA", preto sobre fundo transparente).
 // Dimensões intrínsecas reais (996x606) — a altura exibida é limitada via
@@ -7,8 +10,9 @@ import Link from "next/link";
 const LOGO_SRC = "/niara-pme-logo.png";
 
 export function Logo() {
+  const dict = useDictionary();
   return (
-    <Link href="/" className="flex items-center gap-2" aria-label="Niara PMEs — página inicial">
+    <Link href="/" className="flex items-center gap-2" aria-label={dict.common.homeAriaLabel}>
       <Image src={LOGO_SRC} alt="Niara" width={996} height={606} priority className="h-7 w-auto sm:h-9" />
       {/* A arte só traz "NIARA" — o descritor "PMEs" continua como texto
           separado para diferenciar do produto da exchange (niara-site). */}

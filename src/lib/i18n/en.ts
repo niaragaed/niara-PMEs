@@ -4,6 +4,9 @@ import type { Dictionary } from "./dictionaries";
 export const en = {
   common: {
     skipToContent: "Skip to content",
+    yes: "Yes",
+    no: "No",
+    homeAriaLabel: "Niara PMEs — home page",
     comingSoon: "Coming soon",
     demo: "Demo",
     demoNotice:
@@ -1391,6 +1394,7 @@ export const en = {
         description: "Eligibility check to publish your offering on Sepolia.",
       },
       back: "← Back to My offerings",
+      banner: "real publication on Sepolia. A testnet with no real value; read the terms before signing.",
       title: "Publish on-chain",
       subtitle: "Go through the checklist, review the data that goes to the blockchain and sign with your own wallet.",
       notFound: {
@@ -1418,6 +1422,12 @@ export const en = {
       },
       gates: {
         title: "Checklist before signing",
+        statusLabels: {
+          ok: "OK",
+          rejected: "Failed",
+          error: "Read error",
+          loading: "Checking…",
+        },
         provider: {
           label: "MetaMask wallet detected",
           rejected: "No injected wallet was detected in this browser — install MetaMask to continue.",
@@ -1461,6 +1471,7 @@ export const en = {
       form: {
         title: "Data that goes to the blockchain",
         notice: "These three fields are recorded forever in the ERC-20 token created on Sepolia — review them before signing.",
+        defaultNameSuffix: "Equity",
         name: "Offering name (ERC-20 “name”)",
         symbol: "Token symbol (ERC-20 “symbol”)",
         series: "Series",
@@ -1688,6 +1699,10 @@ export const en = {
       },
       offeringClosedSuccess: "This offering has already closed successfully — investing is no longer possible. If you invested, redeem your shares below.",
       offeringClosedFailure: "This offering closed without reaching the minimum target — investing is no longer possible.",
+      invalidQuantity: "Enter a valid number of shares.",
+      exceedsCapacity: (remaining: string) => `This amount exceeds the offering's remaining capacity (${remaining}).`,
+      exceedsCap: (remaining: string) => `This amount exceeds the cap per investor (${remaining} remaining).`,
+      insufficientBalance: "Insufficient MockBRL balance — use the faucet above.",
       loading: "Loading this offering's data and your position — wait before investing.",
       readError: (reason: string) =>
         `Couldn't confirm this offering's data right now (${reason}) — investing stays blocked until the read works, so a decision is never made with an unconfirmed value.`,
