@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { Transaction } from "@/lib/socios/movimentacoes";
 import { OriginBadge } from "./SociosDashboard";
 
@@ -14,7 +14,7 @@ function formatEpoch(timestamp: number): string {
 // pedido explícito do usuário: uma tabela só, sem separar por seção — cada linha carrega seu
 // próprio OrigemBadge pra quem quiser saber de onde veio, mas a lista/ordenação é uma só.
 export function TransactionsTable({ transactions: movimentacoes }: { transactions: Transaction[] }) {
-  const t = ptBr.partners.transactions;
+  const t = pt.partners.transactions;
 
   return (
     <section className="mt-8">

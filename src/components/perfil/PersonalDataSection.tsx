@@ -8,7 +8,7 @@ import { LogoUpload } from "./LogoUpload";
 import { BannerUpload } from "./BannerUpload";
 import { CardPreview } from "./CardPreview";
 import { ReadField, SelectField, TextareaField, TextField } from "./FormField";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import {
   isValidCEP,
   isValidBirthDate,
@@ -49,14 +49,14 @@ type FormData = {
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
 function display(value: string): string {
-  return value.trim() || ptBr.profile.registrationData.notProvided;
+  return value.trim() || pt.profile.registrationData.notProvided;
 }
 
 // Telefone é salvo/validado só como DDD + número (sem código de país, ver
 // masks.ts); o "+55" é acrescentado aqui só para exibição, mesmo prefixo
 // fixo mostrado no campo em modo de edição (TextField prefix="+55").
 function displayPhone(value: string): string {
-  return value.trim() ? `+55 ${value.trim()}` : ptBr.profile.registrationData.notProvided;
+  return value.trim() ? `+55 ${value.trim()}` : pt.profile.registrationData.notProvided;
 }
 
 function personTypeOf(role: LoadedProfile["role"]): PersonType {
@@ -105,7 +105,7 @@ function toFormData(profile: LoadedProfile, personType: PersonType): FormData {
 
 function validate(data: FormData, personType: PersonType): FormErrors {
   const errors: FormErrors = {};
-  const t = ptBr.profile.registrationData.errors;
+  const t = pt.profile.registrationData.errors;
 
   if (personType === "pf") {
     if (!data.fullName.trim()) errors.fullName = t.required;
@@ -149,7 +149,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
     profile.role === "issuer" ? profile.bannerUrl : null,
   );
 
-  const t = ptBr.profile.registrationData;
+  const t = pt.profile.registrationData;
   const documentLabel = personType === "pf" ? t.fields.documentCpf : t.fields.documentCnpj;
 
   function startEdit() {

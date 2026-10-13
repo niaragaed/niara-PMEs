@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { DocsPage } from "@/components/documentacao/DocumentacaoPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
-  title: `${ptBr.docs.meta.title} · Niara PMEs`,
-  description: ptBr.docs.meta.description,
+  title: `${pt.docs.meta.title} · Niara PMEs`,
+  description: pt.docs.meta.description,
 };
 
 export default function Page() {

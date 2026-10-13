@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { SignUpPage } from "@/components/cadastro/CadastroPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: `${ptBr.signUp.meta.title} · Niara PMEs`,
-  description: ptBr.signUp.meta.description,
+  title: `${pt.signUp.meta.title} · Niara PMEs`,
+  description: pt.signUp.meta.description,
   robots: { index: false, follow: false },
 };
 

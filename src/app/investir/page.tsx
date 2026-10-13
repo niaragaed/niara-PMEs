@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { InvestPage, type MyReservationRow, type ActiveOfferingRow } from "@/components/investir/InvestirPage";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CAP_OCCUPYING_STATUSES } from "@/lib/investments";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: `${ptBr.invest.meta.title} · Niara PMEs`,
-  description: ptBr.invest.meta.description,
+  title: `${pt.invest.meta.title} · Niara PMEs`,
+  description: pt.invest.meta.description,
   robots: { index: false, follow: false },
 };
 

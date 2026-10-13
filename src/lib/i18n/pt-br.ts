@@ -1,4 +1,4 @@
-export const ptBr = {
+export const pt = {
   common: {
     skipToContent: "Pular para o conteúdo",
     comingSoon: "Em breve",

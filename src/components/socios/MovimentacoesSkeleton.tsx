@@ -1,10 +1,10 @@
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 // Fallback do <Suspense> em page.tsx enquanto MovimentacoesSection busca a timeline (on-chain +
 // off-chain) — pode demorar sem uma RPC dedicada (NEXT_PUBLIC_SEPOLIA_RPC_URL), ver
 // src/lib/web3/events.ts.
 export function TransactionsSkeleton() {
-  const t = ptBr.partners;
+  const t = pt.partners;
   return (
     <section className="mt-8" aria-live="polite">
       <h2 className="text-lg font-semibold text-on-military">{t.transactions.title}</h2>

@@ -5,7 +5,7 @@ import { cookieToInitialState } from "wagmi";
 import { Header } from "@/components/nav/Header";
 import { Footer } from "@/components/nav/Footer";
 import { LenisProvider } from "@/components/scroll/LenisProvider";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { config } from "@/lib/web3/config";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -44,7 +44,7 @@ export default async function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-ink focus:shadow-soft-lg"
         >
-          {ptBr.common.skipToContent}
+          {pt.common.skipToContent}
         </a>
         <Providers initialState={initialState}>
           <LenisProvider>

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { CategoryPage } from "@/components/negociar/CategoryPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { requireLogin } from "@/lib/auth/resolveInvestor";
 
 export const metadata: Metadata = {
-  title: `${ptBr.assets.categories.divida} · Niara PMEs`,
-  description: ptBr.trade.categories.divida.shortDescription,
+  title: `${pt.assets.categories.divida} · Niara PMEs`,
+  description: pt.trade.categories.divida.shortDescription,
 };
 
 export default async function Page() {

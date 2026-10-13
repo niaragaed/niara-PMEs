@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export function SignOutButton() {
   const [supabase] = useState(() => createClient());
@@ -24,7 +24,7 @@ export function SignOutButton() {
       disabled={pending}
       className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? ptBr.account.signOutPending : ptBr.account.signOutButton}
+      {pending ? pt.account.signOutPending : pt.account.signOutButton}
     </button>
   );
 }

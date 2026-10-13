@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { SignInPage } from "@/components/entrar/EntrarPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
-  title: `${ptBr.signIn.meta.title} · Niara PMEs`,
+  title: `${pt.signIn.meta.title} · Niara PMEs`,
 };
 
 type PageProps = {

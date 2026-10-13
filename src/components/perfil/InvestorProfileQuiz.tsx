@@ -4,9 +4,9 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useProfile } from "./PerfilContext";
 import { categorizeScore } from "@/lib/investor-profile";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
-const QUESTIONS = ptBr.profile.investor.quiz.questions;
+const QUESTIONS = pt.profile.investor.quiz.questions;
 
 export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
   const { setInvestorProfile } = useProfile();
@@ -16,7 +16,7 @@ export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
   // memória, sem localStorage).
   const [answers, setAnswers] = useState<Array<number | null>>(() => QUESTIONS.map(() => null));
 
-  const t = ptBr.profile.investor.quiz;
+  const t = pt.profile.investor.quiz;
   const question = QUESTIONS[step];
   const selected = answers[step];
   const isLast = step === QUESTIONS.length - 1;

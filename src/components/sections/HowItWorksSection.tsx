@@ -5,7 +5,7 @@ import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Reveal } from "@/components/motion/Reveal";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 const SCROLL_PX_PER_STEP = 600;
 // Duração fixa (ms) das animações de flip (globals.css) — precisa bater com
@@ -160,9 +160,9 @@ export function HowItWorksSection() {
       <div className="mx-auto w-full max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            {ptBr.sections.howItWorks.title}
+            {pt.sections.howItWorks.title}
           </h2>
-          <p className="mt-3 text-lg text-ink-muted">{ptBr.sections.howItWorks.subtitle}</p>
+          <p className="mt-3 text-lg text-ink-muted">{pt.sections.howItWorks.subtitle}</p>
         </Reveal>
 
         {/* perspective no container (não no card): é o que faz o rotateX
@@ -173,7 +173,7 @@ export function HowItWorksSection() {
           className="relative mx-auto mt-12 grid min-h-[200px] w-full max-w-xl grid-cols-1 gap-6 overflow-hidden"
           style={{ perspective: "1000px" }}
         >
-          {ptBr.sections.howItWorks.steps.map((step, index) => (
+          {pt.sections.howItWorks.steps.map((step, index) => (
             <div
               key={step.title}
               ref={(el) => {

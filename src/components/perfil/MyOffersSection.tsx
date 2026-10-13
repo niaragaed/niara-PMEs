@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { formatBRL } from "@/lib/format";
 import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
 import type { OfferingSummary } from "@/app/perfil/actions";
@@ -16,7 +16,7 @@ function formatDate(iso: string): string {
 // /empresa/ofertas, onde criação/ativação/fechamento acontecem de verdade.
 // Só renderizado para issuers (ver PerfilPage) — investidor não tem ofertas.
 export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] }) {
-  const t = ptBr.profile.myOfferings;
+  const t = pt.profile.myOfferings;
 
   return (
     <section id="minhas-ofertas" aria-labelledby="minhas-ofertas-heading" className="scroll-mt-24">
@@ -54,7 +54,7 @@ export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] })
                         {formatBRL(offering.base_cap_cents / 100)}
                       </p>
                       <span className="rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
-                        {ptBr.companyOfferings.status[offering.status]}
+                        {pt.companyOfferings.status[offering.status]}
                       </span>
                       <SyncStatusBadge status={offering.sync_status} />
                     </div>

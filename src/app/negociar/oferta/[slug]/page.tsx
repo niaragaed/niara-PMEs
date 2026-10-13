@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OfferingDetailPage } from "@/components/negociar/OfertaDetailPage";
 import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfertaDetailPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { getOfferingBySlug } from "@/lib/mock/ofertas";
 import { getOnChainIndexBySlug } from "@/lib/mock/ofertasOnChain";
 import { getOfferingAssetPaths } from "@/lib/negociar/ofertaAssets";
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: `${confirmedOffering.issuerTradeName ?? confirmedOffering.issuerLegalName} · Niara PMEs` };
   }
 
-  return { title: `${ptBr.trade.offering.notFound.title} · Niara PMEs` };
+  return { title: `${pt.trade.offering.notFound.title} · Niara PMEs` };
 }
 
 export default async function Page({ params }: PageProps) {

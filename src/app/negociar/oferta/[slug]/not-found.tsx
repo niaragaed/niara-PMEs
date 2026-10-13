@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export default function NotFound() {
-  const t = ptBr.trade.offering.notFound;
+  const t = pt.trade.offering.notFound;
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">

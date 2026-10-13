@@ -1,12 +1,12 @@
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 const SECTIONS = [
-  { id: "o-que-e", label: ptBr.docs.nav.whatIs },
-  { id: "como-funciona", label: ptBr.docs.nav.howItWorks },
-  { id: "enquadramento", label: ptBr.docs.nav.framework },
-  { id: "modelo-receita", label: ptBr.docs.nav.revenueModel },
-  { id: "tecnologia", label: ptBr.docs.nav.technology },
-  { id: "faq", label: ptBr.docs.nav.faq },
+  { id: "o-que-e", label: pt.docs.nav.whatIs },
+  { id: "como-funciona", label: pt.docs.nav.howItWorks },
+  { id: "enquadramento", label: pt.docs.nav.framework },
+  { id: "modelo-receita", label: pt.docs.nav.revenueModel },
+  { id: "tecnologia", label: pt.docs.nav.technology },
+  { id: "faq", label: pt.docs.nav.faq },
 ];
 
 export function DocsNav() {
@@ -14,7 +14,7 @@ export function DocsNav() {
     <>
       {/* Desktop: sidebar sticky */}
       <nav
-        aria-label={ptBr.docs.nav.ariaLabel}
+        aria-label={pt.docs.nav.ariaLabel}
         className="hidden shrink-0 lg:sticky lg:top-24 lg:block lg:w-56"
       >
         <ul className="flex flex-col gap-1">
@@ -34,7 +34,7 @@ export function DocsNav() {
       {/* Mobile/tablet: abas horizontais roláveis */}
       <div
         role="tablist"
-        aria-label={ptBr.docs.nav.ariaLabel}
+        aria-label={pt.docs.nav.ariaLabel}
         className="-mx-4 flex gap-1 overflow-x-auto border-b border-panel-border px-4 pb-px sm:px-6 lg:hidden"
       >
         {SECTIONS.map((section) => (

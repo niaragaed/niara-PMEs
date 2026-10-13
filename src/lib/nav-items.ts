@@ -9,7 +9,7 @@ import {
   Wheat,
   type LucideIcon,
 } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export type NavChild = {
   label: string;
@@ -28,25 +28,25 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    label: ptBr.nav.trade,
+    label: pt.nav.trade,
     href: "#",
     children: [
-      { ...ptBr.nav.tradeChildren.assetsAndTokens, icon: Layers },
-      { ...ptBr.nav.tradeChildren.smesToken, icon: Building2 },
-      { ...ptBr.nav.tradeChildren.tokenAgro, icon: Wheat },
-      { ...ptBr.nav.tradeChildren.realEstateToken, icon: Home },
-      { ...ptBr.nav.tradeChildren.tokenAuto, icon: Car },
-      { ...ptBr.nav.tradeChildren.debtSecurities, icon: Landmark },
+      { ...pt.nav.tradeChildren.assetsAndTokens, icon: Layers },
+      { ...pt.nav.tradeChildren.smesToken, icon: Building2 },
+      { ...pt.nav.tradeChildren.tokenAgro, icon: Wheat },
+      { ...pt.nav.tradeChildren.realEstateToken, icon: Home },
+      { ...pt.nav.tradeChildren.tokenAuto, icon: Car },
+      { ...pt.nav.tradeChildren.debtSecurities, icon: Landmark },
     ],
   },
-  { label: ptBr.nav.assets, href: "/ativos" },
-  { label: ptBr.nav.profile, href: "/perfil" },
+  { label: pt.nav.assets, href: "/ativos" },
+  { label: pt.nav.profile, href: "/perfil" },
   {
-    label: ptBr.nav.about,
+    label: pt.nav.about,
     href: "#",
     children: [
-      { ...ptBr.nav.aboutChildren.documents, icon: BookOpen },
-      { ...ptBr.nav.aboutChildren.contact, icon: Mail },
+      { ...pt.nav.aboutChildren.documents, icon: BookOpen },
+      { ...pt.nav.aboutChildren.contact, icon: Mail },
     ],
   },
 ];

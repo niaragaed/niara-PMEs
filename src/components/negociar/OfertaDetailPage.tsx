@@ -13,7 +13,7 @@ import { OrderTicket } from "./OrderTicket";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
 import { formatBRL } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { DEFAULT_DOCUMENTS, type Offering } from "@/lib/mock/ofertas";
 
 export function OfferingDetailPage({
@@ -30,7 +30,7 @@ export function OfferingDetailPage({
   isPartner?: boolean;
 }) {
   const [ticketOpen, setTicketOpen] = useState(false);
-  const t = ptBr.trade.offering;
+  const t = pt.trade.offering;
   // Fase 4, sub-etapa 5.2: RealOnChainInvestPanel não aceita mais índice, só o par de endereços
   // — esta tela continua só com as 10 ofertas legadas (env var), nunca ofertas self-service (ver
   // PLANO_FASE_3_PUBLICACAO_ONCHAIN.md — /negociar/token-pmes fica fora desta sub-etapa de
@@ -42,7 +42,7 @@ export function OfferingDetailPage({
     <main className="isolate flex flex-1 flex-col bg-military">
       <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.common.demo}</span> —{" "}
+        <span className="font-semibold text-salmon">{pt.common.demo}</span> —{" "}
         {isOnChain ? t.demoBannerOnChain : t.demoBanner}
       </div>
 

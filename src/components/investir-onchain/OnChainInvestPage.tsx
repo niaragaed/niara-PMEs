@@ -6,7 +6,7 @@ import { RealOnChainInvestPanel } from "./RealOnChainInvestPanel";
 import { SolanaInvestPanel } from "./SolanaInvestPanel";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 type OfferingOption = { key: string; label: string; proveniencia: string } & (
   | { rede: "sepolia"; tokenAddress: `0x${string}`; offeringAddress: `0x${string}` }
@@ -31,8 +31,8 @@ export type ServerSolanaOption = { address: string; company: string; open: boole
 // conteúdo (empresa inventada à mão vs. dados que o próprio emissor preencheu), não uma
 // separação estrutural.
 function buildOptions(confirmedOfferings: ConfirmedOnChainOffering[], solanaOfferings: ServerSolanaOption[]): OfferingOption[] {
-  const t = ptBr.investOnChain.offeringSelector;
-  const ts = ptBr.solana;
+  const t = pt.investOnChain.offeringSelector;
+  const ts = pt.solana;
   const legacy = getOnChainAddresses()?.offerings ?? [];
 
   const legacyOptions: OfferingOption[] = legacy.map((pair, index) => ({
@@ -91,8 +91,8 @@ export function OnChainInvestPage({
   solanaOfferings?: ServerSolanaOption[];
   preferSolana?: boolean;
 }) {
-  const t = ptBr.investOnChain;
-  const ts = ptBr.solana;
+  const t = pt.investOnChain;
+  const ts = pt.solana;
   const options = buildOptions(confirmedOfferings, solanaOfferings);
   const initial = (preferSolana ? options.find((o) => o.rede === "solana-devnet") : undefined) ?? options[0];
 

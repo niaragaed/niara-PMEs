@@ -7,7 +7,7 @@ import { Logo } from "@/components/ui/Logo";
 import { NavDropdown } from "@/components/nav/NavDropdown";
 import { AccountMenu } from "@/components/nav/AccountMenu";
 import { NAV_ITEMS } from "@/lib/nav-items";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { HeaderAccount } from "@/lib/nav/headerAccount";
 
 // Toda a interação do Header (scroll, menu mobile) mora aqui — o Header.tsx
@@ -42,7 +42,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Logo />
 
-        <nav aria-label={ptBr.nav.mainAriaLabel} className="hidden md:block">
+        <nav aria-label={pt.nav.mainAriaLabel} className="hidden md:block">
           <ul className="flex items-center gap-8">
             {NAV_ITEMS.map((item) =>
               item.children ? (
@@ -71,14 +71,14 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
               href="/entrar"
               className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
             >
-              {ptBr.nav.signIn}
+              {pt.nav.signIn}
             </Link>
           )}
         </div>
 
         <button
           type="button"
-          aria-label={mobileOpen ? ptBr.nav.closeMenu : ptBr.nav.openMenu}
+          aria-label={mobileOpen ? pt.nav.closeMenu : pt.nav.openMenu}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((current) => !current)}
           className="text-ink md:hidden"
@@ -89,7 +89,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
 
       {mobileOpen && (
         <nav
-          aria-label={ptBr.nav.mobileAriaLabel}
+          aria-label={pt.nav.mobileAriaLabel}
           className="border-t border-border bg-surface px-6 py-4 md:hidden"
         >
           <ul className="flex flex-col gap-4">
@@ -157,7 +157,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
                   onClick={closeMobileMenu}
                   className="inline-flex items-center gap-2 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600"
                 >
-                  {ptBr.nav.signIn}
+                  {pt.nav.signIn}
                 </Link>
               )}
             </li>

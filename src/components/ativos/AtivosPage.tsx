@@ -8,7 +8,7 @@ import { PortfolioSummary } from "./PortfolioSummary";
 import { PositionsTable } from "./PositionsTable";
 import { RealPositionCard } from "./RealPositionCard";
 import { SectionGlow } from "@/components/ui/SectionGlow";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 type Tab = "carteira" | "disponiveis";
 
@@ -19,17 +19,17 @@ export function AssetsPage() {
     <main className="isolate flex flex-1 flex-col bg-military">
       <SectionGlow />
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">{ptBr.assets.demoBanner.label}</span> —{" "}
-        {ptBr.assets.demoBanner.text}
+        <span className="font-semibold text-salmon">{pt.assets.demoBanner.label}</span> —{" "}
+        {pt.assets.demoBanner.text}
       </div>
 
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.assets.title}</h1>
-        <p className="mt-1 text-on-military-muted">{ptBr.assets.subtitle}</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-on-military">{pt.assets.title}</h1>
+        <p className="mt-1 text-on-military-muted">{pt.assets.subtitle}</p>
 
         <div
           role="tablist"
-          aria-label={ptBr.assets.title}
+          aria-label={pt.assets.title}
           className="mt-6 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1"
         >
           <button
@@ -43,7 +43,7 @@ export function AssetsPage() {
               tab === "carteira" ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
             }`}
           >
-            {ptBr.assets.tabs.wallet}
+            {pt.assets.tabs.wallet}
           </button>
           <button
             type="button"
@@ -56,7 +56,7 @@ export function AssetsPage() {
               tab === "disponiveis" ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
             }`}
           >
-            {ptBr.assets.tabs.available}
+            {pt.assets.tabs.available}
           </button>
         </div>
 

@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/ativos/derive";
 import { formatBRL, formatPercent } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
 
 const VIEWS: { key: AllocationView; label: string }[] = [
-  { key: "classe", label: ptBr.assets.allocation.viewClass },
-  { key: "ativo", label: ptBr.assets.allocation.viewAsset },
-  { key: "setor", label: ptBr.assets.allocation.viewSector },
+  { key: "classe", label: pt.assets.allocation.viewClass },
+  { key: "ativo", label: pt.assets.allocation.viewAsset },
+  { key: "setor", label: pt.assets.allocation.viewSector },
 ];
 
 type DonutTooltipProps = {
@@ -34,13 +34,13 @@ function DonutTooltip({ active, payload }: DonutTooltipProps) {
 
 export function AllocationDonut() {
   const [view, setView] = useState<AllocationView>("classe");
-  const slices = computeAllocation(MOCK_POSITIONS, view, ptBr.assets.categories, ptBr.assets.regions);
+  const slices = computeAllocation(MOCK_POSITIONS, view, pt.assets.categories, pt.assets.regions);
 
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{ptBr.assets.allocation.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{pt.assets.allocation.title}</h3>
 
-      <div role="tablist" aria-label={ptBr.assets.allocation.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
+      <div role="tablist" aria-label={pt.assets.allocation.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
         {VIEWS.map((v) => (
           <button
             key={v.key}

@@ -7,7 +7,7 @@
 // sozinho se o gate passa.
 import type { ChangeEvent } from "react";
 import { TextField } from "@/components/perfil/FormField";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export type DataToken = { name: string; symbol: string; series: string };
 
@@ -27,7 +27,7 @@ type Props = {
 };
 
 export function PublicationTerms({ texts, data, onDataChange, accepted, onAcceptedChange, disabled }: Props) {
-  const t = texts ?? ptBr.companyOfferings.publishOnChain;
+  const t = texts ?? pt.companyOfferings.publishOnChain;
   const tf = t.form;
   const tt = t.termText;
 

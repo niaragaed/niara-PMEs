@@ -2,7 +2,7 @@ import { Building2, Car, Home, Tractor, type LucideIcon } from "lucide-react";
 import { Reveal } from "@/components/motion/Reveal";
 import { RevealGroup, RevealItem } from "@/components/motion/RevealGroup";
 import { SectionCard } from "./SectionCard";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 const ICONS: Record<string, LucideIcon> = {
   "Token PMEs": Building2,
@@ -19,12 +19,12 @@ export function TokensSection() {
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-on-salmon sm:text-4xl">
-            {ptBr.sections.tokens.title}
+            {pt.sections.tokens.title}
           </h2>
         </Reveal>
 
         <RevealGroup className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {ptBr.sections.tokens.items.map((item) => {
+          {pt.sections.tokens.items.map((item) => {
             const Icon = ICONS[item.title];
             return (
               <RevealItem key={item.title}>

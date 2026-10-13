@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FlaskConical } from "lucide-react";
 import { OfferingBanner } from "./OfertaBanner";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { formatBRL } from "@/lib/format";
 import type { ActiveOfferingSummary } from "@/lib/investments";
 
@@ -24,7 +24,7 @@ function formatDate(iso: string): string {
 // HONESTIDADE, aqui no sentido de não deixar dois conceitos reais
 // diferentes parecerem o mesmo tipo de "real").
 export function MyOfferCard({ offering }: { offering: ActiveOfferingSummary }) {
-  const t = ptBr.trade.myOfferingCard;
+  const t = pt.trade.myOfferingCard;
   const nome = offering.issuerTradeName ?? offering.issuerLegalName;
 
   return (

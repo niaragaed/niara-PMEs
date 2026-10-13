@@ -7,10 +7,10 @@ import { PartnersDashboard } from "@/components/socios/SociosDashboard";
 import { TransactionsSection } from "@/components/socios/MovimentacoesSection";
 import { TransactionsSkeleton } from "@/components/socios/MovimentacoesSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
-  title: `${ptBr.partners.meta.title} · Niara PMEs`,
+  title: `${pt.partners.meta.title} · Niara PMEs`,
   robots: { index: false, follow: false },
 };
 
@@ -33,8 +33,8 @@ export default async function Page() {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-military px-4 py-16">
         <div className="w-full max-w-sm rounded-lg border border-panel-border bg-panel p-6">
-          <h1 className="text-xl font-semibold text-on-military">{ptBr.partners.login.title}</h1>
-          <p className="mt-1 text-sm text-on-military-muted">{ptBr.partners.login.subtitle}</p>
+          <h1 className="text-xl font-semibold text-on-military">{pt.partners.login.title}</h1>
+          <p className="mt-1 text-sm text-on-military-muted">{pt.partners.login.subtitle}</p>
           <PartnersLoginForm />
         </div>
       </main>
@@ -47,8 +47,8 @@ export default async function Page() {
         <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg border border-panel-border bg-panel p-6 text-center">
           <AlertTriangle className="h-8 w-8 text-salmon" aria-hidden="true" />
           <div>
-            <h1 className="text-xl font-semibold text-on-military">{ptBr.partners.denied.title}</h1>
-            <p className="mt-1 text-sm text-on-military-muted">{ptBr.partners.denied.subtitle}</p>
+            <h1 className="text-xl font-semibold text-on-military">{pt.partners.denied.title}</h1>
+            <p className="mt-1 text-sm text-on-military-muted">{pt.partners.denied.subtitle}</p>
           </div>
           <SignOutButton />
         </div>

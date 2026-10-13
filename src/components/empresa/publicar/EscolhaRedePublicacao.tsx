@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 
 /**
  * Seletor de rede da publicação — só aparece enquanto a oferta não tem nenhuma tentativa
@@ -8,7 +8,7 @@ import { ptBr } from "@/lib/i18n/pt-br";
  * tentativa, e a partir daí a página segue a rede da linha (migration 0017).
  */
 export function PublicationNetworkChoice({ offeringId, current }: { offeringId: string; current: "sepolia" | "solana" }) {
-  const t = ptBr.solana.publish.networkChoice;
+  const t = pt.solana.publish.networkChoice;
   const base = `/empresa/ofertas/${offeringId}/publicar`;
   const options = [
     { id: "sepolia" as const, href: base, label: t.sepolia },

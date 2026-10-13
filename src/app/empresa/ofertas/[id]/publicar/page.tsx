@@ -5,7 +5,7 @@ import { PublishOnChainPage } from "@/components/empresa/publicar/PublicarOnChai
 import { PublishSolanaPage } from "@/components/empresa/publicar/PublicarSolanaPage";
 import { PublicationNetworkChoice } from "@/components/empresa/publicar/EscolhaRedePublicacao";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
@@ -23,8 +23,8 @@ const MAX_DEADLINE_DAYS = 180;
 // virar argumentos da transação, entregando tudo pronto para o Client Component. Nenhuma
 // escrita acontece aqui.
 export const metadata: Metadata = {
-  title: `${ptBr.companyOfferings.publishOnChain.meta.title} · Niara PMEs`,
-  description: ptBr.companyOfferings.publishOnChain.meta.description,
+  title: `${pt.companyOfferings.publishOnChain.meta.title} · Niara PMEs`,
+  description: pt.companyOfferings.publishOnChain.meta.description,
   robots: { index: false, follow: false },
 };
 
@@ -81,7 +81,7 @@ export default async function Page({
   const linkedWallet = (issuer?.wallet_address as string | null) ?? null;
 
   if (offering.status !== "draft") {
-    const t = ptBr.companyOfferings.publishOnChain;
+    const t = pt.companyOfferings.publishOnChain;
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
@@ -91,7 +91,7 @@ export default async function Page({
   }
 
   if (offering.share_price_cents === null) {
-    const t = ptBr.companyOfferings.publishOnChain;
+    const t = pt.companyOfferings.publishOnChain;
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
@@ -118,7 +118,7 @@ export default async function Page({
   const maxAllowedLotCents = baseCapCents + Math.floor(baseCapCents / 4);
 
   if (offering.sync_status === "nao_onchain") {
-    const t = ptBr.companyOfferings.publishOnChain;
+    const t = pt.companyOfferings.publishOnChain;
     const reasons: string[] = [];
     if (hardCapCents > MAX_CAP_CENTS) {
       reasons.push(t.notEligible.res88Limits.cap(formatBRL(hardCapCents / 100)));

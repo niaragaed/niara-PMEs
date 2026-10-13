@@ -1,6 +1,6 @@
 import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { pt } from "@/lib/i18n/pt-br";
 import type { TransactionsSummary } from "@/lib/socios/movimentacoes";
 import { KpiCard } from "./SociosDashboard";
 
@@ -12,7 +12,7 @@ function formatToken(valueWei: bigint, decimals: number, symbol: string): string
 // separadas (resumo on-chain + resumo mock) agora ficam lado a lado, já que a tabela abaixo não
 // separa mais por origem.
 export function SummaryCards({ summary }: { summary: TransactionsSummary }) {
-  const t = ptBr.partners;
+  const t = pt.partners;
   const onChain = summary.onChain;
   const singleFeeBps =
     onChain && onChain.taxaBpsPorOferta.every((bps) => bps === onChain.taxaBpsPorOferta[0])
