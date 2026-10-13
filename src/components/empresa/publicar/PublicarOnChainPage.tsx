@@ -71,7 +71,7 @@ export function PublishOnChainPage({
 
   const currentYear = new Date().getFullYear();
   const [data, setData] = useState<DataToken>({
-    name: `${companyName} Participações`.trim(),
+    name: `${companyName} ${t.form.defaultNameSuffix}`.trim(),
     symbol: (companyName.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
     series: `${currentYear}-A`,
   });
@@ -251,8 +251,7 @@ export function PublishOnChainPage({
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-        <span className="font-semibold text-salmon">Demonstração</span> — publicação real em
-        Sepolia. Testnet sem valor real; leia o termo antes de assinar.
+        <span className="font-semibold text-salmon">{dict.common.demo}</span> — {t.banner}
       </div>
 
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">

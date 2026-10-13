@@ -4,11 +4,12 @@ import { RevealGroup, RevealItem } from "@/components/motion/RevealGroup";
 import { SectionCard } from "./SectionCard";
 import { getDictionary } from "@/lib/i18n/server";
 
+// Keyed by the card's route (stable across languages), never by its translated title.
 const ICONS: Record<string, LucideIcon> = {
-  "Token PMEs": Building2,
-  "Token Auto": Car,
-  "Token Agro": Tractor,
-  "Token Imobiliário": Home,
+  "/negociar/token-pmes": Building2,
+  "/negociar/token-auto": Car,
+  "/negociar/token-agro": Tractor,
+  "/negociar/token-imobiliario": Home,
 };
 
 // 3.3 — Conheça os Tokens. Fundo pêssego CHEIO, título em on-salmon; cada
@@ -26,7 +27,7 @@ export async function TokensSection() {
 
         <RevealGroup className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {dict.sections.tokens.items.map((item) => {
-            const Icon = ICONS[item.title];
+            const Icon = ICONS[item.href];
             return (
               <RevealItem key={item.title}>
                 <SectionCard

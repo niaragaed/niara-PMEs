@@ -105,7 +105,7 @@ export function PublishSolanaPage({
   const company = cutBytes(companyName || "Empresa", MAX_COMPANY_SOLANA);
   const currentYear = new Date().getFullYear();
   const [data, setData] = useState<DataToken>({
-    name: cutBytes(`${companyName} Participações`, MAX_NAME_SOLANA),
+    name: cutBytes(`${companyName} ${dict.companyOfferings.publishOnChain.form.defaultNameSuffix}`, MAX_NAME_SOLANA),
     symbol: (companyName.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
     series: `${currentYear}-A`,
   });

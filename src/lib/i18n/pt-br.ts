@@ -1,6 +1,9 @@
 export const pt = {
   common: {
     skipToContent: "Pular para o conteúdo",
+    yes: "Sim",
+    no: "Não",
+    homeAriaLabel: "Niara PMEs — página inicial",
     comingSoon: "Em breve",
     demo: "Demonstração",
     demoNotice:
@@ -1394,6 +1397,7 @@ export const pt = {
         description: "Verificação de elegibilidade para publicar sua oferta em Sepolia.",
       },
       back: "← Voltar para Minhas ofertas",
+      banner: "publicação real em Sepolia. Testnet sem valor real; leia o termo antes de assinar.",
       title: "Publicar on-chain",
       subtitle: "Confira o checklist, revise os dados que vão para a blockchain e assine com sua própria carteira.",
       notFound: {
@@ -1421,6 +1425,12 @@ export const pt = {
       },
       gates: {
         title: "Checklist antes de assinar",
+        statusLabels: {
+          ok: "OK",
+          rejected: "Reprovado",
+          error: "Erro de leitura",
+          loading: "Verificando…",
+        },
         provider: {
           label: "Carteira MetaMask detectada",
           rejected: "Nenhuma carteira injetada foi detectada neste navegador — instale a MetaMask para continuar.",
@@ -1464,6 +1474,7 @@ export const pt = {
       form: {
         title: "Dados que vão para a blockchain",
         notice: "Estes três campos ficam gravados para sempre no token ERC-20 criado em Sepolia — revise antes de assinar.",
+        defaultNameSuffix: "Participações",
         name: "Nome da oferta (ERC-20 “name”)",
         symbol: "Símbolo do token (ERC-20 “symbol”)",
         series: "Série",
@@ -1691,6 +1702,10 @@ export const pt = {
       },
       offeringClosedSuccess: "Esta oferta já foi encerrada com sucesso — não é mais possível investir. Se você aportou, resgate suas cotas abaixo.",
       offeringClosedFailure: "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir.",
+      invalidQuantity: "Informe uma quantidade de cotas válida.",
+      exceedsCapacity: (remaining: string) => `Esse valor ultrapassa a capacidade restante da oferta (${remaining}).`,
+      exceedsCap: (remaining: string) => `Esse valor ultrapassa o teto por investidor (${remaining} restantes).`,
+      insufficientBalance: "Saldo de MockBRL insuficiente — use o faucet acima.",
       loading: "Carregando os dados desta oferta e a sua posição — aguarde antes de investir.",
       readError: (reason: string) =>
         `Não foi possível confirmar os dados desta oferta agora (${reason}) — investir fica bloqueado até a leitura funcionar, para nunca decidir com um valor não confirmado.`,

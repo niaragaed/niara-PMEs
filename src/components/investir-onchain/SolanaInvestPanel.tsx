@@ -374,7 +374,7 @@ export function SolanaInvestPanel({
             </div>
             <div>
               <dt className="text-xs text-on-military-muted">{t.position.alreadyRedeemed}</dt>
-              <dd className="mt-0.5 text-sm text-on-military">{position.sharesRedeemed ? "Sim" : "Não"}</dd>
+              <dd className="mt-0.5 text-sm text-on-military">{position.sharesRedeemed ? dict.common.yes : dict.common.no}</dd>
             </div>
             {position.refunded && (
               <div>

@@ -368,22 +368,20 @@ export function RealOnChainInvestPanel({
               <p className="mt-2 text-xs text-on-military-muted">{t.invest.allowanceNote}</p>
 
               {invalidValue && shareQuantity !== "" && (
-                <p className="mt-2 text-sm text-value-negative">Informe uma quantidade de cotas válida.</p>
+                <p className="mt-2 text-sm text-value-negative">{t.invest.invalidQuantity}</p>
               )}
               {!invalidValue && exceedsCapacity && (
                 <p className="mt-2 text-sm text-value-negative">
-                  Esse valor ultrapassa a capacidade restante da oferta (
-                  {formatToken(remainingCapacity, terms.mockBrlDecimals, terms.mockBrlSymbol)}).
+                  {t.invest.exceedsCapacity(formatToken(remainingCapacity, terms.mockBrlDecimals, terms.mockBrlSymbol))}
                 </p>
               )}
               {!invalidValue && !exceedsCapacity && exceedsCap && (
                 <p className="mt-2 text-sm text-value-negative">
-                  Esse valor ultrapassa o teto por investidor (
-                  {formatToken(remainingInvestorCap, terms.mockBrlDecimals, terms.mockBrlSymbol)} restantes).
+                  {t.invest.exceedsCap(formatToken(remainingInvestorCap, terms.mockBrlDecimals, terms.mockBrlSymbol))}
                 </p>
               )}
               {!invalidValue && insufficientBalance && (
-                <p className="mt-2 text-sm text-value-negative">Saldo de MockBRL insuficiente — use o faucet acima.</p>
+                <p className="mt-2 text-sm text-value-negative">{t.invest.insufficientBalance}</p>
               )}
 
               <button
@@ -434,7 +432,7 @@ export function RealOnChainInvestPanel({
             </div>
             <div>
               <dt className="text-xs text-on-military-muted">{t.position.alreadyRedeemed}</dt>
-              <dd className="mt-0.5 text-sm text-on-military">{position.alreadyRedeemedShares ? "Sim" : "Não"}</dd>
+              <dd className="mt-0.5 text-sm text-on-military">{position.alreadyRedeemedShares ? dict.common.yes : dict.common.no}</dd>
             </div>
           </dl>
         </Card>
