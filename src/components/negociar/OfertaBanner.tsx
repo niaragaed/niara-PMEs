@@ -16,24 +16,24 @@ function isRemoteUrl(url: string): boolean {
   return url.startsWith("http://") || url.startsWith("https://");
 }
 
-type OfertaBannerSize = "card" | "hero";
+type OfferingBannerSize = "card" | "hero";
 
-const BANNER_HEIGHT: Record<OfertaBannerSize, string> = {
+const BANNER_HEIGHT: Record<OfferingBannerSize, string> = {
   card: "h-32",
   hero: "h-48 sm:h-64",
 };
 
-const LOGO_DIMS: Record<OfertaBannerSize, string> = {
+const LOGO_DIMS: Record<OfferingBannerSize, string> = {
   card: "h-12 w-12",
   hero: "h-16 w-16 sm:h-20 sm:w-20",
 };
 
-const LOGO_ICON_DIMS: Record<OfertaBannerSize, string> = {
+const LOGO_ICON_DIMS: Record<OfferingBannerSize, string> = {
   card: "h-5 w-5",
   hero: "h-7 w-7 sm:h-9 sm:w-9",
 };
 
-const PLACEHOLDER_ICON_DIMS: Record<OfertaBannerSize, string> = {
+const PLACEHOLDER_ICON_DIMS: Record<OfferingBannerSize, string> = {
   card: "h-10 w-10",
   hero: "h-14 w-14",
 };
@@ -45,20 +45,20 @@ const PLACEHOLDER_ICON_DIMS: Record<OfertaBannerSize, string> = {
 // arquivo real (hoje só as 10 ofertas PMEs reais em Sepolia têm fotos geradas no Gemini; as
 // outras categorias nunca têm), caso em que mostra um placeholder com os mesmos tokens de
 // cor/ícone já usados por CategoryChip/CategoryBadge para a categoria da própria oferta.
-export function OfertaBanner({
+export function OfferingBanner({
   bannerUrl,
   logoUrl,
-  nomeFantasia,
-  categoria,
+  tradeName,
+  category,
   size = "card",
 }: {
   bannerUrl: string | null;
   logoUrl: string | null;
-  nomeFantasia: string;
-  categoria: TokenCategory;
-  size?: OfertaBannerSize;
+  tradeName: string;
+  category: TokenCategory;
+  size?: OfferingBannerSize;
 }) {
-  const meta = CATEGORY_META[categoria];
+  const meta = CATEGORY_META[category];
   const Icon = meta.icon;
 
   return (
@@ -85,9 +85,9 @@ export function OfertaBanner({
         {logoUrl ? (
           isRemoteUrl(logoUrl) ? (
             // eslint-disable-next-line @next/next/no-img-element -- vem do bucket público do Supabase Storage, não passa pelo otimizador do next/image (ver comentário acima)
-            <img src={logoUrl} alt={`${nomeFantasia} — logo`} className="h-full w-full object-cover" />
+            <img src={logoUrl} alt={`${tradeName} — logo`} className="h-full w-full object-cover" />
           ) : (
-            <Image src={logoUrl} alt={`${nomeFantasia} — logo`} fill sizes="80px" className="object-cover" />
+            <Image src={logoUrl} alt={`${tradeName} — logo`} fill sizes="80px" className="object-cover" />
           )
         ) : (
           <Icon className={LOGO_ICON_DIMS[size]} style={{ color: meta.iconVar }} aria-hidden="true" />

@@ -1,13 +1,13 @@
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
 #
-# Fluxo deste projeto: `supabase link --project-ref <ref>` (usa
-# SUPABASE_ACCESS_TOKEN ou login interativo) e `supabase db push` (aplica
-# migrations de supabase/migrations/ direto no Postgres remoto via
-# DATABASE_URL/DIRECT_URL do .env.local). Nenhum dos dois exige Docker nem
-# `supabase start` — não subimos a stack local (API/Studio/Auth locais)
-# neste projeto; as seções abaixo (portas, auth local, storage etc.) só
-# importariam para quem rodasse `supabase start`.
+# This project's workflow: `supabase link --project-ref <ref>` (uses
+# SUPABASE_ACCESS_TOKEN or an interactive login) and `supabase db push` (applies the
+# migrations in supabase/migrations/ directly to the remote Postgres via
+# DATABASE_URL/DIRECT_URL from .env.local). Neither requires Docker nor
+# `supabase start`: we don't run the local stack (local API/Studio/Auth)
+# in this project; the sections below (ports, local auth, storage, etc.) would
+# only matter for someone running `supabase start`.
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
 project_id = "niara-PMEs"

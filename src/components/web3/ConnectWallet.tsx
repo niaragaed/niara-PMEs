@@ -44,7 +44,7 @@ export function ConnectWallet({
   connectLabel,
   connectButtonClassName,
 }: { connectLabel?: string; connectButtonClassName?: string } = {}) {
-  const t = ptBr.perfil.carteira;
+  const t = ptBr.profile.wallet;
   const hasProvider = useSyncExternalStore(
     subscribeToProvider,
     getProviderSnapshot,
@@ -82,14 +82,14 @@ export function ConnectWallet({
     return (
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-panel-border bg-military px-3 py-2 text-sm text-on-military-muted">
         <Wallet className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{t.naoDetectada}</span>
+        <span>{t.notDetected}</span>
         <a
           href="https://metamask.io/download/"
           target="_blank"
           rel="noreferrer"
           className="text-salmon underline underline-offset-2 hover:text-salmon-600"
         >
-          {t.instalarMetaMask}
+          {t.installMetaMask}
         </a>
       </div>
     );
@@ -100,7 +100,7 @@ export function ConnectWallet({
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-2 rounded-md border border-salmon/40 bg-salmon/10 p-3 text-sm text-on-military">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
-          <span>{t.redeErrada}</span>
+          <span>{t.wrongNetwork}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -110,13 +110,13 @@ export function ConnectWallet({
             className="flex items-center gap-2 rounded-md bg-salmon px-3 py-1.5 text-sm font-medium text-on-salmon transition-colors hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSwitching && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            <span>{isSwitching ? t.trocandoRede : t.trocarRedeBotao}</span>
+            <span>{isSwitching ? t.switchingNetwork : t.switchNetworkButton}</span>
           </button>
           <button
             type="button"
             onClick={() => disconnect()}
-            aria-label={t.desconectarAriaLabel}
-            title={t.desconectarBotao}
+            aria-label={t.disconnectAriaLabel}
+            title={t.disconnectButton}
             className="rounded-md border border-panel-border bg-military p-1.5 text-on-military-muted transition-colors hover:text-on-military"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -142,8 +142,8 @@ export function ConnectWallet({
           <button
             type="button"
             onClick={() => handleCopy(connection.address as string)}
-            aria-label={t.copiarEndereco}
-            title={t.copiarEndereco}
+            aria-label={t.copyAddress}
+            title={t.copyAddress}
             className="rounded-md border border-panel-border bg-military p-1.5 text-on-military-muted transition-colors hover:text-on-military"
           >
             {copied ? (
@@ -155,14 +155,14 @@ export function ConnectWallet({
           <button
             type="button"
             onClick={() => disconnect()}
-            aria-label={t.desconectarAriaLabel}
-            title={t.desconectarBotao}
+            aria-label={t.disconnectAriaLabel}
+            title={t.disconnectButton}
             className="rounded-md border border-panel-border bg-military p-1.5 text-on-military-muted transition-colors hover:text-on-military"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
-        <p className="text-xs text-on-military-muted">{t.desconectarNota}</p>
+        <p className="text-xs text-on-military-muted">{t.disconnectNote}</p>
       </div>
     );
   }
@@ -193,11 +193,11 @@ export function ConnectWallet({
         ) : (
           <Wallet className="h-4 w-4" aria-hidden="true" />
         )}
-        <span>{isPending ? t.conectando : (connectLabel ?? t.conectarBotao)}</span>
+        <span>{isPending ? t.connecting : (connectLabel ?? t.connectButton)}</span>
       </button>
-      {rejected && <span className="text-xs text-on-military-muted">{t.conexaoRejeitada}</span>}
+      {rejected && <span className="text-xs text-on-military-muted">{t.connectionRejected}</span>}
       {reconnectStalled && !rejected && (
-        <span className="text-xs text-on-military-muted">{t.reconexaoDemorou}</span>
+        <span className="text-xs text-on-military-muted">{t.reconnectionTimedOut}</span>
       )}
     </div>
   );

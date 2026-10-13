@@ -5,9 +5,9 @@
 // "completar cadastro" de /perfil se só resolveAccount() decidisse o destino. Não altera
 // resolveAccount() nem sua lógica -- só decide, antes dele, se este login deveria ir para
 // /socios em vez do fluxo de investidor/emissor. Ver src/lib/auth/resolveSocio.ts.
-import { resolveSocio } from "@/lib/auth/resolveSocio";
+import { resolvePartner } from "@/lib/auth/resolveSocio";
 
-export async function resolvePosLoginDestino(): Promise<"/socios" | "/perfil"> {
-  const { autorizado } = await resolveSocio();
-  return autorizado ? "/socios" : "/perfil";
+export async function resolvePostLoginDestination(): Promise<"/socios" | "/perfil"> {
+  const { autorizado: authorized } = await resolvePartner();
+  return authorized ? "/socios" : "/perfil";
 }

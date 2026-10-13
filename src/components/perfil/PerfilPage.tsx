@@ -1,8 +1,8 @@
 "use client";
 
 import { ShieldAlert, TrendingUp } from "lucide-react";
-import { PerfilProvider, usePerfil } from "./PerfilContext";
-import { PerfilNav } from "./PerfilNav";
+import { ProfileProvider, useProfile } from "./PerfilContext";
+import { ProfileNav } from "./PerfilNav";
 import { PersonalDataSection } from "./PersonalDataSection";
 import { MyOffersSection } from "./MyOffersSection";
 import { InvestorProfileSection } from "./InvestorProfileSection";
@@ -12,80 +12,80 @@ import { SectionGlow } from "@/components/ui/SectionGlow";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { LoadedProfile, OfferingSummary } from "@/app/perfil/actions";
 
-type PerfilPageProps = {
+type ProfilePageProps = {
   profile: LoadedProfile;
   offerings: OfferingSummary[];
   aviso?: "apenas-empresa" | "apenas-investidor";
-  abrirTesteInvestidor?: boolean;
+  openInvestorQuiz?: boolean;
 };
 
-export function PerfilPage({ profile, offerings, aviso, abrirTesteInvestidor }: PerfilPageProps) {
+export function ProfilePage({ profile, offerings, aviso, openInvestorQuiz }: ProfilePageProps) {
   return (
-    <PerfilProvider>
+    <ProfileProvider>
       <main className="isolate flex flex-1 flex-col bg-military">
         <SectionGlow />
         <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
-          <span className="font-semibold text-salmon">{ptBr.perfil.demoBanner.label}</span> —{" "}
-          {ptBr.perfil.demoBanner.text}
+          <span className="font-semibold text-salmon">{ptBr.profile.demoBanner.label}</span> —{" "}
+          {ptBr.profile.demoBanner.text}
         </div>
 
         <div className="border-b border-panel-border bg-panel/60 px-4 py-3 sm:px-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 text-xs text-on-military-muted sm:text-sm">
             <ShieldAlert className="h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
             <span>
-              <span className="font-semibold text-on-military">{ptBr.perfil.kyc.naoVerificado}</span>{" "}
-              {ptBr.perfil.kyc.aviso}
+              <span className="font-semibold text-on-military">{ptBr.profile.kyc.notVerified}</span>{" "}
+              {ptBr.profile.kyc.notice}
             </span>
           </div>
         </div>
 
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.perfil.title}</h1>
-            <p className="mt-1 text-on-military-muted">{ptBr.perfil.subtitle}</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{ptBr.profile.title}</h1>
+            <p className="mt-1 text-on-military-muted">{ptBr.profile.subtitle}</p>
           </div>
 
           {aviso === "apenas-empresa" && (
             <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
-              {ptBr.conta.avisoApenasEmpresa}
+              {ptBr.account.companyOnlyNotice}
             </p>
           )}
           {aviso === "apenas-investidor" && (
             <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
-              {ptBr.conta.avisoApenasInvestidor}
+              {ptBr.account.investorOnlyNotice}
             </p>
           )}
 
           <ProfileBadges />
 
           <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-            <PerfilNav showMinhasOfertas={profile.role === "issuer"} />
+            <ProfileNav showMyOfferings={profile.role === "issuer"} />
             <div className="flex min-w-0 flex-1 flex-col gap-10">
               <PersonalDataSection profile={profile} />
               {profile.role === "issuer" && <MyOffersSection offerings={offerings} />}
-              <InvestorProfileSection abrirAutomaticamente={abrirTesteInvestidor} />
+              <InvestorProfileSection openAutomatically={openInvestorQuiz} />
               <WalletSection walletAddress={profile.walletAddress} />
               <SolanaWalletSection solanaWalletAddress={profile.solanaWalletAddress} />
             </div>
           </div>
         </div>
       </main>
-    </PerfilProvider>
+    </ProfileProvider>
   );
 }
 
 function ProfileBadges() {
-  const { investorProfile } = usePerfil();
+  const { investorProfile } = useProfile();
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-2">
       <span className="inline-flex items-center gap-1.5 rounded-full border border-salmon/40 bg-salmon/10 px-2.5 py-1 text-xs font-medium text-on-military">
         <ShieldAlert className="h-3.5 w-3.5 text-salmon" aria-hidden="true" />
-        {ptBr.perfil.kyc.naoVerificado}
+        {ptBr.profile.kyc.notVerified}
       </span>
       <span className="inline-flex items-center gap-1.5 rounded-full border border-panel-border bg-military-600/40 px-2.5 py-1 text-xs font-medium text-on-military">
         <TrendingUp className="h-3.5 w-3.5 text-salmon" aria-hidden="true" />
-        {ptBr.perfil.badges.perfilPrefix}: {ptBr.perfil.investidor.categorias[investorProfile.category]}
+        {ptBr.profile.badges.profilePrefix}: {ptBr.profile.investor.categories[investorProfile.category]}
       </span>
     </div>
   );

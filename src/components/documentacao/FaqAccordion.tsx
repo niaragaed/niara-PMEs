@@ -9,12 +9,12 @@ export function FaqAccordion() {
 
   return (
     <div className="divide-y divide-panel-border rounded-lg border border-panel-border bg-panel">
-      {ptBr.documentacao.faq.items.map((item, index) => {
+      {ptBr.docs.faq.items.map((item, index) => {
         const isOpen = openIndex === index;
         const buttonId = `faq-button-${index}`;
         const panelId = `faq-panel-${index}`;
         return (
-          <div key={item.pergunta}>
+          <div key={item.question}>
             <h3 className="text-base font-normal">
               <button
                 id={buttonId}
@@ -24,7 +24,7 @@ export function FaqAccordion() {
                 onClick={() => setOpenIndex(isOpen ? null : index)}
                 className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-sm font-medium text-on-military"
               >
-                {item.pergunta}
+                {item.question}
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 text-on-military-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
                   aria-hidden="true"
@@ -38,7 +38,7 @@ export function FaqAccordion() {
                 aria-labelledby={buttonId}
                 className="px-4 pb-4 text-sm leading-relaxed text-on-military-muted"
               >
-                {item.resposta}
+                {item.answer}
               </div>
             )}
           </div>

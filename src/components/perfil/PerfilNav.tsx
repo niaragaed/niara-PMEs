@@ -1,16 +1,16 @@
 import { ptBr } from "@/lib/i18n/pt-br";
 
-const BASE_SECTIONS = [{ id: "dados-cadastro", label: ptBr.perfil.nav.dadosCadastro }];
-const MINHAS_OFERTAS_SECTION = { id: "minhas-ofertas", label: ptBr.perfil.nav.minhasOfertas };
+const BASE_SECTIONS = [{ id: "dados-cadastro", label: ptBr.profile.nav.registrationData }];
+const MY_OFFERINGS_SECTION = { id: "minhas-ofertas", label: ptBr.profile.nav.myOfferings };
 const REST_SECTIONS = [
-  { id: "perfil-investidor", label: ptBr.perfil.nav.perfilInvestidor },
-  { id: "carteira", label: ptBr.perfil.nav.carteira },
+  { id: "perfil-investidor", label: ptBr.profile.nav.investorProfile },
+  { id: "carteira", label: ptBr.profile.nav.wallet },
 ];
 
-export function PerfilNav({ showMinhasOfertas }: { showMinhasOfertas: boolean }) {
+export function ProfileNav({ showMyOfferings }: { showMyOfferings: boolean }) {
   const SECTIONS = [
     ...BASE_SECTIONS,
-    ...(showMinhasOfertas ? [MINHAS_OFERTAS_SECTION] : []),
+    ...(showMyOfferings ? [MY_OFFERINGS_SECTION] : []),
     ...REST_SECTIONS,
   ];
 
@@ -18,7 +18,7 @@ export function PerfilNav({ showMinhasOfertas }: { showMinhasOfertas: boolean })
     <>
       {/* Desktop: sidebar sticky */}
       <nav
-        aria-label={ptBr.perfil.nav.ariaLabel}
+        aria-label={ptBr.profile.nav.ariaLabel}
         className="hidden shrink-0 lg:sticky lg:top-24 lg:block lg:w-56"
       >
         <ul className="flex flex-col gap-1">
@@ -38,7 +38,7 @@ export function PerfilNav({ showMinhasOfertas }: { showMinhasOfertas: boolean })
       {/* Mobile/tablet: abas horizontais roláveis */}
       <div
         role="tablist"
-        aria-label={ptBr.perfil.nav.ariaLabel}
+        aria-label={ptBr.profile.nav.ariaLabel}
         className="-mx-4 flex gap-1 overflow-x-auto border-b border-panel-border px-4 pb-px sm:px-6 lg:hidden"
       >
         {SECTIONS.map((section) => (

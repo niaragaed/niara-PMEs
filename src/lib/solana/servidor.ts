@@ -11,11 +11,11 @@ import "server-only";
 //   2. a conta da oferta, lida direto da rede, com dono = o programa (o runtime da Solana só deixa o
 //      próprio programa criar e escrever contas que ele possui).
 import { PublicKey } from "@solana/web3.js";
-import { conexaoSolana, normalizarOferta, programaPmes, type OfertaSolana } from "./program";
-import { PMES_SOLANA_PROGRAM_ID } from "./config";
-import { descreverErroSolana } from "./errors";
+import { solanaConnection, normalizeOffering, smesProgram, type SolanaOffering } from "./program";
+import { SMES_SOLANA_PROGRAM_ID } from "./config";
+import { describeSolanaError } from "./errors";
 
-export type OfertaCriadaEvento = {
+export type OfferingCreatedEvent = {
   oferta: string;
   emissor: string;
   mintCota: string;
@@ -29,56 +29,56 @@ export type OfertaCriadaEvento = {
   taxaBps: number;
 };
 
-export type LeituraTxPublicacao =
+export type PublicationTxRead =
   | { status: "nao-encontrada"; jaExpirou: boolean }
   | { status: "falhou"; motivo: string }
-  | { status: "ok"; eventos: OfertaCriadaEvento[]; blockTime: number | null };
+  | { status: "ok"; eventos: OfferingCreatedEvent[]; blockTime: number | null };
 
 /** "Program data:" emitidos pelo NOSSO programa (topo da pilha de invoke no momento do log). */
-function dadosDoPrograma(logs: string[]): string[] {
-  const id = PMES_SOLANA_PROGRAM_ID.toBase58();
-  const pilha: string[] = [];
-  const dados: string[] = [];
-  for (const linha of logs) {
-    const invoke = /^Program (\S+) invoke \[\d+\]$/.exec(linha);
+function programData(logs: string[]): string[] {
+  const id = SMES_SOLANA_PROGRAM_ID.toBase58();
+  const stack: string[] = [];
+  const data: string[] = [];
+  for (const line of logs) {
+    const invoke = /^Program (\S+) invoke \[\d+\]$/.exec(line);
     if (invoke) {
-      pilha.push(invoke[1]);
+      stack.push(invoke[1]);
       continue;
     }
     // Ancorado num endereço base58: "Program log: success…" não pode desempilhar.
-    if (/^Program [1-9A-HJ-NP-Za-km-z]{32,44} (success|failed)/.test(linha)) {
-      pilha.pop();
+    if (/^Program [1-9A-HJ-NP-Za-km-z]{32,44} (success|failed)/.test(line)) {
+      stack.pop();
       continue;
     }
-    if (linha.startsWith("Program data: ") && pilha[pilha.length - 1] === id) {
-      dados.push(linha.slice("Program data: ".length).trim());
+    if (line.startsWith("Program data: ") && stack[stack.length - 1] === id) {
+      data.push(line.slice("Program data: ".length).trim());
     }
   }
-  return dados;
+  return data;
 }
 
 const big = (v: { toString(): string }) => BigInt(v.toString());
 
-export async function lerTxPublicacao(assinatura: string): Promise<LeituraTxPublicacao> {
-  const connection = conexaoSolana();
-  const tx = await connection.getTransaction(assinatura, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+export async function readPublicationTx(signature: string): Promise<PublicationTxRead> {
+  const connection = solanaConnection();
+  const tx = await connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
 
   if (!tx) {
     // Distingue "ainda não chegou" de "nunca vai chegar": sem status nenhum E com o blockhash da
     // transação já vencido, ela não entra mais na rede. Quem decide o que fazer com isso é o
     // chamador (ver confirmarPublicacaoSolana).
-    const status = await connection.getSignatureStatus(assinatura, { searchTransactionHistory: true });
+    const status = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
     return { status: "nao-encontrada", jaExpirou: status.value === null };
   }
 
   const logs = tx.meta?.logMessages ?? [];
   if (tx.meta?.err) {
-    return { status: "falhou", motivo: descreverErroSolana({ logs, err: tx.meta.err }) };
+    return { status: "falhou", motivo: describeSolanaError({ logs, err: tx.meta.err }) };
   }
 
-  const coder = programaPmes(connection).coder;
-  const eventos: OfertaCriadaEvento[] = [];
-  for (const base64 of dadosDoPrograma(logs)) {
+  const coder = smesProgram(connection).coder;
+  const events: OfferingCreatedEvent[] = [];
+  for (const base64 of programData(logs)) {
     const evento = coder.events.decode(base64);
     if (!evento || evento.name !== "ofertaCriada") continue;
     const d = evento.data as Record<string, unknown> & {
@@ -87,7 +87,7 @@ export async function lerTxPublicacao(assinatura: string): Promise<LeituraTxPubl
       mintCota: PublicKey;
       cnpjRef: number[];
     };
-    eventos.push({
+    events.push({
       oferta: d.oferta.toBase58(),
       emissor: d.emissor.toBase58(),
       mintCota: d.mintCota.toBase58(),
@@ -101,20 +101,20 @@ export async function lerTxPublicacao(assinatura: string): Promise<LeituraTxPubl
       taxaBps: Number(d.taxaBps),
     });
   }
-  return { status: "ok", eventos, blockTime: tx.blockTime ?? null };
+  return { status: "ok", eventos: events, blockTime: tx.blockTime ?? null };
 }
 
 /** Altura de bloco atual da rede — compara com o lastValidBlockHeight de uma tentativa. */
-export async function alturaDeBlocoAtual(): Promise<number> {
-  return conexaoSolana().getBlockHeight("confirmed");
+export async function currentBlockHeight(): Promise<number> {
+  return solanaConnection().getBlockHeight("confirmed");
 }
 
 /** Conta da oferta lida da rede, só se o dono for o programa niara-pmes-solana. */
-export async function lerContaOfertaVerificada(endereco: string): Promise<OfertaSolana | null> {
-  const connection = conexaoSolana();
-  const chave = new PublicKey(endereco);
-  const info = await connection.getAccountInfo(chave, "confirmed");
-  if (!info || !info.owner.equals(PMES_SOLANA_PROGRAM_ID)) return null;
-  const conta = programaPmes(connection).coder.accounts.decode("oferta", info.data);
-  return normalizarOferta(chave, conta);
+export async function readVerifiedOfferingAccount(address: string): Promise<SolanaOffering | null> {
+  const connection = solanaConnection();
+  const key = new PublicKey(address);
+  const info = await connection.getAccountInfo(key, "confirmed");
+  if (!info || !info.owner.equals(SMES_SOLANA_PROGRAM_ID)) return null;
+  const account = smesProgram(connection).coder.accounts.decode("oferta", info.data);
+  return normalizeOffering(key, account);
 }

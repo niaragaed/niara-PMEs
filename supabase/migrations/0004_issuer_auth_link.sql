@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Niara-PMEs -- 0004_issuer_auth_link
--- Espelho da 0003 para o lado EMPRESA: vincula issuers ao usuario do Supabase
--- Auth (auth.users). Um usuario logado tem no maximo um issuer. user_id fica
--- NULLABLE (seeds/demo sem usuario continuam validos). on delete set null =>
--- o emissor sobrevive se o usuario for apagado; so perde o vinculo.
+-- Mirror of 0003 for the COMPANY side: links issuers to the Supabase Auth user
+-- (auth.users). A signed-in user has at most one issuer. user_id stays
+-- NULLABLE (seeds/demo without a user stay valid). on delete set null =>
+-- the issuer survives if the user is deleted; it only loses the link.
 -- ============================================================================
 
 begin;
@@ -13,7 +13,7 @@ alter table issuers
 
 create index on issuers (user_id);
 
--- RLS segue default-deny; acesso via service_role no servidor. Policy futura
--- (quando o front ler issuers direto com anon key): using (user_id = auth.uid()).
+-- RLS stays default-deny; access via service_role on the server. Future policy
+-- (when the front end reads issuers directly with the anon key): using (user_id = auth.uid()).
 
 commit;

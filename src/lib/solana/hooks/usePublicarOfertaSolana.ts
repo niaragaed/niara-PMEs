@@ -10,69 +10,69 @@
 //   5. pede ao servidor para ler a transação e a conta da oferta na rede e gravar o resultado.
 // Nunca mostra "publicada" antes do passo 5 voltar "confirmada".
 import { useCallback, useMemo, useState } from "react";
-import { conexaoSolana, lerEmissorSolana } from "../program";
-import { txCriarOferta, type ParametrosCriarOferta } from "../instrucoes";
-import { enviarEConfirmar, simularEAssinar, useCarteiraSolana } from "../phantom";
-import { confirmarPublicacaoSolana, registrarTentativaSolana } from "@/app/empresa/ofertas/solana-actions";
-import type { PublicarStatus } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
+import { solanaConnection, readSolanaIssuer } from "../program";
+import { txCreateOffering, type CreateOfferingParams } from "../instrucoes";
+import { sendAndConfirm, simulateAndSign, useSolanaWallet } from "../phantom";
+import { confirmPublicationSolana, registerAttemptSolana } from "@/app/empresa/ofertas/solana-actions";
+import type { PublishStatus } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
 
 /** Mesmos estados da Sepolia; `txHash` aqui é a assinatura base58 da transação. */
-export type PublicarSolanaState = {
-  status: PublicarStatus;
+export type PublishSolanaState = {
+  status: PublishStatus;
   txHash: string | null;
   errorMessage: string | null;
   contractAddress: string | null;
   tokenAddress: string | null;
 };
 
-const IDLE: PublicarSolanaState = { status: "idle", txHash: null, errorMessage: null, contractAddress: null, tokenAddress: null };
+const IDLE: PublishSolanaState = { status: "idle", txHash: null, errorMessage: null, contractAddress: null, tokenAddress: null };
 
-export type PublicarSolanaArgs = Omit<ParametrosCriarOferta, "prazoUnix"> & { offeringId: string; windowDays: number };
+export type PublishSolanaArgs = Omit<CreateOfferingParams, "prazoUnix"> & { offeringId: string; windowDays: number };
 
-export function usePublicarOfertaSolana() {
-  const [state, setState] = useState<PublicarSolanaState>(IDLE);
-  const connection = useMemo(() => conexaoSolana(), []);
-  const carteira = useCarteiraSolana();
+export function usePublishSolanaOffering() {
+  const [state, setState] = useState<PublishSolanaState>(IDLE);
+  const connection = useMemo(() => solanaConnection(), []);
+  const wallet = useSolanaWallet();
 
-  const publicar = useCallback(
-    async (args: PublicarSolanaArgs) => {
-      const emissorWallet = carteira.endereco;
-      if (!emissorWallet) {
+  const publish = useCallback(
+    async (args: PublishSolanaArgs) => {
+      const issuerWallet = wallet.address;
+      if (!issuerWallet) {
         setState({ ...IDLE, status: "erro", errorMessage: "Conecte a carteira Solana (Phantom) para publicar." });
         return;
       }
 
       setState({ ...IDLE, status: "assinando" });
-      const prazoUnix = Math.floor(Date.now() / 1000) + args.windowDays * 24 * 60 * 60;
+      const deadlineUnix = Math.floor(Date.now() / 1000) + args.windowDays * 24 * 60 * 60;
 
-      let assinada;
+      let signed;
       try {
-        const emissor = await lerEmissorSolana(connection, emissorWallet);
-        if (!emissor?.autorizado) throw new Error("Esta carteira não está autorizada como emissora no programa niara-pmes-solana.");
-        const { tx } = await txCriarOferta(connection, emissorWallet, emissor.totalOfertas, {
-          nome: args.nome,
-          simbolo: args.simbolo,
-          empresa: args.empresa,
+        const issuer = await readSolanaIssuer(connection, issuerWallet);
+        if (!issuer?.authorized) throw new Error("Esta carteira não está autorizada como emissora no programa niara-pmes-solana.");
+        const { tx } = await txCreateOffering(connection, issuerWallet, issuer.totalOfferings, {
+          name: args.name,
+          symbol: args.symbol,
+          company: args.company,
           cnpjRefHex: args.cnpjRefHex,
-          serie: args.serie,
-          metaMinima: args.metaMinima,
-          metaMaxima: args.metaMaxima,
-          precoPorCota: args.precoPorCota,
-          prazoUnix,
+          series: args.series,
+          minTarget: args.minTarget,
+          maxTarget: args.maxTarget,
+          pricePerShare: args.pricePerShare,
+          prazoUnix: deadlineUnix,
         });
-        assinada = await simularEAssinar(connection, tx);
-      } catch (erro) {
-        setState({ ...IDLE, status: "erro", errorMessage: erro instanceof Error ? erro.message : String(erro) });
+        signed = await simulateAndSign(connection, tx);
+      } catch (error) {
+        setState({ ...IDLE, status: "erro", errorMessage: error instanceof Error ? error.message : String(error) });
         return;
       }
 
-      const sig = assinada.assinatura;
+      const sig = signed.signature;
       setState({ ...IDLE, status: "registrando", txHash: sig });
-      const reg = await registrarTentativaSolana({
+      const reg = await registerAttemptSolana({
         offeringId: args.offeringId,
         assinatura: sig,
-        prazoUnixSeconds: prazoUnix,
-        ultimoBlocoValido: assinada.lastValidBlockHeight,
+        prazoUnixSeconds: deadlineUnix,
+        ultimoBlocoValido: signed.lastValidBlockHeight,
       });
       if (reg.status === "error") {
         // Nada foi enviado à rede — a assinatura simplesmente não é usada.
@@ -82,15 +82,15 @@ export function usePublicarOfertaSolana() {
 
       setState({ ...IDLE, status: "confirmando", txHash: sig });
       try {
-        await enviarEConfirmar(connection, assinada);
-      } catch (erro) {
+        await sendAndConfirm(connection, signed);
+      } catch (error) {
         // A tentativa já está registrada (sync_status='pendente'): a reconciliação resolve depois —
         // inclusive o caso "não chegou à rede", que volta a oferta para 'nao_onchain' sozinho.
-        setState({ ...IDLE, status: "pendente", txHash: sig, errorMessage: erro instanceof Error ? erro.message : String(erro) });
+        setState({ ...IDLE, status: "pendente", txHash: sig, errorMessage: error instanceof Error ? error.message : String(error) });
         return;
       }
 
-      const conf = await confirmarPublicacaoSolana(args.offeringId);
+      const conf = await confirmPublicationSolana(args.offeringId);
       const base = { ...IDLE, txHash: sig };
       if (conf.status === "confirmada") {
         setState({ ...base, status: "confirmada", contractAddress: conf.contractAddress, tokenAddress: conf.tokenAddress });
@@ -104,8 +104,8 @@ export function usePublicarOfertaSolana() {
         setState({ ...base, status: "erro", errorMessage: conf.message });
       }
     },
-    [carteira.endereco, connection],
+    [wallet.address, connection],
   );
 
-  return { ...state, publicar };
+  return { ...state, publicar: publish };
 }

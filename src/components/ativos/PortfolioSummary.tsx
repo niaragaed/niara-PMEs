@@ -4,18 +4,18 @@ import { ptBr } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
 
 export function PortfolioSummary() {
-  const { patrimonioTotal, valorInvestido, lucroPrejuizo, retornoPercent } = computeTotals(MOCK_POSITIONS);
-  const valueClassName = lucroPrejuizo >= 0 ? "text-value-positive" : "text-value-negative";
+  const { totalEquity, investedValue, profitLoss, returnPercent } = computeTotals(MOCK_POSITIONS);
+  const valueClassName = profitLoss >= 0 ? "text-value-positive" : "text-value-negative";
 
   const cards: { label: string; value: string; valueClassName?: string; note?: string }[] = [
-    { label: ptBr.ativos.kpis.patrimonioTotal, value: formatBRL(patrimonioTotal) },
-    { label: ptBr.ativos.kpis.valorInvestido, value: formatBRL(valorInvestido) },
-    { label: ptBr.ativos.kpis.lucroPrejuizo, value: formatSignedBRL(lucroPrejuizo), valueClassName },
+    { label: ptBr.assets.kpis.totalEquity, value: formatBRL(totalEquity) },
+    { label: ptBr.assets.kpis.investedValue, value: formatBRL(investedValue) },
+    { label: ptBr.assets.kpis.profitLoss, value: formatSignedBRL(profitLoss), valueClassName },
     {
-      label: ptBr.ativos.kpis.retornoPeriodo,
-      value: formatSignedPercent(retornoPercent),
+      label: ptBr.assets.kpis.periodReturn,
+      value: formatSignedPercent(returnPercent),
       valueClassName,
-      note: ptBr.ativos.kpis.retornoNota,
+      note: ptBr.assets.kpis.returnNote,
     },
   ];
 

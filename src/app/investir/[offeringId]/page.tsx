@@ -13,18 +13,18 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { offeringId } = await params;
-  const oferta = await loadPublicOffering(offeringId);
+  const offering = await loadPublicOffering(offeringId);
 
-  if (!oferta) {
+  if (!offering) {
     return {
-      title: `${ptBr.investir.detalhe.naoEncontrada.title} · Niara PMEs`,
+      title: `${ptBr.invest.detail.notFound.title} · Niara PMEs`,
       robots: { index: false, follow: false },
     };
   }
 
   return {
-    title: `${oferta.issuer.legalName} · Niara PMEs`,
-    description: oferta.issuer.businessSummary ?? ptBr.investir.meta.description,
+    title: `${offering.issuer.legalName} · Niara PMEs`,
+    description: offering.issuer.businessSummary ?? ptBr.invest.meta.description,
     robots: { index: false, follow: false },
   };
 }
@@ -54,10 +54,10 @@ export default async function Page({ params }: PageProps) {
     redirect("/conta?aviso=apenas-investidor");
   }
 
-  const oferta = await loadPublicOffering(offeringId);
-  if (!oferta) {
+  const offering = await loadPublicOffering(offeringId);
+  if (!offering) {
     notFound();
   }
 
-  return <OfferingDetailPage oferta={oferta} isOwner={isOwner} />;
+  return <OfferingDetailPage offering={offering} isOwner={isOwner} />;
 }

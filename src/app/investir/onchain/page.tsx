@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { OnChainInvestPage, type OpcaoSolanaServidor } from "@/components/investir-onchain/OnChainInvestPage";
+import { OnChainInvestPage, type ServerSolanaOption } from "@/components/investir-onchain/OnChainInvestPage";
 import { ptBr } from "@/lib/i18n/pt-br";
-import { resolveSocio } from "@/lib/auth/resolveSocio";
+import { resolvePartner } from "@/lib/auth/resolveSocio";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
-import { conexaoSolana, listarOfertasSolana } from "@/lib/solana/program";
+import { solanaConnection, listSolanaOfferings } from "@/lib/solana/program";
 
 export const metadata: Metadata = {
-  title: `${ptBr.investirOnChain.meta.title} · Niara PMEs`,
-  description: ptBr.investirOnChain.meta.description,
+  title: `${ptBr.investOnChain.meta.title} · Niara PMEs`,
+  description: ptBr.investOnChain.meta.description,
   robots: { index: false, follow: false },
 };
 
@@ -20,14 +20,14 @@ export const dynamic = "force-dynamic";
  * fora do ar ou programa ainda não publicado nesta rede = lista vazia, e o seletor mostra só as
  * ofertas da Sepolia. Abertas primeiro, depois as mais recentes.
  */
-async function carregarOfertasSolana(): Promise<OpcaoSolanaServidor[]> {
+async function loadSolanaOfferings(): Promise<ServerSolanaOption[]> {
   try {
-    const ofertas = await listarOfertasSolana(conexaoSolana());
-    return ofertas
-      .map((o) => ({ endereco: o.endereco, empresa: o.empresa, aberta: o.estado === "Aberta", abertura: o.abertura }))
-      .sort((a, b) => Number(b.aberta) - Number(a.aberta) || b.abertura - a.abertura);
-  } catch (erro) {
-    console.error("investir/onchain: falha ao listar ofertas da Solana", erro);
+    const offerings = await listSolanaOfferings(solanaConnection());
+    return offerings
+      .map((o) => ({ address: o.address, company: o.company, open: o.state === "Aberta", opening: o.opening }))
+      .sort((a, b) => Number(b.open) - Number(a.open) || b.opening - a.opening);
+  } catch (error) {
+    console.error("investir/onchain: falha ao listar ofertas da Solana", error);
     return [];
   }
 }
@@ -39,18 +39,18 @@ async function carregarOfertasSolana(): Promise<OpcaoSolanaServidor[]> {
 // os botões "Encerrar oferta"/"Liberar recursos" ficam habilitados nesta interface — não afeta o
 // resto da página. `?rede=solana` abre direto na primeira oferta da Solana.
 export default async function Page({ searchParams }: { searchParams: Promise<{ rede?: string }> }) {
-  const { rede } = await searchParams;
-  const [{ autorizado: isSocio }, confirmedOfferings, ofertasSolana] = await Promise.all([
-    resolveSocio(),
+  const { rede: network } = await searchParams;
+  const [{ autorizado: isPartner }, confirmedOfferings, solanaOfferings] = await Promise.all([
+    resolvePartner(),
     loadConfirmedOnChainOfferings(),
-    carregarOfertasSolana(),
+    loadSolanaOfferings(),
   ]);
   return (
     <OnChainInvestPage
-      isSocio={isSocio}
+      isPartner={isPartner}
       confirmedOfferings={confirmedOfferings}
-      ofertasSolana={ofertasSolana}
-      preferirSolana={rede === "solana"}
+      solanaOfferings={solanaOfferings}
+      preferSolana={network === "solana"}
     />
   );
 }

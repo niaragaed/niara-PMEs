@@ -5,13 +5,13 @@ import { HelpCircle } from "lucide-react";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type IndicatorHelpProps = {
-  nome: string;
-  explicacao: string;
+  name: string;
+  explanation: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function IndicatorHelp({ nome, explicacao, isOpen, onOpenChange }: IndicatorHelpProps) {
+export function IndicatorHelp({ name: nome, explanation, isOpen, onOpenChange }: IndicatorHelpProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverId = useId();
 
@@ -39,7 +39,7 @@ export function IndicatorHelp({ nome, explicacao, isOpen, onOpenChange }: Indica
     <div ref={containerRef} className="relative inline-flex">
       <button
         type="button"
-        aria-label={ptBr.negociar.oferta.indicadores.ajudaAria(nome)}
+        aria-label={ptBr.trade.offering.indicators.helpAria(nome)}
         aria-expanded={isOpen}
         aria-controls={popoverId}
         onClick={() => onOpenChange(!isOpen)}
@@ -58,7 +58,7 @@ export function IndicatorHelp({ nome, explicacao, isOpen, onOpenChange }: Indica
           // no pior caso é parcialmente cortado, nunca cria overflow.
           className="animate-dropdown absolute right-0 top-full z-20 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-md border border-border bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-soft-lg"
         >
-          {explicacao}
+          {explanation}
         </div>
       )}
     </div>

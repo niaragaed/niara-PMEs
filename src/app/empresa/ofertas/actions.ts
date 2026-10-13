@@ -45,7 +45,7 @@ const createOfferingSchema = z.object({
     .trim()
     .min(1, "Informe o valor por cota.")
     .regex(MONEY_FORMAT, "Use o formato 5.000.000,00."),
-  categoria: z.enum(OFFERING_CATEGORIES, { message: "Selecione uma categoria." }),
+  category: z.enum(OFFERING_CATEGORIES, { message: "Selecione uma categoria." }),
 });
 
 // hard_cap = base + floor(base * pct / 100), tudo em BigInt/centavos
@@ -144,7 +144,7 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
     base_cap_cents: baseCapCents.toString(),
     hard_cap_cents: hardCapCents.toString(),
     share_price_cents: sharePriceCents.toString(),
-    category: parsed.data.categoria,
+    category: parsed.data.category,
     opens_at: opensAt.toISOString(),
     closes_at: closesAt.toISOString(),
     is_demo: process.env.NIARA_ENV === "demo",

@@ -1,13 +1,13 @@
 -- ============================================================================
 -- Niara-PMEs -- 0002_settlement
--- Fechamento all-or-nothing. So MEXE EM ESTADO no banco. Efeitos externos
--- (release de escrow, emissao de token) sao do app, via adapters, DEPOIS.
+-- All-or-nothing closing. It ONLY CHANGES STATE in the database. External
+-- effects (escrow release, token issuance) belong to the app, via adapters, AFTERWARDS.
 -- ============================================================================
 
 begin;
 
--- Resolve a oferta: se o PAGO (paid/settled) atingiu o minimo -> 'funded';
--- senao -> 'failed' e devolve/cancela os aportes. Idempotente por status.
+-- Resolves the offering: if the PAID amount (paid/settled) reached the minimum -> 'funded';
+-- otherwise -> 'failed' and refunds/cancels the investments. Idempotent by status.
 create function settle_offering(p_offering_id uuid)
 returns text language plpgsql as $fn$
 declare
@@ -29,7 +29,7 @@ begin
 
   if v_paid >= v_min then
     update offerings set status = 'funded' where id = p_offering_id;
-    -- reservas que nunca pagaram nao entram: cancela.
+    -- reservations that were never paid don't count: cancel them.
     update investments set status = 'cancelled'
       where offering_id = p_offering_id and status = 'reserved';
     return 'funded';
@@ -43,8 +43,8 @@ begin
   end if;
 end $fn$;
 
--- Marca a oferta como liquidada DEPOIS que o app fez release + emissao de token
--- (mock). Chamada pelo closeOffering do app apos os efeitos externos.
+-- Marks the offering as settled AFTER the app did the release + token issuance
+-- (mock). Called by the app's closeOffering after the external effects.
 create function mark_offering_settled(p_offering_id uuid)
 returns void language plpgsql as $fn$
 declare v_status text;

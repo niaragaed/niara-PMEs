@@ -13,14 +13,14 @@
 
 const HEX_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
-export type OfertaOnChainAddresses = {
+export type OnChainOfferingAddresses = {
   token: `0x${string}`;
-  oferta: `0x${string}`;
+  offering: `0x${string}`;
 };
 
 export type OnChainAddresses = {
   mockBrl: `0x${string}`;
-  ofertas: OfertaOnChainAddresses[];
+  offerings: OnChainOfferingAddresses[];
 };
 
 function readAddress(value: string | undefined): `0x${string}` | null {
@@ -30,18 +30,18 @@ function readAddress(value: string | undefined): `0x${string}` | null {
 
 // Formato: "token1:oferta1;token2:oferta2;..." — delimitadores simples de propósito, para
 // evitar problemas de escaping de JSON dentro de um valor de variável de ambiente.
-function parseOfertas(value: string | undefined): OfertaOnChainAddresses[] {
+function parseOfferings(value: string | undefined): OnChainOfferingAddresses[] {
   if (!value) return [];
 
   return value
     .split(";")
-    .map((par) => par.trim())
+    .map((pair) => pair.trim())
     .filter(Boolean)
-    .map((par) => {
-      const [tokenRaw, ofertaRaw] = par.split(":").map((parte) => parte?.trim());
-      return { token: readAddress(tokenRaw), oferta: readAddress(ofertaRaw) };
+    .map((pair) => {
+      const [tokenRaw, offeringRaw] = pair.split(":").map((part) => part?.trim());
+      return { token: readAddress(tokenRaw), offering: readAddress(offeringRaw) };
     })
-    .filter((par): par is OfertaOnChainAddresses => Boolean(par.token && par.oferta));
+    .filter((pair): pair is OnChainOfferingAddresses => Boolean(pair.token && pair.offering));
 }
 
 /**
@@ -52,9 +52,9 @@ function parseOfertas(value: string | undefined): OfertaOnChainAddresses[] {
  */
 export function getOnChainAddresses(): OnChainAddresses | null {
   const mockBrl = readAddress(process.env.NEXT_PUBLIC_MOCKBRL_ADDRESS);
-  const ofertas = parseOfertas(process.env.NEXT_PUBLIC_OFERTAS_ONCHAIN);
+  const offerings = parseOfferings(process.env.NEXT_PUBLIC_OFERTAS_ONCHAIN);
 
-  if (!mockBrl || ofertas.length === 0) return null;
+  if (!mockBrl || offerings.length === 0) return null;
 
-  return { mockBrl, ofertas };
+  return { mockBrl, offerings };
 }

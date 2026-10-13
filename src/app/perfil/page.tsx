@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { PerfilPage } from "@/components/perfil/PerfilPage";
+import { ProfilePage } from "@/components/perfil/PerfilPage";
 import { loadMyOfferingsSummary, loadProfile } from "./actions";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
-  title: `${ptBr.perfil.meta.title} · Niara PMEs`,
-  description: ptBr.perfil.meta.description,
+  title: `${ptBr.profile.meta.title} · Niara PMEs`,
+  description: ptBr.profile.meta.description,
   robots: { index: false, follow: false },
 };
 
@@ -16,7 +16,7 @@ type PageProps = {
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const { aviso, onboarding } = await searchParams;
+  const { aviso: notice, onboarding } = await searchParams;
 
   await requireLogin();
 
@@ -29,6 +29,6 @@ export default async function Page({ searchParams }: PageProps) {
   const offerings = role === "issuer" ? await loadMyOfferingsSummary() : [];
 
   return (
-    <PerfilPage profile={profile} offerings={offerings} aviso={aviso} abrirTesteInvestidor={onboarding === "1"} />
+    <ProfilePage profile={profile} offerings={offerings} aviso={notice} openInvestorQuiz={onboarding === "1"} />
   );
 }

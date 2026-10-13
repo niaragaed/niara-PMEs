@@ -1,6 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { getEventosOnChain } from "@/lib/web3/events";
+import { getEventsOnChain } from "@/lib/web3/events";
 
 // Endpoint disparado pelo Vercel Cron (ver vercel.json) para manter o cache on-chain de /socios
 // sempre em dia, sem depender de alguém visitar a página. Reaproveita a MESMA função incremental
@@ -10,7 +10,7 @@ import { getEventosOnChain } from "@/lib/web3/events";
 // a próxima execução do cron continua de onde parou.
 export const maxDuration = 60;
 
-function autorizado(request: Request): boolean {
+function authorized(request: Request): boolean {
   const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
   // Sem CRON_SECRET configurado, recusa por padrão — nunca deixa a rota aberta sem querer.
@@ -19,13 +19,13 @@ function autorizado(request: Request): boolean {
 }
 
 export async function GET(request: Request) {
-  if (!autorizado(request)) {
+  if (!authorized(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   try {
-    const eventos = await getEventosOnChain();
-    return NextResponse.json({ ok: true, totalEventosNoCache: eventos.length });
+    const events = await getEventsOnChain();
+    return NextResponse.json({ ok: true, totalEventosNoCache: events.length });
   } catch (error) {
     console.error("[cron/sync-onchain] falha ao sincronizar:", error);
     return NextResponse.json({ ok: false, error: String(error) }, { status: 500 });

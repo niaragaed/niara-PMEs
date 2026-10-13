@@ -22,15 +22,15 @@ import { getOnChainAddresses } from "./addresses";
 import { mockBrlAbi } from "./abis/mockBrl";
 import { ofertaCaptacaoAbi } from "./abis/ofertaCaptacao";
 import {
-  encontrarBlocoDeploy,
+  findDeployBlock,
   publicClient,
-  fetchEventosOnChainRange,
+  fetchOnChainEventsRange,
   mapWithConcurrency,
-  type EventoOnChain,
-  type TipoEventoOnChain,
+  type OnChainEvent,
+  type OnChainEventType,
 } from "./eventsCore";
 
-export type { EventoOnChain, TipoEventoOnChain } from "./eventsCore";
+export type { OnChainEvent as EventoOnChain, OnChainEventType as TipoEventoOnChain } from "./eventsCore";
 
 const RPC_CONCURRENCY = 5;
 
@@ -47,9 +47,9 @@ type OnchainEventCacheRow = {
   block_timestamp: number | string | null;
 };
 
-function rowParaEvento(row: OnchainEventCacheRow): EventoOnChain {
+function rowToEvent(row: OnchainEventCacheRow): OnChainEvent {
   return {
-    tipo: row.tipo as TipoEventoOnChain,
+    tipo: row.tipo as OnChainEventType,
     ofertaAddress: row.oferta_address as `0x${string}`,
     ofertaIndex: row.oferta_index,
     investidor: (row.investidor as `0x${string}` | null) ?? null,
@@ -62,7 +62,7 @@ function rowParaEvento(row: OnchainEventCacheRow): EventoOnChain {
   };
 }
 
-function eventoParaRow(evento: EventoOnChain): OnchainEventCacheRow {
+function eventToRow(evento: OnChainEvent): OnchainEventCacheRow {
   return {
     tipo: evento.tipo,
     oferta_address: evento.ofertaAddress,
@@ -79,7 +79,7 @@ function eventoParaRow(evento: EventoOnChain): OnchainEventCacheRow {
 
 type SyncState = { lastSyncedBlock: bigint; mockBrlAddress: string | null };
 
-async function lerSyncState(): Promise<SyncState | null> {
+async function readSyncState(): Promise<SyncState | null> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("onchain_sync_state")
@@ -93,7 +93,7 @@ async function lerSyncState(): Promise<SyncState | null> {
 // Só devolve eventos de ofertas que ainda estão configuradas em
 // NEXT_PUBLIC_OFERTAS_ONCHAIN hoje — evita misturar, para sempre, eventos de uma geração de
 // contratos antiga (pré-redeploy) com a atual, caso a tabela algum dia acumule as duas.
-async function lerEventosCache(enderecosValidos: Set<string>): Promise<EventoOnChain[]> {
+async function readCachedEvents(validAddresses: Set<string>): Promise<OnChainEvent[]> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("onchain_events_cache")
@@ -101,24 +101,24 @@ async function lerEventosCache(enderecosValidos: Set<string>): Promise<EventoOnC
     .order("block_number", { ascending: false });
   if (error) throw error;
   return (data ?? [])
-    .filter((row) => enderecosValidos.has((row.oferta_address as string).toLowerCase()))
-    .map(rowParaEvento);
+    .filter((row) => validAddresses.has((row.oferta_address as string).toLowerCase()))
+    .map(rowToEvent);
 }
 
-async function salvarNovosEventos(eventos: EventoOnChain[]): Promise<void> {
-  if (eventos.length === 0) return;
+async function saveNewEvents(events: OnChainEvent[]): Promise<void> {
+  if (events.length === 0) return;
   const admin = createAdminClient();
   const { error } = await admin
     .from("onchain_events_cache")
-    .upsert(eventos.map(eventoParaRow), { onConflict: "tx_hash,oferta_address,tipo" });
+    .upsert(events.map(eventToRow), { onConflict: "tx_hash,oferta_address,tipo" });
   if (error) throw error;
 }
 
-async function atualizarSyncState(blocoAtual: bigint, mockBrlAddress: `0x${string}`): Promise<void> {
+async function updateSyncState(currentBlock: bigint, mockBrlAddress: `0x${string}`): Promise<void> {
   const admin = createAdminClient();
   const { error } = await admin
     .from("onchain_sync_state")
-    .upsert({ id: 1, last_synced_block: blocoAtual.toString(), mock_brl_address: mockBrlAddress.toLowerCase() });
+    .upsert({ id: 1, last_synced_block: currentBlock.toString(), mock_brl_address: mockBrlAddress.toLowerCase() });
   if (error) throw error;
 }
 
@@ -128,7 +128,7 @@ async function atualizarSyncState(blocoAtual: bigint, mockBrlAddress: `0x${strin
 // ainda arriscado perto do limite. Fica em 800 blocos (~80 janelas, ~25-40s) com boa margem de
 // segurança mesmo em cold start ou rede mais lenta — se um dia RPC_THROTTLE_MS ou CHUNK_SIZE
 // mudarem, revisar esta conta junto.
-const MAX_BLOCOS_POR_EXECUCAO = BigInt(800);
+const MAX_BLOCKS_PER_EXECUTION = BigInt(800);
 
 /**
  * Lê todos os eventos de todas as ofertas configuradas (NEXT_PUBLIC_OFERTAS_ONCHAIN), mais
@@ -148,16 +148,16 @@ const MAX_BLOCOS_POR_EXECUCAO = BigInt(800);
  * `encontrarBlocoDeploy` (busca binária por `eth_getCode`, sem depender de nenhum artefato de
  * deploy nem de constante atualizada manualmente).
  */
-export async function getEventosOnChain(): Promise<EventoOnChain[]> {
+export async function getEventsOnChain(): Promise<OnChainEvent[]> {
   const addresses = getOnChainAddresses();
   if (!addresses) return [];
 
-  const enderecosValidos = new Set(addresses.ofertas.map((oferta) => oferta.oferta.toLowerCase()));
+  const validAddresses = new Set(addresses.offerings.map((offering) => offering.offering.toLowerCase()));
   const client = publicClient();
-  const [blocoAtual, syncState, eventosCache] = await Promise.all([
+  const [currentBlock, syncState, cachedEvents] = await Promise.all([
     client.getBlockNumber(),
-    lerSyncState(),
-    lerEventosCache(enderecosValidos),
+    readSyncState(),
+    readCachedEvents(validAddresses),
   ]);
 
   // syncState.mockBrlAddress === null significa "coluna recém-criada pela migration 0013, nunca
@@ -166,24 +166,24 @@ export async function getEventosOnChain(): Promise<EventoOnChain[]> {
   // (fazendo reescanear dezenas de milhares de blocos de uma vez e estourar rate limit do RPC).
   // Só é redeploy de verdade quando JÁ existe um endereço anterior salvo e ele é diferente do
   // atual.
-  const redeployDetectado =
+  const redeployDetected =
     syncState !== null && syncState.mockBrlAddress !== null && syncState.mockBrlAddress !== addresses.mockBrl.toLowerCase();
 
   let syncedAte: bigint;
-  if (syncState === null || redeployDetectado) {
-    const blocoDeploy = await encontrarBlocoDeploy(client, addresses.mockBrl);
-    if (redeployDetectado) {
+  if (syncState === null || redeployDetected) {
+    const deployBlock = await findDeployBlock(client, addresses.mockBrl);
+    if (redeployDetected) {
       console.warn(
-        `[socios] Endereço de MockBRL mudou (era ${syncState?.mockBrlAddress}, agora ${addresses.mockBrl}) — infra parece ter sido redeployada. Bloco de deploy recalculado automaticamente: ${blocoDeploy}. Eventos de contratos anteriores seguem no banco mas não entram mais na leitura (filtrados por endereço vigente).`,
+        `[socios] Endereço de MockBRL mudou (era ${syncState?.mockBrlAddress}, agora ${addresses.mockBrl}) — infra parece ter sido redeployada. Bloco de deploy recalculado automaticamente: ${deployBlock}. Eventos de contratos anteriores seguem no banco mas não entram mais na leitura (filtrados por endereço vigente).`,
       );
     }
-    syncedAte = blocoDeploy - BigInt(1);
+    syncedAte = deployBlock - BigInt(1);
   } else {
     syncedAte = syncState.lastSyncedBlock;
   }
 
-  if (blocoAtual <= syncedAte) {
-    return eventosCache;
+  if (currentBlock <= syncedAte) {
+    return cachedEvents;
   }
 
   // Teto de blocos por execução: sem isso, um intervalo pendente grande (ex.: ninguém visitou
@@ -195,22 +195,22 @@ export async function getEventosOnChain(): Promise<EventoOnChain[]> {
   // estoura o timeout, custe o backlog o que custar; só demora mais chamadas para se atualizar
   // por completo, o que é um trade-off muito melhor que timeout e perda silenciosa dos dados
   // on-chain na tela.
-  const blocoAlvo = blocoAtual - syncedAte > MAX_BLOCOS_POR_EXECUCAO ? syncedAte + MAX_BLOCOS_POR_EXECUCAO : blocoAtual;
+  const targetBlock = currentBlock - syncedAte > MAX_BLOCKS_PER_EXECUTION ? syncedAte + MAX_BLOCKS_PER_EXECUTION : currentBlock;
 
-  const novosEventos = await fetchEventosOnChainRange(client, addresses.ofertas, syncedAte + BigInt(1), blocoAlvo);
+  const newEvents = await fetchOnChainEventsRange(client, addresses.offerings, syncedAte + BigInt(1), targetBlock);
 
   try {
-    await Promise.all([salvarNovosEventos(novosEventos), atualizarSyncState(blocoAlvo, addresses.mockBrl)]);
+    await Promise.all([saveNewEvents(newEvents), updateSyncState(targetBlock, addresses.mockBrl)]);
   } catch (error) {
     console.error("[socios] falha ao gravar cache on-chain (resposta atual não é afetada):", error);
   }
 
-  const todosEventos = [...eventosCache, ...novosEventos];
-  todosEventos.sort((a, b) => Number(b.blockNumber - a.blockNumber));
-  return todosEventos;
+  const allEvents = [...cachedEvents, ...newEvents];
+  allEvents.sort((a, b) => Number(b.blockNumber - a.blockNumber));
+  return allEvents;
 }
 
-export type ResumoOnChain = {
+export type OnChainSummary = {
   mockBrlDecimals: number;
   mockBrlSymbol: string;
   totalArrecadadoWei: bigint;
@@ -232,7 +232,7 @@ export type ResumoOnChain = {
  * cache acima; a soma da taxa vem de `eventos`, que já é o resultado cacheado de
  * `getEventosOnChain()`.
  */
-export async function getResumoOnChain(eventos: EventoOnChain[]): Promise<ResumoOnChain | null> {
+export async function getSummaryOnChain(events: OnChainEvent[]): Promise<OnChainSummary | null> {
   const addresses = getOnChainAddresses();
   if (!addresses) return null;
 
@@ -243,23 +243,23 @@ export async function getResumoOnChain(eventos: EventoOnChain[]): Promise<Resumo
     client.readContract({ address: addresses.mockBrl, abi: mockBrlAbi, functionName: "symbol" }),
   ]);
 
-  const taxaBpsPorOferta = await mapWithConcurrency(addresses.ofertas, RPC_CONCURRENCY, (oferta) =>
-    client.readContract({ address: oferta.oferta, abi: ofertaCaptacaoAbi, functionName: "taxaBps" }),
+  const feeBpsByOffering = await mapWithConcurrency(addresses.offerings, RPC_CONCURRENCY, (offering) =>
+    client.readContract({ address: offering.offering, abi: ofertaCaptacaoAbi, functionName: "taxaBps" }),
   );
 
-  const aportes = eventos.filter((evento) => evento.tipo === "Aporte");
-  const totalArrecadadoWei = aportes.reduce((total, evento) => total + (evento.valorWei ?? BigInt(0)), BigInt(0));
-  const carteirasUnicas = new Set(aportes.map((evento) => evento.investidor).filter(Boolean)).size;
+  const investments = events.filter((evento) => evento.tipo === "Aporte");
+  const totalRaisedWei = investments.reduce((total, evento) => total + (evento.valorWei ?? BigInt(0)), BigInt(0));
+  const uniqueWallets = new Set(investments.map((evento) => evento.investidor).filter(Boolean)).size;
 
-  const recursosLiberados = eventos.filter((evento) => evento.tipo === "RecursosLiberados");
-  const taxaRecebidaWei = recursosLiberados.reduce((total, evento) => total + (evento.taxaWei ?? BigInt(0)), BigInt(0));
+  const fundsReleased = events.filter((evento) => evento.tipo === "RecursosLiberados");
+  const receivedFeeWei = fundsReleased.reduce((total, evento) => total + (evento.taxaWei ?? BigInt(0)), BigInt(0));
 
   return {
     mockBrlDecimals,
     mockBrlSymbol,
-    totalArrecadadoWei,
-    carteirasUnicas,
-    taxaBpsPorOferta: taxaBpsPorOferta.map(Number),
-    taxaRecebidaWei,
+    totalArrecadadoWei: totalRaisedWei,
+    carteirasUnicas: uniqueWallets,
+    taxaBpsPorOferta: feeBpsByOffering.map(Number),
+    taxaRecebidaWei: receivedFeeWei,
   };
 }

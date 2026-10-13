@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
-import { OfertaBanner } from "./OfertaBanner";
+import { OfferingBanner } from "./OfertaBanner";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 // Card de vitrine para uma oferta PME self-service (publicada pelo próprio emissor via
@@ -23,20 +23,20 @@ function formatMbrl(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 }
 
-export function SelfServicePmesCard({
+export function SelfServiceSmesCard({
   id,
-  nome,
-  setor,
+  name: nome,
+  sector,
   bannerUrl,
   logoUrl,
   hardCapCents,
   sharePriceCents,
   sharesCount,
-  rede = "sepolia",
+  rede: network = "sepolia",
 }: {
   id: string;
-  nome: string;
-  setor: string | null;
+  name: string;
+  sector: string | null;
   bannerUrl: string | null;
   logoUrl: string | null;
   hardCapCents: number;
@@ -44,38 +44,38 @@ export function SelfServicePmesCard({
   sharesCount: number | null;
   rede?: "sepolia" | "solana-devnet";
 }) {
-  const t = ptBr.negociar.pmesOnChain;
+  const t = ptBr.trade.smesOnChain;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-2 ring-salmon">
-      <OfertaBanner bannerUrl={bannerUrl} logoUrl={logoUrl} nomeFantasia={nome} categoria="pmes" size="card" />
+      <OfferingBanner bannerUrl={bannerUrl} logoUrl={logoUrl} tradeName={nome} category="pmes" size="card" />
 
       <div className="flex flex-1 flex-col gap-3 p-5">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-3 py-1 text-xs font-semibold text-on-salmon">
           <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-          {rede === "solana-devnet" ? t.seloSolana : t.selo}
+          {network === "solana-devnet" ? t.solanaBadge : t.badge}
         </span>
 
         <div>
           <h3 className="text-sm font-semibold text-ink">{nome}</h3>
-          {setor && <p className="text-xs text-ink-muted">{setor}</p>}
+          {sector && <p className="text-xs text-ink-muted">{sector}</p>}
         </div>
 
-        <p className="text-xs font-medium italic text-ink-muted">{t.dadosDoEmissor}</p>
+        <p className="text-xs font-medium italic text-ink-muted">{t.issuerData}</p>
 
         <dl className="mt-1 grid grid-cols-3 gap-x-3 gap-y-2">
           <div>
-            <dt className="text-xs text-ink-muted">{t.metaCaptacao}</dt>
+            <dt className="text-xs text-ink-muted">{t.fundraisingTarget}</dt>
             <dd className="mt-0.5 text-sm font-medium text-ink">{formatMbrl(hardCapCents)} mBRL</dd>
           </div>
           <div>
-            <dt className="text-xs text-ink-muted">{t.precoPorCota}</dt>
+            <dt className="text-xs text-ink-muted">{t.pricePerShare}</dt>
             <dd className="mt-0.5 text-sm font-medium text-ink">
               {sharePriceCents === null ? "—" : `${formatMbrl(sharePriceCents)} mBRL`}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-ink-muted">{t.cotas}</dt>
+            <dt className="text-xs text-ink-muted">{t.shares}</dt>
             <dd className="mt-0.5 text-sm font-medium text-ink">
               {sharesCount === null ? "—" : sharesCount.toLocaleString("pt-BR")}
             </dd>
@@ -86,7 +86,7 @@ export function SelfServicePmesCard({
           href={`/negociar/oferta/${id}`}
           className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-military px-4 py-2 text-sm font-medium text-on-military transition-colors hover:bg-military-600"
         >
-          {t.verOferta}
+          {t.viewOffering}
         </Link>
       </div>
     </div>

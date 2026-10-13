@@ -1,9 +1,9 @@
 export const ptBr = {
   common: {
-    pularParaConteudo: "Pular para o conteúdo",
-    emBreve: "Em breve",
-    demonstracao: "Demonstração",
-    avisoDemonstracao:
+    skipToContent: "Pular para o conteúdo",
+    comingSoon: "Em breve",
+    demo: "Demonstração",
+    demoNotice:
       "Conteúdo institucional e de demonstração. Nenhuma oferta real de investimento está disponível nesta fase.",
   },
   meta: {
@@ -14,25 +14,25 @@ export const ptBr = {
   styleguide: {
     title: "Design system",
     subtitle: "Referência viva dos tokens definidos em @theme (src/app/globals.css).",
-    coresBase: "Cores base",
-    verdeMilitar: "Verde-sálvia (primária)",
-    salmao: "Pêssego (acento / CTA)",
-    acentos: "Acentos de seção",
-    tipografia: "Tipografia",
-    raiosSombras: "Raios e sombras",
-    botoes: "Botões",
+    colorsBase: "Cores base",
+    militaryGreen: "Verde-sálvia (primária)",
+    salmon: "Pêssego (acento / CTA)",
+    accents: "Acentos de seção",
+    typography: "Tipografia",
+    radiiAndShadows: "Raios e sombras",
+    buttons: "Botões",
     cards: "Cards",
-    fundosAlternados: "Fundos alternados de seção",
-    tipografiaAmostra:
+    alternatingBackgrounds: "Fundos alternados de seção",
+    typographySample:
       "Space Grotesk é usada em títulos (h1–h6); Inter é usada no corpo do texto, como este parágrafo.",
-    botaoPrimario: "Botão primário",
-    botaoSecundario: "Botão secundário",
-    botaoDesabilitado: "Botão desabilitado",
-    cardTitulo: "Card padrão",
-    cardTexto: "Superfície bg-surface sobre bg-surface-alt, borda sutil e sombra suave.",
-    fundoSalvia: "Fundo sálvia (military-100) — título em ink",
-    fundoPessego: "Fundo pêssego (salmon-100) — título em ink, subtítulo em ink-peach",
-    fundoPessegoSubtitulo: "Subtítulo de exemplo em ink-peach sobre fundo pêssego.",
+    primaryButton: "Botão primário",
+    secondaryButton: "Botão secundário",
+    disabledButton: "Botão desabilitado",
+    cardTitle: "Card padrão",
+    cardText: "Superfície bg-surface sobre bg-surface-alt, borda sutil e sombra suave.",
+    sageBackground: "Fundo sálvia (military-100) — título em ink",
+    peachBackground: "Fundo pêssego (salmon-100) — título em ink, subtítulo em ink-peach",
+    peachBackgroundSubtitle: "Subtítulo de exemplo em ink-peach sobre fundo pêssego.",
   },
   hero: {
     badge: "Plataforma para empresas",
@@ -170,9 +170,9 @@ export const ptBr = {
   footer: {
     brandDescription:
       "Plataforma para pequenas e médias empresas estruturarem captação e dividirem capital via tokenização.",
-    columnNegociar: "Negociar",
-    columnPlataforma: "Plataforma",
-    columnSobre: "Sobre",
+    columnTrade: "Negociar",
+    columnPlatform: "Plataforma",
+    columnAbout: "Sobre",
     footerAriaLabel: "Navegação do rodapé",
     disclaimer:
       "Conteúdo institucional e de demonstração. Nenhuma oferta real de investimento está disponível nesta fase. Este site não constitui oferta pública de valores mobiliários.",
@@ -183,24 +183,24 @@ export const ptBr = {
     mobileAriaLabel: "Navegação móvel",
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
-    entrar: "Entrar",
-    contaMenu: {
-      abrirMenu: "Abrir menu da conta",
-      entrarOutraConta: "Entrar com outra conta",
-      sair: "Sair",
-      saindo: "Saindo…",
+    signIn: "Entrar",
+    accountMenu: {
+      openMenu: "Abrir menu da conta",
+      signInOtherAccount: "Entrar com outra conta",
+      signOut: "Sair",
+      signingOut: "Saindo…",
     },
-    negociar: "Negociar",
-    ativos: "Ativos",
-    perfil: "Perfil",
-    sobre: "Sobre",
-    negociarChildren: {
-      ativosTokens: {
+    trade: "Negociar",
+    assets: "Ativos",
+    profile: "Perfil",
+    about: "Sobre",
+    tradeChildren: {
+      assetsAndTokens: {
         label: "Ativos e tokens",
         href: "/negociar/ativos-e-tokens",
         description: "Visão geral dos tipos de ativo tokenizados na plataforma.",
       },
-      tokenPmes: {
+      smesToken: {
         label: "Token PMEs",
         href: "/negociar/token-pmes",
         description: "Token de participação para pequenas e médias empresas.",
@@ -210,7 +210,7 @@ export const ptBr = {
         href: "/negociar/token-agro",
         description: "Token voltado a operações e ativos do agronegócio.",
       },
-      tokenImobiliario: {
+      realEstateToken: {
         label: "Token imobiliário",
         href: "/negociar/token-imobiliario",
         description: "Token lastreado em ativos imobiliários.",
@@ -220,26 +220,26 @@ export const ptBr = {
         href: "/negociar/token-auto",
         description: "Token voltado ao setor automotivo.",
       },
-      titulosDivida: {
+      debtSecurities: {
         label: "Títulos de dívida",
         href: "/negociar/titulos-de-divida",
         description: "Instrumentos de dívida estruturados via tokenização.",
       },
     },
-    sobreChildren: {
-      documentos: {
+    aboutChildren: {
+      documents: {
         label: "Documentos e FAQs",
         href: "/sobre/documentos",
         description: "Materiais institucionais e perguntas frequentes.",
       },
-      contato: {
+      contact: {
         label: "Contate-nos",
         href: "/sobre/contato",
         description: "Fale com o time da Niara PMEs.",
       },
     },
   },
-  ativos: {
+  assets: {
     meta: {
       title: "Ativos",
       description: "Sua carteira de participações tokenizadas — catálogo e posições, em demonstração.",
@@ -251,70 +251,70 @@ export const ptBr = {
       text: "carteira e dados simulados. Não reflete posições ou valores reais — exceto o cartão \"Posição real — Sepolia\" no topo de \"Minha carteira\", que lê direto de um contrato on-chain de verdade.",
     },
     tabs: {
-      carteira: "Minha carteira",
-      disponiveis: "Ativos disponíveis",
+      wallet: "Minha carteira",
+      available: "Ativos disponíveis",
     },
-    posicaoReal: {
-      selo: "Real — Sepolia",
+    realPosition: {
+      badge: "Real — Sepolia",
       link: "Investir / ver detalhes →",
-      explicacao:
+      explanation:
         "Sua posição real na oferta de demonstração em Sepolia — lida direto do contrato on-chain, diferente do restante desta tela (100% simulado).",
-      conectarPrompt: "Conecte sua carteira para ver sua posição real nesta oferta.",
-      redeErrada: "Troque para a rede Sepolia para ver sua posição real.",
-      semPosicao: "Você ainda não investiu na oferta real desta demonstração.",
-      aportado: "Você aportou",
-      cotas: "Suas cotas (ParticipacaoToken)",
-      estadoLabel: "Estado da oferta",
+      connectPrompt: "Conecte sua carteira para ver sua posição real nesta oferta.",
+      wrongNetwork: "Troque para a rede Sepolia para ver sua posição real.",
+      noPosition: "Você ainda não investiu na oferta real desta demonstração.",
+      invested: "Você aportou",
+      shares: "Suas cotas (ParticipacaoToken)",
+      stateLabel: "Estado da oferta",
     },
     kpis: {
-      patrimonioTotal: "Patrimônio total",
-      valorInvestido: "Valor investido",
-      lucroPrejuizo: "Lucro/Prejuízo total",
-      retornoPeriodo: "Retorno no período",
-      retornoNota: "Últimos 12 meses",
+      totalEquity: "Patrimônio total",
+      investedValue: "Valor investido",
+      profitLoss: "Lucro/Prejuízo total",
+      periodReturn: "Retorno no período",
+      returnNote: "Últimos 12 meses",
     },
-    categorias: {
+    categories: {
       pmes: "Token PMEs",
       agro: "Token Agro",
       imobiliario: "Token Imobiliário",
       auto: "Token Auto",
       divida: "Títulos de dívida",
     },
-    regioes: {
+    regions: {
       sudeste: "Sudeste",
       sul: "Sul",
       nordeste: "Nordeste",
       "centro-oeste": "Centro-Oeste",
     },
-    evolucao: {
+    evolution: {
       title: "Evolução do portfólio",
-      seriesInvestido: "Valor investido",
-      seriesGanho: "Ganho de capital",
+      investedSeries: "Valor investido",
+      gainSeries: "Ganho de capital",
       description:
         "Descrição do gráfico: valor investido e ganho de capital acumulado, mês a mês, nos últimos 12 meses — os mesmos dados aparecem na tabela de posições abaixo.",
     },
-    alocacao: {
+    allocation: {
       title: "Alocação",
-      viewClasse: "Por classe",
-      viewAtivo: "Por ativo",
-      viewSetor: "Por setor/região",
+      viewClass: "Por classe",
+      viewAsset: "Por ativo",
+      viewSector: "Por setor/região",
     },
-    tabela: {
+    table: {
       title: "Posições",
-      colAtivo: "Ativo",
-      colCategoria: "Categoria",
-      colCotas: "Cotas",
-      colPrecoMedio: "Preço médio",
-      colValorAtual: "Valor atual",
-      colVariacao: "Variação",
+      colAsset: "Ativo",
+      colCategory: "Categoria",
+      colShares: "Cotas",
+      colAveragePrice: "Preço médio",
+      colCurrentValue: "Valor atual",
+      colChange: "Variação",
     },
-    catalogo: {
+    catalog: {
       title: "Ativos disponíveis",
       subtitle: "Catálogo de demonstração — participações ilustrativas, sem oferta real disponível.",
-      investir: "Investir",
+      invest: "Investir",
     },
   },
-  perfil: {
+  profile: {
     meta: {
       title: "Perfil",
       description: "Área de perfil — dados de cadastro, ofertas, perfil de investidor e carteira.",
@@ -326,26 +326,26 @@ export const ptBr = {
       text: "ambiente de demonstração, use apenas dados fictícios. Os campos de \"Dados de cadastro\" ficam salvos de verdade na sua conta, e \"Minhas ofertas\" mostra as ofertas reais da sua empresa; a seção \"Perfil de investidor\" permanece apenas nesta sessão do navegador.",
     },
     kyc: {
-      naoVerificado: "Não verificado",
-      aviso:
+      notVerified: "Não verificado",
+      notice:
         "O KYC desta demonstração é aprovado automaticamente, sem verificação real. A validação de identidade de verdade será implementada quando o produto entrar no ar.",
     },
     badges: {
-      perfilPrefix: "Perfil",
+      profilePrefix: "Perfil",
     },
     nav: {
       ariaLabel: "Seções do perfil",
-      dadosCadastro: "Dados de cadastro",
-      minhasOfertas: "Minhas ofertas",
-      perfilInvestidor: "Perfil de investidor",
-      carteira: "Carteira",
+      registrationData: "Dados de cadastro",
+      myOfferings: "Minhas ofertas",
+      investorProfile: "Perfil de investidor",
+      wallet: "Carteira",
     },
-    dadosCadastro: {
+    registrationData: {
       title: "Dados de cadastro",
-      tipoPessoa: {
+      personType: {
         legend: "Tipo de cadastro",
-        pessoaFisica: "Pessoa física",
-        pessoaJuridica: "Pessoa jurídica",
+        individual: "Pessoa física",
+        company: "Pessoa jurídica",
       },
       avatar: {
         changeLabel: "Alterar",
@@ -356,7 +356,7 @@ export const ptBr = {
         invalidType: "Selecione um arquivo de imagem (JPG ou PNG).",
         tooLarge: "A imagem deve ter até 2MB.",
       },
-      logoEmpresa: {
+      companyLogo: {
         title: "Logo da empresa",
         subtitle:
           "A logo é pública — aparece na página da oferta e nos cards de vitrine. Diferente da foto de perfil acima, este envio é salvo de verdade.",
@@ -364,15 +364,15 @@ export const ptBr = {
         sendLabel: "Enviar logo",
         changeLabel: "Trocar",
         removeLabel: "Remover",
-        enviando: "Enviando…",
+        sending: "Enviando…",
         selectLabel: "Selecionar arquivo de logo",
         hint: "JPG, PNG ou WebP, até 2MB. Imagem quadrada (ex.: 400×400) fica melhor no card.",
         invalidType: "Selecione um arquivo JPG, PNG ou WebP.",
         tooLarge: "A imagem deve ter até 2MB.",
-        sucessoEnviada: "Logo enviada.",
-        sucessoRemovida: "Logo removida.",
+        successSent: "Logo enviada.",
+        successRemoved: "Logo removida.",
       },
-      bannerEmpresa: {
+      companyBanner: {
         title: "Banner da oferta",
         subtitle:
           "O banner é público — aparece como capa do card da sua oferta em /negociar, junto com a logo. Este envio é salvo de verdade.",
@@ -380,95 +380,95 @@ export const ptBr = {
         sendLabel: "Enviar banner",
         changeLabel: "Trocar",
         removeLabel: "Remover",
-        enviando: "Enviando…",
+        sending: "Enviando…",
         selectLabel: "Selecionar arquivo de banner",
         hint: "JPG, PNG ou WebP, até 3MB. Proporção larga (ex.: 1200×400) fica melhor no card.",
         invalidType: "Selecione um arquivo JPG, PNG ou WebP.",
         tooLarge: "A imagem deve ter até 3MB.",
-        sucessoEnviada: "Banner enviado.",
-        sucessoRemovida: "Banner removido.",
+        successSent: "Banner enviado.",
+        successRemoved: "Banner removido.",
       },
-      previaCard: {
+      cardPreview: {
         title: "Prévia do card",
         subtitle:
           "Como o banner e a logo aparecem juntos no card da sua oferta em /negociar — o recorte é igual ao real, ajuste as imagens acima se ficar estranho.",
       },
-      secaoPessoal: "Dados pessoais",
-      secaoPublica: "Dados públicos da empresa",
-      secaoPublicaNota: "Estes campos aparecem na página pública da oferta — diferente do restante do cadastro, que é privado.",
+      personalSection: "Dados pessoais",
+      publicSection: "Dados públicos da empresa",
+      publicSectionNote: "Estes campos aparecem na página pública da oferta — diferente do restante do cadastro, que é privado.",
       publishCnpj: {
         statusLabel: "CNPJ na página pública",
         label: "Exibir CNPJ na minha oferta (mascarado)",
         hint: "Se marcado, a página pública da oferta mostra a raiz do CNPJ mascarada (ex.: 12.345.678/****-**). Se desmarcado, o CNPJ não aparece — e nem é lido do banco para a página pública. Os demais dados de contato (telefone, endereço, carteira) nunca são públicos, com ou sem esta opção.",
-        exibindo: "Exibindo (mascarado) na oferta pública",
-        naoExibindo: "Não exibido na oferta pública",
+        showing: "Exibindo (mascarado) na oferta pública",
+        notShowing: "Não exibido na oferta pública",
       },
-      secaoEndereco: "Endereço",
-      campos: {
-        pais: "País",
-        brasil: "Brasil",
-        nomeCompleto: "Nome completo",
-        razaoSocial: "Razão social",
-        nomeFantasia: "Nome fantasia",
-        documentoCpf: "CPF",
-        documentoCnpj: "CNPJ",
-        dataNascimento: "Data de nascimento",
+      addressSection: "Endereço",
+      fields: {
+        country: "País",
+        brazil: "Brasil",
+        fullName: "Nome completo",
+        legalName: "Razão social",
+        tradeName: "Nome fantasia",
+        documentCpf: "CPF",
+        documentCnpj: "CNPJ",
+        birthDate: "Data de nascimento",
         email: "Email",
-        receitaBrutaAnual: "Receita bruta anual (R$)",
-        setor: "Setor de atuação",
-        resumoNegocio: "Resumo do negócio",
-        telefone: "Telefone",
+        grossAnnualRevenue: "Receita bruta anual (R$)",
+        sector: "Setor de atuação",
+        businessSummary: "Resumo do negócio",
+        phone: "Telefone",
         cep: "CEP",
-        logradouro: "Rua",
-        numero: "Número",
-        complemento: "Complemento",
-        bairro: "Bairro",
-        cidade: "Cidade",
-        estado: "Estado",
-        selecionarEstado: "Selecione",
+        street: "Rua",
+        number: "Número",
+        complement: "Complemento",
+        district: "Bairro",
+        city: "Cidade",
+        state: "Estado",
+        selectState: "Selecione",
       },
-      salvar: "Salvar",
-      salvando: "Salvando…",
-      cancelar: "Cancelar",
-      editar: "Editar",
-      salvarNota: "Estes dados ficam salvos na sua conta. Ambiente de demonstração — use apenas dados fictícios; nenhuma verificação (KYC) é feita a partir daqui.",
-      salvoConfirmacao: "Dados salvos com sucesso.",
-      naoInformado: "Não informado",
-      erros: {
-        obrigatorio: "Campo obrigatório.",
-        documentoInvalido: "Documento inválido.",
-        dataInvalida: "Data inválida.",
-        emailInvalido: "Email inválido.",
-        telefoneInvalido: "Telefone inválido.",
-        cepInvalido: "CEP inválido.",
+      save: "Salvar",
+      saving: "Salvando…",
+      cancel: "Cancelar",
+      edit: "Editar",
+      saveNote: "Estes dados ficam salvos na sua conta. Ambiente de demonstração — use apenas dados fictícios; nenhuma verificação (KYC) é feita a partir daqui.",
+      savedConfirmation: "Dados salvos com sucesso.",
+      notProvided: "Não informado",
+      errors: {
+        required: "Campo obrigatório.",
+        invalidDocument: "Documento inválido.",
+        invalidDate: "Data inválida.",
+        invalidEmail: "Email inválido.",
+        phoneInvalid: "Telefone inválido.",
+        invalidCep: "CEP inválido.",
       },
     },
-    minhasOfertas: {
+    myOfferings: {
       title: "Minhas ofertas",
       subtitle: "Resumo das ofertas de captação da sua empresa. Criação, ativação e fechamento ficam em \"Minhas ofertas\" (gerenciamento completo).",
-      vazio: "Nenhuma oferta cadastrada ainda.",
-      gerenciarBotao: "Gerenciar ofertas →",
+      empty: "Nenhuma oferta cadastrada ainda.",
+      manageButton: "Gerenciar ofertas →",
       card: {
-        criadaEm: "Criada em",
-        metaMinima: "Meta mínima",
-        teto: "Teto (com lote adicional)",
+        createdOn: "Criada em",
+        minTarget: "Meta mínima",
+        cap: "Teto (com lote adicional)",
       },
     },
-    investidor: {
+    investor: {
       title: "Perfil de investidor",
       subtitle:
         "Equivalente à API (Análise de Perfil do Investidor) exigida pela CVM. Em produção, o questionário seria obrigatório antes de operar, e o cadastro só se completaria após respondê-lo — aqui, por ser demonstração, o restante do site continua acessível.",
-      avaliadoEm: (data: string) => `Avaliado em ${data}`,
-      categorias: {
+      evaluatedOn: (data: string) => `Avaliado em ${data}`,
+      categories: {
         conservador: "Conservador",
         moderado: "Moderado",
         arrojado: "Arrojado",
       },
       quiz: {
-        questionCounter: (atual: number, total: number) => `Pergunta ${atual} de ${total}`,
-        voltar: "Voltar",
-        proximo: "Próxima",
-        verResultado: "Ver resultado",
+        questionCounter: (current: number, total: number) => `Pergunta ${current} de ${total}`,
+        back: "Voltar",
+        next: "Próxima",
+        viewResult: "Ver resultado",
         questions: [
           {
             id: "objetivo",
@@ -522,13 +522,13 @@ export const ptBr = {
           },
         ],
       },
-      resultado: {
-        oQueSignifica: "O que este perfil significa",
-        reacaoRisco: "Reação a risco e volatilidade",
-        classesAtivos: "Classes de ativos mais adequadas",
+      result: {
+        whatItMeans: "O que este perfil significa",
+        riskReaction: "Reação a risco e volatilidade",
+        assetClasses: "Classes de ativos mais adequadas",
         disclaimer:
           "Resultado ilustrativo. Não constitui recomendação de investimento nem substitui a análise de perfil exigida pela regulação.",
-        refazer: "Refazer avaliação",
+        redo: "Refazer avaliação",
       },
       categoryDetails: {
         conservador: {
@@ -555,61 +555,61 @@ export const ptBr = {
         },
       },
     },
-    carteira: {
+    wallet: {
       title: "Carteira",
       subtitle:
         "Conexão real com sua carteira — apenas leitura de endereço e rede. Nenhuma transação é realizada.",
-      redeNota:
+      networkNote:
         "Rede de demonstração: Ethereum Sepolia (testnet). A conexão em si é real, mas o restante da plataforma continua sendo demonstração — nenhuma compra, venda ou outra operação com valor mobiliário é feita por meio desta conexão.",
-      naoDetectada: "Nenhuma carteira detectada neste navegador.",
-      instalarMetaMask: "Instalar MetaMask",
-      conectarBotao: "Conectar carteira",
-      conectando: "Conectando…",
-      reconexaoDemorou:
+      notDetected: "Nenhuma carteira detectada neste navegador.",
+      installMetaMask: "Instalar MetaMask",
+      connectButton: "Conectar carteira",
+      connecting: "Conectando…",
+      reconnectionTimedOut:
         "A reconexão automática não respondeu. Desbloqueie a carteira e conecte manualmente.",
-      conexaoRejeitada: "Pedido de conexão recusado na carteira.",
-      desconectarBotao: "Desconectar",
-      desconectarAriaLabel: "Desconectar carteira",
-      desconectarNota:
+      connectionRejected: "Pedido de conexão recusado na carteira.",
+      disconnectButton: "Desconectar",
+      disconnectAriaLabel: "Desconectar carteira",
+      disconnectNote:
         "Desconectar encerra a sessão aqui no site — a carteira em si continua sob controle do MetaMask. Para revogar o acesso por completo, use as configurações de conexões do próprio MetaMask.",
-      redeErrada:
+      wrongNetwork:
         "Rede diferente de Sepolia detectada. Este é um ambiente de demonstração; nenhuma operação real ocorre nesta plataforma, em nenhuma rede.",
-      trocarRedeBotao: "Trocar para Sepolia",
-      trocandoRede: "Trocando de rede…",
-      copiarEndereco: "Copiar endereço completo",
-      enderecoCopiado: "Endereço copiado",
-      painel: {
+      switchNetworkButton: "Trocar para Sepolia",
+      switchingNetwork: "Trocando de rede…",
+      copyAddress: "Copiar endereço completo",
+      addressCopied: "Endereço copiado",
+      panel: {
         title: "Detalhes da conexão",
         status: "Status",
-        statusConectado: "Conectado",
-        statusDesconectado: "Não conectado",
-        endereco: "Endereço",
-        rede: "Rede",
-        redeDesconhecida: "Rede não suportada",
-        saldo: "Saldo (ETH de teste)",
-        semConexaoNota: "Conecte sua carteira para ver os detalhes aqui.",
-        carregandoSaldo: "Carregando…",
+        statusConnected: "Conectado",
+        statusDisconnected: "Não conectado",
+        address: "Endereço",
+        network: "Rede",
+        unknownNetwork: "Rede não suportada",
+        balance: "Saldo (ETH de teste)",
+        noConnectionNote: "Conecte sua carteira para ver os detalhes aqui.",
+        loadingBalance: "Carregando…",
       },
-      vinculo: {
+      link: {
         title: "Vínculo com o perfil",
-        explicacao:
+        explanation:
           "Conectar (acima) só lê o endereço da carteira nesta sessão do navegador — nada é salvo. Vincular grava esse endereço na sua conta, para identificá-la em futuras sessões.",
-        vinculadaLabel: "Vinculada ao perfil",
-        conectadaAgoraLabel: "Conectada agora",
-        nenhuma: "Nenhuma",
-        salvarBotao: "Salvar esta carteira no perfil",
-        salvando: "Salvando…",
-        trocarBotao: "Trocar para a carteira conectada",
-        trocando: "Trocando…",
-        desvincularBotao: "Desvincular",
-        desvinculando: "Desvinculando…",
-        conecteParaVincular: "Conecte uma carteira acima para poder vinculá-la ao perfil.",
-        sucessoVinculada: "Carteira vinculada ao perfil.",
-        sucessoDesvinculada: "Carteira desvinculada do perfil.",
+        linkedLabel: "Vinculada ao perfil",
+        connectedNowLabel: "Conectada agora",
+        none: "Nenhuma",
+        saveButton: "Salvar esta carteira no perfil",
+        saving: "Salvando…",
+        switchButton: "Trocar para a carteira conectada",
+        switching: "Trocando…",
+        unlinkButton: "Desvincular",
+        unlinking: "Desvinculando…",
+        connectToLink: "Conecte uma carteira acima para poder vinculá-la ao perfil.",
+        successLinked: "Carteira vinculada ao perfil.",
+        successUnlinked: "Carteira desvinculada do perfil.",
       },
     },
   },
-  documentacao: {
+  docs: {
     meta: {
       title: "Documentação",
       description:
@@ -620,106 +620,106 @@ export const ptBr = {
       "O que é a Niara PMEs, como funciona a tokenização e em que estágio o projeto está hoje.",
     nav: {
       ariaLabel: "Navegação da documentação",
-      oQueE: "O que é a Niara PMEs",
-      comoFunciona: "Como funciona a tokenização",
-      enquadramento: "Enquadramento regulatório",
-      modeloReceita: "Modelo de receita",
-      tecnologia: "Tecnologia",
+      whatIs: "O que é a Niara PMEs",
+      howItWorks: "Como funciona a tokenização",
+      framework: "Enquadramento regulatório",
+      revenueModel: "Modelo de receita",
+      technology: "Tecnologia",
       faq: "FAQ",
     },
-    estagioAtual: {
+    currentStage: {
       label: "Estágio atual",
-      texto:
+      text:
         "protótipo em ambiente de testnet. Não há contratos em produção em mainnet nem auditoria de segurança publicada até o momento. Todo o conteúdo do site é demonstração — nenhuma oferta real está disponível.",
     },
-    oQueE: {
+    whatIs: {
       title: "O que é a Niara PMEs",
-      texto:
+      text:
         "A Niara PMEs é uma plataforma que ajuda pequenas e médias empresas a captar investimento e organizar a divisão do seu capital de forma mais acessível, por meio da tokenização. O objetivo é reduzir custo e burocracia na estruturação de rodadas de captação e no registro de participações. Conteúdo em fase de demonstração.",
     },
-    comoFunciona: {
+    howItWorks: {
       title: "Como funciona a tokenização",
-      passos: [
+      steps: [
         {
-          titulo: "Cadastro da empresa",
-          texto: "A empresa cria seu perfil e informa os dados da oferta.",
+          title: "Cadastro da empresa",
+          text: "A empresa cria seu perfil e informa os dados da oferta.",
         },
         {
-          titulo: "Estruturação da oferta",
-          texto:
+          title: "Estruturação da oferta",
+          text:
             "Definição de valores, condições e do que será tokenizado (participação/cotas, recebíveis ou dívida), dentro do enquadramento aplicável.",
         },
         {
-          titulo: "Emissão dos tokens",
-          texto:
+          title: "Emissão dos tokens",
+          text:
             "Geração on-chain dos tokens que representam a participação/direito, com registro. Nenhum token é emitido sem lastro/atestado correspondente.",
         },
         {
-          titulo: "Captação e registro",
-          texto:
+          title: "Captação e registro",
+          text:
             "Investidores participam e o registro de participações (cap table) fica disponível de forma transparente.",
         },
       ],
     },
-    enquadramento: {
+    framework: {
       title: "Enquadramento regulatório",
-      paragrafos: [
+      paragraphs: [
         "A captação pública de investimento por plataformas eletrônicas no Brasil é regulada pela Resolução CVM 88 (crowdfunding de investimento), e a distribuição deve ocorrer por plataforma autorizada/registrada pela CVM. Nesta fase, a Niara PMEs é um ambiente institucional e de demonstração: não realiza oferta pública de valores mobiliários nem promete retorno. Ativos tokenizados que caracterizem valores mobiliários dependem das autorizações regulatórias aplicáveis.",
         "O registro de participações em blockchain funciona como registro probatório de integridade e anterioridade — não substitui os livros societários da Lei 6.404 nem o registro em cartório.",
       ],
     },
-    modeloReceita: {
+    revenueModel: {
       title: "Modelo de receita",
-      texto:
+      text:
         "O modelo de receita previsto envolve taxas de estruturação/listagem cobradas da empresa que tokeniza e taxas sobre transações. Os percentuais estão em definição e serão informados de forma transparente.",
     },
-    tecnologia: {
+    technology: {
       title: "Tecnologia",
-      texto:
+      text:
         "Os contratos da Niara são escritos em Solidity e compatíveis com EVM, permitindo deploy em redes compatíveis. Um invariante central garante que nenhum token seja emitido sem lastro atestado (o total emitido nunca excede o total atestado).",
     },
     faq: {
       title: "FAQ",
       items: [
         {
-          pergunta: "O que é um ativo tokenizado?",
-          resposta:
+          question: "O que é um ativo tokenizado?",
+          answer:
             "Representação digital, on-chain, de uma participação ou direito, que pode ser registrada e transferida de forma mais simples.",
         },
         {
-          pergunta: "Como uma empresa tokeniza seu capital na Niara PMEs?",
-          resposta:
+          question: "Como uma empresa tokeniza seu capital na Niara PMEs?",
+          answer:
             "Pelo fluxo de cadastro → estruturação da oferta → emissão → captação/registro descrito acima (em demonstração nesta fase).",
         },
         {
-          pergunta: "Preciso de carteira para participar?",
-          resposta:
+          question: "Preciso de carteira para participar?",
+          answer:
             "Nesta fase de demonstração, não há operação real; futuramente uma carteira poderá ser usada para custódia dos tokens.",
         },
         {
-          pergunta: "Quais são as taxas?",
-          resposta:
+          question: "Quais são as taxas?",
+          answer:
             "O modelo de taxas está em definição e será informado de forma transparente (sem valores fixos por enquanto).",
         },
         {
-          pergunta: "Isso é uma oferta de valores mobiliários? É regulado?",
-          resposta:
+          question: "Isso é uma oferta de valores mobiliários? É regulado?",
+          answer:
             "Não. Nesta fase é conteúdo institucional/demonstração; ofertas dependem das autorizações da CVM (Resolução CVM 88 e regras aplicáveis).",
         },
         {
-          pergunta: "Em que estágio está o projeto?",
-          resposta:
+          question: "Em que estágio está o projeto?",
+          answer:
             "Em desenvolvimento: o site mostra a estrutura do produto de forma totalmente simulada; os contratos estão em protótipo, em ambiente de testnet.",
         },
         {
-          pergunta: "Meus dados estão seguros?",
-          resposta:
+          question: "Meus dados estão seguros?",
+          answer:
             "Nesta fase os dados de formulário não são enviados a um servidor nem persistidos; seguem as diretrizes da LGPD.",
         },
       ],
     },
   },
-  contato: {
+  contact: {
     meta: {
       title: "Contate-nos",
       description: "Parcerias, tokenização, imprensa ou suporte — escolha um assunto e conte pra gente.",
@@ -727,33 +727,33 @@ export const ptBr = {
     title: "Contate-nos",
     subtitle: "Parcerias, tokenização, imprensa ou suporte — escolha um assunto e conte pra gente.",
     form: {
-      nome: "Nome",
+      name: "Nome",
       email: "Email",
-      assunto: "Assunto",
-      assuntoOpcoes: {
-        empresa: "Empresa que quer tokenizar",
-        investidor: "Investidor",
-        parcerias: "Parcerias",
-        imprensa: "Imprensa",
-        suporte: "Suporte",
-        outro: "Outro",
+      subject: "Assunto",
+      subjectOptions: {
+        company: "Empresa que quer tokenizar",
+        investor: "Investidor",
+        partnerships: "Parcerias",
+        press: "Imprensa",
+        support: "Suporte",
+        other: "Outro",
       },
-      mensagem: "Mensagem",
-      nota: (email: string) =>
+      message: "Mensagem",
+      note: (email: string) =>
         `Ainda não há envio automático — ao enviar, seu cliente de email padrão abre com a mensagem pré-preenchida para ${email}.`,
-      enviarBotao: "Abrir email",
-      erros: {
-        nome: "Informe seu nome.",
+      sendButton: "Abrir email",
+      errors: {
+        name: "Informe seu nome.",
         email: "Informe um email válido.",
-        mensagem: "Escreva uma mensagem.",
+        message: "Escreva uma mensagem.",
       },
-      assuntoPrefix: (assunto: string) => `Contato via site — ${assunto}`,
+      subjectPrefix: (subject: string) => `Contato via site — ${subject}`,
     },
-    direto: {
+    direct: {
       title: "Fale direto com a gente",
     },
   },
-  negociar: {
+  trade: {
     demoBanner: {
       label: "Demonstração",
       text: "categorias e exemplos são majoritariamente ilustrativos — ofertas com o selo \"Real — Sepolia\" envolvem transações reais na testnet, mas a empresa por trás continua fictícia.",
@@ -766,368 +766,368 @@ export const ptBr = {
       title: "Ativos e tokens",
       subtitle:
         "Os tipos de ativo que podem ser tokenizados na plataforma. Escolha uma categoria para entender como funciona.",
-      categoriasHeading: "Categorias",
-      verCategoria: "Ver categoria →",
+      categoriesHeading: "Categorias",
+      viewCategory: "Ver categoria →",
     },
-    vitrine: {
+    showcase: {
       title: "Vitrine (demonstração)",
-      tagExemplo: "Exemplo fictício · valores simulados",
-      verDetalhes: "Negociar →",
+      exampleTag: "Exemplo fictício · valores simulados",
+      viewDetails: "Negociar →",
     },
-    ofertaReal: {
-      selo: "Oferta real · aceita reserva",
-      metaCaptacao: "Meta de captação",
-      valorPorCota: "Valor por cota",
-      numeroCotas: "Número de cotas",
-      prazo: "Prazo",
-      naoInformado: "Não informado",
-      verOferta: "Negociar →",
+    realOffering: {
+      badge: "Oferta real · aceita reserva",
+      fundraisingTarget: "Meta de captação",
+      valuePerShare: "Valor por cota",
+      shareCount: "Número de cotas",
+      deadline: "Prazo",
+      notProvided: "Não informado",
+      viewOffering: "Negociar →",
     },
-    minhaOfertaCard: {
-      selo: "Demonstração — criação de oferta",
-      metaCaptacao: "Meta de captação",
-      valorPorCota: "Valor por cota",
-      numeroCotas: "Número de cotas",
-      prazo: "Prazo",
-      naoInformado: "Não informado",
-      verOferta: "Negociar →",
+    myOfferingCard: {
+      badge: "Demonstração — criação de oferta",
+      fundraisingTarget: "Meta de captação",
+      valuePerShare: "Valor por cota",
+      shareCount: "Número de cotas",
+      deadline: "Prazo",
+      notProvided: "Não informado",
+      viewOffering: "Negociar →",
     },
-    pmesOnChain: {
-      selo: "Real — Sepolia",
-      seloSolana: "Real — Solana Devnet",
-      empresaFicticia: "Empresa fictícia de demonstração",
-      metaCaptacao: "Meta de captação",
-      precoPorCota: "Preço por cota",
-      cotas: "Cotas",
-      verOferta: "Negociar →",
+    smesOnChain: {
+      badge: "Real — Sepolia",
+      solanaBadge: "Real — Solana Devnet",
+      fictitiousCompany: "Empresa fictícia de demonstração",
+      fundraisingTarget: "Meta de captação",
+      pricePerShare: "Preço por cota",
+      shares: "Cotas",
+      viewOffering: "Negociar →",
       // Mesmo selo/verOferta acima, usado também pela oferta self-service — só a linha de
       // proveniência muda (dado real do emissor, não empresa fictícia). Sem meta/preço/cotas na
       // vitrine self-service de propósito: os termos reais variam por oferta e só são confiáveis
       // lidos ao vivo da chain (RealOnChainInvestPanel, na página de detalhe) — mostrar aqui
       // obrigaria usar as mesmas constantes fixas das legadas, que não valem para ofertas com
       // termos próprios.
-      dadosDoEmissor: "Dados informados pelo próprio emissor (demonstração)",
+      issuerData: "Dados informados pelo próprio emissor (demonstração)",
     },
-    categorias: {
+    categories: {
       pmes: {
-        descricaoCurta: "Participação societária ou recebíveis de pequenas e médias empresas.",
-        lastro: "Participação societária ou recebível de PME",
-        casosDeUso: [
+        shortDescription: "Participação societária ou recebíveis de pequenas e médias empresas.",
+        backing: "Participação societária ou recebível de PME",
+        useCases: [
           "Abertura de novas filiais ou unidades",
           "Antecipação de caixa de recebíveis",
           "Capital de giro para lançar um novo produto",
         ],
       },
       agro: {
-        descricaoCurta: "Operações e ativos do agronegócio, como safras e maquinário.",
-        lastro: "Operação agrícola, maquinário ou recebível do agronegócio",
-        casosDeUso: [
+        shortDescription: "Operações e ativos do agronegócio, como safras e maquinário.",
+        backing: "Operação agrícola, maquinário ou recebível do agronegócio",
+        useCases: [
           "Custeio de safra e capital de giro",
           "Aquisição ou renovação de maquinário",
           "Antecipação de recebíveis da produção",
         ],
       },
       imobiliario: {
-        descricaoCurta: "Cotas e recebíveis lastreados em empreendimentos imobiliários.",
-        lastro: "Cotas de SPE ou recebível imobiliário",
-        casosDeUso: [
+        shortDescription: "Cotas e recebíveis lastreados em empreendimentos imobiliários.",
+        backing: "Cotas de SPE ou recebível imobiliário",
+        useCases: [
           "Financiamento de obra em andamento",
           "Aquisição de novo imóvel ou terreno",
           "Antecipação de recebíveis de locação ou venda",
         ],
       },
       auto: {
-        descricaoCurta: "Frotas, veículos e serviços do setor automotivo.",
-        lastro: "Frota de veículos ou operação do setor automotivo",
-        casosDeUso: [
+        shortDescription: "Frotas, veículos e serviços do setor automotivo.",
+        backing: "Frota de veículos ou operação do setor automotivo",
+        useCases: [
           "Renovação ou ampliação de frota",
           "Expansão de rede de oficinas ou serviços",
           "Capital de giro para peças e estoque",
         ],
       },
       divida: {
-        descricaoCurta: "Instrumentos de dívida estruturados, como antecipação de recebíveis.",
-        lastro: "Recebível ou dívida estruturada da empresa",
-        casosDeUso: [
+        shortDescription: "Instrumentos de dívida estruturados, como antecipação de recebíveis.",
+        backing: "Recebível ou dívida estruturada da empresa",
+        useCases: [
           "Antecipação de recebíveis de venda",
           "Capital de giro de curto prazo",
           "Financiamento de estoque sazonal",
         ],
       },
     },
-    categoriaTemplate: {
-      voltar: "‹ Ativos e tokens",
-      fichaTitle: "Ficha do ativo",
-      lastro: "Lastro",
-      publico: "Público",
-      publicoValor: "Investidores cadastrados na plataforma",
-      enquadramento: "Enquadramento",
-      enquadramentoValor: "A validar (CVM)",
-      estagio: "Estágio",
-      estagioValor: "Protótipo",
-      casosDeUsoTitle: "Casos de uso",
-      ofertasReaisTitle: "Ofertas reais nesta categoria",
-      ofertasReaisNota: "Ofertas reais, abertas para reserva. Visível só para investidores cadastrados e logados.",
-      suaOfertaTitle: "Sua oferta nesta categoria",
-      suaOfertaNota:
+    categoryTemplate: {
+      back: "‹ Ativos e tokens",
+      factSheetTitle: "Ficha do ativo",
+      backing: "Lastro",
+      audience: "Público",
+      audienceValue: "Investidores cadastrados na plataforma",
+      framework: "Enquadramento",
+      frameworkValue: "A validar (CVM)",
+      stage: "Estágio",
+      stageValue: "Protótipo",
+      useCasesTitle: "Casos de uso",
+      realOfferingsTitle: "Ofertas reais nesta categoria",
+      realOfferingsNote: "Ofertas reais, abertas para reserva. Visível só para investidores cadastrados e logados.",
+      yourOfferingTitle: "Sua oferta nesta categoria",
+      yourOfferingNote:
         "Oferta cadastrada pela sua empresa. Visível só para você, dono da oferta — sem opção de reserva.",
-      vitrineTitle: "Exemplos (demonstração)",
-      vitrineTitlePmesOnChain: "Ofertas PMEs (Sepolia real, empresas fictícias)",
-      publicarOfertaBotao: "Publicar oferta",
-      filtroSetor: {
+      showcaseTitle: "Exemplos (demonstração)",
+      showcaseTitleSmesOnChain: "Ofertas PMEs (Sepolia real, empresas fictícias)",
+      publishOfferingButton: "Publicar oferta",
+      sectorFilter: {
         ariaLabel: "Filtrar por setor",
-        todos: "Todos",
+        all: "Todos",
       },
-      notaRodape:
+      footnote:
         "Exemplos fictícios com valores simulados. Não constitui oferta pública de valores mobiliários. Ofertas dependem das autorizações aplicáveis da CVM.",
     },
-    oferta: {
+    offering: {
       demoBanner: "Conteúdo de demonstração — sem oferta real.",
       demoBannerOnChain:
         "Empresa fictícia de demonstração — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
-      avisoMisto:
+      mixedNotice:
         "Esta empresa é fictícia (dados de demonstração) — mas o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
       demoBannerSelfService:
         "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
-      avisoSelfService:
+      selfServiceNotice:
         "Os dados desta empresa foram informados pelo próprio emissor (demonstração) — e o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
       demoBannerSelfServiceSolana:
         "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na Solana Devnet.",
-      avisoSelfServiceSolana:
+      selfServiceSolanaNotice:
         "Os dados desta empresa foram informados pelo próprio emissor (demonstração) — e o investimento abaixo é real: transações assinadas e confirmadas de verdade na Solana Devnet, não uma simulação de produto.",
-      voltarCategoria: "‹ Voltar para a categoria",
-      dadosPublicos: {
+      backToCategory: "‹ Voltar para a categoria",
+      publicData: {
         title: "Dados públicos da empresa",
-        razaoSocial: "Razão social",
+        legalName: "Razão social",
         cnpj: "CNPJ (fictício)",
-        setor: "Setor",
-        localizacao: "Localização",
-        resumo: "Resumo do negócio",
+        sector: "Setor",
+        location: "Localização",
+        summary: "Resumo do negócio",
       },
-      financeiro: {
+      financial: {
         title: "Financeiro / caixa (demonstração)",
-        receitaAnual: "Receita anual",
-        caixaDisponivel: "Caixa disponível",
+        annualRevenue: "Receita anual",
+        availableCash: "Caixa disponível",
         endividamento: "Endividamento",
-        nota: "Indicadores simulados — dados fictícios.",
-        seriesReceita: "Receita",
-        seriesCaixa: "Caixa",
+        note: "Indicadores simulados — dados fictícios.",
+        revenueSeries: "Receita",
+        cashSeries: "Caixa",
         chartDescription:
           "Descrição do gráfico: evolução simulada de receita e caixa nos últimos 6 meses. Dados fictícios, sem relação com o desempenho real da empresa.",
       },
-      indicadores: {
+      indicators: {
         title: "Indicadores fundamentalistas",
-        nota: "Indicadores simulados de demonstração — não refletem valores reais nem análise de nenhuma empresa.",
-        ajudaAria: (nome: string) => `O que é ${nome}?`,
-        grupos: {
+        note: "Indicadores simulados de demonstração — não refletem valores reais nem análise de nenhuma empresa.",
+        helpAria: (nome: string) => `O que é ${nome}?`,
+        groups: {
           valuation: {
             label: "Valuation",
-            itens: {
+            items: {
               pl: {
-                nome: "P/L",
-                unidade: "numero",
-                explicacao:
+                name: "P/L",
+                unit: "numero",
+                explanation:
                   'Preço da ação dividido pelo lucro por ação; indica quantos anos de lucro seriam necessários para "pagar" o preço.',
               },
               pvp: {
-                nome: "P/VP",
-                unidade: "numero",
-                explicacao: "Preço dividido pelo valor patrimonial por ação; quanto o mercado paga sobre o patrimônio contábil.",
+                name: "P/VP",
+                unit: "numero",
+                explanation: "Preço dividido pelo valor patrimonial por ação; quanto o mercado paga sobre o patrimônio contábil.",
               },
               psr: {
-                nome: "P/Receita (PSR)",
-                unidade: "numero",
-                explicacao: "Valor de mercado dividido pela receita líquida.",
+                name: "P/Receita (PSR)",
+                unit: "numero",
+                explanation: "Valor de mercado dividido pela receita líquida.",
               },
               evEbitda: {
-                nome: "EV/Ebitda",
-                unidade: "numero",
-                explicacao:
+                name: "EV/Ebitda",
+                unit: "numero",
+                explanation:
                   "Valor da firma (EV) dividido pelo Ebitda; múltiplo operacional independente da estrutura de capital.",
               },
               evEbit: {
-                nome: "EV/Ebit",
-                unidade: "numero",
-                explicacao: "Valor da firma dividido pelo Ebit (lucro operacional).",
+                name: "EV/Ebit",
+                unit: "numero",
+                explanation: "Valor da firma dividido pelo Ebit (lucro operacional).",
               },
               pEbitda: {
-                nome: "P/Ebitda",
-                unidade: "numero",
-                explicacao: "Valor de mercado dividido pelo Ebitda.",
+                name: "P/Ebitda",
+                unit: "numero",
+                explanation: "Valor de mercado dividido pelo Ebitda.",
               },
               pEbit: {
-                nome: "P/Ebit",
-                unidade: "numero",
-                explicacao: "Valor de mercado dividido pelo Ebit.",
+                name: "P/Ebit",
+                unit: "numero",
+                explanation: "Valor de mercado dividido pelo Ebit.",
               },
               pAtivo: {
-                nome: "P/Ativo",
-                unidade: "numero",
-                explicacao: "Valor de mercado dividido pelo ativo total.",
+                name: "P/Ativo",
+                unit: "numero",
+                explanation: "Valor de mercado dividido pelo ativo total.",
               },
               pAtivoCircLiq: {
-                nome: "P/Ativo Circ. Liq.",
-                unidade: "numero",
-                explicacao: "Preço dividido pelo ativo circulante líquido (circulante menos passivos).",
+                name: "P/Ativo Circ. Liq.",
+                unit: "numero",
+                explanation: "Preço dividido pelo ativo circulante líquido (circulante menos passivos).",
               },
               pCapGiro: {
-                nome: "P/Cap. Giro",
-                unidade: "numero",
-                explicacao: "Preço dividido pelo capital de giro (ativo circulante menos passivo circulante).",
+                name: "P/Cap. Giro",
+                unit: "numero",
+                explanation: "Preço dividido pelo capital de giro (ativo circulante menos passivo circulante).",
               },
               lpa: {
-                nome: "LPA",
-                unidade: "numero",
-                explicacao: "Lucro por ação: lucro líquido dividido pelo número de ações.",
+                name: "LPA",
+                unit: "numero",
+                explanation: "Lucro por ação: lucro líquido dividido pelo número de ações.",
               },
               vpa: {
-                nome: "VPA",
-                unidade: "numero",
-                explicacao: "Valor patrimonial por ação: patrimônio líquido dividido pelo número de ações.",
+                name: "VPA",
+                unit: "numero",
+                explanation: "Valor patrimonial por ação: patrimônio líquido dividido pelo número de ações.",
               },
             },
           },
           eficiencia: {
             label: "Eficiência",
-            itens: {
+            items: {
               margemBruta: {
-                nome: "Margem Bruta",
-                unidade: "percentual",
-                explicacao: "Lucro bruto dividido pela receita líquida.",
+                name: "Margem Bruta",
+                unit: "percentual",
+                explanation: "Lucro bruto dividido pela receita líquida.",
               },
               margemEbitda: {
-                nome: "Margem Ebitda",
-                unidade: "percentual",
-                explicacao: "Ebitda dividido pela receita líquida.",
+                name: "Margem Ebitda",
+                unit: "percentual",
+                explanation: "Ebitda dividido pela receita líquida.",
               },
               margemEbit: {
-                nome: "Margem Ebit",
-                unidade: "percentual",
-                explicacao: "Ebit (lucro operacional) dividido pela receita líquida.",
+                name: "Margem Ebit",
+                unit: "percentual",
+                explanation: "Ebit (lucro operacional) dividido pela receita líquida.",
               },
               margemLiquida: {
-                nome: "Margem Líquida",
-                unidade: "percentual",
-                explicacao: "Lucro líquido dividido pela receita líquida.",
+                name: "Margem Líquida",
+                unit: "percentual",
+                explanation: "Lucro líquido dividido pela receita líquida.",
               },
               giroAtivos: {
-                nome: "Giro Ativos",
-                unidade: "numero",
-                explicacao: "Receita dividida pelo ativo total; quanto o ativo gera de receita.",
+                name: "Giro Ativos",
+                unit: "numero",
+                explanation: "Receita dividida pelo ativo total; quanto o ativo gera de receita.",
               },
             },
           },
           rentabilidade: {
             label: "Rentabilidade",
-            itens: {
+            items: {
               roe: {
-                nome: "ROE",
-                unidade: "percentual",
-                explicacao: "Retorno sobre o patrimônio líquido: lucro líquido dividido pelo patrimônio líquido.",
+                name: "ROE",
+                unit: "percentual",
+                explanation: "Retorno sobre o patrimônio líquido: lucro líquido dividido pelo patrimônio líquido.",
               },
               roa: {
-                nome: "ROA",
-                unidade: "percentual",
-                explicacao: "Retorno sobre os ativos: lucro líquido dividido pelo ativo total.",
+                name: "ROA",
+                unit: "percentual",
+                explanation: "Retorno sobre os ativos: lucro líquido dividido pelo ativo total.",
               },
               roic: {
-                nome: "ROIC",
-                unidade: "percentual",
-                explicacao:
+                name: "ROIC",
+                unit: "percentual",
+                explanation:
                   "Retorno sobre o capital investido: resultado operacional após impostos dividido pelo capital investido.",
               },
             },
           },
           dividendos: {
             label: "Dividendos",
-            itens: {
+            items: {
               dividendYield: {
-                nome: "Dividend Yield",
-                unidade: "percentual",
-                explicacao: "Dividendos por ação nos últimos 12 meses dividido pelo preço da ação.",
+                name: "Dividend Yield",
+                unit: "percentual",
+                explanation: "Dividendos por ação nos últimos 12 meses dividido pelo preço da ação.",
               },
               payout: {
-                nome: "Payout",
-                unidade: "percentual",
-                explicacao: "Percentual do lucro distribuído como dividendos.",
+                name: "Payout",
+                unit: "percentual",
+                explanation: "Percentual do lucro distribuído como dividendos.",
               },
             },
           },
           endividamento: {
             label: "Endividamento",
-            itens: {
+            items: {
               liquidezCorrente: {
-                nome: "Liquidez Corrente",
-                unidade: "numero",
-                explicacao:
+                name: "Liquidez Corrente",
+                unit: "numero",
+                explanation:
                   "Ativo circulante dividido pelo passivo circulante; capacidade de honrar obrigações de curto prazo.",
               },
               dividaLiquidaEbitda: {
-                nome: "Dívida Líquida/Ebitda",
-                unidade: "numero",
-                explicacao: "Dívida líquida dividida pelo Ebitda; quantos anos de Ebitda para quitar a dívida.",
+                name: "Dívida Líquida/Ebitda",
+                unit: "numero",
+                explanation: "Dívida líquida dividida pelo Ebitda; quantos anos de Ebitda para quitar a dívida.",
               },
               dividaLiquidaEbit: {
-                nome: "Dívida Líquida/Ebit",
-                unidade: "numero",
-                explicacao: "Dívida líquida dividida pelo Ebit.",
+                name: "Dívida Líquida/Ebit",
+                unit: "numero",
+                explanation: "Dívida líquida dividida pelo Ebit.",
               },
               dividaLiquidaPatrimonio: {
-                nome: "Dívida Líquida/Patrimônio",
-                unidade: "numero",
-                explicacao: "Dívida líquida dividida pelo patrimônio líquido.",
+                name: "Dívida Líquida/Patrimônio",
+                unit: "numero",
+                explanation: "Dívida líquida dividida pelo patrimônio líquido.",
               },
               dividaBrutaPatrimonio: {
-                nome: "Dívida Bruta/Patrimônio",
-                unidade: "numero",
-                explicacao: "Dívida bruta dividida pelo patrimônio líquido.",
+                name: "Dívida Bruta/Patrimônio",
+                unit: "numero",
+                explanation: "Dívida bruta dividida pelo patrimônio líquido.",
               },
               patrimonioAtivos: {
-                nome: "Patrimônio/Ativos",
-                unidade: "numero",
-                explicacao: "Patrimônio líquido dividido pelo ativo total.",
+                name: "Patrimônio/Ativos",
+                unit: "numero",
+                explanation: "Patrimônio líquido dividido pelo ativo total.",
               },
               passivosAtivos: {
-                nome: "Passivos/Ativos",
-                unidade: "numero",
-                explicacao: "Passivo total dividido pelo ativo total.",
+                name: "Passivos/Ativos",
+                unit: "numero",
+                explanation: "Passivo total dividido pelo ativo total.",
               },
             },
           },
           crescimento: {
             label: "Crescimento",
-            itens: {
+            items: {
               cagrReceitas5a: {
-                nome: "CAGR Receitas 5 anos",
-                unidade: "percentual",
-                explicacao: "Taxa de crescimento anual composta da receita nos últimos 5 anos.",
+                name: "CAGR Receitas 5 anos",
+                unit: "percentual",
+                explanation: "Taxa de crescimento anual composta da receita nos últimos 5 anos.",
               },
             },
           },
         },
       },
-      termos: {
+      terms: {
         title: "Termos da oferta",
-        tipoToken: "O que o token representa",
-        tipoTokenValores: {
+        tokenType: "O que o token representa",
+        tokenTypeValues: {
           participacao: "Participação societária / cotas",
           recebivel: "Recebível",
           divida: "Dívida",
         },
-        metaCaptacao: "Meta de captação",
-        valorPorToken: "Valor por token/cota",
-        quantidadeTokens: "Quantidade de tokens/cotas",
-        prazo: "Prazo",
-        prazoMeses: (meses: number) => `${meses} meses`,
-        nota: "Qualquer estimativa de rendimento é ilustrativa e não constitui promessa de retorno.",
+        fundraisingTarget: "Meta de captação",
+        valuePerToken: "Valor por token/cota",
+        quantityTokens: "Quantidade de tokens/cotas",
+        deadline: "Prazo",
+        deadlineMonths: (months: number) => `${months} meses`,
+        note: "Qualquer estimativa de rendimento é ilustrativa e não constitui promessa de retorno.",
       },
-      documentos: {
+      documents: {
         title: "Documentos",
-        emBreve: "Em breve",
+        comingSoon: "Em breve",
       },
-      riscos: {
+      risks: {
         title: "Riscos e avisos",
-        itens: [
+        items: [
           "Investir em valores mobiliários envolve risco de perda, inclusive total, do capital investido.",
           "Nenhuma rentabilidade é prometida ou garantida; qualquer estimativa é meramente ilustrativa.",
           "Este ambiente é de demonstração: não há oferta pública real disponível e nenhuma ordem enviada aqui é real.",
@@ -1135,208 +1135,208 @@ export const ptBr = {
           "O registro on-chain, quando existir, é probatório de integridade e anterioridade — não substitui os livros societários da Lei 6.404 nem o registro em cartório.",
         ],
       },
-      negociarBotao: "Negociar (simulação)",
-      naoEncontrada: {
+      tradeButton: "Negociar (simulação)",
+      notFound: {
         title: "Oferta não encontrada",
         description: "Esta oferta de demonstração não existe ou foi removida.",
-        voltar: "‹ Ativos e tokens",
+        back: "‹ Ativos e tokens",
       },
     },
-    boleta: {
+    orderTicket: {
       title: "Boleta (simulação)",
-      fecharAria: "Fechar boleta",
+      closeAria: "Fechar boleta",
       demoBanner: "Demonstração — nenhuma ordem real é enviada. Não há negociação real de valores mobiliários.",
-      ladoGroupLabel: "Comprar ou vender",
-      comprar: "Comprar",
-      vender: "Vender",
-      quantidade: "Quantidade (tokens/cotas)",
-      preco: "Preço (R$)",
-      totalEstimado: "Total estimado",
-      taxa: "Taxa (estimada / a definir)",
-      saldoSimulado: "Saldo simulado",
-      revisarBotao: "Revisar (simulação)",
-      confirmarBotao: "Confirmar (simulação)",
-      voltarEditarBotao: "Voltar e editar",
-      resumoTitle: "Resumo da ordem (simulação)",
-      resultado: (lado: "buy" | "sell", quantidade: number, nome: string) =>
-        `Ordem simulada registrada — ${lado === "buy" ? "compra" : "venda"} de ${quantidade} ${nome} — nenhuma transação real ocorreu.`,
-      novaOrdemBotao: "Nova ordem (simulação)",
-      erros: {
-        quantidadeInvalida: "Informe uma quantidade válida, maior que zero.",
-        precoInvalido: "Informe um preço válido, maior que zero.",
+      sideGroupLabel: "Comprar ou vender",
+      buy: "Comprar",
+      sell: "Vender",
+      quantity: "Quantidade (tokens/cotas)",
+      price: "Preço (R$)",
+      totalEstimated: "Total estimado",
+      fee: "Taxa (estimada / a definir)",
+      simulatedBalance: "Saldo simulado",
+      reviewButton: "Revisar (simulação)",
+      confirmButton: "Confirmar (simulação)",
+      backToEditButton: "Voltar e editar",
+      summaryTitle: "Resumo da ordem (simulação)",
+      result: (side: "buy" | "sell", quantity: number, nome: string) =>
+        `Ordem simulada registrada — ${side === "buy" ? "compra" : "venda"} de ${quantity} ${nome} — nenhuma transação real ocorreu.`,
+      newOrderButton: "Nova ordem (simulação)",
+      errors: {
+        invalidQuantity: "Informe uma quantidade válida, maior que zero.",
+        invalidPrice: "Informe um preço válido, maior que zero.",
       },
     },
   },
-  entrar: {
+  signIn: {
     meta: {
       title: "Entrar",
     },
-    fecharAriaLabel: "Fechar e voltar para a home",
-    titulo: "Entrar",
-    subtitulo: "Entre com o email e a senha da sua conta Niara PMEs.",
-    tituloCaptacao: "Entre para estruturar sua captação",
-    subtituloCaptacao:
+    closeAriaLabel: "Fechar e voltar para a home",
+    title: "Entrar",
+    subtitle: "Entre com o email e a senha da sua conta Niara PMEs.",
+    fundraisingTitle: "Entre para estruturar sua captação",
+    fundraisingSubtitle:
       "Entre com sua conta (ou crie uma nova abaixo) para estruturar sua captação. A estruturação da oferta em si continua em demonstração e depende das autorizações da CVM — o onboarding de captação chega em breve.",
-    avisoLoginNecessario: "Faça login ou crie uma conta para acessar essa página.",
+    loginRequiredNotice: "Faça login ou crie uma conta para acessar essa página.",
     video: {
       ariaLabel: "Assistir no YouTube: como criar sua conta na MetaMask (abre em nova aba)",
-      texto: "Antes de criar sua conta na plataforma, veja o vídeo e crie sua conta na MetaMask.",
+      text: "Antes de criar sua conta na plataforma, veja o vídeo e crie sua conta na MetaMask.",
     },
     email: {
       label: "Email",
       placeholder: "seu@email.com",
     },
-    senha: {
+    password: {
       label: "Senha",
       placeholder: "••••••••",
     },
-    entrarBotao: "Entrar",
-    criarContaBotao: "Criar conta",
-    entrarPendente: "Entrando…",
-    ou: "ou",
-    erros: {
-      emailInvalido: "Informe um email válido.",
-      senhaCurta: "A senha precisa ter pelo menos 6 caracteres.",
-      credenciaisInvalidas: "Email ou senha incorretos.",
-      emailJaCadastrado: "Já existe uma conta com este email. Tente entrar.",
-      senhaFraca: "Senha muito fraca — use pelo menos 6 caracteres.",
-      generico: "Não foi possível concluir. Tente novamente em instantes.",
+    signInButton: "Entrar",
+    createAccountButton: "Criar conta",
+    signInPending: "Entrando…",
+    or: "ou",
+    errors: {
+      invalidEmail: "Informe um email válido.",
+      shortPassword: "A senha precisa ter pelo menos 6 caracteres.",
+      invalidCredentials: "Email ou senha incorretos.",
+      emailAlreadyRegistered: "Já existe uma conta com este email. Tente entrar.",
+      weakPassword: "Senha muito fraca — use pelo menos 6 caracteres.",
+      generic: "Não foi possível concluir. Tente novamente em instantes.",
     },
     google: {
-      continuarBotao: "Continuar com Google",
+      continueButton: "Continuar com Google",
     },
-    termosNota: "Ao continuar, você concorda com os Termos de Uso e a Política de Privacidade (documentos em breve).",
+    termsNote: "Ao continuar, você concorda com os Termos de Uso e a Política de Privacidade (documentos em breve).",
   },
-  conta: {
+  account: {
     meta: {
       title: "Conta",
       description: "Área de conta — dados de sessão e vínculo com o cadastro de investidor ou empresa.",
     },
-    titulo: "Conta",
+    title: "Conta",
     emailLabel: "Email",
-    papelLabel: "Cadastro",
-    papelInvestidor: "Investidor — cadastrado",
-    papelEmpresa: "Empresa — cadastrada",
-    papelNaoCadastrado: "não cadastrado ainda (demonstração)",
-    completarCadastroBotao: "Completar cadastro",
-    minhasOfertasBotao: "Minhas ofertas",
-    investirBotao: "Investir",
-    avisoApenasEmpresa: "Essa área é exclusiva para empresas cadastradas. Complete o cadastro como pessoa jurídica para criar ofertas.",
-    avisoApenasInvestidor: "Essa área é exclusiva para investidores cadastrados. Complete o cadastro como pessoa física para reservar aportes.",
-    sairBotao: "Sair",
-    sairPendente: "Saindo…",
+    roleLabel: "Cadastro",
+    investorRole: "Investidor — cadastrado",
+    companyRole: "Empresa — cadastrada",
+    roleNotRegistered: "não cadastrado ainda (demonstração)",
+    completeRegistrationButton: "Completar cadastro",
+    myOfferingsButton: "Minhas ofertas",
+    investButton: "Investir",
+    companyOnlyNotice: "Essa área é exclusiva para empresas cadastradas. Complete o cadastro como pessoa jurídica para criar ofertas.",
+    investorOnlyNotice: "Essa área é exclusiva para investidores cadastrados. Complete o cadastro como pessoa física para reservar aportes.",
+    signOutButton: "Sair",
+    signOutPending: "Saindo…",
   },
-  cadastro: {
+  signUp: {
     meta: {
       title: "Completar cadastro",
       description: "Cadastro de investidor (pessoa física) ou empresa (pessoa jurídica) na Niara PMEs.",
     },
-    passoContaContador: "Passo 1 de 3",
-    passoTipoContador: "Passo 2 de 3",
-    passoDadosContador: "Passo 3 de 3",
-    conta: {
-      titulo: "Criar sua conta",
-      subtitulo:
+    accountStepCounter: "Passo 1 de 3",
+    typeStepCounter: "Passo 2 de 3",
+    dataStepCounter: "Passo 3 de 3",
+    account: {
+      title: "Criar sua conta",
+      subtitle:
         "Defina o email e a senha que você vai usar para acessar a Niara PMEs. No próximo passo, você escolhe se vai usar a plataforma como investidor ou como empresa.",
       email: {
         label: "Email",
         placeholder: "seu@email.com",
       },
-      senha: {
+      password: {
         label: "Senha",
         placeholder: "••••••••",
       },
-      criarContaBotao: "Criar conta",
-      criandoContaBotao: "Criando conta…",
-      jaTemContaLink: "Já tem uma conta? Entrar",
+      createAccountButton: "Criar conta",
+      creatingAccountButton: "Criando conta…",
+      hasAccountLink: "Já tem uma conta? Entrar",
     },
-    titulo: "Complete seu cadastro",
-    subtitulo:
+    title: "Complete seu cadastro",
+    subtitle:
       "Sua conta de acesso já foi criada. Agora só faltam os dados de cadastro para usar a plataforma como investidor ou como empresa.",
-    tipoPessoa: {
+    personType: {
       legend: "Tipo de cadastro",
-      pessoaFisica: "Pessoa física (investidor)",
-      pessoaFisicaDescricao: "Você vai investir em ofertas de captação de empresas na plataforma.",
-      pessoaJuridica: "Pessoa jurídica (empresa)",
-      pessoaJuridicaDescricao: "Sua empresa vai estruturar uma captação ou investir através da plataforma.",
+      individual: "Pessoa física (investidor)",
+      individualDescription: "Você vai investir em ofertas de captação de empresas na plataforma.",
+      company: "Pessoa jurídica (empresa)",
+      companyDescription: "Sua empresa vai estruturar uma captação ou investir através da plataforma.",
     },
-    dadosTitulo: "Dados de cadastro",
-    dadosSubtituloPf: "Preencha seus dados pessoais para concluir o cadastro como investidor.",
-    dadosSubtituloPj: "Preencha os dados da sua empresa para concluir o cadastro como pessoa jurídica.",
-    secaoPessoal: "Dados pessoais",
-    secaoEndereco: "Endereço",
-    campos: {
-      pais: "País",
-      brasil: "Brasil",
+    dataTitle: "Dados de cadastro",
+    dataSubtitlePf: "Preencha seus dados pessoais para concluir o cadastro como investidor.",
+    dataSubtitlePj: "Preencha os dados da sua empresa para concluir o cadastro como pessoa jurídica.",
+    personalSection: "Dados pessoais",
+    addressSection: "Endereço",
+    fields: {
+      country: "País",
+      brazil: "Brasil",
       email: "Email",
-      nomeCompleto: "Nome completo",
-      documentoCpf: "CPF",
-      documentoCnpj: "CNPJ",
-      dataNascimento: "Data de nascimento",
-      razaoSocial: "Razão social",
-      nomeFantasia: "Nome fantasia",
-      receitaBrutaAnual: "Receita bruta anual (R$)",
-      telefone: "Telefone",
+      fullName: "Nome completo",
+      documentCpf: "CPF",
+      documentCnpj: "CNPJ",
+      birthDate: "Data de nascimento",
+      legalName: "Razão social",
+      tradeName: "Nome fantasia",
+      grossAnnualRevenue: "Receita bruta anual (R$)",
+      phone: "Telefone",
       cep: "CEP",
-      logradouro: "Rua",
-      numero: "Número",
-      complemento: "Complemento",
-      bairro: "Bairro",
-      cidade: "Cidade",
-      estado: "Estado",
-      selecionarEstado: "Selecione",
+      street: "Rua",
+      number: "Número",
+      complement: "Complemento",
+      district: "Bairro",
+      city: "Cidade",
+      state: "Estado",
+      selectState: "Selecione",
     },
-    erros: {
-      obrigatorio: "Campo obrigatório.",
-      documentoInvalido: "Documento inválido.",
-      dataInvalida: "Data inválida.",
-      telefoneInvalido: "Telefone inválido.",
-      cepInvalido: "CEP inválido.",
+    errors: {
+      required: "Campo obrigatório.",
+      invalidDocument: "Documento inválido.",
+      invalidDate: "Data inválida.",
+      phoneInvalid: "Telefone inválido.",
+      invalidCep: "CEP inválido.",
     },
-    demoNota:
+    demoNote:
       "Ambiente de demonstração — use apenas dados fictícios. Estes dados ficam salvos de verdade na sua conta (os mesmos campos continuam editáveis depois em \"Perfil\"); nenhuma verificação de identidade (KYC) é feita a partir daqui.",
-    continuarBotao: "Continuar",
-    voltarBotao: "Voltar",
-    cadastrarBotao: "Concluir cadastro",
-    cadastrandoBotao: "Concluindo…",
+    continueButton: "Continuar",
+    backButton: "Voltar",
+    registerButton: "Concluir cadastro",
+    registeringButton: "Concluindo…",
   },
-  empresaOfertas: {
+  companyOfferings: {
     meta: {
       title: "Minhas ofertas",
       description: "Ofertas de captação da empresa cadastrada na Niara PMEs.",
     },
-    titulo: "Minhas ofertas",
-    subtitulo: "Crie e ative ofertas de captação da sua empresa.",
-    vazio: "Nenhuma oferta cadastrada ainda.",
-    criarTitulo: "Nova oferta",
-    campos: {
-      valorOferta: "Valor da oferta (R$)",
-      loteAdicional: "Lote adicional (%)",
-      metaMinima: "Meta mínima (R$)",
-      prazoDias: "Prazo (dias)",
-      valorPorCota: "Valor por cota (R$)",
-      categoria: "Categoria do token",
-      categoriaPlaceholder: "Selecione",
+    title: "Minhas ofertas",
+    subtitle: "Crie e ative ofertas de captação da sua empresa.",
+    empty: "Nenhuma oferta cadastrada ainda.",
+    createTitle: "Nova oferta",
+    fields: {
+      offeringValue: "Valor da oferta (R$)",
+      additionalLot: "Lote adicional (%)",
+      minTarget: "Meta mínima (R$)",
+      deadlineDays: "Prazo (dias)",
+      valuePerShare: "Valor por cota (R$)",
+      category: "Categoria do token",
+      categoryPlaceholder: "Selecione",
     },
-    categoriaAviso:
+    categoryNotice:
       "Todas as categorias estão disponíveis nesta demonstração. O enquadramento regulatório real varia por categoria (Token Imobiliário, Agro e Títulos de dívida têm regras próprias na CVM) — só a captação sob a Resolução CVM 88 (PMEs) é o que este backend modela hoje.",
-    cotasPreview: (cotas: string) => `Resulta em ${cotas} cotas.`,
-    erros: {
-      obrigatorio: "Campo obrigatório.",
-      valorInvalido: "Use o formato 5.000.000,00.",
-      prazoInvalido: "Informe um prazo entre 1 e 180 dias.",
-      loteInvalido: "Informe um percentual entre 0 e 25.",
-      valorPorCotaInvalido: "Use o formato 5.000.000,00.",
-      valorPorCotaNaoDivide: "O valor da oferta precisa ser múltiplo do valor por cota.",
-      categoriaInvalida: "Selecione uma categoria.",
+    sharesPreview: (shares: string) => `Resulta em ${shares} cotas.`,
+    errors: {
+      required: "Campo obrigatório.",
+      invalidValue: "Use o formato 5.000.000,00.",
+      invalidDeadline: "Informe um prazo entre 1 e 180 dias.",
+      invalidLot: "Informe um percentual entre 0 e 25.",
+      invalidValuePerShare: "Use o formato 5.000.000,00.",
+      valuePerShareDoesNotDivide: "O valor da oferta precisa ser múltiplo do valor por cota.",
+      invalidCategory: "Selecione uma categoria.",
     },
-    criarBotao: "Criar oferta (rascunho)",
-    criandoBotao: "Criando…",
-    ativarAviso:
+    createButton: "Criar oferta (rascunho)",
+    creatingButton: "Criando…",
+    activateNotice:
       "Ativação de novas ofertas pausada nesta demonstração — a captação está migrando para rodar direto em Sepolia real, sem passar por este fluxo simulado.",
-    fecharBotao: "Fechar captação (simulado)",
-    fechandoBotao: "Fechando…",
-    fecharAviso:
+    closeButton: "Fechar captação (simulado)",
+    closingButton: "Fechando…",
+    closeNotice:
       "Na demonstração, dá para fechar a captação a qualquer momento. No produto real, o fechamento respeita o fim do prazo da oferta.",
     status: {
       draft: "Rascunho",
@@ -1347,132 +1347,132 @@ export const ptBr = {
       cancelled: "Cancelada",
     },
     card: {
-      criadaEm: "Criada em",
-      valor: "Valor da oferta",
-      teto: "Teto (com lote adicional)",
-      metaMinima: "Meta mínima",
-      pago: "Pago até agora",
-      janela: "Janela de captação",
-      valorPorCota: "Valor por cota",
-      numeroCotas: "Número de cotas",
-      categoria: "Categoria",
-      naoInformado: "Não informado",
+      createdOn: "Criada em",
+      value: "Valor da oferta",
+      cap: "Teto (com lote adicional)",
+      minTarget: "Meta mínima",
+      paid: "Pago até agora",
+      window: "Janela de captação",
+      valuePerShare: "Valor por cota",
+      shareCount: "Número de cotas",
+      category: "Categoria",
+      notProvided: "Não informado",
     },
-    resultado: {
+    result: {
       funded: "Meta atingida — tokens emitidos (simulado).",
       failed: "Meta não atingida — aportes reembolsados (simulado).",
-      tokensEmitidos: "Tokens emitidos (simulado)",
+      issuedTokens: "Tokens emitidos (simulado)",
       ref: "Referência (simulada)",
     },
-    publicarLink: "Publicar on-chain →",
+    publishLink: "Publicar on-chain →",
     onchainStatus: {
       pendente: {
-        titulo: "Publicação em andamento",
-        texto: "Transação assinada — aguardando confirmação on-chain.",
+        title: "Publicação em andamento",
+        text: "Transação assinada — aguardando confirmação on-chain.",
         link: "Ver status →",
       },
       confirmada: {
-        titulo: "Publicada on-chain",
-        contrato: "Contrato da oferta",
+        title: "Publicada on-chain",
+        contract: "Contrato da oferta",
         token: "Contrato do token",
-        verOferta: "Ver oferta pública →",
+        viewOffering: "Ver oferta pública →",
       },
       divergente: {
-        titulo: "Divergência encontrada na publicação",
-        texto: "A verificação encontrou uma inconsistência entre a transação e os dados desta oferta — revise antes de prosseguir.",
+        title: "Divergência encontrada na publicação",
+        text: "A verificação encontrou uma inconsistência entre a transação e os dados desta oferta — revise antes de prosseguir.",
         link: "Revisar →",
       },
     },
-    publicarOnChain: {
+    publishOnChain: {
       meta: {
         title: "Publicar on-chain",
         description: "Verificação de elegibilidade para publicar sua oferta em Sepolia.",
       },
-      voltar: "← Voltar para Minhas ofertas",
-      titulo: "Publicar on-chain",
-      subtitulo: "Confira o checklist, revise os dados que vão para a blockchain e assine com sua própria carteira.",
-      naoEncontrada: {
+      back: "← Voltar para Minhas ofertas",
+      title: "Publicar on-chain",
+      subtitle: "Confira o checklist, revise os dados que vão para a blockchain e assine com sua própria carteira.",
+      notFound: {
         title: "Oferta não encontrada",
         description: "Esta oferta não existe ou não pertence à sua conta.",
-        voltar: "Voltar para Minhas ofertas",
+        back: "Voltar para Minhas ofertas",
       },
-      naoElegivel: {
-        titulo: "Esta oferta não pode ser publicada agora",
-        texto: "Só ofertas em rascunho podem ser publicadas on-chain — esta já mudou de status.",
-        semValorPorCota: "Esta oferta não tem valor por cota definido — não é possível calcular a quantidade de cotas para publicar on-chain.",
-        limitesRes88: {
+      notEligible: {
+        title: "Esta oferta não pode ser publicada agora",
+        text: "Só ofertas em rascunho podem ser publicadas on-chain — esta já mudou de status.",
+        noValuePerShare: "Esta oferta não tem valor por cota definido — não é possível calcular a quantidade de cotas para publicar on-chain.",
+        res88Limits: {
           intro:
             "Esta oferta viola limites da Resolução CVM 88 gravados nela mesma — a chain sempre vai recusar a publicação, porque o contrato confere os mesmos limites de novo. Não adianta tentar publicar de novo: é preciso recriar a oferta em Minhas ofertas com valores válidos.",
-          teto: (valorTeto: string) => `Teto da oferta (${valorTeto}) ultrapassa o limite de R$15.000.000,00 da Resolução CVM 88.`,
-          loteAdicional: (valorBase: string, valorTeto: string, maximoPermitido: string) =>
-            `Teto da oferta (${valorTeto}) ultrapassa 25% do valor base (${valorBase}) — o máximo permitido seria ${maximoPermitido}, conforme a Resolução CVM 88.`,
-          prazo: (dias: number) => `Prazo de ${dias} dias ultrapassa o limite de 180 dias da Resolução CVM 88.`,
+          cap: (capValue: string) => `Teto da oferta (${capValue}) ultrapassa o limite de R$15.000.000,00 da Resolução CVM 88.`,
+          additionalLot: (baseValue: string, capValue: string, maxAllowed: string) =>
+            `Teto da oferta (${capValue}) ultrapassa 25% do valor base (${baseValue}) — o máximo permitido seria ${maxAllowed}, conforme a Resolução CVM 88.`,
+          deadline: (days: number) => `Prazo de ${days} dias ultrapassa o limite de 180 dias da Resolução CVM 88.`,
         },
       },
-      semCarteiraVinculada: {
-        titulo: "Nenhuma carteira vinculada à sua conta",
-        texto: "Antes de publicar, vá em Perfil e vincule a carteira MetaMask que vai assinar por esta empresa.",
+      noLinkedWallet: {
+        title: "Nenhuma carteira vinculada à sua conta",
+        text: "Antes de publicar, vá em Perfil e vincule a carteira MetaMask que vai assinar por esta empresa.",
         link: "Ir para Perfil →",
       },
       gates: {
-        titulo: "Checklist antes de assinar",
+        title: "Checklist antes de assinar",
         provider: {
           label: "Carteira MetaMask detectada",
-          reprovado: "Nenhuma carteira injetada foi detectada neste navegador — instale a MetaMask para continuar.",
+          rejected: "Nenhuma carteira injetada foi detectada neste navegador — instale a MetaMask para continuar.",
         },
-        rede: {
+        network: {
           label: "Conectado à rede Sepolia",
-          naoConectado: "Conecte sua carteira para checar a rede.",
-          redeErrada: (chainId: number) => `Conectado à rede ${chainId} — troque para Sepolia na MetaMask.`,
+          notConnected: "Conecte sua carteira para checar a rede.",
+          wrongNetwork: (chainId: number) => `Conectado à rede ${chainId} — troque para Sepolia na MetaMask.`,
         },
-        saldo: {
+        balance: {
           label: "Saldo de ETH suficiente para o gás",
-          carregando: "Consultando saldo e preço do gás em Sepolia…",
-          erro: "Não foi possível consultar o saldo ou o preço do gás agora — tente de novo em instantes.",
-          reprovado: (saldo: string, custo: string) =>
-            `Saldo de ${saldo} é insuficiente para o custo estimado de ${custo} de gás (estimativa com margem de segurança — o preço do gás em Sepolia já variou bastante numa mesma sessão).`,
-          ok: (saldo: string, custo: string) => `Saldo de ${saldo} — custo estimado de gás: ${custo}.`,
+          loading: "Consultando saldo e preço do gás em Sepolia…",
+          error: "Não foi possível consultar o saldo ou o preço do gás agora — tente de novo em instantes.",
+          rejected: (balance: string, cost: string) =>
+            `Saldo de ${balance} é insuficiente para o custo estimado de ${cost} de gás (estimativa com margem de segurança — o preço do gás em Sepolia já variou bastante numa mesma sessão).`,
+          ok: (balance: string, cost: string) => `Saldo de ${balance} — custo estimado de gás: ${cost}.`,
         },
-        autorizado: {
+        authorized: {
           label: "Carteira autorizada pela Niara para publicar (emissoresAutorizados)",
-          naoConectado: "Conecte sua carteira para checar a autorização.",
-          reprovado: "Esta carteira ainda não foi autorizada pela Niara a publicar ofertas — fale com a equipe.",
-          erro: "Não foi possível consultar a autorização on-chain agora — tente de novo em instantes.",
+          notConnected: "Conecte sua carteira para checar a autorização.",
+          rejected: "Esta carteira ainda não foi autorizada pela Niara a publicar ofertas — fale com a equipe.",
+          error: "Não foi possível consultar a autorização on-chain agora — tente de novo em instantes.",
         },
-        titularidade: {
+        ownership: {
           label: "Carteira conectada é a vinculada à sua conta",
-          semCarteiraVinculada: "Nenhuma carteira vinculada — veja o aviso acima.",
-          naoConectado: "Conecte sua carteira para comparar.",
-          diferente: (vinculada: string, conectada: string) =>
-            `A carteira vinculada à sua conta (${vinculada}) é diferente da conectada agora (${conectada}). Troque na MetaMask ou vincule a atual em Perfil.`,
+          noLinkedWallet: "Nenhuma carteira vinculada — veja o aviso acima.",
+          notConnected: "Conecte sua carteira para comparar.",
+          different: (linked: string, connected: string) =>
+            `A carteira vinculada à sua conta (${linked}) é diferente da conectada agora (${connected}). Troque na MetaMask ou vincule a atual em Perfil.`,
         },
-        termo: {
+        term: {
           label: "Termo de publicação aceito",
-          reprovado: "Preencha os dados do token e marque a caixa do termo abaixo antes de publicar.",
+          rejected: "Preencha os dados do token e marque a caixa do termo abaixo antes de publicar.",
         },
       },
-      botao: {
+      button: {
         label: "Publicar on-chain",
-        bloqueadoAria: "Publicação bloqueada",
-        pendencias: "Pendências antes de habilitar o botão:",
+        blockedAria: "Publicação bloqueada",
+        pendingItems: "Pendências antes de habilitar o botão:",
       },
-      formulario: {
-        titulo: "Dados que vão para a blockchain",
-        aviso: "Estes três campos ficam gravados para sempre no token ERC-20 criado em Sepolia — revise antes de assinar.",
-        nome: "Nome da oferta (ERC-20 “name”)",
-        simbolo: "Símbolo do token (ERC-20 “symbol”)",
-        serie: "Série",
-        erros: {
-          nomeObrigatorio: "Informe um nome.",
-          simboloObrigatorio: "Informe um símbolo.",
-          serieObrigatoria: "Informe uma série.",
+      form: {
+        title: "Dados que vão para a blockchain",
+        notice: "Estes três campos ficam gravados para sempre no token ERC-20 criado em Sepolia — revise antes de assinar.",
+        name: "Nome da oferta (ERC-20 “name”)",
+        symbol: "Símbolo do token (ERC-20 “symbol”)",
+        series: "Série",
+        errors: {
+          nameRequired: "Informe um nome.",
+          symbolRequired: "Informe um símbolo.",
+          seriesRequired: "Informe uma série.",
         },
       },
-      termoTexto: {
-        titulo: "Antes de publicar, leia com atenção",
+      termText: {
+        title: "Antes de publicar, leia com atenção",
         intro:
           "Você está prestes a assinar uma transação real na rede de teste Sepolia, usando sua própria carteira e pagando o próprio gás em ETH de teste. Diferente da conexão de carteira em Perfil (que só lê seu endereço e saldo), esta ação grava dados permanentes numa blockchain pública — a Niara não assina por você e não pode desfazer isso depois.",
-        itens: [
+        items: [
           "É uma rede de teste, sem valor real. Sepolia ETH e o MockBRL usado nesta demonstração não têm lastro nem valor financeiro nenhum. Nenhum dinheiro real muda de mãos aqui.",
           "O registro é público e permanente. O nome da sua empresa e os termos desta oferta (meta, prazo, valor por cota) ficarão gravados para sempre numa blockchain pública, visíveis a qualquer pessoa no Etherscan — inclusive depois de você excluir sua conta na Niara PMEs. Seu CNPJ não é gravado em texto — só um hash (bytes32) dele, que não pode ser revertido para o número original a partir da chain.",
           "Você paga o próprio gás. A transação custa ETH de teste da sua carteira — a Niara não cobre, não reembolsa e não patrocina essa taxa.",
@@ -1481,107 +1481,107 @@ export const ptBr = {
         ],
         checkbox: "Li e entendi os pontos acima, e quero prosseguir com a publicação em Sepolia.",
       },
-      publicacao: {
-        assinando: "Aguardando sua assinatura na MetaMask…",
-        registrando: "Assinatura recebida — registrando a tentativa…",
-        confirmando: "Transação enviada — aguardando confirmação em Sepolia…",
-        pendenteTitulo: "Ainda não publicada",
-        pendenteTexto:
+      publication: {
+        signing: "Aguardando sua assinatura na MetaMask…",
+        registering: "Assinatura recebida — registrando a tentativa…",
+        confirming: "Transação enviada — aguardando confirmação em Sepolia…",
+        pendingTitle: "Ainda não publicada",
+        pendingText:
           "Sua transação foi enviada mas ainda não confirmou. Isto NÃO significa que a oferta já está publicada — volte aqui em instantes para conferir. Acompanhe direto no Etherscan:",
-        verNoEtherscan: "Ver no Etherscan →",
-        confirmadaTitulo: "Publicada em Sepolia",
-        confirmadaTexto: "Sua oferta foi confirmada on-chain. Endereços do contrato:",
+        viewOnEtherscan: "Ver no Etherscan →",
+        confirmedTitle: "Publicada em Sepolia",
+        confirmedText: "Sua oferta foi confirmada on-chain. Endereços do contrato:",
         contractLabel: "Oferta (escrow)",
         tokenLabel: "Token (cotas)",
-        revertidaTitulo: "A transação reverteu",
-        divergenteTitulo: "Divergência detectada",
-        divergenteTexto: "A leitura da chain não bateu com o esperado nesta verificação — reveja o motivo abaixo antes de reprocessar. Isto não cria uma transação nova, só reconfere a mesma transação já enviada.",
-        reprocessar: "Reprocessar",
-        reprocessarNota: "Reconfere a mesma transação (não assina nada de novo) — use depois de entender por que divergiu.",
-        verificarNovamente: "Verificar novamente",
-        divergenteConsistenciaTexto:
+        revertedTitle: "A transação reverteu",
+        divergentTitle: "Divergência detectada",
+        divergentText: "A leitura da chain não bateu com o esperado nesta verificação — reveja o motivo abaixo antes de reprocessar. Isto não cria uma transação nova, só reconfere a mesma transação já enviada.",
+        reprocess: "Reprocessar",
+        reprocessNote: "Reconfere a mesma transação (não assina nada de novo) — use depois de entender por que divergiu.",
+        verifyAgain: "Verificar novamente",
+        divergentConsistencyText:
           "Os dados desta oferta no Supabase mudaram depois da publicação e não batem mais com os valores imutáveis já gravados no contrato — reveja o motivo abaixo. A chain nunca muda; a correção, se houver, é sempre no Supabase.",
-        verificarConsistencia: "Verificar consistência",
-        verificarConsistenciaNota:
+        verifyConsistency: "Verificar consistência",
+        verifyConsistencyNote:
           "Relê os valores do contrato (metaMinima/metaMaxima/precoPorCota/prazo) e compara com esta oferta no Supabase agora — não corrige nenhum dos dois lados, só sinaliza.",
       },
     },
   },
-  investir: {
+  invest: {
     meta: {
       title: "Investir",
       description: "Vitrine de ofertas reais de captação abertas na Niara PMEs.",
     },
-    titulo: "Investir",
-    subtitulo: "Ofertas reais de captação, abertas agora, de empresas cadastradas na plataforma.",
-    avisoReal:
+    title: "Investir",
+    subtitle: "Ofertas reais de captação, abertas agora, de empresas cadastradas na plataforma.",
+    realNotice:
       "Estas são ofertas reais registradas no sistema — diferente das vitrines de demonstração em /negociar e /ativos. Reservar um aporte aqui grava no banco de verdade.",
     linkOnChain: {
-      texto: "Procurando a demonstração com blockchain de verdade?",
+      text: "Procurando a demonstração com blockchain de verdade?",
       link: "Investir na testnet Sepolia (transações reais)",
     },
-    vazio: "Nenhuma oferta aberta para reserva no momento.",
+    empty: "Nenhuma oferta aberta para reserva no momento.",
     card: {
-      statusAtiva: "Ativa",
-      metaMinima: "Meta mínima",
-      teto: "Teto da oferta",
-      jaReservado: "Já reservado/pago",
-      janela: "Janela de captação",
-      verOferta: "Ver oferta →",
+      statusActive: "Ativa",
+      minTarget: "Meta mínima",
+      cap: "Teto da oferta",
+      alreadyReserved: "Já reservado/pago",
+      window: "Janela de captação",
+      viewOffering: "Ver oferta →",
     },
     form: {
-      titulo: "Reservar aporte",
-      fecharAria: "Fechar",
-      campoValor: "Valor do aporte (R$)",
-      confirmarBotao: "Reservar (grava no banco)",
-      confirmandoBotao: "Reservando…",
-      cancelarBotao: "Cancelar",
-      erroValorInvalido: "Use o formato 1.000,00.",
-      sucesso: "Reserva registrada. Ela aparece em \"Minhas reservas\" abaixo.",
+      title: "Reservar aporte",
+      closeAria: "Fechar",
+      fieldValue: "Valor do aporte (R$)",
+      confirmButton: "Reservar (grava no banco)",
+      confirmingButton: "Reservando…",
+      cancelButton: "Cancelar",
+      invalidValueError: "Use o formato 1.000,00.",
+      success: "Reserva registrada. Ela aparece em \"Minhas reservas\" abaixo.",
     },
-    detalhe: {
-      voltar: "‹ Voltar para ofertas",
-      reservarBotao: "Reservar aporte",
-      dono: {
-        aviso:
+    detail: {
+      back: "‹ Voltar para ofertas",
+      reserveButton: "Reservar aporte",
+      owner: {
+        notice:
           "Esta é a sua oferta — o emissor não pode investir na própria captação. Acompanhe o andamento em",
         link: "Minhas ofertas",
       },
-      naoEncontrada: {
+      notFound: {
         title: "Oferta não encontrada",
         description: "Esta oferta não existe, não está mais ativa para reserva, ou foi removida.",
-        voltar: "‹ Voltar para ofertas",
+        back: "‹ Voltar para ofertas",
       },
-      dadosPublicos: {
+      publicData: {
         title: "Dados públicos da empresa",
-        razaoSocial: "Razão social",
-        nomeFantasia: "Nome fantasia",
+        legalName: "Razão social",
+        tradeName: "Nome fantasia",
         cnpj: "CNPJ",
-        cnpjNaoPublicado: "Não divulgado pela empresa",
-        setor: "Setor",
-        localizacao: "Localização",
-        naoInformado: "Não informado",
-        resumo: "Resumo do negócio",
+        cnpjNotPublished: "Não divulgado pela empresa",
+        sector: "Setor",
+        location: "Localização",
+        notProvided: "Não informado",
+        summary: "Resumo do negócio",
       },
-      termos: {
+      terms: {
         title: "Termos da oferta",
-        categoria: "Categoria",
-        metaMinima: "Meta mínima",
-        teto: "Teto (com lote adicional)",
-        jaReservado: "Já reservado/pago",
-        valorPorCota: "Valor por cota",
-        numeroCotas: "Número de cotas",
-        janela: "Janela de captação",
-        naoInformado: "Não informado",
-        nota: "Qualquer estimativa de rendimento é ilustrativa e não constitui promessa de retorno.",
+        category: "Categoria",
+        minTarget: "Meta mínima",
+        cap: "Teto (com lote adicional)",
+        alreadyReserved: "Já reservado/pago",
+        valuePerShare: "Valor por cota",
+        shareCount: "Número de cotas",
+        window: "Janela de captação",
+        notProvided: "Não informado",
+        note: "Qualquer estimativa de rendimento é ilustrativa e não constitui promessa de retorno.",
       },
-      documentos: {
+      documents: {
         title: "Documentos",
-        emBreve: "Em breve",
+        comingSoon: "Em breve",
       },
-      riscos: {
+      risks: {
         title: "Riscos e avisos",
-        itens: [
+        items: [
           "Investir em valores mobiliários envolve risco de perda, inclusive total, do capital investido.",
           "Nenhuma rentabilidade é prometida ou garantida; qualquer estimativa é meramente ilustrativa.",
           "Esta oferta é real (gravada no banco), mas a plataforma ainda opera em ambiente de demonstração — o enquadramento regulatório completo (autorização da CVM, Resolução CVM 88) depende de validação jurídica antes de qualquer captação pública ao mercado em geral.",
@@ -1589,90 +1589,90 @@ export const ptBr = {
         ],
       },
     },
-    minhasReservas: {
-      titulo: "Minhas reservas",
-      avisoSimulado:
+    myReservations: {
+      title: "Minhas reservas",
+      simulatedNotice:
         "Pagamento e verificação de identidade (KYC) desta seção são simulados — nenhum valor real é movimentado.",
-      vazio: "Você ainda não reservou nenhum aporte.",
-      reservadoEm: "Reservado em",
+      empty: "Você ainda não reservou nenhum aporte.",
+      reservedOn: "Reservado em",
       status: "Reservado — aguardando pagamento",
-      confirmarBotao: "Confirmar pagamento (simulado)",
-      confirmandoBotao: "Confirmando…",
-      pagoStatus: "Pago (simulado)",
+      confirmButton: "Confirmar pagamento (simulado)",
+      confirmingButton: "Confirmando…",
+      paidStatus: "Pago (simulado)",
       refLabel: "Referência (simulada)",
-      kycAviso:
+      kycNotice:
         "Seu KYC (demonstração) ainda não foi aprovado — é preciso aprová-lo antes de confirmar o pagamento.",
-      kycBotao: "Fazer KYC (demonstração)",
-      kycEnviando: "Enviando…",
+      kycButton: "Fazer KYC (demonstração)",
+      kycSending: "Enviando…",
     },
   },
-  investirOnChain: {
+  investOnChain: {
     meta: {
       title: "Investir — on-chain real (Sepolia e Solana)",
       description: "Fluxo de investimento com transações reais assinadas na testnet Sepolia e na Solana Devnet.",
     },
-    titulo: "Investimento real — testnet Sepolia",
-    subtitulo:
+    title: "Investimento real — testnet Sepolia",
+    subtitle:
       "Esta tela executa transações de verdade em Sepolia: MockBRL não tem valor nenhum, mas as assinaturas, os hashes e o estado do contrato são reais on-chain — diferente do restante da plataforma, que é demonstração/mock.",
-    avisoReal:
+    realNotice:
       "Real na testnet Sepolia. Nenhum valor de mercado está envolvido (MockBRL é um mock de teste, sem lastro), mas cada transação abaixo é assinada e confirmada de verdade na rede — não é uma simulação de produto.",
-    requisitos: {
+    requirements: {
       title: "Antes de começar",
-      itens: [
+      items: [
         "MetaMask instalada, conectada e na rede Sepolia.",
         "Sepolia ETH na carteira para pagar o gas de cada transação — obtenha num faucet público de Sepolia.",
         "MockBRL de teste — pode ser obtido abaixo, direto pela carteira conectada.",
       ],
     },
-    contratoNaoConfigurado:
+    contractNotConfigured:
       "Esta oferta ainda não foi configurada neste ambiente (endereços de contrato ausentes). É preciso rodar o script administrativo que cria a oferta em Sepolia e preencher o .env.local com os endereços gerados.",
-    semCarteira: "Conecte sua carteira para ver seu saldo, sua posição e investir nesta oferta.",
-    seletorOferta: {
+    noWallet: "Conecte sua carteira para ver seu saldo, sua posição e investir nesta oferta.",
+    offeringSelector: {
       label: "Oferta de demonstração (várias disponíveis, em Sepolia e na Solana Devnet — escolha uma antes de investir)",
-      opcao: "Oferta",
-      proveniencia: {
-        legado: "Empresa fictícia de demonstração",
+      option: "Oferta",
+      provenance: {
+        legacy: "Empresa fictícia de demonstração",
         selfService: "Dados informados pelo próprio emissor (demonstração)",
       },
     },
     faucet: {
       title: "1. Obter MockBRL de teste",
-      descricao:
+      description:
         "MockBRL é um mock de teste — sem lastro, sem valor, mint público e irrestrito. Qualquer carteira pode cunhar saldo para si mesma, sem depender de uma carteira administrativa.",
-      saldoLabel: "Seu saldo de MockBRL",
-      quantidadeLabel: "Quantidade a mintar",
-      botao: "Mintar MockBRL",
-      assinando: "Aguardando assinatura…",
-      confirmando: "Confirmando na rede…",
-      sucesso: "MockBRL mintado com sucesso.",
+      balanceLabel: "Seu saldo de MockBRL",
+      quantityLabel: "Quantidade a mintar",
+      button: "Mintar MockBRL",
+      signing: "Aguardando assinatura…",
+      confirming: "Confirmando na rede…",
+      success: "MockBRL mintado com sucesso.",
     },
-    termos: {
+    terms: {
       title: "2. Termos da oferta (lidos direto do contrato)",
-      estadoLabel: "Estado",
-      estados: {
+      stateLabel: "Estado",
+      states: {
         Aberta: "Aberta",
         EncerradaSucesso: "Encerrada — sucesso",
         EncerradaFalha: "Encerrada — fracasso",
       },
-      totalArrecadado: "Total arrecadado",
-      metaMinima: "Meta mínima",
-      metaMaxima: "Meta máxima",
-      precoPorCota: "Preço por cota",
-      prazo: "Prazo",
-      tetoPorInvestidor: "Teto por investidor (nesta oferta)",
-      nota: "O teto por investidor aqui é só o limite desta oferta específica — não substitui o teto anual entre plataformas da Resolução CVM 88, que é off-chain e auto-declaratório.",
-      taxaLabel: "Taxa da plataforma",
-      taxaComTaxa: (pct: string) =>
+      totalRaised: "Total arrecadado",
+      minTarget: "Meta mínima",
+      maxTarget: "Meta máxima",
+      pricePerShare: "Preço por cota",
+      deadline: "Prazo",
+      capPerInvestor: "Teto por investidor (nesta oferta)",
+      note: "O teto por investidor aqui é só o limite desta oferta específica — não substitui o teto anual entre plataformas da Resolução CVM 88, que é off-chain e auto-declaratório.",
+      feeLabel: "Taxa da plataforma",
+      feeWithFee: (pct: string) =>
         `${pct}% — retida do valor repassado ao emissor quando a captação fecha com sucesso (ver seção "Liberar recursos" abaixo). Não é descontada da quantidade de cotas que você recebe.`,
-      taxaSemTaxa: "Sem taxa nesta oferta (taxaBps = 0, lido direto do contrato).",
+      feeWithoutFee: "Sem taxa nesta oferta (taxaBps = 0, lido direto do contrato).",
     },
-    investir: {
+    invest: {
       title: "3. Investir",
-      quantidadeLabel: "Quantidade de cotas",
-      valorLabel: "Valor a aportar",
-      allowanceNota:
+      quantityLabel: "Quantidade de cotas",
+      valueLabel: "Valor a aportar",
+      allowanceNote:
         "Se sua autorização (allowance) de MockBRL for insuficiente, você vai assinar uma aprovação antes do aporte — só quando necessário.",
-      botao: "Investir",
+      button: "Investir",
       status: {
         idle: "",
         "verificando-allowance": "Verificando autorização de MockBRL…",
@@ -1681,194 +1681,194 @@ export const ptBr = {
         "simulando-aportar": "Conferindo se o aporte seria aceito antes de pedir sua assinatura…",
         "assinando-aportar": "Aguardando assinatura do aporte…",
         "confirmando-aportar": "Confirmando aporte na rede…",
-        sucesso: "Aporte confirmado on-chain.",
-        erro: "Não foi possível concluir o aporte.",
+        success: "Aporte confirmado on-chain.",
+        error: "Não foi possível concluir o aporte.",
       },
-      ofertaEncerradaSucesso: "Esta oferta já foi encerrada com sucesso — não é mais possível investir. Se você aportou, resgate suas cotas abaixo.",
-      ofertaEncerradaFalha: "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir.",
-      carregando: "Carregando os dados desta oferta e a sua posição — aguarde antes de investir.",
-      erroLeitura: (motivo: string) =>
-        `Não foi possível confirmar os dados desta oferta agora (${motivo}) — investir fica bloqueado até a leitura funcionar, para nunca decidir com um valor não confirmado.`,
+      offeringClosedSuccess: "Esta oferta já foi encerrada com sucesso — não é mais possível investir. Se você aportou, resgate suas cotas abaixo.",
+      offeringClosedFailure: "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir.",
+      loading: "Carregando os dados desta oferta e a sua posição — aguarde antes de investir.",
+      readError: (reason: string) =>
+        `Não foi possível confirmar os dados desta oferta agora (${reason}) — investir fica bloqueado até a leitura funcionar, para nunca decidir com um valor não confirmado.`,
     },
-    posicao: {
+    position: {
       title: "Sua posição nesta oferta",
-      aportado: "Você já aportou",
-      elegivelParaResgate: "Cotas a resgatar",
-      jaResgatou: "Cotas já resgatadas para esta carteira",
-      saldoParticipacao: "Seu saldo de participação (on-chain)",
+      invested: "Você já aportou",
+      eligibleForRedemption: "Cotas a resgatar",
+      alreadyRedeemed: "Cotas já resgatadas para esta carteira",
+      participationBalance: "Seu saldo de participação (on-chain)",
     },
-    encerrar: {
+    close: {
       title: "4. Encerrar a oferta",
-      descricao:
+      description:
         "O contrato em si é permissionless — qualquer carteira poderia encerrar diretamente na rede assim que o prazo terminar ou o total arrecadado atingir a meta máxima exatamente. Essa regra é proposital: nenhum investidor fica refém da plataforma ou da empresa emissora para recuperar o aporte numa captação que não fechou. Nesta interface, por enquanto, o botão abaixo fica disponível para a equipe Niara e para a própria empresa emissora desta oferta.",
-      restrito:
+      restricted:
         "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara e para a empresa emissora desta oferta. Qualquer outra carteira pode encerrar do mesmo jeito, diretamente na rede.",
-      botao: "Encerrar oferta",
-      assinando: "Aguardando assinatura…",
-      confirmando: "Confirmando na rede…",
-      sucesso: "Oferta encerrada on-chain.",
+      button: "Encerrar oferta",
+      signing: "Aguardando assinatura…",
+      confirming: "Confirmando na rede…",
+      success: "Oferta encerrada on-chain.",
     },
-    resgatar: {
+    redeem: {
       title: "5. Resgatar cotas",
-      descricao:
+      description:
         "Depois do encerramento com sucesso, resgate (pull, uma vez) as cotas proporcionais ao seu aporte.",
-      botao: "Resgatar cotas",
-      assinando: "Aguardando assinatura…",
-      confirmando: "Confirmando na rede…",
-      sucesso: "Cotas resgatadas — confira o saldo de participação acima.",
+      button: "Resgatar cotas",
+      signing: "Aguardando assinatura…",
+      confirming: "Confirmando na rede…",
+      success: "Cotas resgatadas — confira o saldo de participação acima.",
     },
-    liberar: {
+    release: {
       title: "6. Liberar recursos ao emissor",
-      descricao:
+      description:
         "Transfere (pull, uma vez, permissionless no contrato) o valor arrecadado ao emissor e, se esta oferta tiver taxaBps > 0, a taxa da plataforma ao protocoloWallet. Sem esta chamada o dinheiro fica retido no escrow para sempre. Nesta interface, por enquanto, o botão abaixo fica disponível só para a equipe Niara.",
-      restrito: "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara.",
-      previa: (valorEmissor: string, taxa: string) => `Ao liberar agora: ${valorEmissor} ao emissor, ${taxa} de taxa ao protocolo.`,
-      jaLiberado: "Recursos já liberados para esta oferta.",
-      botao: "Liberar recursos",
-      assinando: "Aguardando assinatura…",
-      confirmando: "Confirmando na rede…",
-      sucesso: "Recursos liberados on-chain — confira a transação no Etherscan.",
+      restricted: "Bloqueado nesta interface por enquanto — disponível só para a equipe Niara.",
+      preview: (issuerValue: string, fee: string) => `Ao liberar agora: ${issuerValue} ao emissor, ${fee} de taxa ao protocolo.`,
+      alreadyReleased: "Recursos já liberados para esta oferta.",
+      button: "Liberar recursos",
+      signing: "Aguardando assinatura…",
+      confirming: "Confirmando na rede…",
+      success: "Recursos liberados on-chain — confira a transação no Etherscan.",
     },
-    erros: {
-      redeErrada: "Troque para a rede Sepolia para continuar.",
+    errors: {
+      wrongNetwork: "Troque para a rede Sepolia para continuar.",
     },
   },
   solana: {
-    redeNome: "Solana Devnet",
-    redeSepolia: "Ethereum Sepolia",
-    carteira: {
-      naoDetectada: "Nenhuma carteira Solana detectada neste navegador.",
-      instalarPhantom: "Instalar a Phantom",
-      conectar: "Conectar Phantom",
-      conectando: "Conectando…",
-      conexaoRejeitada: "Conexão recusada na carteira.",
-      copiarEndereco: "Copiar endereço",
-      desconectar: "Desconectar",
-      rede: "Solana Devnet",
-      saldoSol: (sol: string) => `Saldo de SOL de teste (taxas da rede): ${sol} SOL.`,
+    networkName: "Solana Devnet",
+    sepoliaNetwork: "Ethereum Sepolia",
+    wallet: {
+      notDetected: "Nenhuma carteira Solana detectada neste navegador.",
+      installPhantom: "Instalar a Phantom",
+      connect: "Conectar Phantom",
+      connecting: "Conectando…",
+      connectionRejected: "Conexão recusada na carteira.",
+      copyAddress: "Copiar endereço",
+      disconnect: "Desconectar",
+      network: "Solana Devnet",
+      solBalance: (sol: string) => `Saldo de SOL de teste (taxas da rede): ${sol} SOL.`,
       faucetSol: "Obter SOL de teste (faucet.solana.com)",
-      notaRede:
+      networkNote:
         "A carteira só assina: o site envia a transação pela devnet da Solana, independentemente da rede selecionada na Phantom.",
     },
-    investir: {
-      avisoReal:
+    invest: {
+      realNotice:
         "Real na Solana Devnet. Nenhum valor de mercado está envolvido (MockBRL é um token de teste, sem lastro), mas cada transação abaixo é assinada e confirmada de verdade na rede, pelo programa niara-pmes-solana — não é uma simulação de produto.",
-      requisitos: [
+      requirements: [
         "Phantom (ou outra carteira Solana compatível) instalada e conectada.",
         "Um pouco de SOL de teste para as taxas da rede e o aluguel das contas — obtenha em faucet.solana.com (devnet).",
         "MockBRL de teste — pode ser obtido abaixo, direto pela carteira conectada.",
       ],
-      termosTitulo: "2. Termos da oferta (lidos direto do programa)",
-      ofertaInexistente:
+      termsTitle: "2. Termos da oferta (lidos direto do programa)",
+      nonexistentOffering:
         "Esta oferta não existe no programa niara-pmes-solana desta rede — confira se o programa já foi publicado na devnet.",
-      semCarteira: "Conecte sua carteira Solana para ver seu saldo, sua posição e investir nesta oferta.",
-      contaOferta: "Conta da oferta (programa niara-pmes-solana)",
-      semTaxa: "Sem taxa nesta oferta (taxa_bps = 0, lido direto do programa).",
-      pausada: "pausada pela plataforma",
-      pausadaTexto: "Esta oferta está pausada pela plataforma — aportes bloqueados por enquanto.",
+      noWallet: "Conecte sua carteira Solana para ver seu saldo, sua posição e investir nesta oferta.",
+      offeringAccount: "Conta da oferta (programa niara-pmes-solana)",
+      noFee: "Sem taxa nesta oferta (taxa_bps = 0, lido direto do programa).",
+      paused: "pausada pela plataforma",
+      pausedText: "Esta oferta está pausada pela plataforma — aportes bloqueados por enquanto.",
       faucet: {
-        titulo: "1. Obter MockBRL de teste",
-        descricao:
+        title: "1. Obter MockBRL de teste",
+        description:
           "MockBRL na Solana é um token SPL de teste, sem lastro e sem valor. O faucet do próprio programa cunha até 1.000.000 mBRL por chamada para a carteira que assina.",
       },
-      semApprove:
+      noApprove:
         "Na Solana não existe aprovação (approve) separada: o aporte é uma única transação, assinada por você, que transfere o MockBRL direto para o escrow da oferta.",
-      quantidadeInvalida: "Informe uma quantidade de cotas válida.",
-      excedeCapacidade: (restante: string) => `Esse valor ultrapassa a capacidade restante da oferta (${restante}).`,
-      excedeTeto: (restante: string) =>
-        `Esse valor ultrapassa o teto por investidor (${restante} restantes) — só passa se esta carteira estiver marcada como investidor qualificado no programa.`,
-      saldoInsuficiente: "Saldo de MockBRL insuficiente — use o faucet acima.",
-      prazoEncerrado: "O prazo desta oferta já terminou — não aceita mais aportes. Ela pode ser encerrada.",
-      ofertaEncerradaFalha:
+      invalidQuantity: "Informe uma quantidade de cotas válida.",
+      exceedsCapacity: (remaining: string) => `Esse valor ultrapassa a capacidade restante da oferta (${remaining}).`,
+      exceedsCap: (remaining: string) =>
+        `Esse valor ultrapassa o teto por investidor (${remaining} restantes) — só passa se esta carteira estiver marcada como investidor qualificado no programa.`,
+      insufficientBalance: "Saldo de MockBRL insuficiente — use o faucet acima.",
+      deadlinePassed: "O prazo desta oferta já terminou — não aceita mais aportes. Ela pode ser encerrada.",
+      offeringClosedFailure:
         "Esta oferta foi encerrada sem atingir a meta mínima — não é mais possível investir. Se você aportou, peça o reembolso abaixo.",
-      reembolsadoLabel: "Aporte reembolsado",
-      cotasCongeladas:
+      refundedLabel: "Aporte reembolsado",
+      sharesFrozen:
         "Suas cotas ficam numa conta de token congelada pelo programa: aparecem na sua carteira, mas não podem ser transferidas (ainda não há mercado secundário).",
-      encerrarDescricao:
+      closeDescription:
         "No programa, encerrar é permissionless: qualquer carteira pode encerrar assim que o prazo terminar ou o total arrecadado atingir exatamente a meta máxima — nenhum investidor fica refém da plataforma. Nesta interface, por enquanto, o botão fica disponível para a equipe Niara e para a própria empresa emissora.",
-      encerrarAindaNao: "Ainda não é possível encerrar: o prazo não terminou e a meta máxima não foi atingida.",
-      resgatarDescricao: (cotas: string, simbolo: string) =>
-        `A captação fechou com sucesso. Resgate (uma vez) as ${cotas} cotas ${simbolo} correspondentes ao seu aporte.`,
-      reembolso: {
-        titulo: "Reembolso",
-        descricao: (valor: string) =>
-          `A captação não atingiu a meta mínima. O escrow devolve exatamente o que você aportou: ${valor}.`,
-        botao: "Pedir reembolso",
-        sucesso: "Reembolso confirmado on-chain.",
+      closeNotYet: "Ainda não é possível encerrar: o prazo não terminou e a meta máxima não foi atingida.",
+      redeemDescription: (shares: string, symbol: string) =>
+        `A captação fechou com sucesso. Resgate (uma vez) as ${shares} cotas ${symbol} correspondentes ao seu aporte.`,
+      refund: {
+        title: "Reembolso",
+        description: (value: string) =>
+          `A captação não atingiu a meta mínima. O escrow devolve exatamente o que você aportou: ${value}.`,
+        button: "Pedir reembolso",
+        success: "Reembolso confirmado on-chain.",
       },
-      liberarDescricao:
+      releaseDescription:
         "Transfere (uma vez, permissionless no programa) o valor arrecadado ao emissor, menos a taxa da plataforma, que vai para a carteira do protocolo. Sem esta instrução o dinheiro fica retido no escrow. Nesta interface, por enquanto, o botão fica disponível só para a equipe Niara.",
-      liberarSucesso: "Recursos liberados on-chain.",
-      assinando: "Aguardando assinatura na Phantom…",
-      confirmando: "Confirmando na rede…",
-      verNoExplorer: "ver no Solana Explorer",
+      releaseSuccess: "Recursos liberados on-chain.",
+      signing: "Aguardando assinatura na Phantom…",
+      confirming: "Confirmando na rede…",
+      viewOnExplorer: "ver no Solana Explorer",
     },
-    publicar: {
-      escolhaRede: {
-        titulo: "Em qual rede publicar?",
-        texto:
+    publish: {
+      networkChoice: {
+        title: "Em qual rede publicar?",
+        text:
           "A mesma oferta pode ser publicada na Ethereum Sepolia (MetaMask) ou na Solana Devnet (Phantom) — as regras da Res. CVM 88 são conferidas de novo pelo contrato/programa nas duas. Escolha uma: depois de publicada, a rede da oferta não muda.",
         sepolia: "Ethereum Sepolia",
         solana: "Solana Devnet",
       },
-      subtitulo:
+      subtitle:
         "Confira o checklist, revise os dados que vão para a Solana Devnet e assine com a sua própria carteira Phantom.",
       banner: "publicação real na Solana Devnet. Rede de teste sem valor real; leia o termo antes de assinar.",
-      semCarteiraVinculada: {
-        titulo: "Nenhuma carteira Solana vinculada à sua conta",
-        texto: "Antes de publicar, vá em Perfil e vincule a carteira Phantom que vai assinar por esta empresa.",
+      noLinkedWallet: {
+        title: "Nenhuma carteira Solana vinculada à sua conta",
+        text: "Antes de publicar, vá em Perfil e vincule a carteira Phantom que vai assinar por esta empresa.",
         link: "Ir para Perfil →",
       },
       gates: {
         provider: {
           label: "Carteira Phantom detectada",
-          reprovado: "Nenhuma carteira Solana foi detectada neste navegador — instale a Phantom para continuar.",
+          rejected: "Nenhuma carteira Solana foi detectada neste navegador — instale a Phantom para continuar.",
         },
-        conexao: {
+        connection: {
           label: "Phantom conectada",
-          reprovado: "Conecte a Phantom acima.",
+          rejected: "Conecte a Phantom acima.",
         },
-        saldo: {
+        balance: {
           label: "Saldo de SOL suficiente para o aluguel das contas e a taxa",
-          carregando: "Consultando saldo e custo na Solana Devnet…",
-          erro: "Não foi possível consultar o saldo agora — tente de novo em instantes.",
-          reprovado: (saldo: string, custo: string) =>
-            `Saldo de ${saldo} SOL é insuficiente para o custo estimado de ${custo} SOL (aluguel da conta da oferta, do mint de cotas e do escrow, mais a taxa, com margem). Obtenha SOL de teste em faucet.solana.com.`,
-          ok: (saldo: string, custo: string) => `Saldo de ${saldo} SOL — custo estimado: ${custo} SOL (aluguel das contas + taxa).`,
+          loading: "Consultando saldo e custo na Solana Devnet…",
+          error: "Não foi possível consultar o saldo agora — tente de novo em instantes.",
+          rejected: (balance: string, cost: string) =>
+            `Saldo de ${balance} SOL é insuficiente para o custo estimado de ${cost} SOL (aluguel da conta da oferta, do mint de cotas e do escrow, mais a taxa, com margem). Obtenha SOL de teste em faucet.solana.com.`,
+          ok: (balance: string, cost: string) => `Saldo de ${balance} SOL — custo estimado: ${cost} SOL (aluguel das contas + taxa).`,
         },
-        autorizado: {
+        authorized: {
           label: "Carteira autorizada pela Niara no programa niara-pmes-solana",
-          naoConectado: "Conecte a Phantom para checar a autorização.",
-          reprovado: "Esta carteira ainda não foi autorizada pela Niara a publicar ofertas na Solana — fale com a equipe.",
-          ofertaAberta: "Esta carteira já tem uma oferta aberta no programa — encerre-a antes de publicar outra.",
-          erro: "Não foi possível consultar a autorização on-chain agora — tente de novo em instantes.",
+          notConnected: "Conecte a Phantom para checar a autorização.",
+          rejected: "Esta carteira ainda não foi autorizada pela Niara a publicar ofertas na Solana — fale com a equipe.",
+          openOffering: "Esta carteira já tem uma oferta aberta no programa — encerre-a antes de publicar outra.",
+          error: "Não foi possível consultar a autorização on-chain agora — tente de novo em instantes.",
         },
-        titularidade: {
+        ownership: {
           label: "Carteira conectada é a carteira Solana vinculada à sua conta",
-          semCarteiraVinculada: "Nenhuma carteira Solana vinculada — veja o aviso acima.",
-          naoConectado: "Conecte a Phantom para comparar.",
-          diferente: (vinculada: string, conectada: string) =>
-            `A carteira Solana vinculada à sua conta (${vinculada}) é diferente da conectada agora (${conectada}). Troque de conta na Phantom ou vincule a atual em Perfil.`,
+          noLinkedWallet: "Nenhuma carteira Solana vinculada — veja o aviso acima.",
+          notConnected: "Conecte a Phantom para comparar.",
+          different: (linked: string, connected: string) =>
+            `A carteira Solana vinculada à sua conta (${linked}) é diferente da conectada agora (${connected}). Troque de conta na Phantom ou vincule a atual em Perfil.`,
         },
-        termo: {
+        term: {
           label: "Termo de publicação aceito",
-          reprovado: "Preencha os dados do token e marque a caixa do termo abaixo antes de publicar.",
-          limites: "Nome até 64 bytes, símbolo até 10 e série até 16 (limites do programa).",
+          rejected: "Preencha os dados do token e marque a caixa do termo abaixo antes de publicar.",
+          limits: "Nome até 64 bytes, símbolo até 10 e série até 16 (limites do programa).",
         },
       },
-      formulario: {
-        titulo: "Dados que vão para a blockchain",
-        aviso:
+      form: {
+        title: "Dados que vão para a blockchain",
+        notice:
           "Estes três campos ficam gravados para sempre na conta da oferta criada pelo programa niara-pmes-solana — revise antes de assinar.",
-        nome: "Nome da oferta",
-        simbolo: "Símbolo das cotas",
-        serie: "Série",
+        name: "Nome da oferta",
+        symbol: "Símbolo das cotas",
+        series: "Série",
       },
-      termoTexto: {
-        titulo: "Antes de publicar, leia com atenção",
+      termText: {
+        title: "Antes de publicar, leia com atenção",
         intro:
           "Você está prestes a assinar uma transação real na Solana Devnet, rede de teste, usando a sua própria carteira Phantom e pagando com SOL de teste o aluguel das contas criadas. Esta ação grava dados permanentes numa blockchain pública — a Niara não assina por você e não pode desfazer isso depois.",
-        itens: [
+        items: [
           "É uma rede de teste, sem valor real. SOL de devnet e o MockBRL usado nesta demonstração não têm lastro nem valor financeiro nenhum. Nenhum dinheiro real muda de mãos aqui.",
           "O registro é público e permanente. O nome da sua empresa e os termos desta oferta (meta, prazo, valor por cota) ficarão gravados numa blockchain pública, visíveis a qualquer pessoa no Solana Explorer — inclusive depois de você excluir sua conta na Niara PMEs. Seu CNPJ não é gravado em texto — só um hash dele, que não pode ser revertido para o número original.",
           "Você paga o próprio custo. A transação usa SOL de teste da sua carteira para o aluguel das contas e a taxa — a Niara não cobre nem reembolsa.",
@@ -1877,67 +1877,67 @@ export const ptBr = {
         ],
         checkbox: "Li e entendi os pontos acima, e quero prosseguir com a publicação na Solana Devnet.",
       },
-      publicacao: {
-        assinando: "Aguardando sua assinatura na Phantom…",
-        registrando: "Assinatura recebida — registrando a tentativa antes de enviar…",
-        confirmando: "Transação enviada — aguardando confirmação na Solana Devnet…",
-        pendenteTexto:
+      publication: {
+        signing: "Aguardando sua assinatura na Phantom…",
+        registering: "Assinatura recebida — registrando a tentativa antes de enviar…",
+        confirming: "Transação enviada — aguardando confirmação na Solana Devnet…",
+        pendingText:
           "A transação foi assinada e registrada, mas ainda não confirmou. Isto NÃO significa que a oferta já está publicada — volte aqui em instantes para conferir. Se ela não chegar à rede em alguns minutos, a tentativa é descartada sozinha e você pode publicar de novo.",
-        verNoExplorer: "Ver no Solana Explorer →",
-        confirmadaTitulo: "Publicada na Solana Devnet",
-        confirmadaTexto: "Sua oferta foi confirmada on-chain. Contas criadas pelo programa:",
+        viewOnExplorer: "Ver no Solana Explorer →",
+        confirmedTitle: "Publicada na Solana Devnet",
+        confirmedText: "Sua oferta foi confirmada on-chain. Contas criadas pelo programa:",
         contractLabel: "Oferta (conta do programa, com escrow)",
         tokenLabel: "Mint das cotas (SPL)",
-        verificarConsistenciaNota:
+        verifyConsistencyNote:
           "Relê a conta da oferta (meta mínima, meta máxima, preço por cota e prazo) e compara com esta oferta no Supabase agora — não corrige nenhum dos lados, só sinaliza.",
-        verOferta: "Ver a oferta na vitrine →",
+        viewOffering: "Ver a oferta na vitrine →",
       },
     },
-    perfil: {
+    profile: {
       title: "Carteira Solana",
       subtitle:
         "Conexão real com a Phantom na Solana Devnet. Vincular a carteira permite publicar ofertas na Solana em nome da sua empresa.",
-      vinculoTitulo: "Vínculo com o perfil",
-      explicacao:
+      linkTitle: "Vínculo com o perfil",
+      explanation:
         "Para vincular, a Phantom pede a assinatura de uma mensagem (sem transação e sem custo) que prova que a carteira é sua. O endereço fica gravado na sua conta, separado da carteira MetaMask.",
-      vinculadaLabel: "Vinculada ao perfil",
-      conectadaAgoraLabel: "Conectada agora",
-      nenhuma: "Nenhuma",
-      vincularBotao: "Vincular esta carteira",
-      trocarBotao: "Trocar para esta carteira",
-      desvincularBotao: "Desvincular",
-      assinando: "Aguardando assinatura…",
-      assinaturaRecusada: "Assinatura recusada na carteira — nada foi salvo.",
-      semSignMessage: "Esta carteira não permite assinar mensagens — use a Phantom.",
-      sucessoVinculada: "Carteira Solana vinculada à sua conta.",
-      sucessoDesvinculada: "Carteira Solana desvinculada.",
-      conecteParaVincular: "Conecte a Phantom acima para vincular.",
+      linkedLabel: "Vinculada ao perfil",
+      connectedNowLabel: "Conectada agora",
+      none: "Nenhuma",
+      linkButton: "Vincular esta carteira",
+      switchButton: "Trocar para esta carteira",
+      unlinkButton: "Desvincular",
+      signing: "Aguardando assinatura…",
+      signatureRefused: "Assinatura recusada na carteira — nada foi salvo.",
+      noSignMessage: "Esta carteira não permite assinar mensagens — use a Phantom.",
+      successLinked: "Carteira Solana vinculada à sua conta.",
+      successUnlinked: "Carteira Solana desvinculada.",
+      connectToLink: "Conecte a Phantom acima para vincular.",
     },
-    paginaInvestir: {
-      titulo: "Investimento real — Solana Devnet",
-      subtitulo:
+    investPage: {
+      title: "Investimento real — Solana Devnet",
+      subtitle:
         "Esta oferta vive no programa niara-pmes-solana, na devnet da Solana: MockBRL não tem valor nenhum, mas as assinaturas, as transações e o estado do programa são reais on-chain — diferente do restante da plataforma, que é demonstração/mock.",
     },
-    seletor: {
-      provenienciaDemo: "Empresa fictícia de demonstração",
-      provenienciaSelfService: "Dados informados pelo próprio emissor (demonstração)",
+    selector: {
+      provenanceDemo: "Empresa fictícia de demonstração",
+      provenanceSelfService: "Dados informados pelo próprio emissor (demonstração)",
     },
   },
-  socios: {
+  partners: {
     meta: { title: "Sócios" },
     login: {
       title: "Área de sócios",
       subtitle: "Acesso interno, restrito. Faça login com sua conta cadastrada.",
       emailLabel: "E-mail",
-      senhaLabel: "Senha",
-      entrarBotao: "Entrar",
-      entrandoBotao: "Entrando…",
-      erros: {
-        credenciaisInvalidas: "E-mail ou senha incorretos.",
-        generico: "Não foi possível entrar. Tente novamente.",
+      passwordLabel: "Senha",
+      signInButton: "Entrar",
+      signingInButton: "Entrando…",
+      errors: {
+        invalidCredentials: "E-mail ou senha incorretos.",
+        generic: "Não foi possível entrar. Tente novamente.",
       },
     },
-    negado: {
+    denied: {
       title: "Acesso restrito",
       subtitle: "Esta conta não está autorizada a ver o painel de sócios.",
     },
@@ -1945,42 +1945,42 @@ export const ptBr = {
       label: "Área interna",
       text: "painel administrativo para os sócios — não é voltado ao investidor final, nunca acessível fora da allowlist.",
     },
-    titulo: "Painel de sócios",
-    logadoComo: "Logado como",
-    origem: {
+    title: "Painel de sócios",
+    loggedInAs: "Logado como",
+    origin: {
       real: "Sepolia real",
       mock: "Demo/mock",
     },
-    resumoReal: {
+    realSummary: {
       title: "Resumo — Sepolia real",
-      totalArrecadado: "Total arrecadado (todas as ofertas)",
-      carteirasUnicas: "Carteiras únicas que investiram",
-      aliquotaConfigurada: "Alíquota de taxa configurada",
-      taxaZeradaNota: "taxaBps = 0 em todas as ofertas hoje, lido direto do contrato — nenhuma taxa é cobrada nelas.",
-      receitaTaxa: "Receita da plataforma (taxa)",
-      receitaTaxaNota:
+      totalRaised: "Total arrecadado (todas as ofertas)",
+      uniqueWallets: "Carteiras únicas que investiram",
+      configuredRate: "Alíquota de taxa configurada",
+      zeroFeeNote: "taxaBps = 0 em todas as ofertas hoje, lido direto do contrato — nenhuma taxa é cobrada nelas.",
+      feeRevenue: "Receita da plataforma (taxa)",
+      feeRevenueNote:
         "Soma real de RecursosLiberados.taxa já transferida ao protocoloWallet via liberarParaEmissor() — mBRL de testnet, não moeda real. Nunca um valor projetado.",
-      taxaVariavel: "Varia por oferta",
-      ofertasConfiguradas: "Ofertas configuradas",
-      naoConfigurado: "Nenhuma oferta on-chain configurada (NEXT_PUBLIC_OFERTAS_ONCHAIN ausente).",
-      carregando: "Lendo eventos on-chain (Sepolia)... pode levar um pouco sem uma RPC dedicada.",
-      erroCarregamento: "Não foi possível ler os dados on-chain agora (RPC lenta ou indisponível). Tente atualizar a página em alguns instantes.",
+      variableFee: "Varia por oferta",
+      configuredOfferings: "Ofertas configuradas",
+      notConfigured: "Nenhuma oferta on-chain configurada (NEXT_PUBLIC_OFERTAS_ONCHAIN ausente).",
+      loading: "Lendo eventos on-chain (Sepolia)... pode levar um pouco sem uma RPC dedicada.",
+      loadingError: "Não foi possível ler os dados on-chain agora (RPC lenta ou indisponível). Tente atualizar a página em alguns instantes.",
     },
-    resumoMock: {
+    mockSummary: {
       title: "Resumo — Demo/mock (Supabase)",
-      totalPago: "Total pago (status paid/settled)",
-      investidoresUnicos: "Investidores únicos",
-      semTaxaNota: "Este fluxo simulado não tem conceito de taxa no schema — não exibido.",
+      totalPaid: "Total pago (status paid/settled)",
+      uniqueInvestors: "Investidores únicos",
+      noFeeNote: "Este fluxo simulado não tem conceito de taxa no schema — não exibido.",
     },
-    tabelaReal: {
+    realTable: {
       title: "Transações reais (Sepolia)",
-      colTipo: "Tipo",
-      colInvestidor: "Carteira",
-      colValor: "Valor",
-      colData: "Data",
+      colType: "Tipo",
+      colInvestor: "Carteira",
+      colValue: "Valor",
+      colDate: "Data",
       colTx: "Transação",
-      vazio: "Nenhum evento on-chain ainda.",
-      tipos: {
+      empty: "Nenhum evento on-chain ainda.",
+      types: {
         Aporte: "Aporte",
         OfertaEncerrada: "Oferta encerrada",
         OfertaCancelada: "Oferta cancelada",
@@ -1989,14 +1989,14 @@ export const ptBr = {
         Reembolso: "Reembolso",
       },
     },
-    tabelaMock: {
+    mockTable: {
       title: "Transações demo (Supabase)",
-      colEmissor: "Emissor",
-      colInvestidor: "Investidor",
-      colValor: "Valor",
+      colIssuer: "Emissor",
+      colInvestor: "Investidor",
+      colValue: "Valor",
       colStatus: "Status",
-      colData: "Data",
-      vazio: "Nenhuma transação demo ainda.",
+      colDate: "Data",
+      empty: "Nenhuma transação demo ainda.",
       status: {
         reserved: "Reservado",
         paid: "Pago (simulado)",
@@ -2005,20 +2005,20 @@ export const ptBr = {
         cancelled: "Cancelado",
       },
     },
-    movimentacoes: {
+    transactions: {
       title: "Todas as movimentações",
       subtitle:
         "Timeline única com tudo que acontece no site — eventos reais on-chain (Sepolia) e movimentações off-chain (cadastros, ofertas, aportes, pagamentos), mais recentes primeiro.",
-      resumoTitle: "Resumo agregado",
-      carregando: "Lendo movimentações (on-chain + Supabase)... pode levar um pouco sem uma RPC dedicada.",
-      colOrigem: "Origem",
-      colTipo: "Tipo",
-      colAtor: "Quem",
-      colValor: "Valor",
-      colData: "Data",
+      summaryTitle: "Resumo agregado",
+      loading: "Lendo movimentações (on-chain + Supabase)... pode levar um pouco sem uma RPC dedicada.",
+      colOrigin: "Origem",
+      colType: "Tipo",
+      colActor: "Quem",
+      colValue: "Valor",
+      colDate: "Data",
       colLink: "Link",
-      verNaChain: "Ver na chain",
-      vazio: "Nenhuma movimentação ainda.",
+      viewOnChain: "Ver na chain",
+      empty: "Nenhuma movimentação ainda.",
     },
   },
 } as const;

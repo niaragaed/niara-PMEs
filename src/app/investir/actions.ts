@@ -27,7 +27,7 @@ export type ReserveInvestmentState =
 
 const reserveInvestmentSchema = z.object({
   offeringId: z.string().uuid("Oferta inválida."),
-  valorReais: z
+  amountReais: z
     .string()
     .trim()
     .min(1, "Informe o valor do aporte.")
@@ -90,12 +90,12 @@ export async function reserveInvestment(dataInput: unknown): Promise<ReserveInve
     return { status: "error", message: "Corrija os campos destacados.", fieldErrors };
   }
 
-  const amountCents = reaisToCents(parsed.data.valorReais);
+  const amountCents = reaisToCents(parsed.data.amountReais);
   if (amountCents === null) {
     return {
       status: "error",
       message: "Corrija os campos destacados.",
-      fieldErrors: { valorReais: "Use o formato 1.000,00." },
+      fieldErrors: { amountReais: "Use o formato 1.000,00." },
     };
   }
 
@@ -323,7 +323,7 @@ export async function loadPublicOffering(offeringIdInput: unknown): Promise<Publ
     .eq("offering_id", offeringId)
     .in("status", CAP_OCCUPYING_STATUSES);
 
-  const arrecadadoCents = (investmentsData ?? []).reduce(
+  const raisedCents = (investmentsData ?? []).reduce(
     (total, investment) => total + Number(investment.amount_cents),
     0,
   );
@@ -341,7 +341,7 @@ export async function loadPublicOffering(offeringIdInput: unknown): Promise<Publ
     category: offering.category as TokenCategory | null,
     opensAt: offering.opens_at,
     closesAt: offering.closes_at,
-    arrecadadoCents,
+    arrecadadoCents: raisedCents,
     issuer: {
       legalName: issuerRow.legal_name,
       tradeName: issuerRow.trade_name,

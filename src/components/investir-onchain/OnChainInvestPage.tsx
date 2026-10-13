@@ -8,13 +8,13 @@ import { getOnChainAddresses } from "@/lib/web3/addresses";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-type OpcaoOferta = { key: string; label: string; proveniencia: string } & (
-  | { rede: "sepolia"; tokenAddress: `0x${string}`; ofertaAddress: `0x${string}` }
-  | { rede: "solana-devnet"; ofertaEndereco: string }
+type OfferingOption = { key: string; label: string; proveniencia: string } & (
+  | { rede: "sepolia"; tokenAddress: `0x${string}`; offeringAddress: `0x${string}` }
+  | { rede: "solana-devnet"; offeringAddress: string }
 );
 
 /** Oferta do programa niara-pmes-solana, já lida no servidor (page.tsx). */
-export type OpcaoSolanaServidor = { endereco: string; empresa: string; aberta: boolean; abertura: number };
+export type ServerSolanaOption = { address: string; company: string; open: boolean; opening: number };
 
 // Fase 4, sub-etapa 5.2 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md): o seletor passa a unir DUAS
 // origens de oferta — a lista legada (NEXT_PUBLIC_OFERTAS_ONCHAIN, 10 ofertas de reserva criadas
@@ -30,30 +30,30 @@ export type OpcaoSolanaServidor = { endereco: string; empresa: string; aberta: b
 // global — a única diferença que ESTE seletor precisa expor é a linha de proveniência do
 // conteúdo (empresa inventada à mão vs. dados que o próprio emissor preencheu), não uma
 // separação estrutural.
-function montarOpcoes(confirmedOfferings: ConfirmedOnChainOffering[], ofertasSolana: OpcaoSolanaServidor[]): OpcaoOferta[] {
-  const t = ptBr.investirOnChain.seletorOferta;
+function buildOptions(confirmedOfferings: ConfirmedOnChainOffering[], solanaOfferings: ServerSolanaOption[]): OfferingOption[] {
+  const t = ptBr.investOnChain.offeringSelector;
   const ts = ptBr.solana;
-  const legado = getOnChainAddresses()?.ofertas ?? [];
+  const legacy = getOnChainAddresses()?.offerings ?? [];
 
-  const opcoesLegado: OpcaoOferta[] = legado.map((par, index) => ({
+  const legacyOptions: OfferingOption[] = legacy.map((pair, index) => ({
     rede: "sepolia" as const,
     key: `legado-${index}`,
-    tokenAddress: par.token,
-    ofertaAddress: par.oferta,
-    label: `${t.opcao} ${index + 1}`,
-    proveniencia: t.proveniencia.legado,
+    tokenAddress: pair.token,
+    offeringAddress: pair.offering,
+    label: `${t.option} ${index + 1}`,
+    proveniencia: t.provenance.legacy,
   }));
 
-  const opcoesSelfService: OpcaoOferta[] = confirmedOfferings.flatMap((oferta) =>
-    oferta.rede === "sepolia"
+  const selfServiceOptions: OfferingOption[] = confirmedOfferings.flatMap((offering) =>
+    offering.rede === "sepolia"
       ? [
           {
             rede: "sepolia" as const,
-            key: oferta.id,
-            tokenAddress: oferta.tokenAddress,
-            ofertaAddress: oferta.contractAddress,
-            label: oferta.issuerTradeName ?? oferta.issuerLegalName,
-            proveniencia: t.proveniencia.selfService,
+            key: offering.id,
+            tokenAddress: offering.tokenAddress,
+            offeringAddress: offering.contractAddress,
+            label: offering.issuerTradeName ?? offering.issuerLegalName,
+            proveniencia: t.provenance.selfService,
           },
         ]
       : [],
@@ -66,40 +66,40 @@ function montarOpcoes(confirmedOfferings: ConfirmedOnChainOffering[], ofertasSol
   const selfServiceSolana = new Map(
     confirmedOfferings.filter((o) => o.rede === "solana-devnet").map((o) => [o.contractAddress, o]),
   );
-  const opcoesSolana: OpcaoOferta[] = ofertasSolana.map((o) => {
-    const cadastrada = selfServiceSolana.get(o.endereco);
+  const solanaOptions: OfferingOption[] = solanaOfferings.map((o) => {
+    const registered = selfServiceSolana.get(o.address);
     return {
       rede: "solana-devnet" as const,
-      key: `solana-${o.endereco}`,
-      ofertaEndereco: o.endereco,
-      label: cadastrada ? (cadastrada.issuerTradeName ?? cadastrada.issuerLegalName) : o.empresa,
-      proveniencia: cadastrada ? ts.seletor.provenienciaSelfService : ts.seletor.provenienciaDemo,
+      key: `solana-${o.address}`,
+      offeringAddress: o.address,
+      label: registered ? (registered.issuerTradeName ?? registered.issuerLegalName) : o.company,
+      proveniencia: registered ? ts.selector.provenanceSelfService : ts.selector.provenanceDemo,
     };
   });
 
-  return [...opcoesLegado, ...opcoesSelfService, ...opcoesSolana];
+  return [...legacyOptions, ...selfServiceOptions, ...solanaOptions];
 }
 
 export function OnChainInvestPage({
-  isSocio = false,
+  isPartner = false,
   confirmedOfferings,
-  ofertasSolana = [],
-  preferirSolana = false,
+  solanaOfferings = [],
+  preferSolana = false,
 }: {
-  isSocio?: boolean;
+  isPartner?: boolean;
   confirmedOfferings: ConfirmedOnChainOffering[];
-  ofertasSolana?: OpcaoSolanaServidor[];
-  preferirSolana?: boolean;
+  solanaOfferings?: ServerSolanaOption[];
+  preferSolana?: boolean;
 }) {
-  const t = ptBr.investirOnChain;
+  const t = ptBr.investOnChain;
   const ts = ptBr.solana;
-  const opcoes = montarOpcoes(confirmedOfferings, ofertasSolana);
-  const inicial = (preferirSolana ? opcoes.find((o) => o.rede === "solana-devnet") : undefined) ?? opcoes[0];
+  const options = buildOptions(confirmedOfferings, solanaOfferings);
+  const initial = (preferSolana ? options.find((o) => o.rede === "solana-devnet") : undefined) ?? options[0];
 
-  const [selectedKey, setSelectedKey] = useState(inicial?.key ?? "");
-  const selecionada = opcoes.find((opcao) => opcao.key === selectedKey) ?? opcoes[0] ?? null;
+  const [selectedKey, setSelectedKey] = useState(initial?.key ?? "");
+  const selected = options.find((option) => option.key === selectedKey) ?? options[0] ?? null;
 
-  function handleTrocarOferta(event: ChangeEvent<HTMLSelectElement>) {
+  function handleSwitchOffering(event: ChangeEvent<HTMLSelectElement>) {
     setSelectedKey(event.target.value);
   }
 
@@ -107,14 +107,14 @@ export function OnChainInvestPage({
   // Não existe mais um check de "MockBRL global configurado" aqui — cada oferta resolve o seu
   // próprio MockBRL on-chain (ver RealOnChainInvestPanel), então a única coisa que pode faltar
   // neste nível é a lista de ofertas em si.
-  if (opcoes.length === 0 || !selecionada) {
+  if (options.length === 0 || !selected) {
     return (
       <main className="flex flex-1 flex-col bg-military">
         <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.titulo}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.title}</h1>
           <div className="mt-6 flex items-start gap-3 rounded-lg border border-salmon/40 bg-panel p-5 text-sm text-on-military">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-salmon" aria-hidden="true" />
-            <p>{t.contratoNaoConfigurado}</p>
+            <p>{t.contractNotConfigured}</p>
           </div>
         </div>
       </main>
@@ -125,39 +125,39 @@ export function OnChainInvestPage({
     <main className="flex flex-1 flex-col bg-military">
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <h1 className="text-3xl font-semibold tracking-tight text-on-military">
-          {selecionada.rede === "solana-devnet" ? ts.paginaInvestir.titulo : t.titulo}
+          {selected.rede === "solana-devnet" ? ts.investPage.title : t.title}
         </h1>
         <p className="mt-2 text-sm text-on-military-muted">
-          {selecionada.rede === "solana-devnet" ? ts.paginaInvestir.subtitulo : t.subtitulo}
+          {selected.rede === "solana-devnet" ? ts.investPage.subtitle : t.subtitle}
         </p>
 
         <div className="mt-6 flex flex-col gap-6">
-          {opcoes.length > 1 && (
+          {options.length > 1 && (
             <label className="flex flex-col gap-1 rounded-lg border border-panel-border bg-panel p-5 text-sm">
-              <span className="text-xs font-semibold text-on-military-muted">{t.seletorOferta.label}</span>
+              <span className="text-xs font-semibold text-on-military-muted">{t.offeringSelector.label}</span>
               <select
-                value={selecionada.key}
-                onChange={handleTrocarOferta}
+                value={selected.key}
+                onChange={handleSwitchOffering}
                 className="w-full max-w-xs rounded-md border border-panel-border bg-military px-3 py-2 text-on-military focus:outline-none focus:ring-2 focus:ring-salmon"
               >
-                {opcoes.map((opcao) => (
-                  <option key={opcao.key} value={opcao.key}>
-                    [{opcao.rede === "solana-devnet" ? ts.redeNome : ts.redeSepolia}] {opcao.label} — {opcao.proveniencia}
+                {options.map((option) => (
+                  <option key={option.key} value={option.key}>
+                    [{option.rede === "solana-devnet" ? ts.networkName : ts.sepoliaNetwork}] {option.label} — {option.proveniencia}
                   </option>
                 ))}
               </select>
             </label>
           )}
 
-          {selecionada.rede === "sepolia" ? (
+          {selected.rede === "sepolia" ? (
             <RealOnChainInvestPanel
-              key={selecionada.key}
-              tokenAddress={selecionada.tokenAddress}
-              ofertaAddress={selecionada.ofertaAddress}
-              isSocio={isSocio}
+              key={selected.key}
+              tokenAddress={selected.tokenAddress}
+              offeringAddress={selected.offeringAddress}
+              isPartner={isPartner}
             />
           ) : (
-            <SolanaInvestPanel key={selecionada.key} ofertaEndereco={selecionada.ofertaEndereco} isSocio={isSocio} />
+            <SolanaInvestPanel key={selected.key} offeringAddress={selected.offeringAddress} isPartner={isPartner} />
           )}
         </div>
       </div>

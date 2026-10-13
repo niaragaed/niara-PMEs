@@ -4,8 +4,8 @@ import { useState, useTransition, type ChangeEvent, type FormEvent } from "react
 import { closeOffering, createOffering, type OfferingActionState } from "@/app/empresa/ofertas/actions";
 import { SelectField, TextField } from "@/components/perfil/FormField";
 import { SyncStatusBadge } from "@/components/empresa/publicar/SyncStatusBadge";
-import { RedeBadge } from "@/components/solana/RedeBadge";
-import { linkExplorerSolanaConta } from "@/lib/solana/config";
+import { NetworkBadge } from "@/components/solana/RedeBadge";
+import { solanaExplorerAccountLink } from "@/lib/solana/config";
 import { formatBRL } from "@/lib/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 import type { TokenCategory } from "@/lib/mock/ativos";
@@ -43,7 +43,7 @@ type FormState = {
   additionalLotPct: string;
   windowDays: string;
   sharePriceReais: string;
-  categoria: string;
+  category: string;
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -54,7 +54,7 @@ const EMPTY_FORM: FormState = {
   additionalLotPct: "0",
   windowDays: "",
   sharePriceReais: "",
-  categoria: "",
+  category: "",
 };
 
 const quotasFormatter = new Intl.NumberFormat("pt-BR");
@@ -77,8 +77,8 @@ function computeQuotasPreview(
 
 // Mesmo padrão de PublicarOnChainPage.tsx — helper pequeno, duplicado em vez de extraído
 // para um módulo compartilhado (só 2 usos, ver convenção de não abstrair sem necessidade).
-function explorerAddress(rede: OfferingRow["rede"], address: string) {
-  if (rede === "solana-devnet") return linkExplorerSolanaConta(address);
+function explorerAddress(network: OfferingRow["rede"], address: string) {
+  if (network === "solana-devnet") return solanaExplorerAccountLink(address);
   return `https://sepolia.etherscan.io/address/${address}`;
 }
 
@@ -90,31 +90,31 @@ function formatDate(iso: string): string {
 
 function validate(data: FormState): FormErrors {
   const errors: FormErrors = {};
-  const t = ptBr.empresaOfertas.erros;
+  const t = ptBr.companyOfferings.errors;
 
-  if (!MONEY_FORMAT.test(data.baseCapReais.trim())) errors.baseCapReais = t.valorInvalido;
-  if (!MONEY_FORMAT.test(data.targetMinReais.trim())) errors.targetMinReais = t.valorInvalido;
+  if (!MONEY_FORMAT.test(data.baseCapReais.trim())) errors.baseCapReais = t.invalidValue;
+  if (!MONEY_FORMAT.test(data.targetMinReais.trim())) errors.targetMinReais = t.invalidValue;
 
   const pct = Number(data.additionalLotPct);
-  if (!Number.isInteger(pct) || pct < 0 || pct > 25) errors.additionalLotPct = t.loteInvalido;
+  if (!Number.isInteger(pct) || pct < 0 || pct > 25) errors.additionalLotPct = t.invalidLot;
 
-  const dias = Number(data.windowDays);
-  if (!Number.isInteger(dias) || dias < 1 || dias > 180) errors.windowDays = t.prazoInvalido;
+  const days = Number(data.windowDays);
+  if (!Number.isInteger(days) || days < 1 || days > 180) errors.windowDays = t.invalidDeadline;
 
   if (!MONEY_FORMAT.test(data.sharePriceReais.trim())) {
-    errors.sharePriceReais = t.valorPorCotaInvalido;
+    errors.sharePriceReais = t.invalidValuePerShare;
   } else {
     const preview = computeQuotasPreview(data.baseCapReais, data.sharePriceReais);
-    if (preview && !preview.exact) errors.sharePriceReais = t.valorPorCotaNaoDivide;
+    if (preview && !preview.exact) errors.sharePriceReais = t.valuePerShareDoesNotDivide;
   }
 
-  if (!OFFERING_CATEGORIES.includes(data.categoria as TokenCategory)) errors.categoria = t.categoriaInvalida;
+  if (!OFFERING_CATEGORIES.includes(data.category as TokenCategory)) errors.category = t.invalidCategory;
 
   return errors;
 }
 
-export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
-  const t = ptBr.empresaOfertas;
+export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
+  const t = ptBr.companyOfferings;
   const [draft, setDraft] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [createState, setCreateState] = useState<OfferingActionState | null>(null);
@@ -145,7 +145,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
         additionalLotPct: draft.additionalLotPct,
         windowDays: draft.windowDays,
         sharePriceReais: draft.sharePriceReais,
-        categoria: draft.categoria,
+        category: draft.category,
       });
       if (result.status === "error") {
         setCreateState(result);
@@ -173,13 +173,13 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
   return (
     <main className="flex flex-1 flex-col bg-military">
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.titulo}</h1>
-        <p className="mt-2 text-sm text-on-military-muted">{t.subtitulo}</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.title}</h1>
+        <p className="mt-2 text-sm text-on-military-muted">{t.subtitle}</p>
 
         <section className="mt-8">
           {offerings.length === 0 ? (
             <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
-              {t.vazio}
+              {t.empty}
             </p>
           ) : (
             <ul className="flex flex-col gap-3">
@@ -191,7 +191,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                         {formatBRL(offering.base_cap_cents / 100)}
                       </p>
                       <p className="text-xs text-on-military-muted">
-                        {t.card.criadaEm} {formatDate(offering.created_at)}
+                        {t.card.createdOn} {formatDate(offering.created_at)}
                       </p>
                     </div>
                     <span className="rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
@@ -201,59 +201,59 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
 
                   <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.metaMinima}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.minTarget}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
                         {formatBRL(offering.target_min_cents / 100)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.teto}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.cap}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
                         {formatBRL(offering.hard_cap_cents / 100)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.pago}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.paid}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">{formatBRL(offering.paidCents / 100)}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.janela}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.window}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
                         {formatDate(offering.opens_at)} – {formatDate(offering.closes_at)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.valorPorCota}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.valuePerShare}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
                         {offering.share_price_cents === null
-                          ? t.card.naoInformado
+                          ? t.card.notProvided
                           : formatBRL(offering.share_price_cents / 100)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.numeroCotas}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.shareCount}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
                         {offering.share_price_cents === null
-                          ? t.card.naoInformado
+                          ? t.card.notProvided
                           : quotasFormatter.format(offering.base_cap_cents / offering.share_price_cents)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-on-military-muted">{t.card.categoria}</dt>
+                      <dt className="text-xs text-on-military-muted">{t.card.category}</dt>
                       <dd className="mt-0.5 text-sm text-on-military">
-                        {offering.category === null ? t.card.naoInformado : ptBr.ativos.categorias[offering.category]}
+                        {offering.category === null ? t.card.notProvided : ptBr.assets.categories[offering.category]}
                       </dd>
                     </div>
                   </dl>
 
                   {offering.status === "draft" && offering.sync_status === "nao_onchain" && (
                     <div className="mt-4 flex flex-col gap-2">
-                      <p className="text-xs text-on-military-muted">{t.ativarAviso}</p>
+                      <p className="text-xs text-on-military-muted">{t.activateNotice}</p>
                       <a
                         href={`/empresa/ofertas/${offering.id}/publicar`}
                         className="self-start rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600"
                       >
-                        {t.publicarLink}
+                        {t.publishLink}
                       </a>
                     </div>
                   )}
@@ -261,7 +261,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                   {offering.status === "draft" && offering.sync_status === "pendente" && (
                     <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
                       <SyncStatusBadge status={offering.sync_status} />
-                      <p className="mt-1 text-xs text-on-military-muted">{t.onchainStatus.pendente.texto}</p>
+                      <p className="mt-1 text-xs text-on-military-muted">{t.onchainStatus.pendente.text}</p>
                       <a
                         href={`/empresa/ofertas/${offering.id}/publicar`}
                         className="mt-2 inline-block text-xs font-medium text-salmon hover:text-salmon-600"
@@ -275,11 +275,11 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                     <div className="mt-4 rounded-md border border-panel-border bg-military/40 p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <SyncStatusBadge status={offering.sync_status} />
-                        <RedeBadge rede={offering.rede} />
+                        <NetworkBadge rede={offering.rede} />
                       </div>
                       {offering.contract_address && (
                         <p className="mt-1 text-xs text-on-military-muted">
-                          {t.onchainStatus.confirmada.contrato}:{" "}
+                          {t.onchainStatus.confirmada.contract}:{" "}
                           <a
                             href={explorerAddress(offering.rede, offering.contract_address)}
                             target="_blank"
@@ -307,7 +307,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                         href={`/negociar/oferta/${offering.id}`}
                         className="mt-2 inline-block text-xs font-medium text-salmon hover:text-salmon-600"
                       >
-                        {t.onchainStatus.confirmada.verOferta}
+                        {t.onchainStatus.confirmada.viewOffering}
                       </a>
                     </div>
                   )}
@@ -315,7 +315,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                   {offering.status === "draft" && offering.sync_status === "divergente" && (
                     <div role="alert" className="mt-4 rounded-md border border-value-negative/30 bg-value-negative/10 p-3">
                       <SyncStatusBadge status={offering.sync_status} />
-                      <p className="mt-1 text-xs text-value-negative">{t.onchainStatus.divergente.texto}</p>
+                      <p className="mt-1 text-xs text-value-negative">{t.onchainStatus.divergente.text}</p>
                       <a
                         href={`/empresa/ofertas/${offering.id}/publicar`}
                         className="mt-2 inline-block text-xs font-medium text-value-negative underline"
@@ -333,28 +333,28 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                         disabled={isPending && closingId === offering.id}
                         className="self-start rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {isPending && closingId === offering.id ? t.fechandoBotao : t.fecharBotao}
+                        {isPending && closingId === offering.id ? t.closingButton : t.closeButton}
                       </button>
-                      <p className="text-xs text-on-military-muted">{t.fecharAviso}</p>
+                      <p className="text-xs text-on-military-muted">{t.closeNotice}</p>
                     </div>
                   )}
 
                   {offering.status === "failed" && (
-                    <p className="mt-4 text-sm text-on-military-muted">{t.resultado.failed}</p>
+                    <p className="mt-4 text-sm text-on-military-muted">{t.result.failed}</p>
                   )}
 
                   {offering.status === "settled" && (
                     <div className="mt-4">
-                      <p className="text-sm text-on-military-muted">{t.resultado.funded}</p>
+                      <p className="text-sm text-on-military-muted">{t.result.funded}</p>
                       {offering.tokenRefs.length > 0 && (
                         <div className="mt-2 rounded-md border border-panel-border bg-military/40 p-3">
                           <p className="text-xs text-on-military-muted">
-                            {t.resultado.tokensEmitidos}: {offering.tokenRefs.length}
+                            {t.result.issuedTokens}: {offering.tokenRefs.length}
                           </p>
                           <ul className="mt-1 flex flex-col gap-1">
                             {offering.tokenRefs.map((ref) => (
                               <li key={ref} className="text-xs text-on-military-muted">
-                                {t.resultado.ref}: <code className="text-on-military">{ref}</code>
+                                {t.result.ref}: <code className="text-on-military">{ref}</code>
                               </li>
                             ))}
                           </ul>
@@ -374,7 +374,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
         </section>
 
         <section id="criar-oferta" className="mt-10 scroll-mt-24">
-          <h2 className="text-xl font-semibold text-on-military">{t.criarTitulo}</h2>
+          <h2 className="text-xl font-semibold text-on-military">{t.createTitle}</h2>
 
           <form
             onSubmit={handleSubmit}
@@ -384,7 +384,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TextField
                 id="oferta-valor"
-                label={t.campos.valorOferta}
+                label={t.fields.offeringValue}
                 value={draft.baseCapReais}
                 onChange={handleFieldChange("baseCapReais")}
                 error={errors.baseCapReais}
@@ -393,7 +393,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
               />
               <TextField
                 id="oferta-meta-minima"
-                label={t.campos.metaMinima}
+                label={t.fields.minTarget}
                 value={draft.targetMinReais}
                 onChange={handleFieldChange("targetMinReais")}
                 error={errors.targetMinReais}
@@ -402,7 +402,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
               />
               <TextField
                 id="oferta-lote"
-                label={t.campos.loteAdicional}
+                label={t.fields.additionalLot}
                 value={draft.additionalLotPct}
                 onChange={handleFieldChange("additionalLotPct")}
                 error={errors.additionalLotPct}
@@ -411,7 +411,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
               />
               <TextField
                 id="oferta-prazo"
-                label={t.campos.prazoDias}
+                label={t.fields.deadlineDays}
                 value={draft.windowDays}
                 onChange={handleFieldChange("windowDays")}
                 error={errors.windowDays}
@@ -420,7 +420,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
               />
               <TextField
                 id="oferta-valor-cota"
-                label={t.campos.valorPorCota}
+                label={t.fields.valuePerShare}
                 value={draft.sharePriceReais}
                 onChange={handleFieldChange("sharePriceReais")}
                 error={errors.sharePriceReais}
@@ -429,27 +429,27 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
               />
               <SelectField
                 id="oferta-categoria"
-                label={t.campos.categoria}
-                value={draft.categoria}
-                onChange={handleFieldChange("categoria")}
-                error={errors.categoria}
-                placeholder={t.campos.categoriaPlaceholder}
+                label={t.fields.category}
+                value={draft.category}
+                onChange={handleFieldChange("category")}
+                error={errors.category}
+                placeholder={t.fields.categoryPlaceholder}
               >
-                {OFFERING_CATEGORIES.map((categoria) => (
-                  <option key={categoria} value={categoria}>
-                    {ptBr.ativos.categorias[categoria]}
+                {OFFERING_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {ptBr.assets.categories[category]}
                   </option>
                 ))}
               </SelectField>
             </div>
 
-            <p className="text-xs text-on-military-muted">{t.categoriaAviso}</p>
+            <p className="text-xs text-on-military-muted">{t.categoryNotice}</p>
 
             {quotasPreview && (
               <p className="text-xs text-on-military-muted">
                 {quotasPreview.exact
-                  ? t.cotasPreview(quotasFormatter.format(quotasPreview.quotas))
-                  : t.erros.valorPorCotaNaoDivide}
+                  ? t.sharesPreview(quotasFormatter.format(quotasPreview.quotas))
+                  : t.errors.valuePerShareDoesNotDivide}
               </p>
             )}
 
@@ -465,7 +465,7 @@ export function OfertasPage({ offerings }: { offerings: OfferingRow[] }) {
                 disabled={isPending}
                 className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isPending ? t.criandoBotao : t.criarBotao}
+                {isPending ? t.creatingButton : t.createButton}
               </button>
             </div>
           </form>

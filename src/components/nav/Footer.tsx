@@ -3,9 +3,9 @@ import { Logo } from "@/components/ui/Logo";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { ptBr } from "@/lib/i18n/pt-br";
 
-const negociarLinks = NAV_ITEMS.find((item) => item.label === ptBr.nav.negociar)?.children ?? [];
-const sobreLinks = NAV_ITEMS.find((item) => item.label === ptBr.nav.sobre)?.children ?? [];
-const plataformaLinks = NAV_ITEMS.filter((item) => !item.children);
+const tradeLinks = NAV_ITEMS.find((item) => item.label === ptBr.nav.trade)?.children ?? [];
+const aboutLinks = NAV_ITEMS.find((item) => item.label === ptBr.nav.about)?.children ?? [];
+const platformLinks = NAV_ITEMS.filter((item) => !item.children);
 
 export function Footer() {
   return (
@@ -20,9 +20,9 @@ export function Footer() {
         </div>
 
         <nav aria-label={ptBr.footer.footerAriaLabel}>
-          <h3 className="text-sm font-semibold text-ink">{ptBr.footer.columnNegociar}</h3>
+          <h3 className="text-sm font-semibold text-ink">{ptBr.footer.columnTrade}</h3>
           <ul className="mt-4 flex flex-col gap-3">
-            {negociarLinks.map((link) => (
+            {tradeLinks.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="text-sm text-ink-muted transition-colors hover:text-ink">
                   {link.label}
@@ -32,10 +32,10 @@ export function Footer() {
           </ul>
         </nav>
 
-        <nav aria-label={ptBr.footer.columnPlataforma}>
-          <h3 className="text-sm font-semibold text-ink">{ptBr.footer.columnPlataforma}</h3>
+        <nav aria-label={ptBr.footer.columnPlatform}>
+          <h3 className="text-sm font-semibold text-ink">{ptBr.footer.columnPlatform}</h3>
           <ul className="mt-4 flex flex-col gap-3">
-            {plataformaLinks.map((link) => (
+            {platformLinks.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="text-sm text-ink-muted transition-colors hover:text-ink">
                   {link.label}
@@ -45,10 +45,10 @@ export function Footer() {
           </ul>
         </nav>
 
-        <nav aria-label={ptBr.footer.columnSobre}>
-          <h3 className="text-sm font-semibold text-ink">{ptBr.footer.columnSobre}</h3>
+        <nav aria-label={ptBr.footer.columnAbout}>
+          <h3 className="text-sm font-semibold text-ink">{ptBr.footer.columnAbout}</h3>
           <ul className="mt-4 flex flex-col gap-3">
-            {sobreLinks.map((link) => (
+            {aboutLinks.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="text-sm text-ink-muted transition-colors hover:text-ink">
                   {link.label}

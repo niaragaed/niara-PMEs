@@ -14,7 +14,7 @@ export type InvestorProfileResult = {
   completedAt: string; // ISO date
 };
 
-const QUESTIONS = ptBr.perfil.investidor.quiz.questions;
+const QUESTIONS = ptBr.profile.investor.quiz.questions;
 
 export const SCORE_MIN = QUESTIONS.reduce(
   (sum, q) => sum + Math.min(...q.options.map((o) => o.weight)),
@@ -27,10 +27,10 @@ export const SCORE_MAX = QUESTIONS.reduce(
 
 export function categorizeScore(score: number): InvestorCategory {
   const span = SCORE_MAX - SCORE_MIN;
-  const conservadorLimit = SCORE_MIN + span / 3;
-  const moderadoLimit = SCORE_MIN + (span * 2) / 3;
-  if (score <= conservadorLimit) return "conservador";
-  if (score <= moderadoLimit) return "moderado";
+  const conservativeLimit = SCORE_MIN + span / 3;
+  const moderateLimit = SCORE_MIN + (span * 2) / 3;
+  if (score <= conservativeLimit) return "conservador";
+  if (score <= moderateLimit) return "moderado";
   return "arrojado";
 }
 

@@ -24,7 +24,7 @@ export function SignOutButton() {
       disabled={pending}
       className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? ptBr.conta.sairPendente : ptBr.conta.sairBotao}
+      {pending ? ptBr.account.signOutPending : ptBr.account.signOutButton}
     </button>
   );
 }

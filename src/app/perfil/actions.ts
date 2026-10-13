@@ -16,7 +16,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { resolveAccount, type AccountRole } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
-import { isValidCEP, isValidCNPJ, isValidCPF, isValidDataNascimento, isValidTelefone, onlyDigits } from "@/lib/masks";
+import { isValidCEP, isValidCNPJ, isValidCPF, isValidBirthDate, isValidPhone, onlyDigits } from "@/lib/masks";
 import { MONEY_FORMAT, centsToReais, reaisToCents } from "@/lib/money";
 import {
   getIssuerLogoVersion,
@@ -40,12 +40,12 @@ type SharedFields = {
   taxId: string;
   phone: string;
   cep: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
   walletAddress: string | null;
   /** Carteira Solana vinculada (migration 0017) — separada da EVM. */
   solanaWalletAddress: string | null;
@@ -125,12 +125,12 @@ export async function loadProfile(): Promise<LoadedProfile> {
       walletAddress: data.wallet_address,
     solanaWalletAddress: data.solana_wallet_address ?? null,
       cep: data.addr_cep ?? "",
-      logradouro: data.addr_street ?? "",
-      numero: data.addr_number ?? "",
-      complemento: data.addr_complement ?? "",
-      bairro: data.addr_neighborhood ?? "",
-      cidade: data.addr_city ?? "",
-      estado: data.addr_state ?? "",
+      street: data.addr_street ?? "",
+      number: data.addr_number ?? "",
+      complement: data.addr_complement ?? "",
+      district: data.addr_neighborhood ?? "",
+      city: data.addr_city ?? "",
+      state: data.addr_state ?? "",
     };
   }
 
@@ -171,12 +171,12 @@ export async function loadProfile(): Promise<LoadedProfile> {
     walletAddress: data.wallet_address,
     solanaWalletAddress: data.solana_wallet_address ?? null,
     cep: data.addr_cep ?? "",
-    logradouro: data.addr_street ?? "",
-    numero: data.addr_number ?? "",
-    complemento: data.addr_complement ?? "",
-    bairro: data.addr_neighborhood ?? "",
-    cidade: data.addr_city ?? "",
-    estado: data.addr_state ?? "",
+    street: data.addr_street ?? "",
+    number: data.addr_number ?? "",
+    complement: data.addr_complement ?? "",
+    district: data.addr_neighborhood ?? "",
+    city: data.addr_city ?? "",
+    state: data.addr_state ?? "",
   };
 }
 
@@ -216,14 +216,14 @@ export async function loadMyOfferingsSummary(): Promise<OfferingSummary[]> {
 }
 
 const addressSchema = {
-  phone: z.string().refine((value) => isValidTelefone(value), "Telefone inválido.").transform(onlyDigits),
+  phone: z.string().refine((value) => isValidPhone(value), "Telefone inválido.").transform(onlyDigits),
   cep: z.string().refine((value) => isValidCEP(value), "CEP inválido.").transform(onlyDigits),
-  logradouro: z.string().trim().min(1, "Informe a rua."),
-  numero: z.string().trim().min(1, "Informe o número."),
-  complemento: z.string().trim(),
-  bairro: z.string().trim().min(1, "Informe o bairro."),
-  cidade: z.string().trim().min(1, "Informe a cidade."),
-  estado: z
+  street: z.string().trim().min(1, "Informe a rua."),
+  number: z.string().trim().min(1, "Informe o número."),
+  complement: z.string().trim(),
+  district: z.string().trim().min(1, "Informe o bairro."),
+  city: z.string().trim().min(1, "Informe a cidade."),
+  state: z
     .string()
     .trim()
     .regex(/^[A-Za-z]{2}$/, "Selecione o estado.")
@@ -235,7 +235,7 @@ const investorUpdateSchema = z.object({
   taxId: z.string().refine((value) => isValidCPF(value), "CPF inválido — informe os 11 dígitos.").transform(onlyDigits),
   birthDate: z
     .string()
-    .refine((value) => isValidDataNascimento(value), "Data de nascimento inválida.")
+    .refine((value) => isValidBirthDate(value), "Data de nascimento inválida.")
     .transform(brDateToIso),
   ...addressSchema,
 });
@@ -315,12 +315,12 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
         birth_date: parsed.data.birthDate,
         phone: parsed.data.phone,
         addr_cep: parsed.data.cep,
-        addr_street: parsed.data.logradouro,
-        addr_number: parsed.data.numero,
-        addr_complement: parsed.data.complemento || null,
-        addr_neighborhood: parsed.data.bairro,
-        addr_city: parsed.data.cidade,
-        addr_state: parsed.data.estado,
+        addr_street: parsed.data.street,
+        addr_number: parsed.data.number,
+        addr_complement: parsed.data.complement || null,
+        addr_neighborhood: parsed.data.district,
+        addr_city: parsed.data.city,
+        addr_state: parsed.data.state,
       })
       .eq("id", accountId);
 
@@ -358,12 +358,12 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
         publish_cnpj: parsed.data.publishCnpj,
         phone: parsed.data.phone,
         addr_cep: parsed.data.cep,
-        addr_street: parsed.data.logradouro,
-        addr_number: parsed.data.numero,
-        addr_complement: parsed.data.complemento || null,
-        addr_neighborhood: parsed.data.bairro,
-        addr_city: parsed.data.cidade,
-        addr_state: parsed.data.estado,
+        addr_street: parsed.data.street,
+        addr_number: parsed.data.number,
+        addr_complement: parsed.data.complement || null,
+        addr_neighborhood: parsed.data.district,
+        addr_city: parsed.data.city,
+        addr_state: parsed.data.state,
       })
       .eq("id", accountId);
 

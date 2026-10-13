@@ -19,18 +19,18 @@
 import { useMemo, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Coins, ExternalLink } from "lucide-react";
 import { ConnectPhantom } from "@/components/solana/ConnectPhantom";
-import { useCarteiraSolana } from "@/lib/solana/phantom";
-import { useOfertaSolana } from "@/lib/solana/hooks/useOfertaSolana";
-import { useAcaoSolana, type StatusAcaoSolana } from "@/lib/solana/hooks/useAcaoSolana";
-import { txAportar, txEncerrar, txFaucet, txLiberar, txReembolsar, txResgatar } from "@/lib/solana/instrucoes";
-import { DECIMAIS_MBRL_SOLANA, FAUCET_MAXIMO_MBRL_SOLANA, UNIDADE_MBRL_SOLANA, linkExplorerSolanaConta, linkExplorerSolanaTx } from "@/lib/solana/config";
-import { formatPrazo, formatToken } from "@/lib/web3/format";
+import { useSolanaWallet } from "@/lib/solana/phantom";
+import { useSolanaOffering } from "@/lib/solana/hooks/useOfertaSolana";
+import { useSolanaAction, type SolanaActionStatus } from "@/lib/solana/hooks/useAcaoSolana";
+import { txInvest, txClose, txFaucet, txRelease, txRefund, txRedeem } from "@/lib/solana/instrucoes";
+import { DECIMALS_MBRL_SOLANA, FAUCET_MAX_MBRL_SOLANA, UNIT_MBRL_SOLANA, solanaExplorerAccountLink, linkExplorerSolanaTx } from "@/lib/solana/config";
+import { formatDeadline, formatToken } from "@/lib/web3/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 const MBRL = "mBRL";
 
 /** Relógio em segundos, arredondado a 15 s (snapshot estável entre renders; 0 no servidor). */
-function useAgora(): number {
+function useNow(): number {
   return useSyncExternalStore(
     (cb) => {
       const id = setInterval(cb, 15_000);
@@ -50,21 +50,21 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function fmt(valor: bigint) {
-  return formatToken(valor, DECIMAIS_MBRL_SOLANA, MBRL);
+function fmt(value: bigint) {
+  return formatToken(value, DECIMALS_MBRL_SOLANA, MBRL);
 }
 
-function Retorno({ status, errorMessage, assinatura, sucesso }: { status: StatusAcaoSolana; errorMessage: string | null; assinatura: string | null; sucesso: string }) {
-  const t = ptBr.solana.investir;
+function Return({ status, errorMessage, signature, success }: { status: SolanaActionStatus; errorMessage: string | null; signature: string | null; success: string }) {
+  const t = ptBr.solana.invest;
   return (
     <>
       {status === "sucesso" && (
         <p role="status" className="mt-3 flex flex-wrap items-center gap-2 text-sm text-value-positive">
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          {sucesso}
-          {assinatura && (
-            <a href={linkExplorerSolanaTx(assinatura)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-salmon hover:text-salmon-600">
-              {t.verNoExplorer}
+          {success}
+          {signature && (
+            <a href={linkExplorerSolanaTx(signature)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-salmon hover:text-salmon-600">
+              {t.viewOnExplorer}
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
           )}
@@ -79,124 +79,124 @@ function Retorno({ status, errorMessage, assinatura, sucesso }: { status: Status
   );
 }
 
-function rotuloBotao(status: StatusAcaoSolana, padrao: string) {
-  const t = ptBr.solana.investir;
-  if (status === "assinando") return t.assinando;
-  if (status === "confirmando") return t.confirmando;
-  return padrao;
+function buttonLabel(status: SolanaActionStatus, defaultLabel: string) {
+  const t = ptBr.solana.invest;
+  if (status === "assinando") return t.signing;
+  if (status === "confirmando") return t.confirming;
+  return defaultLabel;
 }
 
 export function SolanaInvestPanel({
-  ofertaEndereco,
-  isSocio = false,
-  isEmissor = false,
+  offeringAddress,
+  isPartner: isSocio = false,
+  isEmissor: isIssuer = false,
 }: {
-  ofertaEndereco: string;
-  isSocio?: boolean;
+  offeringAddress: string;
+  isPartner?: boolean;
   isEmissor?: boolean;
 }) {
-  const t = ptBr.investirOnChain;
-  const ts = ptBr.solana.investir;
-  const carteira = useCarteiraSolana();
-  const investidor = carteira.endereco;
-  const leitura = useOfertaSolana(ofertaEndereco, investidor);
-  const { oferta, posicao } = leitura;
+  const t = ptBr.investOnChain;
+  const ts = ptBr.solana.invest;
+  const carteira = useSolanaWallet();
+  const investidor = carteira.address;
+  const leitura = useSolanaOffering(offeringAddress, investidor);
+  const { offering: oferta, position: posicao } = leitura;
 
-  const faucet = useAcaoSolana();
-  const investir = useAcaoSolana();
-  const encerrar = useAcaoSolana();
-  const resgatar = useAcaoSolana();
-  const reembolsar = useAcaoSolana();
-  const liberar = useAcaoSolana();
+  const faucet = useSolanaAction();
+  const investir = useSolanaAction();
+  const encerrar = useSolanaAction();
+  const resgatar = useSolanaAction();
+  const reembolsar = useSolanaAction();
+  const liberar = useSolanaAction();
 
-  const agora = useAgora();
+  const agora = useNow();
   const [quantidadeFaucet, setQuantidadeFaucet] = useState("100");
   const [quantidadeCotas, setQuantidadeCotas] = useState("1");
 
   const zero = BigInt(0);
   const quantidade = useMemo(() => (/^\d+$/.test(quantidadeCotas.trim()) ? BigInt(quantidadeCotas.trim()) : zero), [quantidadeCotas, zero]);
 
-  if (leitura.inexistente) {
+  if (leitura.nonexistent) {
     return (
       <div className="flex items-start gap-3 rounded-lg border border-salmon/40 bg-panel p-5 text-sm text-on-military">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-salmon" aria-hidden="true" />
-        <p>{ts.ofertaInexistente}</p>
+        <p>{ts.nonexistentOffering}</p>
       </div>
     );
   }
 
   const conectado = Boolean(investidor);
-  const pronto = leitura.pronto && oferta !== null;
+  const pronto = leitura.ready && oferta !== null;
 
-  const preco = oferta?.precoPorCota ?? zero;
+  const preco = oferta?.pricePerShare ?? zero;
   const valorAporte = quantidade * preco;
-  const capacidadeRestante = oferta ? oferta.metaMaxima - oferta.totalArrecadado : zero;
-  const tetoRestante = oferta ? oferta.tetoPorInvestidor - posicao.aportado : zero;
+  const capacidadeRestante = oferta ? oferta.maxTarget - oferta.totalRaised : zero;
+  const tetoRestante = oferta ? oferta.capPerInvestor - posicao.invested : zero;
   const valorInvalido = valorAporte <= zero;
   const excedeCapacidade = valorAporte > capacidadeRestante;
   const excedeTeto = valorAporte > tetoRestante;
-  const saldoInsuficiente = valorAporte > leitura.saldoMbrl;
-  const prazoEncerrado = oferta && agora > 0 ? agora > oferta.prazo : false;
+  const saldoInsuficiente = valorAporte > leitura.mbrlBalance;
+  const prazoEncerrado = oferta && agora > 0 ? agora > oferta.deadline : false;
 
-  const aberta = oferta?.estado === "Aberta";
-  const podeEncerrarAgora = Boolean(oferta && aberta && (prazoEncerrado || oferta.totalArrecadado === oferta.metaMaxima));
+  const aberta = oferta?.state === "Aberta";
+  const podeEncerrarAgora = Boolean(oferta && aberta && (prazoEncerrado || oferta.totalRaised === oferta.maxTarget));
 
   const investirDesabilitado =
-    !conectado || !pronto || !aberta || Boolean(oferta?.pausada) || prazoEncerrado || valorInvalido || excedeCapacidade || saldoInsuficiente || investir.ocupado;
+    !conectado || !pronto || !aberta || Boolean(oferta?.paused) || prazoEncerrado || valorInvalido || excedeCapacidade || saldoInsuficiente || investir.busy;
 
   async function handleFaucet() {
     if (!investidor) return;
     const n = Number(quantidadeFaucet.replace(",", "."));
-    if (!Number.isFinite(n) || n <= 0 || n > FAUCET_MAXIMO_MBRL_SOLANA) return;
-    await faucet.executar((c) => txFaucet(c, investidor, BigInt(Math.round(n)) * UNIDADE_MBRL_SOLANA));
+    if (!Number.isFinite(n) || n <= 0 || n > FAUCET_MAX_MBRL_SOLANA) return;
+    await faucet.execute((c) => txFaucet(c, investidor, BigInt(Math.round(n)) * UNIT_MBRL_SOLANA));
     leitura.refetch();
   }
 
   async function handleInvestir() {
     if (!investidor || !oferta) return;
-    await investir.executar((c) => txAportar(c, investidor, oferta, valorAporte));
+    await investir.execute((c) => txInvest(c, investidor, oferta, valorAporte));
     leitura.refetch();
   }
 
   async function handleEncerrar() {
     if (!oferta) return;
-    await encerrar.executar((c) => txEncerrar(c, oferta));
+    await encerrar.execute((c) => txClose(c, oferta));
     leitura.refetch();
   }
 
   async function handleResgatar() {
     if (!investidor || !oferta) return;
-    await resgatar.executar((c) => txResgatar(c, investidor, oferta));
+    await resgatar.execute((c) => txRedeem(c, investidor, oferta));
     leitura.refetch();
   }
 
   async function handleReembolsar() {
     if (!investidor || !oferta) return;
-    await reembolsar.executar((c) => txReembolsar(c, investidor, oferta));
+    await reembolsar.execute((c) => txRefund(c, investidor, oferta));
     leitura.refetch();
   }
 
   async function handleLiberar() {
     if (!investidor || !oferta) return;
-    await liberar.executar((c) => txLiberar(c, investidor, oferta));
+    await liberar.execute((c) => txRelease(c, investidor, oferta));
     leitura.refetch();
   }
 
-  const taxa = oferta ? (oferta.totalArrecadado * BigInt(oferta.taxaBps)) / BigInt(10_000) : zero;
-  const valorEmissor = oferta ? oferta.totalArrecadado - taxa : zero;
-  const cotasAResgatar = oferta && preco > zero ? posicao.aportado / preco : zero;
+  const taxa = oferta ? (oferta.totalRaised * BigInt(oferta.feeBps)) / BigInt(10_000) : zero;
+  const valorEmissor = oferta ? oferta.totalRaised - taxa : zero;
+  const cotasAResgatar = oferta && preco > zero ? posicao.invested / preco : zero;
 
   return (
     <div className="flex flex-col gap-6">
       <p className="flex items-start gap-2 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
-        {ts.avisoReal}
+        {ts.realNotice}
       </p>
 
       <div className="rounded-lg border border-panel-border bg-panel p-5">
-        <h2 className="text-sm font-semibold text-on-military">{t.requisitos.title}</h2>
+        <h2 className="text-sm font-semibold text-on-military">{t.requirements.title}</h2>
         <ul className="mt-2 flex flex-col gap-1.5">
-          {ts.requisitos.map((item) => (
+          {ts.requirements.map((item) => (
             <li key={item} className="flex gap-2 text-sm text-on-military-muted">
               <span aria-hidden="true">•</span>
               <span>{item}</span>
@@ -209,77 +209,77 @@ export function SolanaInvestPanel({
         <ConnectPhantom />
       </div>
 
-      <Card title={ts.termosTitulo}>
+      <Card title={ts.termsTitle}>
         {!oferta ? (
           <p className={leitura.errorMessage ? "text-sm text-value-negative" : "text-sm text-on-military-muted"}>
-            {leitura.errorMessage ? t.investir.erroLeitura(leitura.errorMessage) : t.investir.carregando}
+            {leitura.errorMessage ? t.invest.readError(leitura.errorMessage) : t.invest.loading}
           </p>
         ) : (
           <>
             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-on-military-muted">{t.termos.estadoLabel}</dt>
+                <dt className="text-xs text-on-military-muted">{t.terms.stateLabel}</dt>
                 <dd className="mt-0.5 text-sm text-on-military">
-                  {t.termos.estados[oferta.estado]}
-                  {oferta.pausada && aberta ? ` — ${ts.pausada}` : ""}
+                  {t.terms.states[oferta.state]}
+                  {oferta.paused && aberta ? ` — ${ts.paused}` : ""}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-on-military-muted">{t.termos.totalArrecadado}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.totalArrecadado)}</dd>
+                <dt className="text-xs text-on-military-muted">{t.terms.totalRaised}</dt>
+                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.totalRaised)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-on-military-muted">{t.termos.metaMinima}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.metaMinima)}</dd>
+                <dt className="text-xs text-on-military-muted">{t.terms.minTarget}</dt>
+                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.minTarget)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-on-military-muted">{t.termos.metaMaxima}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.metaMaxima)}</dd>
+                <dt className="text-xs text-on-military-muted">{t.terms.maxTarget}</dt>
+                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.maxTarget)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-on-military-muted">{t.termos.precoPorCota}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.precoPorCota)}</dd>
+                <dt className="text-xs text-on-military-muted">{t.terms.pricePerShare}</dt>
+                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.pricePerShare)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-on-military-muted">{t.termos.tetoPorInvestidor}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.tetoPorInvestidor)}</dd>
+                <dt className="text-xs text-on-military-muted">{t.terms.capPerInvestor}</dt>
+                <dd className="mt-0.5 text-sm text-on-military">{fmt(oferta.capPerInvestor)}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs text-on-military-muted">{t.termos.prazo}</dt>
-                <dd className="mt-0.5 text-sm text-on-military">{formatPrazo(BigInt(oferta.prazo))}</dd>
+                <dt className="text-xs text-on-military-muted">{t.terms.deadline}</dt>
+                <dd className="mt-0.5 text-sm text-on-military">{formatDeadline(BigInt(oferta.deadline))}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs text-on-military-muted">{t.termos.taxaLabel}</dt>
+                <dt className="text-xs text-on-military-muted">{t.terms.feeLabel}</dt>
                 <dd className="mt-0.5 text-sm text-on-military">
-                  {oferta.taxaBps === 0 ? ts.semTaxa : t.termos.taxaComTaxa((oferta.taxaBps / 100).toFixed(2))}
+                  {oferta.feeBps === 0 ? ts.noFee : t.terms.feeWithFee((oferta.feeBps / 100).toFixed(2))}
                 </dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs text-on-military-muted">{ts.contaOferta}</dt>
+                <dt className="text-xs text-on-military-muted">{ts.offeringAccount}</dt>
                 <dd className="mt-0.5 break-all text-sm">
-                  <a href={linkExplorerSolanaConta(oferta.endereco)} target="_blank" rel="noreferrer" className="font-mono text-xs text-salmon hover:text-salmon-600">
-                    {oferta.endereco}
+                  <a href={solanaExplorerAccountLink(oferta.address)} target="_blank" rel="noreferrer" className="font-mono text-xs text-salmon hover:text-salmon-600">
+                    {oferta.address}
                   </a>
                 </dd>
               </div>
             </dl>
-            <p className="mt-4 text-xs text-on-military-muted">{t.termos.nota}</p>
+            <p className="mt-4 text-xs text-on-military-muted">{t.terms.note}</p>
           </>
         )}
       </Card>
 
-      {!conectado && <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">{ts.semCarteira}</p>}
+      {!conectado && <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">{ts.noWallet}</p>}
 
       {conectado && (
-        <Card title={ts.faucet.titulo}>
-          <p className="text-sm text-on-military-muted">{ts.faucet.descricao}</p>
+        <Card title={ts.faucet.title}>
+          <p className="text-sm text-on-military-muted">{ts.faucet.description}</p>
           <dl className="mt-4 flex items-center justify-between gap-4 text-sm">
-            <dt className="text-on-military-muted">{t.faucet.saldoLabel}</dt>
-            <dd className="font-mono text-on-military">{fmt(leitura.saldoMbrl)}</dd>
+            <dt className="text-on-military-muted">{t.faucet.balanceLabel}</dt>
+            <dd className="font-mono text-on-military">{fmt(leitura.mbrlBalance)}</dd>
           </dl>
           <div className="mt-4 flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs text-on-military-muted">{t.faucet.quantidadeLabel}</span>
+              <span className="text-xs text-on-military-muted">{t.faucet.quantityLabel}</span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -290,35 +290,35 @@ export function SolanaInvestPanel({
             </label>
             <button
               type="button"
-              disabled={faucet.ocupado}
+              disabled={faucet.busy}
               onClick={handleFaucet}
               className="flex items-center gap-2 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Coins className="h-4 w-4" aria-hidden="true" />
-              {rotuloBotao(faucet.status, t.faucet.botao)}
+              {buttonLabel(faucet.status, t.faucet.button)}
             </button>
           </div>
-          <Retorno {...faucet} sucesso={t.faucet.sucesso} />
+          <Return {...faucet} success={t.faucet.success} />
         </Card>
       )}
 
       {conectado && pronto && oferta && !aberta && (
         <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
-          {oferta.estado === "EncerradaSucesso" ? t.investir.ofertaEncerradaSucesso : ts.ofertaEncerradaFalha}
+          {oferta.state === "EncerradaSucesso" ? t.invest.offeringClosedSuccess : ts.offeringClosedFailure}
         </p>
       )}
 
       {conectado && (!pronto || aberta) && (
-        <Card title={t.investir.title}>
+        <Card title={t.invest.title}>
           {!pronto ? (
             <p className={leitura.errorMessage ? "text-sm text-value-negative" : "text-sm text-on-military-muted"}>
-              {leitura.errorMessage ? t.investir.erroLeitura(leitura.errorMessage) : t.investir.carregando}
+              {leitura.errorMessage ? t.invest.readError(leitura.errorMessage) : t.invest.loading}
             </p>
           ) : (
             <>
               <div className="flex flex-wrap items-end gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="text-xs text-on-military-muted">{t.investir.quantidadeLabel}</span>
+                  <span className="text-xs text-on-military-muted">{t.invest.quantityLabel}</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -328,19 +328,19 @@ export function SolanaInvestPanel({
                   />
                 </label>
                 <div className="text-sm text-on-military-muted">
-                  {t.investir.valorLabel}: <span className="font-mono text-on-military">{fmt(valorAporte)}</span>
+                  {t.invest.valueLabel}: <span className="font-mono text-on-military">{fmt(valorAporte)}</span>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-on-military-muted">{ts.semApprove}</p>
+              <p className="mt-2 text-xs text-on-military-muted">{ts.noApprove}</p>
 
-              {valorInvalido && quantidadeCotas !== "" && <p className="mt-2 text-sm text-value-negative">{ts.quantidadeInvalida}</p>}
-              {!valorInvalido && excedeCapacidade && <p className="mt-2 text-sm text-value-negative">{ts.excedeCapacidade(fmt(capacidadeRestante))}</p>}
+              {valorInvalido && quantidadeCotas !== "" && <p className="mt-2 text-sm text-value-negative">{ts.invalidQuantity}</p>}
+              {!valorInvalido && excedeCapacidade && <p className="mt-2 text-sm text-value-negative">{ts.exceedsCapacity(fmt(capacidadeRestante))}</p>}
               {!valorInvalido && !excedeCapacidade && excedeTeto && (
-                <p className="mt-2 text-sm text-value-negative">{ts.excedeTeto(fmt(tetoRestante < zero ? zero : tetoRestante))}</p>
+                <p className="mt-2 text-sm text-value-negative">{ts.exceedsCap(fmt(tetoRestante < zero ? zero : tetoRestante))}</p>
               )}
-              {!valorInvalido && saldoInsuficiente && <p className="mt-2 text-sm text-value-negative">{ts.saldoInsuficiente}</p>}
-              {prazoEncerrado && <p className="mt-2 text-sm text-value-negative">{ts.prazoEncerrado}</p>}
-              {oferta?.pausada && <p className="mt-2 text-sm text-value-negative">{ts.pausadaTexto}</p>}
+              {!valorInvalido && saldoInsuficiente && <p className="mt-2 text-sm text-value-negative">{ts.insufficientBalance}</p>}
+              {prazoEncerrado && <p className="mt-2 text-sm text-value-negative">{ts.deadlinePassed}</p>}
+              {oferta?.paused && <p className="mt-2 text-sm text-value-negative">{ts.pausedText}</p>}
 
               <button
                 type="button"
@@ -348,107 +348,107 @@ export function SolanaInvestPanel({
                 onClick={handleInvestir}
                 className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {rotuloBotao(investir.status, t.investir.botao)}
+                {buttonLabel(investir.status, t.invest.button)}
               </button>
-              <Retorno {...investir} sucesso={t.investir.status.sucesso} />
+              <Return {...investir} success={t.invest.status.success} />
             </>
           )}
         </Card>
       )}
 
       {conectado && oferta && (
-        <Card title={t.posicao.title}>
+        <Card title={t.position.title}>
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-on-military-muted">{t.posicao.aportado}</dt>
-              <dd className="mt-0.5 text-sm text-on-military">{fmt(posicao.aportado)}</dd>
+              <dt className="text-xs text-on-military-muted">{t.position.invested}</dt>
+              <dd className="mt-0.5 text-sm text-on-military">{fmt(posicao.invested)}</dd>
             </div>
             <div>
-              <dt className="text-xs text-on-military-muted">{t.posicao.saldoParticipacao}</dt>
+              <dt className="text-xs text-on-military-muted">{t.position.participationBalance}</dt>
               <dd className="mt-0.5 text-sm text-on-military">
-                {leitura.saldoCotas.toString()} {oferta.simbolo}
+                {leitura.shareBalance.toString()} {oferta.symbol}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-on-military-muted">{t.posicao.jaResgatou}</dt>
-              <dd className="mt-0.5 text-sm text-on-military">{posicao.cotasResgatadas ? "Sim" : "Não"}</dd>
+              <dt className="text-xs text-on-military-muted">{t.position.alreadyRedeemed}</dt>
+              <dd className="mt-0.5 text-sm text-on-military">{posicao.sharesRedeemed ? "Sim" : "Não"}</dd>
             </div>
-            {posicao.reembolsado && (
+            {posicao.refunded && (
               <div>
-                <dt className="text-xs text-on-military-muted">{ts.reembolsadoLabel}</dt>
+                <dt className="text-xs text-on-military-muted">{ts.refundedLabel}</dt>
                 <dd className="mt-0.5 text-sm text-on-military">Sim</dd>
               </div>
             )}
           </dl>
-          {posicao.cotasResgatadas && <p className="mt-3 text-xs text-on-military-muted">{ts.cotasCongeladas}</p>}
+          {posicao.sharesRedeemed && <p className="mt-3 text-xs text-on-military-muted">{ts.sharesFrozen}</p>}
         </Card>
       )}
 
       {conectado && oferta && aberta && (
-        <Card title={t.encerrar.title}>
-          <p className="text-sm text-on-military-muted">{ts.encerrarDescricao}</p>
+        <Card title={t.close.title}>
+          <p className="text-sm text-on-military-muted">{ts.closeDescription}</p>
           <button
             type="button"
-            disabled={!(isSocio || isEmissor) || !podeEncerrarAgora || encerrar.ocupado}
+            disabled={!(isSocio || isIssuer) || !podeEncerrarAgora || encerrar.busy}
             onClick={handleEncerrar}
             className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {rotuloBotao(encerrar.status, t.encerrar.botao)}
+            {buttonLabel(encerrar.status, t.close.button)}
           </button>
-          {!(isSocio || isEmissor) && <p className="mt-3 text-xs text-on-military-muted">{t.encerrar.restrito}</p>}
-          {(isSocio || isEmissor) && !podeEncerrarAgora && <p className="mt-3 text-xs text-on-military-muted">{ts.encerrarAindaNao}</p>}
-          <Retorno {...encerrar} sucesso={t.encerrar.sucesso} />
+          {!(isSocio || isIssuer) && <p className="mt-3 text-xs text-on-military-muted">{t.close.restricted}</p>}
+          {(isSocio || isIssuer) && !podeEncerrarAgora && <p className="mt-3 text-xs text-on-military-muted">{ts.closeNotYet}</p>}
+          <Return {...encerrar} success={t.close.success} />
         </Card>
       )}
 
-      {conectado && oferta?.estado === "EncerradaSucesso" && !posicao.cotasResgatadas && posicao.aportado > zero && (
-        <Card title={t.resgatar.title}>
-          <p className="text-sm text-on-military-muted">{ts.resgatarDescricao(cotasAResgatar.toString(), oferta.simbolo)}</p>
+      {conectado && oferta?.state === "EncerradaSucesso" && !posicao.sharesRedeemed && posicao.invested > zero && (
+        <Card title={t.redeem.title}>
+          <p className="text-sm text-on-military-muted">{ts.redeemDescription(cotasAResgatar.toString(), oferta.symbol)}</p>
           <button
             type="button"
-            disabled={resgatar.ocupado}
+            disabled={resgatar.busy}
             onClick={handleResgatar}
             className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {rotuloBotao(resgatar.status, t.resgatar.botao)}
+            {buttonLabel(resgatar.status, t.redeem.button)}
           </button>
-          <Retorno {...resgatar} sucesso={t.resgatar.sucesso} />
+          <Return {...resgatar} success={t.redeem.success} />
         </Card>
       )}
 
-      {conectado && oferta?.estado === "EncerradaFalha" && !posicao.reembolsado && posicao.aportado > zero && (
-        <Card title={ts.reembolso.titulo}>
-          <p className="text-sm text-on-military-muted">{ts.reembolso.descricao(fmt(posicao.aportado))}</p>
+      {conectado && oferta?.state === "EncerradaFalha" && !posicao.refunded && posicao.invested > zero && (
+        <Card title={ts.refund.title}>
+          <p className="text-sm text-on-military-muted">{ts.refund.description(fmt(posicao.invested))}</p>
           <button
             type="button"
-            disabled={reembolsar.ocupado}
+            disabled={reembolsar.busy}
             onClick={handleReembolsar}
             className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {rotuloBotao(reembolsar.status, ts.reembolso.botao)}
+            {buttonLabel(reembolsar.status, ts.refund.button)}
           </button>
-          <Retorno {...reembolsar} sucesso={ts.reembolso.sucesso} />
+          <Return {...reembolsar} success={ts.refund.success} />
         </Card>
       )}
 
-      {conectado && oferta?.estado === "EncerradaSucesso" && (
-        <Card title={t.liberar.title}>
-          <p className="text-sm text-on-military-muted">{ts.liberarDescricao}</p>
-          {!oferta.recursosLiberados && <p className="mt-2 text-sm text-on-military">{t.liberar.previa(fmt(valorEmissor), fmt(taxa))}</p>}
-          {oferta.recursosLiberados ? (
-            <p className="mt-4 text-sm text-value-positive">{t.liberar.jaLiberado}</p>
+      {conectado && oferta?.state === "EncerradaSucesso" && (
+        <Card title={t.release.title}>
+          <p className="text-sm text-on-military-muted">{ts.releaseDescription}</p>
+          {!oferta.fundsReleased && <p className="mt-2 text-sm text-on-military">{t.release.preview(fmt(valorEmissor), fmt(taxa))}</p>}
+          {oferta.fundsReleased ? (
+            <p className="mt-4 text-sm text-value-positive">{t.release.alreadyReleased}</p>
           ) : (
             <>
               <button
                 type="button"
-                disabled={!isSocio || liberar.ocupado}
+                disabled={!isSocio || liberar.busy}
                 onClick={handleLiberar}
                 className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {rotuloBotao(liberar.status, t.liberar.botao)}
+                {buttonLabel(liberar.status, t.release.button)}
               </button>
-              {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.liberar.restrito}</p>}
-              <Retorno {...liberar} sucesso={ts.liberarSucesso} />
+              {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.release.restricted}</p>}
+              <Return {...liberar} success={ts.releaseSuccess} />
             </>
           )}
         </Card>

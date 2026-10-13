@@ -12,7 +12,7 @@ const THUMB_MAXRES = `https://img.youtube.com/vi/${YOUTUBE_ID}/maxresdefault.jpg
 const THUMB_FALLBACK = `https://img.youtube.com/vi/${YOUTUBE_ID}/hqdefault.jpg`;
 
 export function VideoCover() {
-  const t = ptBr.entrar.video;
+  const t = ptBr.signIn.video;
   const [thumbSrc, setThumbSrc] = useState(THUMB_MAXRES);
 
   return (
@@ -41,7 +41,7 @@ export function VideoCover() {
           <Play className="h-6 w-6 translate-x-0.5" fill="currentColor" aria-hidden="true" />
         </span>
         <p className="max-w-xs rounded-lg bg-military/70 px-4 py-2 text-sm font-medium text-on-military backdrop-blur-sm">
-          {t.texto}
+          {t.text}
         </p>
       </div>
     </a>

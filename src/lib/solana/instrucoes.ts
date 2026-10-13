@@ -8,82 +8,82 @@
 // transação falhar, nunca desviar valor.
 import { BN } from "@anchor-lang/core";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { ata, pdaEmissor, pdaMintMbrl, pdaOferta, programaPmes, type OfertaSolana } from "./program";
+import { minutes, issuerPda, pdaMintMbrl, offeringPda, smesProgram, type SolanaOffering } from "./program";
 
 const pk = (v: string) => new PublicKey(v);
 const bn = (v: bigint) => new BN(v.toString());
 
-export async function txFaucet(connection: Connection, usuario: string, valor: bigint): Promise<Transaction> {
-  return programaPmes(connection)
-    .methods.faucetMbrl(bn(valor))
-    .accountsPartial({ usuario: pk(usuario), mintMoeda: pdaMintMbrl() })
+export async function txFaucet(connection: Connection, user: string, value: bigint): Promise<Transaction> {
+  return smesProgram(connection)
+    .methods.faucetMbrl(bn(value))
+    .accountsPartial({ usuario: pk(user), mintMoeda: pdaMintMbrl() })
     .transaction();
 }
 
-export async function txAportar(connection: Connection, investidor: string, oferta: OfertaSolana, valor: bigint): Promise<Transaction> {
+export async function txInvest(connection: Connection, investor: string, offering: SolanaOffering, value: bigint): Promise<Transaction> {
   const mint = pdaMintMbrl();
-  return programaPmes(connection)
-    .methods.aportar(bn(valor))
+  return smesProgram(connection)
+    .methods.aportar(bn(value))
     .accountsPartial({
-      investidor: pk(investidor),
-      oferta: pk(oferta.endereco),
-      origem: ata(pk(investidor), mint),
-      cofre: pk(oferta.cofre),
+      investidor: pk(investor),
+      oferta: pk(offering.address),
+      origem: minutes(pk(investor), mint),
+      cofre: pk(offering.vault),
       mintMoeda: mint,
     })
     .transaction();
 }
 
-export async function txEncerrar(connection: Connection, oferta: OfertaSolana): Promise<Transaction> {
-  return programaPmes(connection)
+export async function txClose(connection: Connection, offering: SolanaOffering): Promise<Transaction> {
+  return smesProgram(connection)
     .methods.encerrar()
-    .accountsPartial({ oferta: pk(oferta.endereco), emissor: pdaEmissor(pk(oferta.emissor)) })
+    .accountsPartial({ oferta: pk(offering.address), emissor: issuerPda(pk(offering.issuer)) })
     .transaction();
 }
 
-export async function txResgatar(connection: Connection, investidor: string, oferta: OfertaSolana): Promise<Transaction> {
-  return programaPmes(connection)
+export async function txRedeem(connection: Connection, investor: string, offering: SolanaOffering): Promise<Transaction> {
+  return smesProgram(connection)
     .methods.resgatarCotas()
-    .accountsPartial({ investidor: pk(investidor), oferta: pk(oferta.endereco), mintCota: pk(oferta.mintCota) })
+    .accountsPartial({ investidor: pk(investor), oferta: pk(offering.address), mintCota: pk(offering.shareMint) })
     .transaction();
 }
 
-export async function txReembolsar(connection: Connection, investidor: string, oferta: OfertaSolana): Promise<Transaction> {
-  return programaPmes(connection)
+export async function txRefund(connection: Connection, investor: string, offering: SolanaOffering): Promise<Transaction> {
+  return smesProgram(connection)
     .methods.reembolsar()
     .accountsPartial({
-      investidor: pk(investidor),
-      oferta: pk(oferta.endereco),
-      cofre: pk(oferta.cofre),
+      investidor: pk(investor),
+      oferta: pk(offering.address),
+      cofre: pk(offering.vault),
       mintMoeda: pdaMintMbrl(),
     })
     .transaction();
 }
 
-export async function txLiberar(connection: Connection, pagador: string, oferta: OfertaSolana): Promise<Transaction> {
-  return programaPmes(connection)
+export async function txRelease(connection: Connection, payer: string, offering: SolanaOffering): Promise<Transaction> {
+  return smesProgram(connection)
     .methods.liberarParaEmissor()
     .accountsPartial({
-      pagador: pk(pagador),
-      oferta: pk(oferta.endereco),
-      cofre: pk(oferta.cofre),
+      pagador: pk(payer),
+      oferta: pk(offering.address),
+      cofre: pk(offering.vault),
       mintMoeda: pdaMintMbrl(),
-      emissorWallet: pk(oferta.emissor),
-      protocoloWallet: pk(oferta.protocoloWallet),
+      emissorWallet: pk(offering.issuer),
+      protocoloWallet: pk(offering.protocolWallet),
     })
     .transaction();
 }
 
-export type ParametrosCriarOferta = {
-  nome: string;
-  simbolo: string;
-  empresa: string;
+export type CreateOfferingParams = {
+  name: string;
+  symbol: string;
+  company: string;
   /** keccak256(CNPJ) em hex 0x… — o mesmo `cnpjRef` da publicação na Sepolia. */
   cnpjRefHex: string;
-  serie: string;
-  metaMinima: bigint;
-  metaMaxima: bigint;
-  precoPorCota: bigint;
+  series: string;
+  minTarget: bigint;
+  maxTarget: bigint;
+  pricePerShare: bigint;
   prazoUnix: number;
 };
 
@@ -91,31 +91,31 @@ export type ParametrosCriarOferta = {
  * `indiceOferta` = `Emissor.total_ofertas` lido agora: é a seed da próxima oferta deste emissor.
  * Devolve também o endereço que a oferta vai ter, para o chamador mostrar/conferir depois.
  */
-export async function txCriarOferta(
+export async function txCreateOffering(
   connection: Connection,
-  emissorWallet: string,
-  indiceOferta: number,
-  p: ParametrosCriarOferta,
+  issuerWallet: string,
+  offeringIndex: number,
+  p: CreateOfferingParams,
 ): Promise<{ tx: Transaction; oferta: string }> {
-  const limpo = p.cnpjRefHex.replace(/^0x/, "");
-  if (!/^[0-9a-fA-F]{64}$/.test(limpo)) throw new Error("cnpjRef inválido.");
-  const cnpjRef = Array.from({ length: 32 }, (_, i) => parseInt(limpo.slice(i * 2, i * 2 + 2), 16));
-  const wallet = pk(emissorWallet);
-  const oferta = pdaOferta(wallet, indiceOferta);
+  const clean = p.cnpjRefHex.replace(/^0x/, "");
+  if (!/^[0-9a-fA-F]{64}$/.test(clean)) throw new Error("cnpjRef inválido.");
+  const cnpjRef = Array.from({ length: 32 }, (_, i) => parseInt(clean.slice(i * 2, i * 2 + 2), 16));
+  const wallet = pk(issuerWallet);
+  const offering = offeringPda(wallet, offeringIndex);
 
-  const tx = await programaPmes(connection)
+  const tx = await smesProgram(connection)
     .methods.criarOferta({
-      nome: p.nome,
-      simbolo: p.simbolo,
-      empresa: p.empresa,
+      nome: p.name,
+      simbolo: p.symbol,
+      empresa: p.company,
       cnpjRef,
-      serie: p.serie,
-      metaMinima: bn(p.metaMinima),
-      metaMaxima: bn(p.metaMaxima),
-      precoPorCota: bn(p.precoPorCota),
+      serie: p.series,
+      metaMinima: bn(p.minTarget),
+      metaMaxima: bn(p.maxTarget),
+      precoPorCota: bn(p.pricePerShare),
       prazo: new BN(p.prazoUnix),
     })
-    .accountsPartial({ emissorWallet: wallet, emissor: pdaEmissor(wallet), oferta, mintMoeda: pdaMintMbrl() })
+    .accountsPartial({ emissorWallet: wallet, emissor: issuerPda(wallet), oferta: offering, mintMoeda: pdaMintMbrl() })
     .transaction();
-  return { tx, oferta: oferta.toBase58() };
+  return { tx, oferta: offering.toBase58() };
 }

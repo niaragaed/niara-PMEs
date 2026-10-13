@@ -8,9 +8,9 @@ import { ptBr } from "@/lib/i18n/pt-br";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
 
 const VIEWS: { key: AllocationView; label: string }[] = [
-  { key: "classe", label: ptBr.ativos.alocacao.viewClasse },
-  { key: "ativo", label: ptBr.ativos.alocacao.viewAtivo },
-  { key: "setor", label: ptBr.ativos.alocacao.viewSetor },
+  { key: "classe", label: ptBr.assets.allocation.viewClass },
+  { key: "ativo", label: ptBr.assets.allocation.viewAsset },
+  { key: "setor", label: ptBr.assets.allocation.viewSector },
 ];
 
 type DonutTooltipProps = {
@@ -34,13 +34,13 @@ function DonutTooltip({ active, payload }: DonutTooltipProps) {
 
 export function AllocationDonut() {
   const [view, setView] = useState<AllocationView>("classe");
-  const slices = computeAllocation(MOCK_POSITIONS, view, ptBr.ativos.categorias, ptBr.ativos.regioes);
+  const slices = computeAllocation(MOCK_POSITIONS, view, ptBr.assets.categories, ptBr.assets.regions);
 
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{ptBr.ativos.alocacao.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{ptBr.assets.allocation.title}</h3>
 
-      <div role="tablist" aria-label={ptBr.ativos.alocacao.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
+      <div role="tablist" aria-label={ptBr.assets.allocation.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
         {VIEWS.map((v) => (
           <button
             key={v.key}

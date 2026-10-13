@@ -16,7 +16,7 @@ function formatDate(iso: string): string {
 // /empresa/ofertas, onde criação/ativação/fechamento acontecem de verdade.
 // Só renderizado para issuers (ver PerfilPage) — investidor não tem ofertas.
 export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] }) {
-  const t = ptBr.perfil.minhasOfertas;
+  const t = ptBr.profile.myOfferings;
 
   return (
     <section id="minhas-ofertas" aria-labelledby="minhas-ofertas-heading" className="scroll-mt-24">
@@ -31,14 +31,14 @@ export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] })
           href="/empresa/ofertas"
           className="inline-flex items-center gap-1.5 rounded-full bg-salmon px-4 py-2 text-sm font-medium text-on-salmon hover:bg-salmon-600"
         >
-          {t.gerenciarBotao}
+          {t.manageButton}
         </Link>
       </div>
 
       <div className="mt-6">
         {offerings.length === 0 ? (
           <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
-            {t.vazio}
+            {t.empty}
           </p>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -54,12 +54,12 @@ export function MyOffersSection({ offerings }: { offerings: OfferingSummary[] })
                         {formatBRL(offering.base_cap_cents / 100)}
                       </p>
                       <span className="rounded-full border border-panel-border bg-military-600/40 px-3 py-1 text-xs font-medium text-on-military">
-                        {ptBr.empresaOfertas.status[offering.status]}
+                        {ptBr.companyOfferings.status[offering.status]}
                       </span>
                       <SyncStatusBadge status={offering.sync_status} />
                     </div>
                     <p className="mt-1 text-xs text-on-military-muted">
-                      {t.card.criadaEm} {formatDate(offering.created_at)} · {t.card.metaMinima}{" "}
+                      {t.card.createdOn} {formatDate(offering.created_at)} · {t.card.minTarget}{" "}
                       {formatBRL(offering.target_min_cents / 100)}
                     </p>
                   </div>

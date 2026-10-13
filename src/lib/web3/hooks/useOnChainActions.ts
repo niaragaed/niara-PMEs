@@ -6,7 +6,7 @@
 // projeto) e traduz qualquer erro via describeOnChainError antes de devolvê-lo à UI.
 import { useCallback, useState } from "react";
 import { useConnection, usePublicClient, useWriteContract } from "wagmi";
-import { getMockBrlContractAt, getOnChainContracts, type OfertaOnChainEnderecos } from "../contracts";
+import { getMockBrlContractAt, getOnChainContracts, type OnChainOfferingAddresses } from "../contracts";
 import { describeOnChainError } from "../errors";
 
 export type SimpleTxStatus = "idle" | "assinando" | "confirmando" | "sucesso" | "erro";
@@ -27,7 +27,7 @@ const IDLE: SimpleTxState = { status: "idle", errorMessage: null };
  * cada oferta pode ter seu próprio MockBRL (`OfertaCaptacao.moeda()`), resolvido on-chain aqui
  * dentro, nunca herdado de outro hook nem de env var.
  */
-export function useMintMockBrl(enderecos: OfertaOnChainEnderecos | null) {
+export function useMintMockBrl(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const { address } = useConnection();
   const publicClient = usePublicClient();
@@ -35,16 +35,16 @@ export function useMintMockBrl(enderecos: OfertaOnChainEnderecos | null) {
 
   const mint = useCallback(
     async (amount: bigint) => {
-      const contracts = getOnChainContracts(enderecos);
+      const contracts = getOnChainContracts(addresses);
       if (!contracts || !address || !publicClient) return;
 
       setState({ status: "assinando", errorMessage: null });
       try {
-        const moedaAddress = (await publicClient.readContract({
+        const currencyAddress = (await publicClient.readContract({
           ...contracts.ofertaCaptacao,
           functionName: "moeda",
         })) as `0x${string}`;
-        const mockBrl = getMockBrlContractAt(moedaAddress);
+        const mockBrl = getMockBrlContractAt(currencyAddress);
 
         const hash = await writeContractAsync({
           ...mockBrl,
@@ -58,7 +58,7 @@ export function useMintMockBrl(enderecos: OfertaOnChainEnderecos | null) {
         setState({ status: "erro", errorMessage: describeOnChainError(error) });
       }
     },
-    [address, publicClient, writeContractAsync, enderecos],
+    [address, publicClient, writeContractAsync, addresses],
   );
 
   const reset = useCallback(() => setState(IDLE), []);
@@ -111,37 +111,37 @@ export type InvestState = {
  * continuava zero; `aportar` revertia com `ERC20InsufficientAllowance` sempre, mesmo logo após um
  * approve aparentemente bem-sucedido. Ver CLAUDE.md para o incidente completo.
  */
-export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
+export function useInvestOnChain(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<InvestState>({ status: "idle", errorMessage: null });
   const { address } = useConnection();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
-  const investir = useCallback(
-    async (valor: bigint) => {
-      const contracts = getOnChainContracts(enderecos);
+  const invest = useCallback(
+    async (value: bigint) => {
+      const contracts = getOnChainContracts(addresses);
       if (!contracts || !publicClient || !address) return;
 
       try {
         setState({ status: "verificando-allowance", errorMessage: null });
-        const moedaAddress = (await publicClient.readContract({
+        const currencyAddress = (await publicClient.readContract({
           ...contracts.ofertaCaptacao,
           functionName: "moeda",
         })) as `0x${string}`;
-        const mockBrl = getMockBrlContractAt(moedaAddress);
+        const mockBrl = getMockBrlContractAt(currencyAddress);
 
-        const allowanceAtual = (await publicClient.readContract({
+        const currentAllowance = (await publicClient.readContract({
           ...mockBrl,
           functionName: "allowance",
           args: [address, contracts.ofertaCaptacao.address],
         })) as bigint;
 
-        if (allowanceAtual < valor) {
+        if (currentAllowance < value) {
           setState({ status: "assinando-approve", errorMessage: null });
           const approveHash = await writeContractAsync({
             ...mockBrl,
             functionName: "approve",
-            args: [contracts.ofertaCaptacao.address, valor],
+            args: [contracts.ofertaCaptacao.address, value],
           });
           setState({ status: "confirmando-approve", errorMessage: null });
           const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash });
@@ -170,7 +170,7 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
           await publicClient.simulateContract({
             ...contracts.ofertaCaptacao,
             functionName: "aportar",
-            args: [valor],
+            args: [value],
             account: address,
           });
         } catch (simError) {
@@ -179,25 +179,25 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
         }
 
         setState({ status: "assinando-aportar", errorMessage: null });
-        const aportarHash = await writeContractAsync({
+        const investHash = await writeContractAsync({
           ...contracts.ofertaCaptacao,
           functionName: "aportar",
-          args: [valor],
+          args: [value],
         });
         setState({ status: "confirmando-aportar", errorMessage: null });
-        await publicClient.waitForTransactionReceipt({ hash: aportarHash });
+        await publicClient.waitForTransactionReceipt({ hash: investHash });
 
         setState({ status: "sucesso", errorMessage: null });
       } catch (error) {
         setState({ status: "erro", errorMessage: describeOnChainError(error) });
       }
     },
-    [address, publicClient, writeContractAsync, enderecos],
+    [address, publicClient, writeContractAsync, addresses],
   );
 
   const reset = useCallback(() => setState({ status: "idle", errorMessage: null }), []);
 
-  return { ...state, investir, reset };
+  return { ...state, invest, reset };
 }
 
 /**
@@ -205,13 +205,13 @@ export function useInvestirOnChain(enderecos: OfertaOnChainEnderecos | null) {
  * for elegível (prazo atingido, ou total arrecadado == meta máxima exata). `enderecos`
  * identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useEncerrarOferta(enderecos: OfertaOnChainEnderecos | null) {
+export function useCloseOffering(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
-  const encerrar = useCallback(async () => {
-    const contracts = getOnChainContracts(enderecos);
+  const close = useCallback(async () => {
+    const contracts = getOnChainContracts(addresses);
     if (!contracts || !publicClient) return;
 
     setState({ status: "assinando", errorMessage: null });
@@ -223,11 +223,11 @@ export function useEncerrarOferta(enderecos: OfertaOnChainEnderecos | null) {
     } catch (error) {
       setState({ status: "erro", errorMessage: describeOnChainError(error) });
     }
-  }, [publicClient, writeContractAsync, enderecos]);
+  }, [publicClient, writeContractAsync, addresses]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
-  return { ...state, encerrar, reset };
+  return { ...state, close, reset };
 }
 
 /**
@@ -235,13 +235,13 @@ export function useEncerrarOferta(enderecos: OfertaOnChainEnderecos | null) {
  * de `liberarParaEmissor` (ver OfertaCaptacao.sol, confirmado antes de fixar este fluxo).
  * `enderecos` identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useResgatarCotas(enderecos: OfertaOnChainEnderecos | null) {
+export function useRedeemShares(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
-  const resgatar = useCallback(async () => {
-    const contracts = getOnChainContracts(enderecos);
+  const redeem = useCallback(async () => {
+    const contracts = getOnChainContracts(addresses);
     if (!contracts || !publicClient) return;
 
     setState({ status: "assinando", errorMessage: null });
@@ -253,11 +253,11 @@ export function useResgatarCotas(enderecos: OfertaOnChainEnderecos | null) {
     } catch (error) {
       setState({ status: "erro", errorMessage: describeOnChainError(error) });
     }
-  }, [publicClient, writeContractAsync, enderecos]);
+  }, [publicClient, writeContractAsync, addresses]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
-  return { ...state, resgatar, reset };
+  return { ...state, redeem, reset };
 }
 
 /**
@@ -267,13 +267,13 @@ export function useResgatarCotas(enderecos: OfertaOnChainEnderecos | null) {
  * gatilho que de fato move a receita de taxa da plataforma, quando existir. `enderecos`
  * identifica a oferta (par token/oferta, ver contracts.ts).
  */
-export function useLiberarParaEmissor(enderecos: OfertaOnChainEnderecos | null) {
+export function useReleaseToIssuer(addresses: OnChainOfferingAddresses | null) {
   const [state, setState] = useState<SimpleTxState>(IDLE);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
-  const liberar = useCallback(async () => {
-    const contracts = getOnChainContracts(enderecos);
+  const release = useCallback(async () => {
+    const contracts = getOnChainContracts(addresses);
     if (!contracts || !publicClient) return;
 
     setState({ status: "assinando", errorMessage: null });
@@ -285,9 +285,9 @@ export function useLiberarParaEmissor(enderecos: OfertaOnChainEnderecos | null) 
     } catch (error) {
       setState({ status: "erro", errorMessage: describeOnChainError(error) });
     }
-  }, [publicClient, writeContractAsync, enderecos]);
+  }, [publicClient, writeContractAsync, addresses]);
 
   const reset = useCallback(() => setState(IDLE), []);
 
-  return { ...state, liberar, reset };
+  return { ...state, release, reset };
 }

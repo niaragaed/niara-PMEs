@@ -18,8 +18,8 @@ import {
   isValidCEP,
   isValidCNPJ,
   isValidCPF,
-  isValidDataNascimento,
-  isValidTelefone,
+  isValidBirthDate,
+  isValidPhone,
   onlyDigits,
 } from "@/lib/masks";
 import { MONEY_FORMAT, reaisToCents } from "@/lib/money";
@@ -44,14 +44,14 @@ function brDateToIso(value: string): string {
 // deliberadamente por ora (ver CLAUDE.md/discussão de escopo) em vez de
 // extrair um módulo compartilhado, para não mexer no arquivo de /perfil.
 const addressSchema = {
-  phone: z.string().refine((value) => isValidTelefone(value), "Telefone inválido.").transform(onlyDigits),
+  phone: z.string().refine((value) => isValidPhone(value), "Telefone inválido.").transform(onlyDigits),
   cep: z.string().refine((value) => isValidCEP(value), "CEP inválido.").transform(onlyDigits),
-  logradouro: z.string().trim().min(1, "Informe a rua."),
-  numero: z.string().trim().min(1, "Informe o número."),
-  complemento: z.string().trim(),
-  bairro: z.string().trim().min(1, "Informe o bairro."),
-  cidade: z.string().trim().min(1, "Informe a cidade."),
-  estado: z
+  street: z.string().trim().min(1, "Informe a rua."),
+  number: z.string().trim().min(1, "Informe o número."),
+  complement: z.string().trim(),
+  district: z.string().trim().min(1, "Informe o bairro."),
+  city: z.string().trim().min(1, "Informe a cidade."),
+  state: z
     .string()
     .trim()
     .regex(/^[A-Za-z]{2}$/, "Selecione o estado.")
@@ -66,7 +66,7 @@ const investorDataSchema = z.object({
     .transform(onlyDigits),
   birthDate: z
     .string()
-    .refine((value) => isValidDataNascimento(value), "Data de nascimento inválida.")
+    .refine((value) => isValidBirthDate(value), "Data de nascimento inválida.")
     .transform(brDateToIso),
   ...addressSchema,
 });
@@ -154,12 +154,12 @@ export async function createAccount(roleInput: unknown, dataInput: unknown): Pro
       birth_date: parsed.data.birthDate,
       phone: parsed.data.phone,
       addr_cep: parsed.data.cep,
-      addr_street: parsed.data.logradouro,
-      addr_number: parsed.data.numero,
-      addr_complement: parsed.data.complemento || null,
-      addr_neighborhood: parsed.data.bairro,
-      addr_city: parsed.data.cidade,
-      addr_state: parsed.data.estado,
+      addr_street: parsed.data.street,
+      addr_number: parsed.data.number,
+      addr_complement: parsed.data.complement || null,
+      addr_neighborhood: parsed.data.district,
+      addr_city: parsed.data.city,
+      addr_state: parsed.data.state,
     });
 
     if (error) {
@@ -197,12 +197,12 @@ export async function createAccount(roleInput: unknown, dataInput: unknown): Pro
       annual_revenue_cents: annualRevenueCents.toString(),
       phone: parsed.data.phone,
       addr_cep: parsed.data.cep,
-      addr_street: parsed.data.logradouro,
-      addr_number: parsed.data.numero,
-      addr_complement: parsed.data.complemento || null,
-      addr_neighborhood: parsed.data.bairro,
-      addr_city: parsed.data.cidade,
-      addr_state: parsed.data.estado,
+      addr_street: parsed.data.street,
+      addr_number: parsed.data.number,
+      addr_complement: parsed.data.complement || null,
+      addr_neighborhood: parsed.data.district,
+      addr_city: parsed.data.city,
+      addr_state: parsed.data.state,
     });
 
     if (error) {

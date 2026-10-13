@@ -9,15 +9,15 @@ import { ReadField, SelectField, TextField } from "@/components/perfil/FormField
 import { ptBr } from "@/lib/i18n/pt-br";
 import {
   isValidCEP,
-  isValidDataNascimento,
-  isValidDocumento,
+  isValidBirthDate,
+  isValidDocument,
   isValidEmail,
-  isValidTelefone,
+  isValidPhone,
   maskCEP,
-  maskDataNascimento,
-  maskDocumento,
-  maskTelefone,
-  type TipoPessoa,
+  maskBirthDate,
+  maskDocument,
+  maskPhone,
+  type PersonType,
 } from "@/lib/masks";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthError } from "@supabase/supabase-js";
@@ -32,20 +32,20 @@ const UFS = [
 
 type Step = "conta" | "tipo" | "dados";
 
-type ContaErrors = { email?: string; senha?: string };
+type AccountErrors = { email?: string; password?: string };
 
 // Só cobre os erros que signUp pode retornar — mesmo léxico de erros de
 // EntrarPage.tsx (ptBr.entrar.erros), reaproveitado aqui em vez de duplicar
 // as strings (o signUp em si só existe nesta tela agora, ver EntrarPage.tsx).
 function mapSignUpError(error: AuthError): string {
-  const t = ptBr.entrar.erros;
+  const t = ptBr.signIn.errors;
   switch (error.code) {
     case "user_already_exists":
-      return t.emailJaCadastrado;
+      return t.emailAlreadyRegistered;
     case "weak_password":
-      return t.senhaFraca;
+      return t.weakPassword;
     default:
-      return t.generico;
+      return t.generic;
   }
 }
 
@@ -58,12 +58,12 @@ type FormData = {
   annualRevenueReais: string;
   phone: string;
   cep: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
 };
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
@@ -77,33 +77,33 @@ const EMPTY_FORM: FormData = {
   annualRevenueReais: "",
   phone: "",
   cep: "",
-  logradouro: "",
-  numero: "",
-  complemento: "",
-  bairro: "",
-  cidade: "",
-  estado: "",
+  street: "",
+  number: "",
+  complement: "",
+  district: "",
+  city: "",
+  state: "",
 };
 
-function validate(data: FormData, tipoPessoa: TipoPessoa): FormErrors {
+function validate(data: FormData, personType: PersonType): FormErrors {
   const errors: FormErrors = {};
-  const t = ptBr.cadastro.erros;
+  const t = ptBr.signUp.errors;
 
-  if (tipoPessoa === "pf") {
-    if (!data.fullName.trim()) errors.fullName = t.obrigatorio;
-    if (!isValidDataNascimento(data.birthDate)) errors.birthDate = t.dataInvalida;
+  if (personType === "pf") {
+    if (!data.fullName.trim()) errors.fullName = t.required;
+    if (!isValidBirthDate(data.birthDate)) errors.birthDate = t.invalidDate;
   } else {
-    if (!data.legalName.trim()) errors.legalName = t.obrigatorio;
-    if (!data.annualRevenueReais.trim()) errors.annualRevenueReais = t.obrigatorio;
+    if (!data.legalName.trim()) errors.legalName = t.required;
+    if (!data.annualRevenueReais.trim()) errors.annualRevenueReais = t.required;
   }
-  if (!isValidDocumento(data.taxId, tipoPessoa)) errors.taxId = t.documentoInvalido;
-  if (!isValidTelefone(data.phone)) errors.phone = t.telefoneInvalido;
-  if (!isValidCEP(data.cep)) errors.cep = t.cepInvalido;
-  if (!data.logradouro.trim()) errors.logradouro = t.obrigatorio;
-  if (!data.numero.trim()) errors.numero = t.obrigatorio;
-  if (!data.bairro.trim()) errors.bairro = t.obrigatorio;
-  if (!data.cidade.trim()) errors.cidade = t.obrigatorio;
-  if (!data.estado.trim()) errors.estado = t.obrigatorio;
+  if (!isValidDocument(data.taxId, personType)) errors.taxId = t.invalidDocument;
+  if (!isValidPhone(data.phone)) errors.phone = t.phoneInvalid;
+  if (!isValidCEP(data.cep)) errors.cep = t.invalidCep;
+  if (!data.street.trim()) errors.street = t.required;
+  if (!data.number.trim()) errors.number = t.required;
+  if (!data.district.trim()) errors.district = t.required;
+  if (!data.city.trim()) errors.city = t.required;
+  if (!data.state.trim()) errors.state = t.required;
   return errors;
 }
 
@@ -116,65 +116,65 @@ function validate(data: FormData, tipoPessoa: TipoPessoa): FormErrors {
 // via /entrar) pula direto pro passo "tipo", sem repetir o passo "conta".
 // O vídeo à esquerda é o mesmo componente/conteúdo de /entrar (VideoCover),
 // persistente entre os três passos.
-export function CadastroPage({ initialStep, email }: { initialStep: Step; email: string }) {
-  const t = ptBr.cadastro;
+export function SignUpPage({ initialStep, email }: { initialStep: Step; email: string }) {
+  const t = ptBr.signUp;
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
   const [step, setStep] = useState<Step>(initialStep);
   const [resolvedEmail, setResolvedEmail] = useState(email);
-  const [contaEmail, setContaEmail] = useState("");
-  const [contaSenha, setContaSenha] = useState("");
-  const [contaErrors, setContaErrors] = useState<ContaErrors>({});
-  const [contaFormError, setContaFormError] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountErrors, setAccountErrors] = useState<AccountErrors>({});
+  const [accountFormError, setAccountFormError] = useState<string | null>(null);
   const [creatingAccount, setCreatingAccount] = useState(false);
 
-  const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>("pf");
+  const [personType, setPersonType] = useState<PersonType>("pf");
   const [draft, setDraft] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverState, setServerState] = useState<CreateAccountState | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const documentoLabel = tipoPessoa === "pf" ? t.campos.documentoCpf : t.campos.documentoCnpj;
+  const documentLabel = personType === "pf" ? t.fields.documentCpf : t.fields.documentCnpj;
 
-  function validateConta(): boolean {
-    const nextErrors: ContaErrors = {};
-    if (!isValidEmail(contaEmail)) nextErrors.email = ptBr.entrar.erros.emailInvalido;
-    if (contaSenha.length < 6) nextErrors.senha = ptBr.entrar.erros.senhaCurta;
-    setContaErrors(nextErrors);
+  function validateAccount(): boolean {
+    const nextErrors: AccountErrors = {};
+    if (!isValidEmail(accountEmail)) nextErrors.email = ptBr.signIn.errors.invalidEmail;
+    if (accountPassword.length < 6) nextErrors.password = ptBr.signIn.errors.shortPassword;
+    setAccountErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
 
   async function handleCreateAccount(event: FormEvent) {
     event.preventDefault();
-    setContaFormError(null);
-    if (!validateConta()) return;
+    setAccountFormError(null);
+    if (!validateAccount()) return;
 
     setCreatingAccount(true);
-    const { error } = await supabase.auth.signUp({ email: contaEmail, password: contaSenha });
+    const { error } = await supabase.auth.signUp({ email: accountEmail, password: accountPassword });
     if (error) {
-      setContaFormError(mapSignUpError(error));
+      setAccountFormError(mapSignUpError(error));
       setCreatingAccount(false);
       return;
     }
     router.refresh();
-    setResolvedEmail(contaEmail);
+    setResolvedEmail(accountEmail);
     setCreatingAccount(false);
     setStep("tipo");
   }
 
-  function handleTipoPessoaChange(next: TipoPessoa) {
-    setTipoPessoa(next);
+  function handlePersonTypeChange(next: PersonType) {
+    setPersonType(next);
     setDraft((current) => ({ ...current, taxId: "" }));
     setErrors({});
     setServerState(null);
   }
 
-  function goToDados() {
+  function goToData() {
     setStep("dados");
   }
 
-  function goToTipo() {
+  function goToType() {
     setErrors({});
     setServerState(null);
     setStep("tipo");
@@ -184,9 +184,9 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
     return (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const raw = event.target.value;
       let masked = raw;
-      if (field === "taxId") masked = maskDocumento(raw, tipoPessoa);
-      else if (field === "birthDate") masked = maskDataNascimento(raw);
-      else if (field === "phone") masked = maskTelefone(raw);
+      if (field === "taxId") masked = maskDocument(raw, personType);
+      else if (field === "birthDate") masked = maskBirthDate(raw);
+      else if (field === "phone") masked = maskPhone(raw);
       else if (field === "cep") masked = maskCEP(raw);
       setDraft((current) => ({ ...current, [field]: masked }));
     };
@@ -194,26 +194,26 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validate(draft, tipoPessoa);
+    const nextErrors = validate(draft, personType);
     setErrors(nextErrors);
     setServerState(null);
     if (Object.keys(nextErrors).length > 0) return;
 
     startTransition(async () => {
       const payload =
-        tipoPessoa === "pf"
+        personType === "pf"
           ? {
               fullName: draft.fullName,
               taxId: draft.taxId,
               birthDate: draft.birthDate,
               phone: draft.phone,
               cep: draft.cep,
-              logradouro: draft.logradouro,
-              numero: draft.numero,
-              complemento: draft.complemento,
-              bairro: draft.bairro,
-              cidade: draft.cidade,
-              estado: draft.estado,
+              street: draft.street,
+              number: draft.number,
+              complement: draft.complement,
+              district: draft.district,
+              city: draft.city,
+              state: draft.state,
             }
           : {
               legalName: draft.legalName,
@@ -222,15 +222,15 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
               annualRevenueReais: draft.annualRevenueReais,
               phone: draft.phone,
               cep: draft.cep,
-              logradouro: draft.logradouro,
-              numero: draft.numero,
-              complemento: draft.complemento,
-              bairro: draft.bairro,
-              cidade: draft.cidade,
-              estado: draft.estado,
+              street: draft.street,
+              number: draft.number,
+              complement: draft.complement,
+              district: draft.district,
+              city: draft.city,
+              state: draft.state,
             };
 
-      const result = await createAccount(tipoPessoa === "pf" ? "investor" : "issuer", payload);
+      const result = await createAccount(personType === "pf" ? "investor" : "issuer", payload);
       // Sucesso redireciona dentro da própria action (redirect() lança e
       // interrompe a execução) — só chega aqui em caso de erro.
       setServerState(result);
@@ -249,36 +249,36 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
           {step === "conta" ? (
             <>
               <p className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                {t.passoContaContador}
+                {t.accountStepCounter}
               </p>
-              <h1 className="mt-2 text-2xl font-semibold text-on-military sm:text-3xl">{t.conta.titulo}</h1>
-              <p className="mt-2 text-sm text-on-military-muted">{t.conta.subtitulo}</p>
+              <h1 className="mt-2 text-2xl font-semibold text-on-military sm:text-3xl">{t.account.title}</h1>
+              <p className="mt-2 text-sm text-on-military-muted">{t.account.subtitle}</p>
 
               <form onSubmit={handleCreateAccount} noValidate className="mt-8 flex flex-col gap-3">
                 <TextField
                   id="cadastro-conta-email"
-                  label={t.conta.email.label}
+                  label={t.account.email.label}
                   type="email"
-                  value={contaEmail}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setContaEmail(event.target.value)}
-                  error={contaErrors.email}
-                  placeholder={t.conta.email.placeholder}
+                  value={accountEmail}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setAccountEmail(event.target.value)}
+                  error={accountErrors.email}
+                  placeholder={t.account.email.placeholder}
                   autoComplete="email"
                 />
                 <TextField
                   id="cadastro-conta-senha"
-                  label={t.conta.senha.label}
+                  label={t.account.password.label}
                   type="password"
-                  value={contaSenha}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setContaSenha(event.target.value)}
-                  error={contaErrors.senha}
-                  placeholder={t.conta.senha.placeholder}
+                  value={accountPassword}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setAccountPassword(event.target.value)}
+                  error={accountErrors.password}
+                  placeholder={t.account.password.placeholder}
                   autoComplete="new-password"
                 />
 
-                {contaFormError && (
+                {accountFormError && (
                   <p role="alert" className="text-xs text-value-negative">
-                    {contaFormError}
+                    {accountFormError}
                   </p>
                 )}
 
@@ -287,64 +287,64 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                   disabled={creatingAccount}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-salmon px-4 py-2.5 text-sm font-medium text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {creatingAccount ? t.conta.criandoContaBotao : t.conta.criarContaBotao}
+                  {creatingAccount ? t.account.creatingAccountButton : t.account.createAccountButton}
                 </button>
 
                 <Link
                   href="/entrar"
                   className="text-center text-xs text-on-military-muted underline-offset-2 hover:text-on-military hover:underline"
                 >
-                  {t.conta.jaTemContaLink}
+                  {t.account.hasAccountLink}
                 </Link>
               </form>
             </>
           ) : step === "tipo" ? (
             <>
               <p className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                {t.passoTipoContador}
+                {t.typeStepCounter}
               </p>
-              <h1 className="mt-2 text-2xl font-semibold text-on-military sm:text-3xl">{t.titulo}</h1>
-              <p className="mt-2 text-sm text-on-military-muted">{t.subtitulo}</p>
+              <h1 className="mt-2 text-2xl font-semibold text-on-military sm:text-3xl">{t.title}</h1>
+              <p className="mt-2 text-sm text-on-military-muted">{t.subtitle}</p>
 
               <fieldset className="mt-8">
                 <legend className="mb-3 text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                  {t.tipoPessoa.legend}
+                  {t.personType.legend}
                 </legend>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label
                     className={`cursor-pointer rounded-lg border p-4 transition-colors focus-within:ring-2 focus-within:ring-salmon ${
-                      tipoPessoa === "pf" ? "border-salmon bg-military-600/40" : "border-panel-border hover:border-salmon/60"
+                      personType === "pf" ? "border-salmon bg-military-600/40" : "border-panel-border hover:border-salmon/60"
                     }`}
                   >
                     <input
                       type="radio"
                       name="tipoPessoa"
                       value="pf"
-                      checked={tipoPessoa === "pf"}
-                      onChange={() => handleTipoPessoaChange("pf")}
+                      checked={personType === "pf"}
+                      onChange={() => handlePersonTypeChange("pf")}
                       className="sr-only"
                     />
-                    <span className="block text-sm font-semibold text-on-military">{t.tipoPessoa.pessoaFisica}</span>
+                    <span className="block text-sm font-semibold text-on-military">{t.personType.individual}</span>
                     <span className="mt-1 block text-xs text-on-military-muted">
-                      {t.tipoPessoa.pessoaFisicaDescricao}
+                      {t.personType.individualDescription}
                     </span>
                   </label>
                   <label
                     className={`cursor-pointer rounded-lg border p-4 transition-colors focus-within:ring-2 focus-within:ring-salmon ${
-                      tipoPessoa === "pj" ? "border-salmon bg-military-600/40" : "border-panel-border hover:border-salmon/60"
+                      personType === "pj" ? "border-salmon bg-military-600/40" : "border-panel-border hover:border-salmon/60"
                     }`}
                   >
                     <input
                       type="radio"
                       name="tipoPessoa"
                       value="pj"
-                      checked={tipoPessoa === "pj"}
-                      onChange={() => handleTipoPessoaChange("pj")}
+                      checked={personType === "pj"}
+                      onChange={() => handlePersonTypeChange("pj")}
                       className="sr-only"
                     />
-                    <span className="block text-sm font-semibold text-on-military">{t.tipoPessoa.pessoaJuridica}</span>
+                    <span className="block text-sm font-semibold text-on-military">{t.personType.company}</span>
                     <span className="mt-1 block text-xs text-on-military-muted">
-                      {t.tipoPessoa.pessoaJuridicaDescricao}
+                      {t.personType.companyDescription}
                     </span>
                   </label>
                 </div>
@@ -352,34 +352,34 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
 
               <button
                 type="button"
-                onClick={goToDados}
+                onClick={goToData}
                 className="mt-8 rounded-md bg-salmon px-4 py-2.5 text-sm font-semibold text-on-salmon hover:bg-salmon-600"
               >
-                {t.continuarBotao}
+                {t.continueButton}
               </button>
             </>
           ) : (
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                  {t.passoDadosContador}
+                  {t.dataStepCounter}
                 </p>
-                <h1 className="mt-2 text-2xl font-semibold text-on-military sm:text-3xl">{t.dadosTitulo}</h1>
+                <h1 className="mt-2 text-2xl font-semibold text-on-military sm:text-3xl">{t.dataTitle}</h1>
                 <p className="mt-2 text-sm text-on-military-muted">
-                  {tipoPessoa === "pf" ? t.dadosSubtituloPf : t.dadosSubtituloPj}
+                  {personType === "pf" ? t.dataSubtitlePf : t.dataSubtitlePj}
                 </p>
               </div>
 
               <fieldset className="flex flex-col gap-4">
                 <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                  {t.secaoPessoal}
+                  {t.personalSection}
                 </legend>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ReadField label={t.campos.pais} value={t.campos.brasil} />
-                  {tipoPessoa === "pf" ? (
+                  <ReadField label={t.fields.country} value={t.fields.brazil} />
+                  {personType === "pf" ? (
                     <TextField
                       id="cadastro-nome"
-                      label={t.campos.nomeCompleto}
+                      label={t.fields.fullName}
                       value={draft.fullName}
                       onChange={handleFieldChange("fullName")}
                       error={errors.fullName}
@@ -389,14 +389,14 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                     <>
                       <TextField
                         id="cadastro-razao-social"
-                        label={t.campos.razaoSocial}
+                        label={t.fields.legalName}
                         value={draft.legalName}
                         onChange={handleFieldChange("legalName")}
                         error={errors.legalName}
                       />
                       <TextField
                         id="cadastro-nome-fantasia"
-                        label={t.campos.nomeFantasia}
+                        label={t.fields.tradeName}
                         value={draft.tradeName}
                         onChange={handleFieldChange("tradeName")}
                       />
@@ -404,17 +404,17 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                   )}
                   <TextField
                     id="cadastro-documento"
-                    label={documentoLabel}
+                    label={documentLabel}
                     value={draft.taxId}
                     onChange={handleFieldChange("taxId")}
                     error={errors.taxId}
                     inputMode="numeric"
-                    placeholder={tipoPessoa === "pf" ? "000.000.000-00" : "00.000.000/0000-00"}
+                    placeholder={personType === "pf" ? "000.000.000-00" : "00.000.000/0000-00"}
                   />
-                  {tipoPessoa === "pf" && (
+                  {personType === "pf" && (
                     <TextField
                       id="cadastro-nascimento"
-                      label={t.campos.dataNascimento}
+                      label={t.fields.birthDate}
                       value={draft.birthDate}
                       onChange={handleFieldChange("birthDate")}
                       error={errors.birthDate}
@@ -422,10 +422,10 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                       placeholder="DD/MM/AAAA"
                     />
                   )}
-                  {tipoPessoa === "pj" && (
+                  {personType === "pj" && (
                     <TextField
                       id="cadastro-receita"
-                      label={t.campos.receitaBrutaAnual}
+                      label={t.fields.grossAnnualRevenue}
                       value={draft.annualRevenueReais}
                       onChange={handleFieldChange("annualRevenueReais")}
                       error={errors.annualRevenueReais}
@@ -433,10 +433,10 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                       placeholder="5.000.000,00"
                     />
                   )}
-                  <ReadField label={t.campos.email} value={resolvedEmail} />
+                  <ReadField label={t.fields.email} value={resolvedEmail} />
                   <TextField
                     id="cadastro-telefone"
-                    label={t.campos.telefone}
+                    label={t.fields.phone}
                     value={draft.phone}
                     onChange={handleFieldChange("phone")}
                     error={errors.phone}
@@ -450,12 +450,12 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
 
               <fieldset className="flex flex-col gap-4">
                 <legend className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                  {t.secaoEndereco}
+                  {t.addressSection}
                 </legend>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <TextField
                     id="cadastro-cep"
-                    label={t.campos.cep}
+                    label={t.fields.cep}
                     value={draft.cep}
                     onChange={handleFieldChange("cep")}
                     error={errors.cep}
@@ -464,47 +464,47 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                   />
                   <TextField
                     id="cadastro-logradouro"
-                    label={t.campos.logradouro}
-                    value={draft.logradouro}
-                    onChange={handleFieldChange("logradouro")}
-                    error={errors.logradouro}
+                    label={t.fields.street}
+                    value={draft.street}
+                    onChange={handleFieldChange("street")}
+                    error={errors.street}
                     autoComplete="address-line1"
                   />
                   <TextField
                     id="cadastro-numero"
-                    label={t.campos.numero}
-                    value={draft.numero}
-                    onChange={handleFieldChange("numero")}
-                    error={errors.numero}
+                    label={t.fields.number}
+                    value={draft.number}
+                    onChange={handleFieldChange("number")}
+                    error={errors.number}
                   />
                   <TextField
                     id="cadastro-complemento"
-                    label={t.campos.complemento}
-                    value={draft.complemento}
-                    onChange={handleFieldChange("complemento")}
+                    label={t.fields.complement}
+                    value={draft.complement}
+                    onChange={handleFieldChange("complement")}
                   />
                   <TextField
                     id="cadastro-bairro"
-                    label={t.campos.bairro}
-                    value={draft.bairro}
-                    onChange={handleFieldChange("bairro")}
-                    error={errors.bairro}
+                    label={t.fields.district}
+                    value={draft.district}
+                    onChange={handleFieldChange("district")}
+                    error={errors.district}
                   />
                   <TextField
                     id="cadastro-cidade"
-                    label={t.campos.cidade}
-                    value={draft.cidade}
-                    onChange={handleFieldChange("cidade")}
-                    error={errors.cidade}
+                    label={t.fields.city}
+                    value={draft.city}
+                    onChange={handleFieldChange("city")}
+                    error={errors.city}
                     autoComplete="address-level2"
                   />
                   <SelectField
                     id="cadastro-estado"
-                    label={t.campos.estado}
-                    value={draft.estado}
-                    onChange={handleFieldChange("estado")}
-                    error={errors.estado}
-                    placeholder={t.campos.selecionarEstado}
+                    label={t.fields.state}
+                    value={draft.state}
+                    onChange={handleFieldChange("state")}
+                    error={errors.state}
+                    placeholder={t.fields.selectState}
                   >
                     {UFS.map((uf) => (
                       <option key={uf} value={uf}>
@@ -521,7 +521,7 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                 </p>
               )}
 
-              <p className="text-[11px] text-on-military-muted">{t.demoNota}</p>
+              <p className="text-[11px] text-on-military-muted">{t.demoNote}</p>
 
               <div className="flex gap-2">
                 <button
@@ -529,15 +529,15 @@ export function CadastroPage({ initialStep, email }: { initialStep: Step; email:
                   disabled={isPending}
                   className="rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isPending ? t.cadastrandoBotao : t.cadastrarBotao}
+                  {isPending ? t.registeringButton : t.registerButton}
                 </button>
                 <button
                   type="button"
-                  onClick={goToTipo}
+                  onClick={goToType}
                   disabled={isPending}
                   className="rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military-muted hover:text-on-military disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {t.voltarBotao}
+                  {t.backButton}
                 </button>
               </div>
             </form>

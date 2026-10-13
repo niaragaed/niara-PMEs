@@ -10,14 +10,14 @@ import { ofertaOrquestradorAbi } from "./abis/ofertaOrquestrador";
 // Rede fixada explicitamente aqui como constante — nunca inferida da carteira conectada nem
 // de alguma config global. Apontar este contrato para outra rede no futuro exige editar esta
 // linha de propósito; nunca é um acidente de qual chain a wallet do usuário estava.
-export const ORQUESTRADOR_CHAIN_ID = sepolia.id;
+export const ORCHESTRATOR_CHAIN_ID = sepolia.id;
 
 const HEX_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
-export type OrquestradorContract = {
+export type OrchestratorContract = {
   address: `0x${string}`;
   abi: typeof ofertaOrquestradorAbi;
-  chainId: typeof ORQUESTRADOR_CHAIN_ID;
+  chainId: typeof ORCHESTRATOR_CHAIN_ID;
 };
 
 /**
@@ -25,13 +25,13 @@ export type OrquestradorContract = {
  * formado — a UI trata isso como "contrato não configurado", mesmo padrão já usado por
  * `getOnChainContracts()` em `contracts.ts`.
  */
-export function getOrquestradorContract(): OrquestradorContract | null {
+export function getOrchestratorContract(): OrchestratorContract | null {
   const address = process.env.NEXT_PUBLIC_ORQUESTRADOR_ADDRESS;
   if (!address || !HEX_ADDRESS_PATTERN.test(address)) return null;
 
   return {
     address: address as `0x${string}`,
     abi: ofertaOrquestradorAbi,
-    chainId: ORQUESTRADOR_CHAIN_ID,
+    chainId: ORCHESTRATOR_CHAIN_ID,
   };
 }

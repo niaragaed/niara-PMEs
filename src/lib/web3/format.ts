@@ -23,9 +23,9 @@ export function formatEth(valueWei: bigint): string {
   return formatToken(valueWei, 18, "ETH", 6);
 }
 
-export function formatPrazo(prazoUnixSeconds: bigint): string {
-  if (prazoUnixSeconds === BigInt(0)) return "—";
+export function formatDeadline(deadlineUnixSeconds: bigint): string {
+  if (deadlineUnixSeconds === BigInt(0)) return "—";
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
-    new Date(Number(prazoUnixSeconds) * 1000),
+    new Date(Number(deadlineUnixSeconds) * 1000),
   );
 }

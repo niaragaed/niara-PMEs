@@ -10,7 +10,7 @@ export function AvatarUpload() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const t = ptBr.perfil.dadosCadastro.avatar;
+  const t = ptBr.profile.registrationData.avatar;
 
   // a foto nunca sai do navegador — só criamos um object URL local, que
   // precisa ser revogado ao trocar de imagem ou desmontar o componente

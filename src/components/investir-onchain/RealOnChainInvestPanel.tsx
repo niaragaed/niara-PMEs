@@ -31,19 +31,19 @@ import { sepolia } from "wagmi/chains";
 import { AlertTriangle, CheckCircle2, Coins } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import {
-  useMinhaPosicaoOnChain,
-  useOfertaOnChainTermos,
-  type EstadoOferta,
+  useMyOnChainPosition,
+  useOnChainOfferingTerms,
+  type OfferingState,
 } from "@/lib/web3/hooks/useOfertaOnChain";
-import type { OfertaOnChainEnderecos } from "@/lib/web3/contracts";
+import type { OnChainOfferingAddresses } from "@/lib/web3/contracts";
 import {
-  useEncerrarOferta,
-  useInvestirOnChain,
-  useLiberarParaEmissor,
+  useCloseOffering,
+  useInvestOnChain,
+  useReleaseToIssuer,
   useMintMockBrl,
-  useResgatarCotas,
+  useRedeemShares,
 } from "@/lib/web3/hooks/useOnChainActions";
-import { formatPrazo, formatToken } from "@/lib/web3/format";
+import { formatDeadline, formatToken } from "@/lib/web3/format";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -56,28 +56,28 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function FaucetCard({
-  enderecos,
-  saldoMockBrl,
+  addresses,
+  mockBrlBalance,
   mockBrlDecimals,
   mockBrlSymbol,
   disabled,
   onMinted,
 }: {
-  enderecos: OfertaOnChainEnderecos | null;
-  saldoMockBrl: bigint;
+  addresses: OnChainOfferingAddresses | null;
+  mockBrlBalance: bigint;
   mockBrlDecimals: number;
   mockBrlSymbol: string;
   disabled: boolean;
   onMinted: () => void;
 }) {
-  const t = ptBr.investirOnChain.faucet;
-  const [quantidade, setQuantidade] = useState("100");
-  const { status, errorMessage, mint } = useMintMockBrl(enderecos);
+  const t = ptBr.investOnChain.faucet;
+  const [quantity, setQuantity] = useState("100");
+  const { status, errorMessage, mint } = useMintMockBrl(addresses);
 
   const isBusy = status === "assinando" || status === "confirmando";
 
   async function handleMint() {
-    const parsed = Number(quantidade.replace(",", "."));
+    const parsed = Number(quantity.replace(",", "."));
     if (!Number.isFinite(parsed) || parsed <= 0) return;
     await mint(BigInt(Math.round(parsed)) * BigInt(10) ** BigInt(mockBrlDecimals));
     onMinted();
@@ -85,23 +85,23 @@ function FaucetCard({
 
   return (
     <Card title={t.title}>
-      <p className="text-sm text-on-military-muted">{t.descricao}</p>
+      <p className="text-sm text-on-military-muted">{t.description}</p>
 
       <dl className="mt-4 flex items-center justify-between gap-4 text-sm">
-        <dt className="text-on-military-muted">{t.saldoLabel}</dt>
+        <dt className="text-on-military-muted">{t.balanceLabel}</dt>
         <dd className="font-mono text-on-military">
-          {formatToken(saldoMockBrl, mockBrlDecimals, mockBrlSymbol)}
+          {formatToken(mockBrlBalance, mockBrlDecimals, mockBrlSymbol)}
         </dd>
       </dl>
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-xs text-on-military-muted">{t.quantidadeLabel}</span>
+          <span className="text-xs text-on-military-muted">{t.quantityLabel}</span>
           <input
             type="text"
             inputMode="decimal"
-            value={quantidade}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => setQuantidade(event.target.value)}
+            value={quantity}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setQuantity(event.target.value)}
             className="w-32 rounded-md border border-panel-border bg-military px-3 py-2 text-on-military focus:outline-none focus:ring-2 focus:ring-salmon"
           />
         </label>
@@ -112,13 +112,13 @@ function FaucetCard({
           className="flex items-center gap-2 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Coins className="h-4 w-4" aria-hidden="true" />
-          {status === "assinando" ? t.assinando : status === "confirmando" ? t.confirmando : t.botao}
+          {status === "assinando" ? t.signing : status === "confirmando" ? t.confirming : t.button}
         </button>
       </div>
 
       {status === "sucesso" && (
         <p role="status" className="mt-3 text-sm text-value-positive">
-          {t.sucesso}
+          {t.success}
         </p>
       )}
       {status === "erro" && errorMessage && (
@@ -132,119 +132,119 @@ function FaucetCard({
 
 export function RealOnChainInvestPanel({
   tokenAddress,
-  ofertaAddress,
-  isSocio = false,
-  isEmissor = false,
+  offeringAddress,
+  isPartner: isSocio = false,
+  isIssuer = false,
 }: {
   tokenAddress: `0x${string}`;
-  ofertaAddress: `0x${string}`;
-  isSocio?: boolean;
-  isEmissor?: boolean;
+  offeringAddress: `0x${string}`;
+  isPartner?: boolean;
+  isIssuer?: boolean;
 }) {
-  const t = ptBr.investirOnChain;
+  const t = ptBr.investOnChain;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
-  const podeOperar = connection.isConnected && isOnSepolia;
+  const canOperate = connection.isConnected && isOnSepolia;
 
   // Referência estável (mesmo objeto entre renders enquanto os endereços não mudarem) — evita
   // recriar os 6 hooks/callbacks abaixo a cada render só por causa de um objeto novo.
-  const enderecos = useMemo(() => ({ token: tokenAddress, oferta: ofertaAddress }), [tokenAddress, ofertaAddress]);
+  const addresses = useMemo(() => ({ token: tokenAddress, offering: offeringAddress }), [tokenAddress, offeringAddress]);
 
-  const termos = useOfertaOnChainTermos(enderecos);
-  const posicao = useMinhaPosicaoOnChain(enderecos);
+  const terms = useOnChainOfferingTerms(addresses);
+  const position = useMyOnChainPosition(addresses);
 
-  const [quantidadeCotas, setQuantidadeCotas] = useState("1");
-  const invest = useInvestirOnChain(enderecos);
-  const encerrar = useEncerrarOferta(enderecos);
-  const resgatar = useResgatarCotas(enderecos);
-  const liberar = useLiberarParaEmissor(enderecos);
+  const [shareQuantity, setShareQuantity] = useState("1");
+  const invest = useInvestOnChain(addresses);
+  const encerrar = useCloseOffering(addresses);
+  const redeem = useRedeemShares(addresses);
+  const release = useReleaseToIssuer(addresses);
 
-  const quantidadeBigInt = useMemo(() => {
-    const parsed = quantidadeCotas.trim();
+  const quantityBigInt = useMemo(() => {
+    const parsed = shareQuantity.trim();
     if (!/^\d+$/.test(parsed)) return BigInt(0);
     try {
       return BigInt(parsed);
     } catch {
       return BigInt(0);
     }
-  }, [quantidadeCotas]);
+  }, [shareQuantity]);
 
-  const valorAporte = quantidadeBigInt * termos.precoPorCota;
-  const capacidadeRestante = termos.metaMaxima - termos.totalArrecadado;
-  const tetoRestanteInvestidor = termos.tetoPorInvestidor - posicao.aportado;
+  const investmentValue = quantityBigInt * terms.pricePerShare;
+  const remainingCapacity = terms.maxTarget - terms.totalRaised;
+  const remainingInvestorCap = terms.capPerInvestor - position.invested;
 
-  const excedeCapacidade = valorAporte > capacidadeRestante;
-  const excedeTeto = valorAporte > tetoRestanteInvestidor;
-  const saldoInsuficiente = valorAporte > posicao.saldoMockBrl;
-  const valorInvalido = valorAporte <= BigInt(0);
+  const exceedsCapacity = investmentValue > remainingCapacity;
+  const exceedsCap = investmentValue > remainingInvestorCap;
+  const insufficientBalance = investmentValue > position.mockBrlBalance;
+  const invalidValue = investmentValue <= BigInt(0);
 
   // Gate rígido: nunca decidir com leitura não confiável. Enquanto `termos`/`posicao` não
   // terminaram com sucesso, os campos acima (capacidadeRestante, saldoInsuficiente etc.) podem
   // estar calculados a partir do valor de fallback 0 — incidente real (ver CLAUDE.md): um
   // metaMaxima=0 por leitura falha já apareceu como "capacidade zero" (falso), e um
   // allowanceMockBrl obsoleto/não confirmado já fez o fluxo pular o approve por engano.
-  const leiturasProntas = termos.pronto && posicao.pronto;
+  const readsReady = terms.ready && position.ready;
 
-  const investirDesabilitado =
-    !podeOperar ||
-    !leiturasProntas ||
-    termos.estado !== "Aberta" ||
-    valorInvalido ||
-    excedeCapacidade ||
-    excedeTeto ||
-    saldoInsuficiente ||
+  const investDisabled =
+    !canOperate ||
+    !readsReady ||
+    terms.state !== "Aberta" ||
+    invalidValue ||
+    exceedsCapacity ||
+    exceedsCap ||
+    insufficientBalance ||
     (invest.status !== "idle" && invest.status !== "sucesso" && invest.status !== "erro");
 
-  async function handleInvestir() {
+  async function handleInvest() {
     // invest.investir() não recebe mais allowance de fora — lê direto da chain no momento em que
     // roda, para nunca decidir pular o approve com um valor obsoleto (ver useOnChainActions.ts).
-    await invest.investir(valorAporte);
-    termos.refetch();
-    posicao.refetch();
+    await invest.invest(investmentValue);
+    terms.refetch();
+    position.refetch();
   }
 
-  async function handleEncerrar() {
-    await encerrar.encerrar();
-    termos.refetch();
+  async function handleClose() {
+    await encerrar.close();
+    terms.refetch();
   }
 
-  async function handleResgatar() {
-    await resgatar.resgatar();
-    termos.refetch();
-    posicao.refetch();
+  async function handleRedeem() {
+    await redeem.redeem();
+    terms.refetch();
+    position.refetch();
   }
 
-  async function handleLiberar() {
-    await liberar.liberar();
-    termos.refetch();
+  async function handleRelease() {
+    await release.release();
+    terms.refetch();
   }
 
-  const BPS_DENOMINADOR = BigInt(10_000);
-  const taxaWei = (termos.totalArrecadado * termos.taxaBps) / BPS_DENOMINADOR;
-  const valorEmissorWei = termos.totalArrecadado - taxaWei;
+  const BPS_DENOMINATOR = BigInt(10_000);
+  const feeWei = (terms.totalRaised * terms.feeBps) / BPS_DENOMINATOR;
+  const issuerValueWei = terms.totalRaised - feeWei;
 
-  if (!termos.configurado) {
+  if (!terms.configured) {
     return (
       <div className="flex items-start gap-3 rounded-lg border border-salmon/40 bg-panel p-5 text-sm text-on-military">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-salmon" aria-hidden="true" />
-        <p>{t.contratoNaoConfigurado}</p>
+        <p>{t.contractNotConfigured}</p>
       </div>
     );
   }
 
-  const estadoLabel: Record<EstadoOferta, string> = t.termos.estados;
+  const stateLabel: Record<OfferingState, string> = t.terms.states;
 
   return (
     <div className="flex flex-col gap-6">
       <p className="flex items-start gap-2 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
-        {t.avisoReal}
+        {t.realNotice}
       </p>
 
       <div className="rounded-lg border border-panel-border bg-panel p-5">
-        <h2 className="text-sm font-semibold text-on-military">{t.requisitos.title}</h2>
+        <h2 className="text-sm font-semibold text-on-military">{t.requirements.title}</h2>
         <ul className="mt-2 flex flex-col gap-1.5">
-          {t.requisitos.itens.map((item) => (
+          {t.requirements.items.map((item) => (
             <li key={item} className="flex gap-2 text-sm text-on-military-muted">
               <span aria-hidden="true">•</span>
               <span>{item}</span>
@@ -257,148 +257,148 @@ export function RealOnChainInvestPanel({
         <ConnectWallet />
       </div>
 
-      <Card title={t.termos.title}>
+      <Card title={t.terms.title}>
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-xs text-on-military-muted">{t.termos.estadoLabel}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.stateLabel}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {termos.estado ? estadoLabel[termos.estado] : "—"}
+              {terms.state ? stateLabel[terms.state] : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.termos.totalArrecadado}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.totalRaised}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {formatToken(termos.totalArrecadado, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(terms.totalRaised, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.termos.metaMinima}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.minTarget}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {formatToken(termos.metaMinima, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(terms.minTarget, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.termos.metaMaxima}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.maxTarget}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {formatToken(termos.metaMaxima, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(terms.maxTarget, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.termos.precoPorCota}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.pricePerShare}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {formatToken(termos.precoPorCota, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(terms.pricePerShare, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-on-military-muted">{t.termos.tetoPorInvestidor}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.capPerInvestor}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {formatToken(termos.tetoPorInvestidor, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+              {formatToken(terms.capPerInvestor, terms.mockBrlDecimals, terms.mockBrlSymbol)}
             </dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-xs text-on-military-muted">{t.termos.prazo}</dt>
-            <dd className="mt-0.5 text-sm text-on-military">{formatPrazo(termos.prazo)}</dd>
+            <dt className="text-xs text-on-military-muted">{t.terms.deadline}</dt>
+            <dd className="mt-0.5 text-sm text-on-military">{formatDeadline(terms.deadline)}</dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-xs text-on-military-muted">{t.termos.taxaLabel}</dt>
+            <dt className="text-xs text-on-military-muted">{t.terms.feeLabel}</dt>
             <dd className="mt-0.5 text-sm text-on-military">
-              {termos.taxaBps === BigInt(0)
-                ? t.termos.taxaSemTaxa
-                : t.termos.taxaComTaxa((Number(termos.taxaBps) / 100).toFixed(2))}
+              {terms.feeBps === BigInt(0)
+                ? t.terms.feeWithoutFee
+                : t.terms.feeWithFee((Number(terms.feeBps) / 100).toFixed(2))}
             </dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs text-on-military-muted">{t.termos.nota}</p>
+        <p className="mt-4 text-xs text-on-military-muted">{t.terms.note}</p>
       </Card>
 
       {!connection.isConnected && (
         <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
-          {t.semCarteira}
+          {t.noWallet}
         </p>
       )}
 
-      {podeOperar && (
+      {canOperate && (
         <FaucetCard
-          enderecos={enderecos}
-          saldoMockBrl={posicao.saldoMockBrl}
-          mockBrlDecimals={termos.mockBrlDecimals}
-          mockBrlSymbol={termos.mockBrlSymbol}
-          disabled={!podeOperar}
-          onMinted={() => posicao.refetch()}
+          addresses={addresses}
+          mockBrlBalance={position.mockBrlBalance}
+          mockBrlDecimals={terms.mockBrlDecimals}
+          mockBrlSymbol={terms.mockBrlSymbol}
+          disabled={!canOperate}
+          onMinted={() => position.refetch()}
         />
       )}
 
-      {podeOperar && leiturasProntas && termos.estado !== null && termos.estado !== "Aberta" && (
+      {canOperate && readsReady && terms.state !== null && terms.state !== "Aberta" && (
         <p className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted">
-          {termos.estado === "EncerradaSucesso" ? t.investir.ofertaEncerradaSucesso : t.investir.ofertaEncerradaFalha}
+          {terms.state === "EncerradaSucesso" ? t.invest.offeringClosedSuccess : t.invest.offeringClosedFailure}
         </p>
       )}
 
-      {podeOperar && (!leiturasProntas || termos.estado === "Aberta") && (
-        <Card title={t.investir.title}>
-          {!leiturasProntas ? (
-            <p className={termos.errorMessage || posicao.errorMessage ? "text-sm text-value-negative" : "text-sm text-on-military-muted"}>
-              {termos.errorMessage || posicao.errorMessage
-                ? t.investir.erroLeitura((termos.errorMessage ?? posicao.errorMessage) as string)
-                : t.investir.carregando}
+      {canOperate && (!readsReady || terms.state === "Aberta") && (
+        <Card title={t.invest.title}>
+          {!readsReady ? (
+            <p className={terms.errorMessage || position.errorMessage ? "text-sm text-value-negative" : "text-sm text-on-military-muted"}>
+              {terms.errorMessage || position.errorMessage
+                ? t.invest.readError((terms.errorMessage ?? position.errorMessage) as string)
+                : t.invest.loading}
             </p>
           ) : (
             <>
               <div className="flex flex-wrap items-end gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="text-xs text-on-military-muted">{t.investir.quantidadeLabel}</span>
+                  <span className="text-xs text-on-military-muted">{t.invest.quantityLabel}</span>
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={quantidadeCotas}
-                    onChange={(event) => setQuantidadeCotas(event.target.value)}
+                    value={shareQuantity}
+                    onChange={(event) => setShareQuantity(event.target.value)}
                     className="w-32 rounded-md border border-panel-border bg-military px-3 py-2 text-on-military focus:outline-none focus:ring-2 focus:ring-salmon"
                   />
                 </label>
                 <div className="text-sm text-on-military-muted">
-                  {t.investir.valorLabel}:{" "}
+                  {t.invest.valueLabel}:{" "}
                   <span className="font-mono text-on-military">
-                    {formatToken(valorAporte, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+                    {formatToken(investmentValue, terms.mockBrlDecimals, terms.mockBrlSymbol)}
                   </span>
                 </div>
               </div>
 
-              <p className="mt-2 text-xs text-on-military-muted">{t.investir.allowanceNota}</p>
+              <p className="mt-2 text-xs text-on-military-muted">{t.invest.allowanceNote}</p>
 
-              {valorInvalido && quantidadeCotas !== "" && (
+              {invalidValue && shareQuantity !== "" && (
                 <p className="mt-2 text-sm text-value-negative">Informe uma quantidade de cotas válida.</p>
               )}
-              {!valorInvalido && excedeCapacidade && (
+              {!invalidValue && exceedsCapacity && (
                 <p className="mt-2 text-sm text-value-negative">
                   Esse valor ultrapassa a capacidade restante da oferta (
-                  {formatToken(capacidadeRestante, termos.mockBrlDecimals, termos.mockBrlSymbol)}).
+                  {formatToken(remainingCapacity, terms.mockBrlDecimals, terms.mockBrlSymbol)}).
                 </p>
               )}
-              {!valorInvalido && !excedeCapacidade && excedeTeto && (
+              {!invalidValue && !exceedsCapacity && exceedsCap && (
                 <p className="mt-2 text-sm text-value-negative">
                   Esse valor ultrapassa o teto por investidor (
-                  {formatToken(tetoRestanteInvestidor, termos.mockBrlDecimals, termos.mockBrlSymbol)} restantes).
+                  {formatToken(remainingInvestorCap, terms.mockBrlDecimals, terms.mockBrlSymbol)} restantes).
                 </p>
               )}
-              {!valorInvalido && saldoInsuficiente && (
+              {!invalidValue && insufficientBalance && (
                 <p className="mt-2 text-sm text-value-negative">Saldo de MockBRL insuficiente — use o faucet acima.</p>
               )}
 
               <button
                 type="button"
-                disabled={investirDesabilitado}
-                onClick={handleInvestir}
+                disabled={investDisabled}
+                onClick={handleInvest}
                 className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {invest.status === "idle" || invest.status === "sucesso" || invest.status === "erro"
-                  ? t.investir.botao
-                  : t.investir.status[invest.status]}
+                  ? t.invest.button
+                  : t.invest.status[invest.status]}
               </button>
 
               {invest.status === "sucesso" && (
                 <p role="status" className="mt-3 flex items-center gap-2 text-sm text-value-positive">
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                  {t.investir.status.sucesso}
+                  {t.invest.status.success}
                 </p>
               )}
               {invest.status === "erro" && invest.errorMessage && (
@@ -411,52 +411,52 @@ export function RealOnChainInvestPanel({
         </Card>
       )}
 
-      {podeOperar && (
-        <Card title={t.posicao.title}>
+      {canOperate && (
+        <Card title={t.position.title}>
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-on-military-muted">{t.posicao.aportado}</dt>
+              <dt className="text-xs text-on-military-muted">{t.position.invested}</dt>
               <dd className="mt-0.5 text-sm text-on-military">
-                {formatToken(posicao.aportado, termos.mockBrlDecimals, termos.mockBrlSymbol)}
+                {formatToken(position.invested, terms.mockBrlDecimals, terms.mockBrlSymbol)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-on-military-muted">{t.posicao.saldoParticipacao}</dt>
+              <dt className="text-xs text-on-military-muted">{t.position.participationBalance}</dt>
               <dd className="mt-0.5 text-sm text-on-military">
                 {formatToken(
-                  posicao.saldoParticipacaoToken,
-                  termos.participacaoTokenDecimals,
-                  termos.participacaoTokenSymbol,
+                  position.participationTokenBalance,
+                  terms.participationTokenDecimals,
+                  terms.participationTokenSymbol,
                 )}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-on-military-muted">{t.posicao.jaResgatou}</dt>
-              <dd className="mt-0.5 text-sm text-on-military">{posicao.jaResgatouCotas ? "Sim" : "Não"}</dd>
+              <dt className="text-xs text-on-military-muted">{t.position.alreadyRedeemed}</dt>
+              <dd className="mt-0.5 text-sm text-on-military">{position.alreadyRedeemedShares ? "Sim" : "Não"}</dd>
             </div>
           </dl>
         </Card>
       )}
 
-      {podeOperar && termos.estado === "Aberta" && (
-        <Card title={t.encerrar.title}>
-          <p className="text-sm text-on-military-muted">{t.encerrar.descricao}</p>
+      {canOperate && terms.state === "Aberta" && (
+        <Card title={t.close.title}>
+          <p className="text-sm text-on-military-muted">{t.close.description}</p>
           <button
             type="button"
-            disabled={!(isSocio || isEmissor) || encerrar.status === "assinando" || encerrar.status === "confirmando"}
-            onClick={handleEncerrar}
+            disabled={!(isSocio || isIssuer) || encerrar.status === "assinando" || encerrar.status === "confirmando"}
+            onClick={handleClose}
             className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
           >
             {encerrar.status === "assinando"
-              ? t.encerrar.assinando
+              ? t.close.signing
               : encerrar.status === "confirmando"
-                ? t.encerrar.confirmando
-                : t.encerrar.botao}
+                ? t.close.confirming
+                : t.close.button}
           </button>
-          {!(isSocio || isEmissor) && <p className="mt-3 text-xs text-on-military-muted">{t.encerrar.restrito}</p>}
+          {!(isSocio || isIssuer) && <p className="mt-3 text-xs text-on-military-muted">{t.close.restricted}</p>}
           {encerrar.status === "sucesso" && (
             <p role="status" className="mt-3 text-sm text-value-positive">
-              {t.encerrar.sucesso}
+              {t.close.success}
             </p>
           )}
           {encerrar.status === "erro" && encerrar.errorMessage && (
@@ -467,73 +467,73 @@ export function RealOnChainInvestPanel({
         </Card>
       )}
 
-      {podeOperar &&
-        termos.estado === "EncerradaSucesso" &&
-        !posicao.jaResgatouCotas &&
-        posicao.aportado > BigInt(0) && (
-        <Card title={t.resgatar.title}>
-          <p className="text-sm text-on-military-muted">{t.resgatar.descricao}</p>
+      {canOperate &&
+        terms.state === "EncerradaSucesso" &&
+        !position.alreadyRedeemedShares &&
+        position.invested > BigInt(0) && (
+        <Card title={t.redeem.title}>
+          <p className="text-sm text-on-military-muted">{t.redeem.description}</p>
           <button
             type="button"
-            disabled={resgatar.status === "assinando" || resgatar.status === "confirmando"}
-            onClick={handleResgatar}
+            disabled={redeem.status === "assinando" || redeem.status === "confirmando"}
+            onClick={handleRedeem}
             className="mt-4 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {resgatar.status === "assinando"
-              ? t.resgatar.assinando
-              : resgatar.status === "confirmando"
-                ? t.resgatar.confirmando
-                : t.resgatar.botao}
+            {redeem.status === "assinando"
+              ? t.redeem.signing
+              : redeem.status === "confirmando"
+                ? t.redeem.confirming
+                : t.redeem.button}
           </button>
-          {resgatar.status === "sucesso" && (
+          {redeem.status === "sucesso" && (
             <p role="status" className="mt-3 text-sm text-value-positive">
-              {t.resgatar.sucesso}
+              {t.redeem.success}
             </p>
           )}
-          {resgatar.status === "erro" && resgatar.errorMessage && (
+          {redeem.status === "erro" && redeem.errorMessage && (
             <p role="alert" className="mt-3 text-sm text-value-negative">
-              {resgatar.errorMessage}
+              {redeem.errorMessage}
             </p>
           )}
         </Card>
       )}
 
-      {podeOperar && termos.estado === "EncerradaSucesso" && (
-        <Card title={t.liberar.title}>
-          <p className="text-sm text-on-military-muted">{t.liberar.descricao}</p>
-          {!termos.recursosLiberados && (
+      {canOperate && terms.state === "EncerradaSucesso" && (
+        <Card title={t.release.title}>
+          <p className="text-sm text-on-military-muted">{t.release.description}</p>
+          {!terms.fundsReleased && (
             <p className="mt-2 text-sm text-on-military">
-              {t.liberar.previa(
-                formatToken(valorEmissorWei, termos.mockBrlDecimals, termos.mockBrlSymbol),
-                formatToken(taxaWei, termos.mockBrlDecimals, termos.mockBrlSymbol),
+              {t.release.preview(
+                formatToken(issuerValueWei, terms.mockBrlDecimals, terms.mockBrlSymbol),
+                formatToken(feeWei, terms.mockBrlDecimals, terms.mockBrlSymbol),
               )}
             </p>
           )}
-          {termos.recursosLiberados ? (
-            <p className="mt-4 text-sm text-value-positive">{t.liberar.jaLiberado}</p>
+          {terms.fundsReleased ? (
+            <p className="mt-4 text-sm text-value-positive">{t.release.alreadyReleased}</p>
           ) : (
             <>
               <button
                 type="button"
-                disabled={!isSocio || liberar.status === "assinando" || liberar.status === "confirmando"}
-                onClick={handleLiberar}
+                disabled={!isSocio || release.status === "assinando" || release.status === "confirmando"}
+                onClick={handleRelease}
                 className="mt-4 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military hover:border-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {liberar.status === "assinando"
-                  ? t.liberar.assinando
-                  : liberar.status === "confirmando"
-                    ? t.liberar.confirmando
-                    : t.liberar.botao}
+                {release.status === "assinando"
+                  ? t.release.signing
+                  : release.status === "confirmando"
+                    ? t.release.confirming
+                    : t.release.button}
               </button>
-              {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.liberar.restrito}</p>}
-              {liberar.status === "sucesso" && (
+              {!isSocio && <p className="mt-3 text-xs text-on-military-muted">{t.release.restricted}</p>}
+              {release.status === "sucesso" && (
                 <p role="status" className="mt-3 text-sm text-value-positive">
-                  {t.liberar.sucesso}
+                  {t.release.success}
                 </p>
               )}
-              {liberar.status === "erro" && liberar.errorMessage && (
+              {release.status === "erro" && release.errorMessage && (
                 <p role="alert" className="mt-3 text-sm text-value-negative">
-                  {liberar.errorMessage}
+                  {release.errorMessage}
                 </p>
               )}
             </>

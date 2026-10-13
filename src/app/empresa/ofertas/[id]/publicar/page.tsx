@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { keccak256, toHex } from "viem";
-import { PublicarOnChainPage } from "@/components/empresa/publicar/PublicarOnChainPage";
-import { PublicarSolanaPage } from "@/components/empresa/publicar/PublicarSolanaPage";
-import { EscolhaRedePublicacao } from "@/components/empresa/publicar/EscolhaRedePublicacao";
+import { PublishOnChainPage } from "@/components/empresa/publicar/PublicarOnChainPage";
+import { PublishSolanaPage } from "@/components/empresa/publicar/PublicarSolanaPage";
+import { PublicationNetworkChoice } from "@/components/empresa/publicar/EscolhaRedePublicacao";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { ptBr } from "@/lib/i18n/pt-br";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,16 +15,16 @@ import { formatBRL } from "@/lib/format";
 // duas vezes, em dois sistemas, por desenho (a chain não confia cegamente no que o Supabase
 // mandou). Espelhados aqui só para o gate de pré-validação abaixo; nunca a fonte de verdade (essa
 // é a chain, que quem realmente vai rejeitar a transação).
-const TETO_MAXIMO_CENTS = 1_500_000_000; // R$15.000.000
-const PRAZO_MAXIMO_DIAS = 180;
+const MAX_CAP_CENTS = 1_500_000_000; // R$15.000.000
+const MAX_DEADLINE_DAYS = 180;
 
 // Fase 3 (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md) — Server Component: valida dono +
 // elegibilidade (status), lê a carteira vinculada (issuers.wallet_address) e os dados que vão
 // virar argumentos da transação, entregando tudo pronto para o Client Component. Nenhuma
 // escrita acontece aqui.
 export const metadata: Metadata = {
-  title: `${ptBr.empresaOfertas.publicarOnChain.meta.title} · Niara PMEs`,
-  description: ptBr.empresaOfertas.publicarOnChain.meta.description,
+  title: `${ptBr.companyOfferings.publishOnChain.meta.title} · Niara PMEs`,
+  description: ptBr.companyOfferings.publishOnChain.meta.description,
   robots: { index: false, follow: false },
 };
 
@@ -38,7 +38,7 @@ export default async function Page({
   searchParams: Promise<{ rede?: string }>;
 }) {
   const { id } = await params;
-  const { rede: redeEscolhida } = await searchParams;
+  const { rede: chosenNetwork } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -78,24 +78,24 @@ export default async function Page({
     .eq("id", accountId)
     .maybeSingle();
 
-  const walletVinculada = (issuer?.wallet_address as string | null) ?? null;
+  const linkedWallet = (issuer?.wallet_address as string | null) ?? null;
 
   if (offering.status !== "draft") {
-    const t = ptBr.empresaOfertas.publicarOnChain;
+    const t = ptBr.companyOfferings.publishOnChain;
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.naoElegivel.titulo}</h1>
-        <p className="max-w-md text-on-military-muted">{t.naoElegivel.texto}</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
+        <p className="max-w-md text-on-military-muted">{t.notEligible.text}</p>
       </main>
     );
   }
 
   if (offering.share_price_cents === null) {
-    const t = ptBr.empresaOfertas.publicarOnChain;
+    const t = ptBr.companyOfferings.publishOnChain;
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.naoElegivel.titulo}</h1>
-        <p className="max-w-md text-on-military-muted">{t.naoElegivel.semValorPorCota}</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
+        <p className="max-w-md text-on-military-muted">{t.notEligible.noValuePerShare}</p>
       </main>
     );
   }
@@ -115,35 +115,35 @@ export default async function Page({
   // nunca ficar presa atrás deste bloqueio estático.
   const baseCapCents = offering.base_cap_cents as number;
   const hardCapCents = offering.hard_cap_cents as number;
-  const loteMaximoPermitidoCents = baseCapCents + Math.floor(baseCapCents / 4);
+  const maxAllowedLotCents = baseCapCents + Math.floor(baseCapCents / 4);
 
   if (offering.sync_status === "nao_onchain") {
-    const t = ptBr.empresaOfertas.publicarOnChain;
-    const motivos: string[] = [];
-    if (hardCapCents > TETO_MAXIMO_CENTS) {
-      motivos.push(t.naoElegivel.limitesRes88.teto(formatBRL(hardCapCents / 100)));
+    const t = ptBr.companyOfferings.publishOnChain;
+    const reasons: string[] = [];
+    if (hardCapCents > MAX_CAP_CENTS) {
+      reasons.push(t.notEligible.res88Limits.cap(formatBRL(hardCapCents / 100)));
     }
-    if (hardCapCents > loteMaximoPermitidoCents) {
-      motivos.push(
-        t.naoElegivel.limitesRes88.loteAdicional(
+    if (hardCapCents > maxAllowedLotCents) {
+      reasons.push(
+        t.notEligible.res88Limits.additionalLot(
           formatBRL(baseCapCents / 100),
           formatBRL(hardCapCents / 100),
-          formatBRL(loteMaximoPermitidoCents / 100),
+          formatBRL(maxAllowedLotCents / 100),
         ),
       );
     }
-    if (windowDays > PRAZO_MAXIMO_DIAS) {
-      motivos.push(t.naoElegivel.limitesRes88.prazo(windowDays));
+    if (windowDays > MAX_DEADLINE_DAYS) {
+      reasons.push(t.notEligible.res88Limits.deadline(windowDays));
     }
 
-    if (motivos.length > 0) {
+    if (reasons.length > 0) {
       return (
         <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-military px-6 py-32 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.naoElegivel.titulo}</h1>
-          <p className="max-w-md text-on-military-muted">{t.naoElegivel.limitesRes88.intro}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-on-military">{t.notEligible.title}</h1>
+          <p className="max-w-md text-on-military-muted">{t.notEligible.res88Limits.intro}</p>
           <ul className="max-w-md list-inside list-disc text-left text-sm text-value-negative">
-            {motivos.map((motivo) => (
-              <li key={motivo}>{motivo}</li>
+            {reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
             ))}
           </ul>
         </main>
@@ -157,16 +157,16 @@ export default async function Page({
   // externo específico.
   const cnpjRef = keccak256(toHex(issuer?.tax_id ?? ""));
 
-  const empresa = (issuer?.trade_name as string | null) ?? (issuer?.legal_name as string) ?? "";
+  const company = (issuer?.trade_name as string | null) ?? (issuer?.legal_name as string) ?? "";
 
   // Rede (migration 0017): com tentativa registrada ou publicação gravada, a rede é a da linha e não
   // muda mais. Sem nenhuma ('nao_onchain'), o emissor escolhe — `?rede=solana` abre a Solana.
-  const temPublicacao = offering.sync_status !== "nao_onchain";
-  const naSolana = temPublicacao ? offering.rede === "solana-devnet" : redeEscolhida === "solana";
+  const hasPublication = offering.sync_status !== "nao_onchain";
+  const onSolana = hasPublication ? offering.rede === "solana-devnet" : chosenNetwork === "solana";
 
-  const propsComuns = {
+  const commonProps = {
     offeringId: offering.id as string,
-    empresaNome: empresa,
+    companyName: company,
     cnpjRef,
     windowDays: windowDays > 0 ? windowDays : 1,
     targetMinCents: offering.target_min_cents as number,
@@ -179,22 +179,22 @@ export default async function Page({
     onchainLastError: (offering.onchain_last_error as string | null) ?? null,
   };
 
-  if (naSolana) {
+  if (onSolana) {
     return (
       <>
-        {!temPublicacao && <EscolhaRedePublicacao offeringId={offering.id as string} atual="solana" />}
-        <PublicarSolanaPage {...propsComuns} walletVinculada={(issuer?.solana_wallet_address as string | null) ?? null} />
+        {!hasPublication && <PublicationNetworkChoice offeringId={offering.id as string} current="solana" />}
+        <PublishSolanaPage {...commonProps} linkedWallet={(issuer?.solana_wallet_address as string | null) ?? null} />
       </>
     );
   }
 
   return (
     <>
-      {!temPublicacao && <EscolhaRedePublicacao offeringId={offering.id as string} atual="sepolia" />}
-      <PublicarOnChainPage
+      {!hasPublication && <PublicationNetworkChoice offeringId={offering.id as string} current="sepolia" />}
+      <PublishOnChainPage
       offeringId={offering.id as string}
-      walletVinculada={walletVinculada}
-      empresaNome={empresa}
+      linkedWallet={linkedWallet}
+      companyName={company}
       cnpjRef={cnpjRef}
       windowDays={windowDays > 0 ? windowDays : 1}
       targetMinCents={offering.target_min_cents as number}

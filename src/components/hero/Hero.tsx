@@ -42,7 +42,7 @@ export function Hero() {
           </Link>
         </div>
 
-        <p className="max-w-md text-sm text-on-military/80">{ptBr.common.avisoDemonstracao}</p>
+        <p className="max-w-md text-sm text-on-military/80">{ptBr.common.demoNotice}</p>
       </div>
     </section>
   );

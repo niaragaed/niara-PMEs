@@ -20,9 +20,9 @@ export type OnChainContracts = {
   participacaoToken: { address: `0x${string}`; abi: typeof participacaoTokenAbi };
 };
 
-export type OfertaOnChainEnderecos = {
+export type OnChainOfferingAddresses = {
   token: `0x${string}`;
-  oferta: `0x${string}`;
+  offering: `0x${string}`;
 };
 
 /**
@@ -57,11 +57,11 @@ export function getMockBrlContractAt(address: `0x${string}`): { address: `0x${st
  * (por isso não inclui mais `mockBrl`, que exige ler `moeda()` da própria oferta primeiro — ver
  * `getMockBrlContractAt`).
  */
-export function getOnChainContracts(enderecos: OfertaOnChainEnderecos | null): OnChainContracts | null {
-  if (!enderecos) return null;
+export function getOnChainContracts(addresses: OnChainOfferingAddresses | null): OnChainContracts | null {
+  if (!addresses) return null;
 
   return {
-    ofertaCaptacao: { address: enderecos.oferta, abi: ofertaCaptacaoAbi },
-    participacaoToken: { address: enderecos.token, abi: participacaoTokenAbi },
+    ofertaCaptacao: { address: addresses.offering, abi: ofertaCaptacaoAbi },
+    participacaoToken: { address: addresses.token, abi: participacaoTokenAbi },
   };
 }

@@ -6,7 +6,7 @@ import { formatUnits } from "viem";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export function ConnectionPanel() {
-  const t = ptBr.perfil.carteira.painel;
+  const t = ptBr.profile.wallet.panel;
   const connection = useConnection();
   const isOnSepolia = connection.chainId === sepolia.id;
 
@@ -19,13 +19,13 @@ export function ConnectionPanel() {
   function networkName(chainId: number | undefined) {
     if (chainId === undefined) return "—";
     if (chainId === sepolia.id) return sepolia.name;
-    return `${t.redeDesconhecida} (${chainId})`;
+    return `${t.unknownNetwork} (${chainId})`;
   }
 
-  function saldoValue() {
+  function balanceValue() {
     if (!connection.isConnected) return "—";
-    if (!isOnSepolia) return t.redeDesconhecida;
-    if (balance.isPending) return t.carregandoSaldo;
+    if (!isOnSepolia) return t.unknownNetwork;
+    if (balance.isPending) return t.loadingBalance;
     if (!balance.data) return "—";
     return `${formatUnits(balance.data.value, balance.data.decimals)} ${balance.data.symbol}`;
   }
@@ -33,20 +33,20 @@ export function ConnectionPanel() {
   const rows: Array<{ label: string; value: string; mono?: boolean }> = [
     {
       label: t.status,
-      value: connection.isConnected ? t.statusConectado : t.statusDesconectado,
+      value: connection.isConnected ? t.statusConnected : t.statusDisconnected,
     },
     {
-      label: t.endereco,
+      label: t.address,
       value: connection.address ?? "—",
       mono: true,
     },
     {
-      label: t.rede,
+      label: t.network,
       value: connection.isConnected ? networkName(connection.chainId) : "—",
     },
     {
-      label: t.saldo,
-      value: saldoValue(),
+      label: t.balance,
+      value: balanceValue(),
       mono: true,
     },
   ];
@@ -73,7 +73,7 @@ export function ConnectionPanel() {
       </dl>
 
       {!connection.isConnected && (
-        <p className="mt-4 text-xs text-on-military-muted">{t.semConexaoNota}</p>
+        <p className="mt-4 text-xs text-on-military-muted">{t.noConnectionNote}</p>
       )}
     </div>
   );

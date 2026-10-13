@@ -5,26 +5,26 @@ import { DEFAULT_INVESTOR_PROFILE, type InvestorProfileResult } from "@/lib/inve
 
 // Estado só em memória (React), nunca em localStorage/sessionStorage — some
 // ao recarregar a página, como o resto da tela de perfil.
-type PerfilContextValue = {
+type ProfileContextValue = {
   investorProfile: InvestorProfileResult;
   setInvestorProfile: (result: InvestorProfileResult) => void;
 };
 
-const PerfilContext = createContext<PerfilContextValue | null>(null);
+const ProfileContext = createContext<ProfileContextValue | null>(null);
 
-export function usePerfil(): PerfilContextValue {
-  const ctx = useContext(PerfilContext);
+export function useProfile(): ProfileContextValue {
+  const ctx = useContext(ProfileContext);
   if (!ctx) throw new Error("usePerfil precisa estar dentro de <PerfilProvider>");
   return ctx;
 }
 
-export function PerfilProvider({ children }: { children: ReactNode }) {
+export function ProfileProvider({ children }: { children: ReactNode }) {
   const [investorProfile, setInvestorProfile] = useState<InvestorProfileResult>(DEFAULT_INVESTOR_PROFILE);
 
-  const value = useMemo<PerfilContextValue>(
+  const value = useMemo<ProfileContextValue>(
     () => ({ investorProfile, setInvestorProfile }),
     [investorProfile],
   );
 
-  return <PerfilContext.Provider value={value}>{children}</PerfilContext.Provider>;
+  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }

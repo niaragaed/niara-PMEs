@@ -14,8 +14,8 @@ import type {
   PaymentGateway,
 } from "./ports";
 
-function mockRef(prefixo: string): string {
-  return `MOCK-${prefixo}-${crypto.randomUUID()}`;
+function mockRef(prefix: string): string {
+  return `MOCK-${prefix}-${crypto.randomUUID()}`;
 }
 
 export const mockPaymentGateway: PaymentGateway = {

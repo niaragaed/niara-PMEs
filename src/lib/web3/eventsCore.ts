@@ -6,7 +6,7 @@
 // módulo só sabe conversar com a chain via viem, nunca com o banco.
 import { createPublicClient, http, type AbiEvent, type Log } from "viem";
 import { sepolia } from "wagmi/chains";
-import type { OfertaOnChainAddresses } from "./addresses";
+import type { OnChainOfferingAddresses } from "./addresses";
 import { ofertaCaptacaoAbi } from "./abis/ofertaCaptacao";
 
 /**
@@ -20,20 +20,20 @@ import { ofertaCaptacaoAbi } from "./abis/ofertaCaptacao";
  * "Correção redeploy" em events.ts). Custo: ~log2(bloco atual) chamadas RPC (~25 para a Sepolia
  * de hoje), rodada só nesses dois casos raros, nunca a cada leitura normal.
  */
-export async function encontrarBlocoDeploy(
+export async function findDeployBlock(
   client: ReturnType<typeof publicClient>,
   address: `0x${string}`,
 ): Promise<bigint> {
-  const temCodigo = async (bloco: bigint) => {
-    const bytecode = await client.getCode({ address, blockNumber: bloco });
+  const hasCode = async (block: bigint) => {
+    const bytecode = await client.getCode({ address, blockNumber: block });
     return Boolean(bytecode) && bytecode !== "0x";
   };
 
   let lo = BigInt(0);
   let hi = await client.getBlockNumber();
 
-  if (await temCodigo(lo)) return lo;
-  if (!(await temCodigo(hi))) {
+  if (await hasCode(lo)) return lo;
+  if (!(await hasCode(hi))) {
     throw new Error(
       `encontrarBlocoDeploy: endereço ${address} não tem código no bloco atual (${hi}) — endereço errado ou RPC sem acesso a estado histórico (archive node)?`,
     );
@@ -42,11 +42,11 @@ export async function encontrarBlocoDeploy(
   // Busca binária pelo primeiro bloco em que o código já existe: lo sempre "sem código", hi
   // sempre "com código", até sobrar só a fronteira entre os dois.
   while (lo + BigInt(1) < hi) {
-    const meio = lo + (hi - lo) / BigInt(2);
-    if (await temCodigo(meio)) {
-      hi = meio;
+    const middle = lo + (hi - lo) / BigInt(2);
+    if (await hasCode(middle)) {
+      hi = middle;
     } else {
-      lo = meio;
+      lo = middle;
     }
   }
 
@@ -62,10 +62,10 @@ const EVENT_NAMES = [
   "Reembolso",
 ] as const;
 
-export type TipoEventoOnChain = (typeof EVENT_NAMES)[number];
+export type OnChainEventType = (typeof EVENT_NAMES)[number];
 
-export type EventoOnChain = {
-  tipo: TipoEventoOnChain;
+export type OnChainEvent = {
+  tipo: OnChainEventType;
   ofertaAddress: `0x${string}`;
   ofertaIndex: number;
   investidor: `0x${string}` | null;
@@ -99,18 +99,18 @@ const ABI_EVENTS: AbiEvent[] = EVENT_NAMES.map((nome) => {
   return item as AbiEvent;
 });
 
-type LogDecodificado = Log & { eventName?: string; args?: Record<string, unknown> };
+type DecodedLog = Log & { eventName?: string; args?: Record<string, unknown> };
 
-function parseLog(log: LogDecodificado, ofertaAddress: `0x${string}`, ofertaIndex: number): EventoOnChain | null {
-  const tipo = log.eventName as TipoEventoOnChain | undefined;
-  if (!tipo || !EVENT_NAMES.includes(tipo)) return null;
+function parseLog(log: DecodedLog, offeringAddress: `0x${string}`, offeringIndex: number): OnChainEvent | null {
+  const type = log.eventName as OnChainEventType | undefined;
+  if (!type || !EVENT_NAMES.includes(type)) return null;
 
   const args = log.args ?? {};
 
   return {
-    tipo,
-    ofertaAddress,
-    ofertaIndex,
+    tipo: type,
+    ofertaAddress: offeringAddress,
+    ofertaIndex: offeringIndex,
     investidor: (args.investidor as `0x${string}` | undefined) ?? null,
     valorWei: (args.valor as bigint | undefined) ?? (args.valorEmissor as bigint | undefined) ?? null,
     cotas: (args.cotas as bigint | undefined) ?? null,
@@ -132,13 +132,13 @@ function parseLog(log: LogDecodificado, ofertaAddress: `0x${string}`, ofertaInde
 // FROM_BLOCK. Se um dia trocar de RPC por um com teto maior, pode subir este valor.
 const CHUNK_SIZE = BigInt(10);
 
-export function calcularJanelas(fromBlock: bigint, toBlock: bigint): Array<{ from: bigint; to: bigint }> {
-  const janelas: Array<{ from: bigint; to: bigint }> = [];
-  for (let inicio = fromBlock; inicio <= toBlock; inicio += CHUNK_SIZE) {
-    const fim = inicio + CHUNK_SIZE - BigInt(1) > toBlock ? toBlock : inicio + CHUNK_SIZE - BigInt(1);
-    janelas.push({ from: inicio, to: fim });
+export function computeWindows(fromBlock: bigint, toBlock: bigint): Array<{ from: bigint; to: bigint }> {
+  const windows: Array<{ from: bigint; to: bigint }> = [];
+  for (let start = fromBlock; start <= toBlock; start += CHUNK_SIZE) {
+    const end = start + CHUNK_SIZE - BigInt(1) > toBlock ? toBlock : start + CHUNK_SIZE - BigInt(1);
+    windows.push({ from: start, to: end });
   }
-  return janelas;
+  return windows;
 }
 
 // Alchemy no plano Free limita não só o range por chamada (10 blocos, CHUNK_SIZE acima) mas
@@ -159,18 +159,18 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const resultados: R[] = new Array(items.length);
-  let proximo = 0;
+  const results: R[] = new Array(items.length);
+  let next = 0;
 
   async function worker() {
-    while (proximo < items.length) {
-      const indice = proximo++;
-      resultados[indice] = await fn(items[indice]);
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index]);
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return resultados;
+  return results;
 }
 
 /**
@@ -181,49 +181,49 @@ export async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (i
  * tipos de evento juntos via `events`. Quem decide o range a escanear é o chamador (events.ts,
  * a partir do último bloco sincronizado em cache) — esta função não sabe nada de Supabase.
  */
-export async function fetchEventosOnChainRange(
+export async function fetchOnChainEventsRange(
   client: ReturnType<typeof publicClient>,
-  ofertas: OfertaOnChainAddresses[],
+  offerings: OnChainOfferingAddresses[],
   fromBlock: bigint,
   toBlock: bigint,
-): Promise<EventoOnChain[]> {
+): Promise<OnChainEvent[]> {
   if (fromBlock > toBlock) return [];
 
-  const indexPorEndereco = new Map(ofertas.map((oferta, indice) => [oferta.oferta.toLowerCase(), indice]));
-  const janelas = calcularJanelas(fromBlock, toBlock);
+  const indexByAddress = new Map(offerings.map((offering, index) => [offering.offering.toLowerCase(), index]));
+  const windows = computeWindows(fromBlock, toBlock);
 
-  const porJanela = await mapWithConcurrency(janelas, RPC_CONCURRENCY, async (janela) => {
+  const byWindow = await mapWithConcurrency(windows, RPC_CONCURRENCY, async (janela) => {
     const logs = (await client.getLogs({
-      address: ofertas.map((oferta) => oferta.oferta),
+      address: offerings.map((offering) => offering.offering),
       events: ABI_EVENTS,
       fromBlock: janela.from,
       toBlock: janela.to,
-    })) as LogDecodificado[];
+    })) as DecodedLog[];
 
     await sleep(RPC_THROTTLE_MS);
 
     return logs
       .map((log) => {
-        const ofertaAddress = log.address as `0x${string}`;
-        const ofertaIndex = indexPorEndereco.get(ofertaAddress.toLowerCase());
-        if (ofertaIndex === undefined) return null;
-        return parseLog(log, ofertaAddress, ofertaIndex);
+        const offeringAddress = log.address as `0x${string}`;
+        const offeringIndex = indexByAddress.get(offeringAddress.toLowerCase());
+        if (offeringIndex === undefined) return null;
+        return parseLog(log, offeringAddress, offeringIndex);
       })
-      .filter((evento): evento is EventoOnChain => evento !== null);
+      .filter((evento): evento is OnChainEvent => evento !== null);
   });
 
-  const eventos = porJanela.flat();
+  const events = byWindow.flat();
 
   // Preenche timestamp (1 chamada por bloco único, não por evento), mesma limitação de concorrência.
-  const blocosUnicos = [...new Set(eventos.map((evento) => evento.blockNumber))];
-  const blocos = await mapWithConcurrency(blocosUnicos, RPC_CONCURRENCY, (numero) =>
-    client.getBlock({ blockNumber: numero }),
+  const uniqueBlocks = [...new Set(events.map((evento) => evento.blockNumber))];
+  const blocks = await mapWithConcurrency(uniqueBlocks, RPC_CONCURRENCY, (number) =>
+    client.getBlock({ blockNumber: number }),
   );
-  const timestampPorBloco = new Map(blocos.map((bloco) => [bloco.number, Number(bloco.timestamp)]));
-  for (const evento of eventos) {
-    evento.timestamp = timestampPorBloco.get(evento.blockNumber) ?? null;
+  const timestampByBlock = new Map(blocks.map((block) => [block.number, Number(block.timestamp)]));
+  for (const evento of events) {
+    evento.timestamp = timestampByBlock.get(evento.blockNumber) ?? null;
   }
 
-  eventos.sort((a, b) => Number(b.blockNumber - a.blockNumber));
-  return eventos;
+  events.sort((a, b) => Number(b.blockNumber - a.blockNumber));
+  return events;
 }

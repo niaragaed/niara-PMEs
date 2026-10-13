@@ -9,23 +9,23 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { GateChecklist, type GateRow } from "./GateChecklist";
-import { TermoPublicacao, type DadosToken } from "./TermoPublicacao";
-import { usePublicarOnChainGates } from "@/lib/web3/hooks/usePublicarOnChainGates";
-import { usePublicarOfertaOnChain } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
-import { UNIDADE_ON_CHAIN } from "@/lib/web3/gates";
+import { PublicationTerms, type DataToken } from "./TermoPublicacao";
+import { usePublishOnChainGates } from "@/lib/web3/hooks/usePublicarOnChainGates";
+import { usePublishOfferingOnChain } from "@/lib/web3/hooks/usePublicarOfertaOnChain";
+import { UNIT_ON_CHAIN } from "@/lib/web3/gates";
 import { formatEth } from "@/lib/web3/format";
 import {
-  confirmarPublicacao,
+  confirmPublication,
   verificarConsistencia,
-  type ConfirmarPublicacaoState,
+  type ConfirmPublicationState,
   type VerificarConsistenciaState,
 } from "@/app/empresa/ofertas/onchain-actions";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 type Props = {
   offeringId: string;
-  walletVinculada: string | null;
-  empresaNome: string;
+  linkedWallet: string | null;
+  companyName: string;
   cnpjRef: `0x${string}`;
   windowDays: number;
   targetMinCents: number;
@@ -45,10 +45,10 @@ function etherscanAddress(address: string) {
   return `https://sepolia.etherscan.io/address/${address}`;
 }
 
-export function PublicarOnChainPage({
+export function PublishOnChainPage({
   offeringId,
-  walletVinculada,
-  empresaNome,
+  linkedWallet,
+  companyName,
   cnpjRef,
   windowDays,
   targetMinCents,
@@ -60,43 +60,43 @@ export function PublicarOnChainPage({
   tokenAddress,
   onchainLastError,
 }: Props) {
-  const t = ptBr.empresaOfertas.publicarOnChain;
+  const t = ptBr.companyOfferings.publishOnChain;
   const tg = t.gates;
-  const tp = t.publicacao;
+  const tp = t.publication;
 
-  const { connection, gateProvider, gateRede, gateSaldo, gateAutorizado, gateTitularidade } =
-    usePublicarOnChainGates(walletVinculada);
-  const hook = usePublicarOfertaOnChain();
+  const { connection, gateProvider, gateNetwork: gateRede, gateBalance: gateSaldo, gateAuthorized: gateAutorizado, gateOwnership: gateTitularidade } =
+    usePublishOnChainGates(linkedWallet);
+  const hook = usePublishOfferingOnChain();
 
-  const anoAtual = new Date().getFullYear();
-  const [dados, setDados] = useState<DadosToken>({
-    nome: `${empresaNome} Participações`.trim(),
-    simbolo: (empresaNome.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
-    serie: `${anoAtual}-A`,
+  const currentYear = new Date().getFullYear();
+  const [data, setData] = useState<DataToken>({
+    name: `${companyName} Participações`.trim(),
+    symbol: (companyName.replace(/[^A-Za-z]/g, "").slice(0, 6) || "TOKEN").toUpperCase(),
+    series: `${currentYear}-A`,
   });
-  const [aceito, setAceito] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   // Reconciliação ao (re)abrir a tela: se já havia uma tentativa pendente de uma visita
   // anterior (ex.: fechou a aba logo após assinar), confere de novo contra a chain sem exigir
   // clique. Roda uma única vez por carregamento da página.
-  const [reconciliado, setReconciliado] = useState<ConfirmarPublicacaoState | null>(null);
+  const [reconciled, setReconciled] = useState<ConfirmPublicationState | null>(null);
   // Valor inicial já reflete se vamos verificar ao montar — evita chamar setVerificando(true)
   // de forma síncrona dentro do efeito abaixo (o efeito só precisa desligar ao terminar).
-  const [verificando, setVerificando] = useState(syncStatus === "pendente");
+  const [verifying, setVerifying] = useState(syncStatus === "pendente");
   useEffect(() => {
     if (syncStatus === "pendente") {
-      confirmarPublicacao(offeringId)
-        .then(setReconciliado)
-        .finally(() => setVerificando(false));
+      confirmPublication(offeringId)
+        .then(setReconciled)
+        .finally(() => setVerifying(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function verificarNovamente() {
-    setVerificando(true);
-    const resultado = await confirmarPublicacao(offeringId);
-    setReconciliado(resultado);
-    setVerificando(false);
+  async function verifyAgain() {
+    setVerifying(true);
+    const result = await confirmPublication(offeringId);
+    setReconciled(result);
+    setVerifying(false);
   }
 
   // Sub-etapa 5 (reconciliação contínua, ver onchain-actions.ts): roda ao (re)abrir a tela
@@ -105,23 +105,23 @@ export function PublicarOnChainPage({
   // no Supabase desde a última visita). Nunca roda para 'pendente'/'divergente' sem endereço —
   // esses não têm contrato nenhum ainda para ler, e continuam resolvidos por
   // confirmarPublicacao()/"Reprocessar" acima.
-  const deveVerificarConsistencia = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
-  const [consistencia, setConsistencia] = useState<VerificarConsistenciaState | null>(null);
-  const [verificandoConsistencia, setVerificandoConsistencia] = useState(deveVerificarConsistencia);
+  const shouldVerifyConsistency = syncStatus === "confirmada" || (syncStatus === "divergente" && Boolean(contractAddress));
+  const [consistency, setConsistency] = useState<VerificarConsistenciaState | null>(null);
+  const [verifyingConsistency, setVerifyingConsistency] = useState(shouldVerifyConsistency);
   useEffect(() => {
-    if (deveVerificarConsistencia) {
+    if (shouldVerifyConsistency) {
       verificarConsistencia(offeringId)
-        .then(setConsistencia)
-        .finally(() => setVerificandoConsistencia(false));
+        .then(setConsistency)
+        .finally(() => setVerifyingConsistency(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function verificarConsistenciaNovamente() {
-    setVerificandoConsistencia(true);
-    const resultado = await verificarConsistencia(offeringId);
-    setConsistencia(resultado);
-    setVerificandoConsistencia(false);
+  async function verifyConsistencyAgain() {
+    setVerifyingConsistency(true);
+    const result = await verificarConsistencia(offeringId);
+    setConsistency(result);
+    setVerifyingConsistency(false);
   }
 
   // Prioridade de exibição: ação em andamento nesta sessão (hook) > reconciliação de publicação
@@ -130,14 +130,14 @@ export function PublicarOnChainPage({
   const displayStatus: string =
     hook.status !== "idle"
       ? hook.status
-      : reconciliado
-        ? reconciliado.status === "error"
+      : reconciled
+        ? reconciled.status === "error"
           ? "erro"
-          : reconciliado.status
-        : consistencia
-          ? consistencia.status === "error"
+          : reconciled.status
+        : consistency
+          ? consistency.status === "error"
             ? "erro"
-            : consistencia.status
+            : consistency.status
           : syncStatus === "pendente"
             ? "pendente"
             : syncStatus === "confirmada"
@@ -147,105 +147,105 @@ export function PublicarOnChainPage({
                 : "idle";
 
   const displayTxHash = hook.txHash ?? txHash;
-  const displayContract = hook.contractAddress ?? contractAddress ?? (reconciliado?.status === "confirmada" ? reconciliado.contractAddress : null);
-  const displayToken = hook.tokenAddress ?? tokenAddress ?? (reconciliado?.status === "confirmada" ? reconciliado.tokenAddress : null);
+  const displayContract = hook.contractAddress ?? contractAddress ?? (reconciled?.status === "confirmada" ? reconciled.contractAddress : null);
+  const displayToken = hook.tokenAddress ?? tokenAddress ?? (reconciled?.status === "confirmada" ? reconciled.tokenAddress : null);
   const displayError =
     hook.errorMessage ??
     onchainLastError ??
-    (reconciliado && "motivo" in reconciliado ? reconciliado.motivo : null) ??
-    (reconciliado?.status === "error" ? reconciliado.message : null) ??
-    (consistencia && "motivo" in consistencia ? consistencia.motivo : null) ??
-    (consistencia?.status === "error" ? consistencia.message : null);
+    (reconciled && "motivo" in reconciled ? reconciled.motivo : null) ??
+    (reconciled?.status === "error" ? reconciled.message : null) ??
+    (consistency && "motivo" in consistency ? consistency.motivo : null) ??
+    (consistency?.status === "error" ? consistency.message : null);
   // Distingue as duas causas possíveis de 'divergente' (ver onchain-actions.ts): com endereço já
   // gravado, é drift de consistência (recuperável por verificarConsistencia, sem tocar em
   // nenhuma transação); sem endereço, é uma falha de confirmarPublicacao que nunca chegou a
   // confirmar (recuperável só por "Reprocessar").
-  const divergenteEhDriftDeConsistencia = Boolean(displayContract);
+  const divergentIsConsistencyDrift = Boolean(displayContract);
 
   // ── Gate 1 — MetaMask detectada ────────────────────────────────────────────────────────
   const rowProvider: GateRow = {
     id: "provider",
     label: tg.provider.label,
     status: gateProvider.status,
-    detalhe: gateProvider.status === "reprovado" ? tg.provider.reprovado : null,
+    detail: gateProvider.status === "reprovado" ? tg.provider.rejected : null,
   };
 
   // ── Gate 2 — rede Sepolia ───────────────────────────────────────────────────────────────
-  let redeDetalhe: string | null = null;
+  let networkDetail: string | null = null;
   if (gateRede.status === "reprovado") {
-    redeDetalhe = gateRede.motivo === "nao_conectado" ? tg.rede.naoConectado : tg.rede.redeErrada(gateRede.chainIdConectado);
+    networkDetail = gateRede.reason === "nao_conectado" ? tg.network.notConnected : tg.network.wrongNetwork(gateRede.connectedChainId);
   }
-  const rowRede: GateRow = { id: "rede", label: tg.rede.label, status: gateRede.status, detalhe: redeDetalhe };
+  const rowNetwork: GateRow = { id: "rede", label: tg.network.label, status: gateRede.status, detail: networkDetail };
 
   // ── Gate 3 — saldo de ETH suficiente ───────────────────────────────────────────────────
-  let saldoDetalhe: string | null = null;
-  if (gateSaldo.status === "carregando") saldoDetalhe = tg.saldo.carregando;
-  else if (gateSaldo.status === "erro") saldoDetalhe = tg.saldo.erro;
+  let balanceDetail: string | null = null;
+  if (gateSaldo.status === "carregando") balanceDetail = tg.balance.loading;
+  else if (gateSaldo.status === "erro") balanceDetail = tg.balance.error;
   else if (gateSaldo.status === "reprovado") {
-    saldoDetalhe = tg.saldo.reprovado(formatEth(gateSaldo.saldoWei), formatEth(gateSaldo.custoEstimadoWei));
+    balanceDetail = tg.balance.rejected(formatEth(gateSaldo.balanceWei), formatEth(gateSaldo.estimatedCostWei));
   } else if (gateSaldo.status === "ok") {
-    saldoDetalhe = tg.saldo.ok(formatEth(gateSaldo.saldoWei), formatEth(gateSaldo.custoEstimadoWei));
+    balanceDetail = tg.balance.ok(formatEth(gateSaldo.balanceWei), formatEth(gateSaldo.estimatedCostWei));
   }
-  const rowSaldo: GateRow = { id: "saldo", label: tg.saldo.label, status: gateSaldo.status, detalhe: saldoDetalhe };
+  const rowBalance: GateRow = { id: "saldo", label: tg.balance.label, status: gateSaldo.status, detail: balanceDetail };
 
   // ── Gate 4 — emissoresAutorizados on-chain ─────────────────────────────────────────────
-  let autorizadoStatus: GateRow["status"];
-  let autorizadoDetalhe: string | null = null;
+  let authorizedStatus: GateRow["status"];
+  let authorizedDetail: string | null = null;
   if (!connection.address) {
-    autorizadoStatus = "carregando";
-    autorizadoDetalhe = tg.autorizado.naoConectado;
+    authorizedStatus = "carregando";
+    authorizedDetail = tg.authorized.notConnected;
   } else if (gateAutorizado.errorMessage) {
-    autorizadoStatus = "erro";
-    autorizadoDetalhe = gateAutorizado.errorMessage;
-  } else if (gateAutorizado.isLoading || gateAutorizado.autorizado === null) {
-    autorizadoStatus = "carregando";
-  } else if (gateAutorizado.autorizado === false) {
-    autorizadoStatus = "reprovado";
-    autorizadoDetalhe = tg.autorizado.reprovado;
+    authorizedStatus = "erro";
+    authorizedDetail = gateAutorizado.errorMessage;
+  } else if (gateAutorizado.isLoading || gateAutorizado.authorized === null) {
+    authorizedStatus = "carregando";
+  } else if (gateAutorizado.authorized === false) {
+    authorizedStatus = "reprovado";
+    authorizedDetail = tg.authorized.rejected;
   } else {
-    autorizadoStatus = "ok";
+    authorizedStatus = "ok";
   }
-  const rowAutorizado: GateRow = { id: "autorizado", label: tg.autorizado.label, status: autorizadoStatus, detalhe: autorizadoDetalhe };
+  const rowAuthorized: GateRow = { id: "autorizado", label: tg.authorized.label, status: authorizedStatus, detail: authorizedDetail };
 
   // ── Gate 5 — carteira conectada == issuers.wallet_address ──────────────────────────────
-  let titularidadeDetalhe: string | null = null;
+  let ownershipDetail: string | null = null;
   if (gateTitularidade.status === "reprovado") {
-    if (gateTitularidade.motivo === "sem_carteira_vinculada") titularidadeDetalhe = tg.titularidade.semCarteiraVinculada;
-    else if (gateTitularidade.motivo === "nao_conectado") titularidadeDetalhe = tg.titularidade.naoConectado;
-    else titularidadeDetalhe = tg.titularidade.diferente(gateTitularidade.walletVinculada, gateTitularidade.carteiraConectada);
+    if (gateTitularidade.reason === "sem_carteira_vinculada") ownershipDetail = tg.ownership.noLinkedWallet;
+    else if (gateTitularidade.reason === "nao_conectado") ownershipDetail = tg.ownership.notConnected;
+    else ownershipDetail = tg.ownership.different(gateTitularidade.linkedWallet, gateTitularidade.connectedWallet);
   }
-  const rowTitularidade: GateRow = {
+  const rowOwnership: GateRow = {
     id: "titularidade",
-    label: tg.titularidade.label,
-    status: gateTitularidade.status === "reprovado" && gateTitularidade.motivo === "nao_conectado" ? "carregando" : gateTitularidade.status,
-    detalhe: titularidadeDetalhe,
+    label: tg.ownership.label,
+    status: gateTitularidade.status === "reprovado" && gateTitularidade.reason === "nao_conectado" ? "carregando" : gateTitularidade.status,
+    detail: ownershipDetail,
   };
 
   // ── Gate 6 — termo de publicação (real a partir desta etapa) ───────────────────────────
-  const dadosValidos = dados.nome.trim().length > 0 && dados.simbolo.trim().length > 0 && dados.serie.trim().length > 0;
-  const gate6Ok = aceito && dadosValidos;
-  const rowTermo: GateRow = { id: "termo", label: tg.termo.label, status: gate6Ok ? "ok" : "reprovado", detalhe: gate6Ok ? null : tg.termo.reprovado };
+  const validData = data.name.trim().length > 0 && data.symbol.trim().length > 0 && data.series.trim().length > 0;
+  const gate6Ok = accepted && validData;
+  const rowTerm: GateRow = { id: "termo", label: tg.term.label, status: gate6Ok ? "ok" : "reprovado", detail: gate6Ok ? null : tg.term.rejected };
 
-  const rows: GateRow[] = [rowProvider, rowRede, rowSaldo, rowAutorizado, rowTitularidade, rowTermo];
-  const pendencias = rows.filter((r) => r.status !== "ok");
-  const podeHabilitar = pendencias.length === 0 && displayStatus === "idle";
+  const rows: GateRow[] = [rowProvider, rowNetwork, rowBalance, rowAuthorized, rowOwnership, rowTerm];
+  const pendingItems = rows.filter((r) => r.status !== "ok");
+  const canEnable = pendingItems.length === 0 && displayStatus === "idle";
 
-  async function handlePublicar() {
+  async function handlePublish() {
     await hook.publicar({
       offeringId,
-      nome: dados.nome.trim(),
-      simbolo: dados.simbolo.trim(),
-      empresa: empresaNome,
+      name: data.name.trim(),
+      symbol: data.symbol.trim(),
+      company: companyName,
       cnpjRef,
-      serie: dados.serie.trim(),
-      metaMinimaWei: BigInt(targetMinCents) * UNIDADE_ON_CHAIN,
-      metaMaximaWei: BigInt(hardCapCents) * UNIDADE_ON_CHAIN,
-      precoPorCotaWei: BigInt(sharePriceCents) * UNIDADE_ON_CHAIN,
+      series: data.series.trim(),
+      minTargetWei: BigInt(targetMinCents) * UNIT_ON_CHAIN,
+      maxTargetWei: BigInt(hardCapCents) * UNIT_ON_CHAIN,
+      pricePerShareWei: BigInt(sharePriceCents) * UNIT_ON_CHAIN,
       windowDays,
     });
   }
 
-  const emAndamento = displayStatus === "assinando" || displayStatus === "registrando" || displayStatus === "confirmando";
+  const inProgress = displayStatus === "assinando" || displayStatus === "registrando" || displayStatus === "confirmando";
 
   return (
     <main className="flex flex-1 flex-col bg-military">
@@ -256,16 +256,16 @@ export function PublicarOnChainPage({
 
       <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">
         <Link href="/empresa/ofertas" className="text-sm text-salmon hover:text-salmon-600">
-          {t.voltar}
+          {t.back}
         </Link>
 
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-on-military">{t.titulo}</h1>
-        <p className="mt-1 text-sm text-on-military-muted">{t.subtitulo}</p>
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-on-military">{t.title}</h1>
+        <p className="mt-1 text-sm text-on-military-muted">{t.subtitle}</p>
 
         {displayStatus === "confirmada" && (
           <div className="mt-6 rounded-lg border border-value-positive/40 bg-value-positive/10 p-4 text-sm text-on-military">
-            <p className="font-medium">{tp.confirmadaTitulo}</p>
-            <p className="mt-1 text-on-military-muted">{tp.confirmadaTexto}</p>
+            <p className="font-medium">{tp.confirmedTitle}</p>
+            <p className="mt-1 text-on-military-muted">{tp.confirmedText}</p>
             <dl className="mt-3 space-y-1">
               {displayContract && (
                 <div className="flex items-center justify-between gap-3">
@@ -290,42 +290,42 @@ export function PublicarOnChainPage({
             </dl>
             {displayTxHash && (
               <a href={etherscanTx(displayTxHash)} target="_blank" rel="noreferrer" className="mt-3 inline-block text-salmon hover:text-salmon-600">
-                {tp.verNoEtherscan}
+                {tp.viewOnEtherscan}
               </a>
             )}
             <div className="mt-3">
               <button
                 type="button"
-                onClick={verificarConsistenciaNovamente}
-                disabled={verificandoConsistencia}
+                onClick={verifyConsistencyAgain}
+                disabled={verifyingConsistency}
                 className="flex items-center gap-2 rounded-md border border-panel-border px-3 py-1.5 text-sm text-on-military hover:text-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {verificandoConsistencia && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {tp.verificarConsistencia}
+                {verifyingConsistency && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {tp.verifyConsistency}
               </button>
-              <p className="mt-1 text-xs text-on-military-muted">{tp.verificarConsistenciaNota}</p>
+              <p className="mt-1 text-xs text-on-military-muted">{tp.verifyConsistencyNote}</p>
             </div>
           </div>
         )}
 
         {displayStatus === "pendente" && (
           <div className="mt-6 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
-            <p className="font-medium">{tp.pendenteTitulo}</p>
-            <p className="mt-1 text-on-military-muted">{tp.pendenteTexto}</p>
+            <p className="font-medium">{tp.pendingTitle}</p>
+            <p className="mt-1 text-on-military-muted">{tp.pendingText}</p>
             {displayTxHash && (
               <a href={etherscanTx(displayTxHash)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-salmon hover:text-salmon-600">
-                {tp.verNoEtherscan}
+                {tp.viewOnEtherscan}
               </a>
             )}
             <div className="mt-3">
               <button
                 type="button"
-                onClick={verificarNovamente}
-                disabled={verificando}
+                onClick={verifyAgain}
+                disabled={verifying}
                 className="flex items-center gap-2 rounded-md border border-panel-border px-3 py-1.5 text-sm text-on-military hover:text-salmon disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {verificando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {tp.verificarNovamente}
+                {verifying && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {tp.verifyAgain}
               </button>
             </div>
           </div>
@@ -333,68 +333,68 @@ export function PublicarOnChainPage({
 
         {(displayStatus === "revertida" || displayStatus === "erro") && displayError && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
-            {displayStatus === "revertida" && <p className="font-medium">{tp.revertidaTitulo}</p>}
+            {displayStatus === "revertida" && <p className="font-medium">{tp.revertedTitle}</p>}
             <p className="mt-1">{displayError}</p>
           </div>
         )}
 
         {displayStatus === "divergente" && (
           <div role="alert" className="mt-6 rounded-md border border-value-negative/30 bg-value-negative/10 p-4 text-sm text-value-negative">
-            <p className="font-medium">{tp.divergenteTitulo}</p>
-            <p className="mt-1">{divergenteEhDriftDeConsistencia ? tp.divergenteConsistenciaTexto : tp.divergenteTexto}</p>
+            <p className="font-medium">{tp.divergentTitle}</p>
+            <p className="mt-1">{divergentIsConsistencyDrift ? tp.divergentConsistencyText : tp.divergentText}</p>
             {displayError && <p className="mt-1 text-xs">{displayError}</p>}
             {displayTxHash && (
               <a href={etherscanTx(displayTxHash)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-value-negative underline">
-                {tp.verNoEtherscan}
+                {tp.viewOnEtherscan}
               </a>
             )}
-            {divergenteEhDriftDeConsistencia ? (
+            {divergentIsConsistencyDrift ? (
               <div className="mt-3">
                 <button
                   type="button"
-                  onClick={verificarConsistenciaNovamente}
-                  disabled={verificandoConsistencia}
+                  onClick={verifyConsistencyAgain}
+                  disabled={verifyingConsistency}
                   className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {verificandoConsistencia && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                  {tp.verificarConsistencia}
+                  {verifyingConsistency && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {tp.verifyConsistency}
                 </button>
-                <p className="mt-1 text-xs text-on-military-muted">{tp.verificarConsistenciaNota}</p>
+                <p className="mt-1 text-xs text-on-military-muted">{tp.verifyConsistencyNote}</p>
               </div>
             ) : (
               <div className="mt-3">
                 <button
                   type="button"
-                  onClick={verificarNovamente}
-                  disabled={verificando}
+                  onClick={verifyAgain}
+                  disabled={verifying}
                   className="flex items-center gap-2 rounded-md border border-value-negative/40 px-3 py-1.5 text-sm text-value-negative hover:bg-value-negative/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {verificando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                  {tp.reprocessar}
+                  {verifying && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {tp.reprocess}
                 </button>
-                <p className="mt-1 text-xs text-on-military-muted">{tp.reprocessarNota}</p>
+                <p className="mt-1 text-xs text-on-military-muted">{tp.reprocessNote}</p>
               </div>
             )}
           </div>
         )}
 
-        {emAndamento && (
+        {inProgress && (
           <div className="mt-6 flex items-center gap-3 rounded-lg border border-panel-border bg-panel p-4 text-sm text-on-military">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            {displayStatus === "assinando" && tp.assinando}
-            {displayStatus === "registrando" && tp.registrando}
-            {displayStatus === "confirmando" && tp.confirmando}
+            {displayStatus === "assinando" && tp.signing}
+            {displayStatus === "registrando" && tp.registering}
+            {displayStatus === "confirmando" && tp.confirming}
           </div>
         )}
 
         {(displayStatus === "idle" || displayStatus === "revertida" || displayStatus === "erro") && (
           <>
-            {!walletVinculada && (
+            {!linkedWallet && (
               <div className="mt-6 rounded-lg border border-salmon/40 bg-salmon/10 p-4 text-sm text-on-military">
-                <p className="font-medium">{t.semCarteiraVinculada.titulo}</p>
-                <p className="mt-1 text-on-military-muted">{t.semCarteiraVinculada.texto}</p>
+                <p className="font-medium">{t.noLinkedWallet.title}</p>
+                <p className="mt-1 text-on-military-muted">{t.noLinkedWallet.text}</p>
                 <Link href="/perfil#carteira" className="mt-2 inline-block text-salmon hover:text-salmon-600">
-                  {t.semCarteiraVinculada.link}
+                  {t.noLinkedWallet.link}
                 </Link>
               </div>
             )}
@@ -403,37 +403,37 @@ export function PublicarOnChainPage({
               <ConnectWallet />
             </div>
 
-            <h2 className="mt-8 text-sm font-semibold text-on-military">{tg.titulo}</h2>
+            <h2 className="mt-8 text-sm font-semibold text-on-military">{tg.title}</h2>
             <div className="mt-3">
               <GateChecklist rows={rows} />
             </div>
 
             <div className="mt-8">
-              <TermoPublicacao dados={dados} onDadosChange={setDados} aceito={aceito} onAceitoChange={setAceito} desabilitado={false} />
+              <PublicationTerms data={data} onDataChange={setData} accepted={accepted} onAcceptedChange={setAccepted} disabled={false} />
             </div>
 
             <div className="mt-8 flex flex-col items-start gap-3">
               <button
                 type="button"
-                onClick={handlePublicar}
-                disabled={!podeHabilitar}
-                aria-disabled={!podeHabilitar}
-                aria-label={podeHabilitar ? t.botao.label : t.botao.bloqueadoAria}
-                title={podeHabilitar ? t.botao.label : t.botao.bloqueadoAria}
+                onClick={handlePublish}
+                disabled={!canEnable}
+                aria-disabled={!canEnable}
+                aria-label={canEnable ? t.button.label : t.button.blockedAria}
+                title={canEnable ? t.button.label : t.button.blockedAria}
                 className={
-                  podeHabilitar
+                  canEnable
                     ? "rounded-md bg-salmon px-6 py-3 text-sm font-semibold text-on-salmon transition-colors hover:bg-salmon-600"
                     : "cursor-not-allowed rounded-md bg-salmon px-6 py-3 text-sm font-semibold text-on-salmon opacity-60"
                 }
               >
-                {t.botao.label}
+                {t.button.label}
               </button>
 
-              {!podeHabilitar && (
+              {!canEnable && (
                 <div className="text-xs text-on-military-muted">
-                  <p>{t.botao.pendencias}</p>
+                  <p>{t.button.pendingItems}</p>
                   <ul className="mt-1 list-inside list-disc">
-                    {pendencias.map((p) => (
+                    {pendingItems.map((p) => (
                       <li key={p.id}>{p.label}</li>
                     ))}
                   </ul>

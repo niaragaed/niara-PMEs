@@ -21,7 +21,7 @@ import { getIssuerLogoVersion, issuerLogoUrl } from "@/lib/storage/issuer-logo";
 import { getIssuerBannerVersion, issuerBannerUrl } from "@/lib/storage/issuer-banner";
 
 /** Rede em que a oferta foi publicada (migration 0017, `offerings.rede`). */
-export type RedeOferta = "sepolia" | "solana-devnet";
+export type OfferingNetwork = "sepolia" | "solana-devnet";
 
 /**
  * Endereços por rede — união discriminada por `rede` para que nenhum consumidor EVM (viem/wagmi)
@@ -31,11 +31,11 @@ export type RedeOferta = "sepolia" | "solana-devnet";
  *   - Solana:  `contractAddress` = conta da oferta (PDA do programa niara-pmes-solana),
  *              `tokenAddress` = mint SPL das cotas.
  */
-export type EnderecosOfertaPorRede =
+export type OfferingAddressesByNetwork =
   | { rede: "sepolia"; contractAddress: `0x${string}`; tokenAddress: `0x${string}` }
   | { rede: "solana-devnet"; contractAddress: string; tokenAddress: string };
 
-export type ConfirmedOnChainOffering = EnderecosOfertaPorRede & ConfirmedOnChainOfferingBase;
+export type ConfirmedOnChainOffering = OfferingAddressesByNetwork & ConfirmedOnChainOfferingBase;
 
 type ConfirmedOnChainOfferingBase = {
   id: string;
@@ -122,12 +122,12 @@ const BASE58_PUBKEY = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 /** Formato conferido de novo aqui (além dos CHECKs da 0017) — nunca entrega endereço de uma rede
  * com o tipo da outra. Linha com rede desconhecida ou formato inválido é ignorada. */
-function enderecosPorRede(rede: string, contrato: string, token: string): EnderecosOfertaPorRede | null {
-  if (rede === "sepolia" && HEX_ADDRESS.test(contrato) && HEX_ADDRESS.test(token)) {
-    return { rede, contractAddress: contrato as `0x${string}`, tokenAddress: token as `0x${string}` };
+function addressesByNetwork(network: string, contract: string, token: string): OfferingAddressesByNetwork | null {
+  if (network === "sepolia" && HEX_ADDRESS.test(contract) && HEX_ADDRESS.test(token)) {
+    return { rede: network, contractAddress: contract as `0x${string}`, tokenAddress: token as `0x${string}` };
   }
-  if (rede === "solana-devnet" && BASE58_PUBKEY.test(contrato) && BASE58_PUBKEY.test(token)) {
-    return { rede, contractAddress: contrato, tokenAddress: token };
+  if (network === "solana-devnet" && BASE58_PUBKEY.test(contract) && BASE58_PUBKEY.test(token)) {
+    return { rede: network, contractAddress: contract, tokenAddress: token };
   }
   return null;
 }
@@ -151,11 +151,11 @@ async function mapRow(row: ConfirmedOfferingRow, admin: SupabaseClient): Promise
       ? Math.round(Number(row.hard_cap_cents) / Number(row.share_price_cents))
       : null;
 
-  const enderecos = enderecosPorRede(row.rede, row.contract_address, row.token_address);
-  if (!enderecos) return null;
+  const addresses = addressesByNetwork(row.rede, row.contract_address, row.token_address);
+  if (!addresses) return null;
 
   return {
-    ...enderecos,
+    ...addresses,
     id: row.id,
     issuerAccountId: row.issuer_id,
     category: row.category as TokenCategory | null,

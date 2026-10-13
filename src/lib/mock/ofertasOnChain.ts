@@ -3,7 +3,7 @@
 // lista sem também reordenar aquela variável de ambiente (e vice-versa) — não há verificação
 // automática entre os dois lados, só esta lista como ponto único de verdade no frontend. Cada
 // slug precisa existir em `OFERTAS` (src/lib/mock/ofertas.ts) com `categoria === "pmes"`.
-export const ONCHAIN_PMES_SLUGS_EM_ORDEM: readonly string[] = [
+export const ONCHAIN_SMES_SLUGS_IN_ORDER: readonly string[] = [
   "pme-padaria-bela-vista",
   "pme-clinica-vitalis",
   "pme-barbearia-corte-estilo",
@@ -17,18 +17,18 @@ export const ONCHAIN_PMES_SLUGS_EM_ORDEM: readonly string[] = [
 ];
 
 export function getOnChainIndexBySlug(slug: string): number | null {
-  const index = ONCHAIN_PMES_SLUGS_EM_ORDEM.indexOf(slug);
+  const index = ONCHAIN_SMES_SLUGS_IN_ORDER.indexOf(slug);
   return index === -1 ? null : index;
 }
 
 if (process.env.NODE_ENV !== "production") {
-  const semDuplicatas = new Set(ONCHAIN_PMES_SLUGS_EM_ORDEM).size === ONCHAIN_PMES_SLUGS_EM_ORDEM.length;
-  if (!semDuplicatas) {
+  const withoutDuplicates = new Set(ONCHAIN_SMES_SLUGS_IN_ORDER).size === ONCHAIN_SMES_SLUGS_IN_ORDER.length;
+  if (!withoutDuplicates) {
     throw new Error("ONCHAIN_PMES_SLUGS_EM_ORDEM tem slugs duplicados — cada posição deve ser única.");
   }
-  if (ONCHAIN_PMES_SLUGS_EM_ORDEM.length !== 10) {
+  if (ONCHAIN_SMES_SLUGS_IN_ORDER.length !== 10) {
     throw new Error(
-      `ONCHAIN_PMES_SLUGS_EM_ORDEM deveria ter 10 entradas (uma por oferta real em Sepolia), tem ${ONCHAIN_PMES_SLUGS_EM_ORDEM.length}.`,
+      `ONCHAIN_PMES_SLUGS_EM_ORDEM deveria ter 10 entradas (uma por oferta real em Sepolia), tem ${ONCHAIN_SMES_SLUGS_IN_ORDER.length}.`,
     );
   }
 

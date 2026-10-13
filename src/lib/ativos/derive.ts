@@ -11,10 +11,10 @@ export type AllocationSlice = {
 };
 
 export type PortfolioTotals = {
-  patrimonioTotal: number;
-  valorInvestido: number;
-  lucroPrejuizo: number;
-  retornoPercent: number;
+  totalEquity: number;
+  investedValue: number;
+  profitLoss: number;
+  returnPercent: number;
 };
 
 export const CATEGORY_COLOR_VAR: Record<TokenCategory, string> = {
@@ -33,12 +33,12 @@ const REGION_COLOR_VAR: Record<Region, string> = {
 };
 
 export function computeTotals(positions: Position[]): PortfolioTotals {
-  const patrimonioTotal = positions.reduce((sum, p) => sum + p.valorAtual, 0);
-  const valorInvestido = positions.reduce((sum, p) => sum + p.cotas * p.precoMedio, 0);
-  const lucroPrejuizo = patrimonioTotal - valorInvestido;
-  const retornoPercent = valorInvestido === 0 ? 0 : (lucroPrejuizo / valorInvestido) * 100;
+  const totalEquity = positions.reduce((sum, p) => sum + p.currentValue, 0);
+  const investedValue = positions.reduce((sum, p) => sum + p.shares * p.averagePrice, 0);
+  const profitLoss = totalEquity - investedValue;
+  const returnPercent = investedValue === 0 ? 0 : (profitLoss / investedValue) * 100;
 
-  return { patrimonioTotal, valorInvestido, lucroPrejuizo, retornoPercent };
+  return { totalEquity, investedValue, profitLoss, returnPercent };
 }
 
 export function computeAllocation(
@@ -47,15 +47,15 @@ export function computeAllocation(
   categoryLabels: Record<TokenCategory, string>,
   regionLabels: Record<Region, string>,
 ): AllocationSlice[] {
-  const total = positions.reduce((sum, p) => sum + p.valorAtual, 0);
+  const total = positions.reduce((sum, p) => sum + p.currentValue, 0);
 
   if (view === "ativo") {
     return positions
       .map((p) => ({
         key: p.symbol,
         label: p.name,
-        value: p.valorAtual,
-        pct: total === 0 ? 0 : (p.valorAtual / total) * 100,
+        value: p.currentValue,
+        pct: total === 0 ? 0 : (p.currentValue / total) * 100,
         colorVar: CATEGORY_COLOR_VAR[p.category],
       }))
       .sort((a, b) => b.value - a.value);
@@ -66,7 +66,7 @@ export function computeAllocation(
 
   for (const position of positions) {
     const key = position[groupKey];
-    totalsByKey.set(key, (totalsByKey.get(key) ?? 0) + position.valorAtual);
+    totalsByKey.set(key, (totalsByKey.get(key) ?? 0) + position.currentValue);
   }
 
   return Array.from(totalsByKey.entries())

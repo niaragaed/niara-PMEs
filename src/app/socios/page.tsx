@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AlertTriangle } from "lucide-react";
-import { resolveSocio } from "@/lib/auth/resolveSocio";
-import { SociosLoginForm } from "@/components/socios/SociosLoginForm";
-import { SociosDashboard } from "@/components/socios/SociosDashboard";
-import { MovimentacoesSection } from "@/components/socios/MovimentacoesSection";
-import { MovimentacoesSkeleton } from "@/components/socios/MovimentacoesSkeleton";
+import { resolvePartner } from "@/lib/auth/resolveSocio";
+import { PartnersLoginForm } from "@/components/socios/SociosLoginForm";
+import { PartnersDashboard } from "@/components/socios/SociosDashboard";
+import { TransactionsSection } from "@/components/socios/MovimentacoesSection";
+import { TransactionsSkeleton } from "@/components/socios/MovimentacoesSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
 import { ptBr } from "@/lib/i18n/pt-br";
 
 export const metadata: Metadata = {
-  title: `${ptBr.socios.meta.title} · Niara PMEs`,
+  title: `${ptBr.partners.meta.title} · Niara PMEs`,
   robots: { index: false, follow: false },
 };
 
@@ -27,15 +27,15 @@ export const maxDuration = 60;
 // src/lib/auth/resolveSocio.ts. Autenticado mas fora da allowlist = acesso negado, sem
 // redirect (fica na própria página, mensagem clara).
 export default async function Page() {
-  const { userId, email, autorizado } = await resolveSocio();
+  const { userId, email, autorizado } = await resolvePartner();
 
   if (!userId) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-military px-4 py-16">
         <div className="w-full max-w-sm rounded-lg border border-panel-border bg-panel p-6">
-          <h1 className="text-xl font-semibold text-on-military">{ptBr.socios.login.title}</h1>
-          <p className="mt-1 text-sm text-on-military-muted">{ptBr.socios.login.subtitle}</p>
-          <SociosLoginForm />
+          <h1 className="text-xl font-semibold text-on-military">{ptBr.partners.login.title}</h1>
+          <p className="mt-1 text-sm text-on-military-muted">{ptBr.partners.login.subtitle}</p>
+          <PartnersLoginForm />
         </div>
       </main>
     );
@@ -47,8 +47,8 @@ export default async function Page() {
         <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg border border-panel-border bg-panel p-6 text-center">
           <AlertTriangle className="h-8 w-8 text-salmon" aria-hidden="true" />
           <div>
-            <h1 className="text-xl font-semibold text-on-military">{ptBr.socios.negado.title}</h1>
-            <p className="mt-1 text-sm text-on-military-muted">{ptBr.socios.negado.subtitle}</p>
+            <h1 className="text-xl font-semibold text-on-military">{ptBr.partners.denied.title}</h1>
+            <p className="mt-1 text-sm text-on-military-muted">{ptBr.partners.denied.subtitle}</p>
           </div>
           <SignOutButton />
         </div>
@@ -57,11 +57,11 @@ export default async function Page() {
   }
 
   return (
-    <SociosDashboard
+    <PartnersDashboard
       email={email ?? ""}
-      movimentacoesSlot={
-        <Suspense fallback={<MovimentacoesSkeleton />}>
-          <MovimentacoesSection />
+      transactionsSlot={
+        <Suspense fallback={<TransactionsSkeleton />}>
+          <TransactionsSection />
         </Suspense>
       }
     />
