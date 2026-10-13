@@ -7,7 +7,6 @@ import { CategoryBadge } from "./CategoryChip";
 import { OfferingBanner } from "./OfertaBanner";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { CATEGORY_META } from "@/lib/categories";
-import { DEFAULT_DOCUMENTS } from "@/lib/mock/ofertas";
 import type { ConfirmedOnChainOffering } from "@/lib/web3/confirmedOfferings";
 import { getDictionary } from "@/lib/i18n/server";
 
@@ -109,7 +108,7 @@ export async function SelfServiceOfferingDetailPage({
           <section className="rounded-lg bg-surface p-6 shadow-soft">
             <h2 className="text-lg font-semibold text-ink">{t.documents.title}</h2>
             <ul className="mt-4 flex flex-col gap-2">
-              {DEFAULT_DOCUMENTS.map((doc) => (
+              {dict.common.defaultDocuments.map((doc) => (
                 <li
                   key={doc}
                   className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-2.5 text-sm text-ink-muted"

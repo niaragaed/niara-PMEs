@@ -7,7 +7,6 @@ import { reserveInvestment, type PublicOffering, type ReserveInvestmentState } f
 import { TextField } from "@/components/perfil/FormField";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { formatBRL } from "@/lib/format";
-import { DEFAULT_DOCUMENTS } from "@/lib/mock/ofertas";
 import { useDictionary } from "@/lib/i18n/client";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
@@ -272,7 +271,7 @@ export function OfferingDetailPage({ offering, isOwner }: { offering: PublicOffe
             <section className="rounded-lg border border-panel-border bg-panel p-6">
               <h2 className="text-lg font-semibold text-on-military">{t.detail.documents.title}</h2>
               <ul className="mt-4 flex flex-col gap-2">
-                {DEFAULT_DOCUMENTS.map((doc) => (
+                {dict.common.defaultDocuments.map((doc) => (
                   <li
                     key={doc}
                     className="flex items-center justify-between gap-3 rounded-md border border-panel-border px-4 py-2.5 text-sm text-on-military-muted"

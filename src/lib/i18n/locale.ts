@@ -51,3 +51,13 @@ export function htmlLang(locale: Locale): string {
 export function intlLocale(locale: Locale): string {
   return locale === "pt" ? "pt-BR" : "en-US";
 }
+
+/**
+ * Demo content written in both languages next to the data itself (fictitious companies in the
+ * mock catalog) instead of in the dictionaries — see src/lib/mock/ofertas.ts.
+ */
+export type LocalizedText = Record<Locale, string>;
+
+export function localize(text: LocalizedText, locale: Locale): string {
+  return text[locale];
+}

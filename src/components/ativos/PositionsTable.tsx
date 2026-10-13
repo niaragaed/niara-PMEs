@@ -2,7 +2,8 @@
 import { CATEGORY_COLOR_VAR } from "@/lib/ativos/derive";
 import { formatBRL, formatSignedPercent } from "@/lib/format";
 import { MOCK_POSITIONS, type Position } from "@/lib/mock/ativos";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { localize } from "@/lib/i18n/locale";
 
 function changePercent(position: Position): number {
   const invested = position.shares * position.averagePrice;
@@ -11,6 +12,7 @@ function changePercent(position: Position): number {
 
 export function PositionsTable() {
   const dict = useDictionary();
+  const locale = useLocale();
   return (
     <div className="overflow-x-auto rounded-lg border border-panel-border bg-panel">
       <table className="w-full min-w-[640px] text-left text-sm">
@@ -44,7 +46,7 @@ export function PositionsTable() {
 
             return (
               <tr key={position.symbol} className="border-b border-panel-border last:border-0">
-                <td className="px-4 py-3 font-medium text-on-military">{position.name}</td>
+                <td className="px-4 py-3 font-medium text-on-military">{localize(position.name, locale)}</td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-1.5 text-on-military-muted">
                     <span

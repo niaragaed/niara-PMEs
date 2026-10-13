@@ -421,7 +421,7 @@ export function SignUpPage({ initialStep, email }: { initialStep: Step; email: s
                       onChange={handleFieldChange("birthDate")}
                       error={errors.birthDate}
                       inputMode="numeric"
-                      placeholder="DD/MM/AAAA"
+                      placeholder={dict.common.datePlaceholder}
                     />
                   )}
                   {personType === "pj" && (

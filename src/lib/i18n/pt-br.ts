@@ -3,6 +3,16 @@ export const pt = {
     skipToContent: "Pular para o conteúdo",
     yes: "Sim",
     no: "Não",
+    datePlaceholder: "DD/MM/AAAA",
+    defaultDocuments: [
+      "Memorando de informações",
+      "Balanço financeiro",
+      "Demonstrações financeiras",
+      "Release de resultados",
+      "Apresentação dos resultados",
+      "Contrato social / estatuto",
+      "Termo de adesão à oferta",
+    ],
     homeAriaLabel: "Niara PMEs — página inicial",
     comingSoon: "Em breve",
     demo: "Demonstração",
@@ -916,7 +926,7 @@ export const pt = {
         title: "Financeiro / caixa (demonstração)",
         annualRevenue: "Receita anual",
         availableCash: "Caixa disponível",
-        endividamento: "Endividamento",
+        debt: "Endividamento",
         note: "Indicadores simulados — dados fictícios.",
         revenueSeries: "Receita",
         cashSeries: "Caixa",
@@ -931,18 +941,18 @@ export const pt = {
           valuation: {
             label: "Valuation",
             items: {
-              pl: {
+              pe: {
                 name: "P/L",
                 unit: "number",
                 explanation:
                   'Preço da ação dividido pelo lucro por ação; indica quantos anos de lucro seriam necessários para "pagar" o preço.',
               },
-              pvp: {
+              pb: {
                 name: "P/VP",
                 unit: "number",
                 explanation: "Preço dividido pelo valor patrimonial por ação; quanto o mercado paga sobre o patrimônio contábil.",
               },
-              psr: {
+              ps: {
                 name: "P/Receita (PSR)",
                 unit: "number",
                 explanation: "Valor de mercado dividido pela receita líquida.",
@@ -968,64 +978,64 @@ export const pt = {
                 unit: "number",
                 explanation: "Valor de mercado dividido pelo Ebit.",
               },
-              pAtivo: {
+              pAssets: {
                 name: "P/Ativo",
                 unit: "number",
                 explanation: "Valor de mercado dividido pelo ativo total.",
               },
-              pAtivoCircLiq: {
+              pNetCurrentAssets: {
                 name: "P/Ativo Circ. Liq.",
                 unit: "number",
                 explanation: "Preço dividido pelo ativo circulante líquido (circulante menos passivos).",
               },
-              pCapGiro: {
+              pWorkingCapital: {
                 name: "P/Cap. Giro",
                 unit: "number",
                 explanation: "Preço dividido pelo capital de giro (ativo circulante menos passivo circulante).",
               },
-              lpa: {
+              eps: {
                 name: "LPA",
                 unit: "number",
                 explanation: "Lucro por ação: lucro líquido dividido pelo número de ações.",
               },
-              vpa: {
+              bvps: {
                 name: "VPA",
                 unit: "number",
                 explanation: "Valor patrimonial por ação: patrimônio líquido dividido pelo número de ações.",
               },
             },
           },
-          eficiencia: {
+          efficiency: {
             label: "Eficiência",
             items: {
-              margemBruta: {
+              grossMargin: {
                 name: "Margem Bruta",
                 unit: "percent",
                 explanation: "Lucro bruto dividido pela receita líquida.",
               },
-              margemEbitda: {
+              ebitdaMargin: {
                 name: "Margem Ebitda",
                 unit: "percent",
                 explanation: "Ebitda dividido pela receita líquida.",
               },
-              margemEbit: {
+              ebitMargin: {
                 name: "Margem Ebit",
                 unit: "percent",
                 explanation: "Ebit (lucro operacional) dividido pela receita líquida.",
               },
-              margemLiquida: {
+              netMargin: {
                 name: "Margem Líquida",
                 unit: "percent",
                 explanation: "Lucro líquido dividido pela receita líquida.",
               },
-              giroAtivos: {
+              assetTurnover: {
                 name: "Giro Ativos",
                 unit: "number",
                 explanation: "Receita dividida pelo ativo total; quanto o ativo gera de receita.",
               },
             },
           },
-          rentabilidade: {
+          profitability: {
             label: "Rentabilidade",
             items: {
               roe: {
@@ -1046,7 +1056,7 @@ export const pt = {
               },
             },
           },
-          dividendos: {
+          dividends: {
             label: "Dividendos",
             items: {
               dividendYield: {
@@ -1061,51 +1071,51 @@ export const pt = {
               },
             },
           },
-          endividamento: {
+          debt: {
             label: "Endividamento",
             items: {
-              liquidezCorrente: {
+              currentRatio: {
                 name: "Liquidez Corrente",
                 unit: "number",
                 explanation:
                   "Ativo circulante dividido pelo passivo circulante; capacidade de honrar obrigações de curto prazo.",
               },
-              dividaLiquidaEbitda: {
+              netDebtEbitda: {
                 name: "Dívida Líquida/Ebitda",
                 unit: "number",
                 explanation: "Dívida líquida dividida pelo Ebitda; quantos anos de Ebitda para quitar a dívida.",
               },
-              dividaLiquidaEbit: {
+              netDebtEbit: {
                 name: "Dívida Líquida/Ebit",
                 unit: "number",
                 explanation: "Dívida líquida dividida pelo Ebit.",
               },
-              dividaLiquidaPatrimonio: {
+              netDebtEquity: {
                 name: "Dívida Líquida/Patrimônio",
                 unit: "number",
                 explanation: "Dívida líquida dividida pelo patrimônio líquido.",
               },
-              dividaBrutaPatrimonio: {
+              grossDebtEquity: {
                 name: "Dívida Bruta/Patrimônio",
                 unit: "number",
                 explanation: "Dívida bruta dividida pelo patrimônio líquido.",
               },
-              patrimonioAtivos: {
+              equityAssets: {
                 name: "Patrimônio/Ativos",
                 unit: "number",
                 explanation: "Patrimônio líquido dividido pelo ativo total.",
               },
-              passivosAtivos: {
+              liabilitiesAssets: {
                 name: "Passivos/Ativos",
                 unit: "number",
                 explanation: "Passivo total dividido pelo ativo total.",
               },
             },
           },
-          crescimento: {
+          growth: {
             label: "Crescimento",
             items: {
-              cagrReceitas5a: {
+              revenueCagr5y: {
                 name: "CAGR Receitas 5 anos",
                 unit: "percent",
                 explanation: "Taxa de crescimento anual composta da receita nos últimos 5 anos.",

@@ -3,7 +3,8 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
 import type { MonthlyFinancials } from "@/lib/mock/ofertas";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { intlLocale } from "@/lib/i18n/locale";
 
 type TooltipEntry = { value?: unknown; name?: string | number };
 
@@ -32,13 +33,16 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
 
 export function FinancialChart({ series }: { series: MonthlyFinancials[] }) {
   const dict = useDictionary();
+  const locale = useLocale();
   const t = dict.trade.offering.financial;
+  const monthName = new Intl.DateTimeFormat(intlLocale(locale), { month: "short", timeZone: "UTC" });
+  const data = series.map((point) => ({ ...point, month: monthName.format(new Date(Date.UTC(2026, point.month, 1))) }));
 
   return (
     <div>
       <div className="h-56" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
             <XAxis
               dataKey="month"

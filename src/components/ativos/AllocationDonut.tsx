@@ -5,7 +5,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/ativos/derive";
 import { formatBRL, formatPercent } from "@/lib/format";
 import { MOCK_POSITIONS } from "@/lib/mock/ativos";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
 
 const VIEWS: { key: AllocationView; labelKey: "viewClass" | "viewAsset" | "viewSector" }[] = [
   { key: "class", labelKey: "viewClass" },
@@ -34,8 +34,9 @@ function DonutTooltip({ active, payload }: DonutTooltipProps) {
 
 export function AllocationDonut() {
   const dict = useDictionary();
+  const locale = useLocale();
   const [view, setView] = useState<AllocationView>("class");
-  const slices = computeAllocation(MOCK_POSITIONS, view, dict.assets.categories, dict.assets.regions);
+  const slices = computeAllocation(MOCK_POSITIONS, view, dict.assets.categories, dict.assets.regions, locale);
 
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">

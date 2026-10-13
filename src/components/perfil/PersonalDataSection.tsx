@@ -406,7 +406,7 @@ export function PersonalDataSection({ profile }: { profile: LoadedProfile }) {
                   onChange={handleFieldChange("birthDate")}
                   error={errors.birthDate}
                   inputMode="numeric"
-                  placeholder="DD/MM/AAAA"
+                  placeholder={dict.common.datePlaceholder}
                 />
               )}
               {personType === "pj" && (

@@ -1,7 +1,8 @@
 "use client";
 import { Building2, Car, Home, Landmark, Wheat, type LucideIcon } from "lucide-react";
 import { MOCK_CATALOG, type TokenCategory } from "@/lib/mock/ativos";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { localize } from "@/lib/i18n/locale";
 
 const CATEGORY_ICON: Record<TokenCategory, LucideIcon> = {
   pmes: Building2,
@@ -13,6 +14,7 @@ const CATEGORY_ICON: Record<TokenCategory, LucideIcon> = {
 
 export function AssetCatalog() {
   const dict = useDictionary();
+  const locale = useLocale();
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -37,8 +39,8 @@ export function AssetCatalog() {
                 </span>
               </div>
 
-              <h3 className="text-sm font-semibold text-on-military">{asset.name}</h3>
-              <p className="flex-1 text-sm text-on-military-muted">{asset.description}</p>
+              <h3 className="text-sm font-semibold text-on-military">{localize(asset.name, locale)}</h3>
+              <p className="flex-1 text-sm text-on-military-muted">{localize(asset.description, locale)}</p>
 
               <button
                 type="button"

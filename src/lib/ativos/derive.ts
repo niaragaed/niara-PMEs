@@ -1,3 +1,4 @@
+import { localize, type Locale } from "@/lib/i18n/locale";
 import type { Position, Region, TokenCategory } from "@/lib/mock/ativos";
 
 export type AllocationView = "class" | "asset" | "sector";
@@ -46,6 +47,7 @@ export function computeAllocation(
   view: AllocationView,
   categoryLabels: Record<TokenCategory, string>,
   regionLabels: Record<Region, string>,
+  locale: Locale,
 ): AllocationSlice[] {
   const total = positions.reduce((sum, p) => sum + p.currentValue, 0);
 
@@ -53,7 +55,7 @@ export function computeAllocation(
     return positions
       .map((p) => ({
         key: p.symbol,
-        label: p.name,
+        label: localize(p.name, locale),
         value: p.currentValue,
         pct: total === 0 ? 0 : (p.currentValue / total) * 100,
         colorVar: CATEGORY_COLOR_VAR[p.category],

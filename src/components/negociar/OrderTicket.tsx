@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import type { Offering } from "@/lib/mock/ofertas";
-import { useDictionary } from "@/lib/i18n/client";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { localize } from "@/lib/i18n/locale";
 
 type OrderSide = "buy" | "sell";
 type Step = "form" | "review" | "confirmed";
@@ -20,6 +21,7 @@ const INITIAL_SIMULATED_BALANCE = 50_000;
 
 export function OrderTicket({ offering, onClose }: { offering: Offering; onClose: () => void }) {
   const dict = useDictionary();
+  const locale = useLocale();
   const t = dict.trade.orderTicket;
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -236,7 +238,7 @@ export function OrderTicket({ offering, onClose }: { offering: Offering; onClose
       {step === "confirmed" && (
         <div className="mt-4 flex flex-col gap-4">
           <p role="status" className="rounded-md border border-value-positive/40 bg-value-positive/10 px-4 py-3 text-sm text-military">
-            {t.result(side, qtyNum, offering.name)}
+            {t.result(side, qtyNum, localize(offering.name, locale))}
           </p>
           <button
             type="button"
