@@ -38,7 +38,8 @@ yarn-error.log*
 .vercel
 
 # local Claude Code harness state (not project source)
-/.claude/
+/.claude/*
+!/.claude/settings.json
 
 # typescript
 *.tsbuildinfo

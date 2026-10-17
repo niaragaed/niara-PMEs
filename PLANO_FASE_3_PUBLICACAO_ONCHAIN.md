@@ -43,7 +43,7 @@ publication`. Inspecting `src/app/empresa/ofertas/actions.ts` and
   *"Activation of new offerings paused in this demo — fundraising is moving to run directly
   on real Sepolia, without going through this simulated flow."*
   (`src/lib/i18n/pt-br.ts:1318-1319`). That was done in the repository's most recent commit
-  (`441d764`, "feat: taxa real da plataforma (Sepolia) + ajustes de UI"), that is: **someone
+  (`10790e7`, "feat: taxa real da plataforma (Sepolia) + ajustes de UI"), that is: **someone
   already started preparing the ground for this very Phase 3**, turning off the old mock path
   before the real path existed.
 

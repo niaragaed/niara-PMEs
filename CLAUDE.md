@@ -313,6 +313,24 @@ references (e.g. the MetaMask home), never their dark look or their copy.
     reason.
 - Don't hardcode interface strings in JSX; add the key to **both** dictionaries.
 
+## No AI attribution (hard rule)
+
+Nothing in this repository credits an AI tool, anywhere:
+
+- no `Co-Authored-By: Claude` or `Claude-Session:` trailers, and no "Generated with Claude Code"
+  line, in commit messages;
+- no AI tool as a commit author or committer: commits use the project identity
+  (`git config user.name`/`user.email` = `Niara <niaragaed@gmail.com>`, set in every clone and
+  environment before the first commit — some environments default to `Claude <noreply@anthropic.com>`);
+- no "Generated with/by Claude Code" footer in pull request descriptions, comments, issues or files.
+
+It's enforced in two layers: the versioned `.claude/settings.json` turns Claude Code's commit
+and PR attribution off (`"attribution": {"commit": "", "pr": ""}`), and the `No AI attribution`
+GitHub Actions check (`.github/workflows/no-ai-attribution.yml`) fails on any commit or pull
+request description that carries it. Some hosted environments append a footer to PR
+descriptions by themselves; if the check flags one, delete that line in the GitHub UI. The rule
+applies to every Niara repository, including new ones: copy both files when creating a repo.
+
 ---
 ## Backend (Supabase)
 
@@ -2413,24 +2431,8 @@ supabase/
    without SSR/WebGL errors.
 4. **Local commit at the end of each part**, message in **English** in the
    `feat:` / `fix:` / `refactor:` / `chore:` pattern.
-5. 🔴 **No `Co-Authored-By: Claude` trailer in commits** — a project rule, but
-   **not automatic nor guaranteed just because it's written here**. It depends on
-   `.claude/settings.json` existing at the repo root with exactly:
-   ```json
-   {
-     "includeCoAuthoredBy": false
-   }
-   ```
-   That file is in `.gitignore` (`/.claude/`) — it's never versioned, so it
-   **must be created by hand on every new machine/clone**, before the first
-   commit. Without it, Claude Code adds the trailer by default, even with
-   `git config user.name`/`user.email` correctly set (author/committer identity
-   is one thing; the trailer in the message body is another, with no relation
-   between them). Found in practice: the first 3 commits of Phase 3 (on-chain
-   publication) went out with the trailer on this machine before this file
-   existed here, even with the right identity — fixed afterwards via
-   `git commit --amend` + recomposing the previous commits (without
-   `rebase -i`, forbidden by instruction).
+5. 🔴 **No AI attribution** in commits, PRs or files, and commits use the project
+   identity — see "No AI attribution (hard rule)" above.
 6. Never `--force`, never rewrite pushed history, never push without being
    asked.
 7. If something breaks or gets ambiguous: **stop and explain**, don't
