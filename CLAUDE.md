@@ -77,6 +77,10 @@ versions.
 
 ## Stack
 
+- **Node 24.x + npm 11** (`engines` in `package.json`, read by Vercel, and `.nvmrc`).
+  `package-lock.json` is written by npm 11; npm 10 (bundled with Node 22) resolves the
+  optional peer dependencies of `ws` differently and its `npm ci` fails on this lockfile.
+  Always regenerate the lockfile with npm 11, never with another major version.
 - Next.js 16 (App Router) + TypeScript + Tailwind **v4**
 - Tailwind v4 is **CSS-first**: there is no `tailwind.config.js`; tokens live in
   `@theme` inside `src/app/globals.css`

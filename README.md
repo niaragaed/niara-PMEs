@@ -23,8 +23,10 @@ system and the project's full rules.
 
 ## Development
 
+Requires Node 24 (npm 11), pinned in `.nvmrc` and `package.json` (`nvm use` picks it up).
+
 ```bash
-npm install
+npm ci
 cp .env.example .env.local   # fill in your credentials (see .env.example)
 npm run dev
 ```
