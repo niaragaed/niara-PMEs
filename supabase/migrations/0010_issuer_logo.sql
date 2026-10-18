@@ -1,8 +1,8 @@
 -- ============================================================================
 -- Niara-PMEs -- 0010_issuer_logo
--- Caminho da logo da empresa no Supabase Storage. O ARQUIVO mora no bucket
--- (publico); aqui guardamos so o path/URL. Nullable (empresa pode nao ter logo).
--- A logo e publica por natureza (identidade de marca) -> pode aparecer na oferta.
+-- Path of the company logo in Supabase Storage. The FILE lives in the (public)
+-- bucket; here we only store the path/URL. Nullable (a company may not have a logo).
+-- The logo is public by nature (brand identity) -> it may appear on the offering.
 -- ============================================================================
 
 begin;

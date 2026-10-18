@@ -1,54 +1,58 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AlertTriangle } from "lucide-react";
-import { resolveSocio } from "@/lib/auth/resolveSocio";
-import { SociosLoginForm } from "@/components/socios/SociosLoginForm";
-import { SociosDashboard } from "@/components/socios/SociosDashboard";
-import { MovimentacoesSection } from "@/components/socios/MovimentacoesSection";
-import { MovimentacoesSkeleton } from "@/components/socios/MovimentacoesSkeleton";
+import { resolvePartner } from "@/lib/auth/resolvePartner";
+import { PartnersLoginForm } from "@/components/socios/PartnersLoginForm";
+import { PartnersDashboard } from "@/components/socios/PartnersDashboard";
+import { TransactionsSection } from "@/components/socios/TransactionsSection";
+import { TransactionsSkeleton } from "@/components/socios/TransactionsSkeleton";
 import { SignOutButton } from "@/components/conta/SignOutButton";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${ptBr.socios.meta.title} · Niara PMEs`,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.partners.meta.title} · Niara PMEs`,
   robots: { index: false, follow: false },
 };
+}
 
-// 60s (máximo do plano Hobby da Vercel) em vez do padrão de 10s — a leitura on-chain
-// (dentro de getMovimentacoes(), via getEventosOnChain/getResumoOnChain no <Suspense> abaixo)
-// escaneia uma janela de blocos que só cresce com o tempo e, sem NEXT_PUBLIC_SEPOLIA_RPC_URL
-// dedicada, sofre rate limit no RPC público; sem isto, a Vercel mata a função no meio da
-// execução (sem erro nenhum pro navegador, só a requisição pendurada para sempre) antes mesmo do
-// Suspense conseguir entregar o resto da página. Não substitui uma RPC dedicada — só evita o
-// pior caso.
+// 60s (the Vercel Hobby plan's maximum) instead of the default 10s — the on-chain read
+// (inside getTransactionsAndSummary(), via getEventsOnChain/getSummaryOnChain in the <Suspense>
+// below) scans a block window that only grows over time and, without a dedicated
+// NEXT_PUBLIC_SEPOLIA_RPC_URL, gets rate limited on the public RPC; without this, Vercel kills the
+// function mid-run (no error at all for the browser, just the request hanging forever) before the
+// Suspense even manages to deliver the rest of the page. Doesn't replace a dedicated RPC — it only
+// avoids the worst case.
 export const maxDuration = 60;
 
-// Área interna, não é o mesmo fluxo de /entrar (investidor/emissor) — ver
-// src/lib/auth/resolveSocio.ts. Autenticado mas fora da allowlist = acesso negado, sem
-// redirect (fica na própria página, mensagem clara).
+// Internal area, not the same flow as /entrar (investor/issuer) — see
+// src/lib/auth/resolvePartner.ts. Signed in but outside the allowlist = access denied, without a
+// redirect (stays on the page itself, with a clear message).
 export default async function Page() {
-  const { userId, email, autorizado } = await resolveSocio();
+  const dict = await getDictionary();
+  const { userId, email, authorized } = await resolvePartner();
 
   if (!userId) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-military px-4 py-16">
         <div className="w-full max-w-sm rounded-lg border border-panel-border bg-panel p-6">
-          <h1 className="text-xl font-semibold text-on-military">{ptBr.socios.login.title}</h1>
-          <p className="mt-1 text-sm text-on-military-muted">{ptBr.socios.login.subtitle}</p>
-          <SociosLoginForm />
+          <h1 className="text-xl font-semibold text-on-military">{dict.partners.login.title}</h1>
+          <p className="mt-1 text-sm text-on-military-muted">{dict.partners.login.subtitle}</p>
+          <PartnersLoginForm />
         </div>
       </main>
     );
   }
 
-  if (!autorizado) {
+  if (!authorized) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center bg-military px-4 py-16">
         <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg border border-panel-border bg-panel p-6 text-center">
           <AlertTriangle className="h-8 w-8 text-salmon" aria-hidden="true" />
           <div>
-            <h1 className="text-xl font-semibold text-on-military">{ptBr.socios.negado.title}</h1>
-            <p className="mt-1 text-sm text-on-military-muted">{ptBr.socios.negado.subtitle}</p>
+            <h1 className="text-xl font-semibold text-on-military">{dict.partners.denied.title}</h1>
+            <p className="mt-1 text-sm text-on-military-muted">{dict.partners.denied.subtitle}</p>
           </div>
           <SignOutButton />
         </div>
@@ -57,11 +61,11 @@ export default async function Page() {
   }
 
   return (
-    <SociosDashboard
+    <PartnersDashboard
       email={email ?? ""}
-      movimentacoesSlot={
-        <Suspense fallback={<MovimentacoesSkeleton />}>
-          <MovimentacoesSection />
+      transactionsSlot={
+        <Suspense fallback={<TransactionsSkeleton />}>
+          <TransactionsSection />
         </Suspense>
       }
     />

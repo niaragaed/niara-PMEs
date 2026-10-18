@@ -1,0 +1,64 @@
+import type { ReactNode } from "react";
+import { BadgeCheck } from "lucide-react";
+import { SignOutButton } from "@/components/conta/SignOutButton";
+import { getDictionary } from "@/lib/i18n/server";
+
+export function KpiCard({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className="rounded-lg border border-panel-border bg-panel p-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-on-military-muted">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-on-military">{value}</p>
+      {note && <p className="mt-1 text-xs text-on-military-muted">{note}</p>}
+    </div>
+  );
+}
+
+export async function OriginBadge({ real }: { real: boolean }) {
+  const dict = await getDictionary();
+  const t = dict.partners.origin;
+  return real ? (
+    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-2.5 py-0.5 text-xs font-semibold text-on-salmon">
+      <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+      {t.real}
+    </span>
+  ) : (
+    <span className="inline-flex w-fit items-center rounded-full border border-panel-border px-2.5 py-0.5 text-xs font-medium text-on-military-muted">
+      {t.mock}
+    </span>
+  );
+}
+
+export async function PartnersDashboard({
+  email,
+  transactionsSlot,
+}: {
+  email: string;
+  transactionsSlot: ReactNode;
+}) {
+  const dict = await getDictionary();
+  const t = dict.partners;
+
+  return (
+    <main className="flex flex-1 flex-col bg-military">
+      <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
+        <span className="font-semibold text-salmon">{t.banner.label}</span> — {t.banner.text}
+      </div>
+
+      <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{t.title}</h1>
+            <p className="mt-1 text-sm text-on-military-muted">
+              {t.loggedInAs} {email}
+            </p>
+          </div>
+          <SignOutButton />
+        </div>
+
+        {/* Summary + single timeline (real on-chain + off-chain/Supabase), streamed via Suspense
+            (see page.tsx) */}
+        {transactionsSlot}
+      </div>
+    </main>
+  );
+}

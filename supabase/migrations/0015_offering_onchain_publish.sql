@@ -1,39 +1,39 @@
 -- ============================================================================
 -- Niara-PMEs -- 0015_offering_onchain_publish
--- Fase 3: publicacao self-service da oferta em Sepolia, pelo proprio emissor
--- (ver PLANO_FASE_3_PUBLICACAO_ONCHAIN.md). offerings.status NAO MUDA nesta
--- migration -- publicacao on-chain e um conjunto de colunas ORTOGONAL, nunca
--- um novo valor do CHECK de status (a Etapa 0 do plano documenta por que:
--- 'active' ja tem outro significado, incompativel, no fluxo mock de
--- /investir).
+-- Phase 3: self-service publication of the offering on Sepolia by the issuer itself
+-- (see PLANO_FASE_3_PUBLICACAO_ONCHAIN.md). offerings.status does NOT CHANGE in this
+-- migration -- on-chain publication is an ORTHOGONAL set of columns, never
+-- a new value of the status CHECK (step 0 of the plan documents why:
+-- 'active' already has another, incompatible meaning in the mock flow of
+-- /invest).
 --
--- NAO existe coluna "emissor designado" pre-assinatura: a titularidade antes
--- de assinar e checada AO VIVO contra issuers.wallet_address (coluna ja
--- existente, 0006_profile_details.sql) + emissoresAutorizados on-chain --
--- nenhuma das duas precisa de coluna nova aqui. onchain_emissor_wallet
--- abaixo NAO e uma designacao: e um registro de auditoria, gravado uma unica
--- vez, so pela rotina de confirmacao do servidor, com o valor lido direto
--- do evento OfertaCompletaCriada ja minerado -- nunca uma alegacao aceita de
--- ninguem.
+-- There is NO pre-signature "designated issuer" column: ownership before
+-- signing is checked LIVE against issuers.wallet_address (an existing column,
+-- 0006_profile_details.sql) + emissoresAutorizados on-chain --
+-- neither needs a new column here. onchain_emissor_wallet
+-- below is NOT a designation: it is an audit record, written only once,
+-- only by the server's confirmation routine, with the value read directly
+-- from the already mined OfertaCompletaCriada event -- never a claim accepted
+-- from anyone.
 --
--- 'divergente' cobre duas coisas DIFERENTES: (a) uma anomalia na leitura do
--- recibo (raro) e (b) o caso principal esperado -- a oferta on-chain e
--- IMUTAVEL depois de criada, mas a linha de offerings NAO E, nada aqui
--- impede um UPDATE manual em hard_cap_cents/share_price_cents/opens_at/
--- closes_at depois da publicacao. Por isso opens_at/closes_at sao
--- "congelados" no exato prazo enviado a chain no momento da publicacao (ver
--- Server Action registrarTentativa, sub-etapa 4 do plano) -- so assim uma
--- comparacao futura contra o valor imutavel on-chain faz sentido.
+-- 'divergente' covers two DIFFERENT things: (a) an anomaly reading the
+-- receipt (rare) and (b) the main expected case -- the on-chain offering is
+-- IMMUTABLE once created, but the offerings row is NOT; nothing here
+-- prevents a manual UPDATE of hard_cap_cents/share_price_cents/opens_at/
+-- closes_at after publication. That's why opens_at/closes_at are
+-- "frozen" at the exact deadline sent to the chain at publication time (see
+-- the registrarTentativa Server Action, sub-step 4 of the plan) -- only then
+-- does a future comparison against the immutable on-chain value make sense.
 --
--- REVERSIBILIDADE: aditiva por completo (8 colunas novas, todas nullable ou
--- com default; nenhuma coluna/linha existente e alterada). Reversao =
--- desfazer exatamente o que foi feito aqui, na ordem inversa (constraints ->
--- trigger/funcao -> indice -> colunas). Nao ha "0015_down.sql" neste
--- diretorio de proposito: um arquivo aqui seria tratado como MAIS uma
--- migration por `supabase db push` (aplicada para frente, nao para tras) --
--- se um dia for preciso reverter de verdade, o SQL de reversao mora fora de
--- supabase/migrations/ (ver verificacao desta migration, rodada manualmente
--- e sempre dentro de uma transacao com ROLLBACK ao final).
+-- REVERSIBILITY: fully additive (8 new columns, all nullable or
+-- with a default; no existing column/row is changed). Reverting =
+-- undoing exactly what was done here, in reverse order (constraints ->
+-- trigger/function -> index -> columns). There is no "0015_down.sql" in this
+-- directory on purpose: a file here would be treated as ONE MORE
+-- migration by `supabase db push` (applied forward, not backward) --
+-- if a real revert is ever needed, the revert SQL lives outside
+-- supabase/migrations/ (see this migration's verification, run manually
+-- and always inside a transaction with a ROLLBACK at the end).
 -- ============================================================================
 
 begin;
@@ -48,10 +48,10 @@ alter table offerings
   add column onchain_confirmed_at    timestamptz,
   add column onchain_last_error      text;
 
--- Formato de endereco/hash -- mesma regex ja usada no frontend
--- (src/lib/web3/addresses.ts HEX_ADDRESS_PATTERN), replicada aqui como
--- ultima linha de defesa (o banco nunca aceita lixo, mesma filosofia dos
--- triggers da Res. 88 em 0001_core.sql).
+-- Address/hash format -- same regex already used in the front end
+-- (src/lib/web3/addresses.ts HEX_ADDRESS_PATTERN), replicated here as the
+-- last line of defense (the database never accepts garbage, same philosophy as
+-- the Res. 88 triggers in 0001_core.sql).
 alter table offerings
   add constraint contract_address_format
     check (contract_address is null or contract_address ~ '^0x[0-9a-fA-F]{40}$'),
@@ -66,9 +66,9 @@ alter table offerings
   add constraint sync_status_valid
     check (sync_status in ('nao_onchain', 'pendente', 'confirmada', 'divergente'));
 
--- Consistencia entre sync_status e as colunas que ele descreve -- mesmo
--- principio ja usado pelos CHECKs da Res.88: a invariante mora no banco, nao
--- so na Server Action.
+-- Consistency between sync_status and the columns it describes -- same
+-- principle already used by the Res.88 CHECKs: the invariant lives in the database,
+-- not only in the Server Action.
 alter table offerings
   add constraint sync_status_pendente_tem_tx
     check (sync_status not in ('pendente', 'confirmada', 'divergente') or tx_hash is not null),
@@ -83,21 +83,21 @@ alter table offerings
       )
     );
 
--- Nome explicito (nao deixar o Postgres auto-gerar) -- torna a reversao
--- determinista, sem precisar adivinhar o nome do indice depois.
+-- Explicit name (don't let Postgres auto-generate it) -- makes the revert
+-- deterministic, with no need to guess the index name later.
 create index offerings_sync_status_idx on offerings (sync_status) where sync_status <> 'nao_onchain';
 
--- Imutabilidade das 4 colunas que registram o que a chain ja confirmou --
--- ISSO NAO E SO UMA GUARDA DE APLICACAO (WHERE sync_status='pendente' na
--- Server Action): e travado no proprio banco, mesmo padrao ja usado pelos
--- triggers de transicao de investments em 0001_core.sql. Rodar a
--- confirmacao duas vezes (ou qualquer outro codigo, presente ou futuro)
--- NUNCA sobrescreve um valor ja gravado -- so REVERTE (SQLSTATE 23514/
--- check_violation, mesmo padrao de erro das triggers da Res.88).
--- tx_hash e sync_status ficam DE FORA desta trava de proposito: tx_hash
--- precisa poder ser limpo/trocado numa nova tentativa apos um revert
--- (pendente -> nao_onchain), e sync_status precisa poder ir para
--- 'divergente' a partir de 'confirmada' (drift de parametros).
+-- Immutability of the 4 columns that record what the chain already confirmed --
+-- THIS IS NOT ONLY AN APPLICATION GUARD (WHERE sync_status='pendente' in the
+-- Server Action): it is locked in the database itself, same pattern already used
+-- by the investments transition triggers in 0001_core.sql. Running the
+-- confirmation twice (or any other code, present or future)
+-- NEVER overwrites a value already written -- it only REVERTS (SQLSTATE 23514/
+-- check_violation, same error pattern as the Res.88 triggers).
+-- tx_hash and sync_status are left OUT of this lock on purpose: tx_hash
+-- must be clearable/replaceable on a new attempt after a revert
+-- (pendente -> nao_onchain), and sync_status must be able to go to
+-- 'divergente' from 'confirmada' (parameter drift).
 create function enforce_onchain_publish_immutable() returns trigger language plpgsql as $fn$
 begin
   if old.contract_address is not null and new.contract_address is distinct from old.contract_address then
@@ -118,13 +118,13 @@ end $fn$;
 create trigger offerings_onchain_publish_immutable before update on offerings
   for each row execute function enforce_onchain_publish_immutable();
 
--- RLS: NENHUMA mudanca. offerings continua default-deny, sem policy --
--- acesso as colunas novas passa pelo mesmo client admin (service_role) ja
--- usado em toda Server Action de oferta, escopado por resolveAccount() no
--- codigo da aplicacao. Nao habilito auth.uid() aqui pela mesma razao ja
--- registrada em 0003_auth_link.sql: nao afrouxar sem necessidade -- e porque
--- nao ha nenhuma coluna pre-assinatura cuja escrita dependeria dessa
--- protecao (a titularidade e verificada ao vivo contra issuers.wallet_address
--- + emissoresAutorizados on-chain, nao contra uma coluna desta tabela).
+-- RLS: NO change. offerings stays default-deny, without a policy --
+-- access to the new columns goes through the same admin client (service_role)
+-- already used by every offering Server Action, scoped by resolveAccount() in the
+-- application code. I don't enable auth.uid() here for the same reason already
+-- recorded in 0003_auth_link.sql: don't loosen anything without need -- and because
+-- there is no pre-signature column whose write would depend on that
+-- protection (ownership is verified live against issuers.wallet_address
+-- + emissoresAutorizados on-chain, not against a column of this table).
 
 commit;

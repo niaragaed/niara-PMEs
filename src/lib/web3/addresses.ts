@@ -1,26 +1,27 @@
-// Endereços dos contratos reais em Sepolia usados pela integração on-chain (ver
-// CLAUDE.md, seção "Investimento real em Sepolia"). Nunca hardcodar endereço de contrato
-// dentro de componente React — sempre passar por aqui, mesmo padrão de centralização já usado
-// para as demais variáveis de ambiente do projeto.
+// Addresses of the real contracts on Sepolia used by the on-chain integration (see
+// CLAUDE.md, the "/investir/onchain screen" section). Never hard-code a contract address
+// inside a React component — always go through here, the same centralization pattern already used
+// for the project's other environment variables.
 //
-// Suporta VÁRIAS ofertas simultâneas (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) — pensado para uma demo
-// presencial (ex.: estande de evento) onde o apresentador troca de oferta a cada visitante sem
-// precisar de um novo deploy (env vars `NEXT_PUBLIC_*` ficam embutidas no build no Vercel — só
-// alternar o valor não republica o site). Cada oferta é criada uma única vez por um script
-// administrativo fora do frontend (niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol) —
-// este projeto nunca cria ofertas on-chain dinamicamente. `MockBRL` é compartilhado por todas
-// as ofertas (mesma infraestrutura, ver aquele script).
+// Supports SEVERAL simultaneous offerings (`NEXT_PUBLIC_OFERTAS_ONCHAIN`) — designed for an
+// in-person demo (e.g. an event booth) where the presenter switches offerings for each visitor
+// without needing a new deploy (`NEXT_PUBLIC_*` env vars are baked into the build on Vercel — just
+// switching the value doesn't republish the site). Each offering is created a single time by an
+// admin script outside the frontend (niara-contracts-PMEs/script/DemoNiaraPMEsOnChain.s.sol) —
+// this project never creates on-chain offerings dynamically. `MockBRL` is shared by all of these
+// legacy offerings (same infrastructure, see that script); self-service offerings use their own —
+// always resolved from `OfertaCaptacao.moeda()` (see contracts.ts).
 
 const HEX_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
-export type OfertaOnChainAddresses = {
+export type OnChainOfferingAddresses = {
   token: `0x${string}`;
-  oferta: `0x${string}`;
+  offering: `0x${string}`;
 };
 
 export type OnChainAddresses = {
   mockBrl: `0x${string}`;
-  ofertas: OfertaOnChainAddresses[];
+  offerings: OnChainOfferingAddresses[];
 };
 
 function readAddress(value: string | undefined): `0x${string}` | null {
@@ -28,33 +29,33 @@ function readAddress(value: string | undefined): `0x${string}` | null {
   return value as `0x${string}`;
 }
 
-// Formato: "token1:oferta1;token2:oferta2;..." — delimitadores simples de propósito, para
-// evitar problemas de escaping de JSON dentro de um valor de variável de ambiente.
-function parseOfertas(value: string | undefined): OfertaOnChainAddresses[] {
+// Format: "token1:offering1;token2:offering2;..." — simple delimiters on purpose, to
+// avoid JSON escaping problems inside an environment variable value.
+function parseOfferings(value: string | undefined): OnChainOfferingAddresses[] {
   if (!value) return [];
 
   return value
     .split(";")
-    .map((par) => par.trim())
+    .map((pair) => pair.trim())
     .filter(Boolean)
-    .map((par) => {
-      const [tokenRaw, ofertaRaw] = par.split(":").map((parte) => parte?.trim());
-      return { token: readAddress(tokenRaw), oferta: readAddress(ofertaRaw) };
+    .map((pair) => {
+      const [tokenRaw, offeringRaw] = pair.split(":").map((part) => part?.trim());
+      return { token: readAddress(tokenRaw), offering: readAddress(offeringRaw) };
     })
-    .filter((par): par is OfertaOnChainAddresses => Boolean(par.token && par.oferta));
+    .filter((pair): pair is OnChainOfferingAddresses => Boolean(pair.token && pair.offering));
 }
 
 /**
- * Lê o endereço do `MockBRL` e a lista de ofertas das variáveis de ambiente `NEXT_PUBLIC_*`.
- * Retorna `null` (nunca lança) quando `MockBRL` está ausente/mal formado ou a lista de ofertas
- * está vazia — a UI trata esse caso como "contrato sem endereço configurado" (ver
- * src/lib/web3/errors.ts) em vez de quebrar a renderização.
+ * Reads the `MockBRL` address and the list of offerings from the `NEXT_PUBLIC_*` environment
+ * variables. Returns `null` (never throws) when `MockBRL` is missing/malformed or the offering list
+ * is empty — the UI treats that case as "contract without a configured address" instead of
+ * breaking the render.
  */
 export function getOnChainAddresses(): OnChainAddresses | null {
   const mockBrl = readAddress(process.env.NEXT_PUBLIC_MOCKBRL_ADDRESS);
-  const ofertas = parseOfertas(process.env.NEXT_PUBLIC_OFERTAS_ONCHAIN);
+  const offerings = parseOfferings(process.env.NEXT_PUBLIC_OFERTAS_ONCHAIN);
 
-  if (!mockBrl || ofertas.length === 0) return null;
+  if (!mockBrl || offerings.length === 0) return null;
 
-  return { mockBrl, ofertas };
+  return { mockBrl, offerings };
 }

@@ -8,9 +8,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Dirige o ticker do GSAP a partir do raf do Lenis e mantém o ScrollTrigger
-// sincronizado com o scroll suave — sem isso, pin/scrub ficam dessincronizados
-// do Lenis (que intercepta o scroll nativo).
+// Drives the GSAP ticker from Lenis's raf and keeps ScrollTrigger
+// in sync with the smooth scroll — without this, pin/scrub get out of sync
+// with Lenis (which intercepts the native scroll).
 function GsapScrollSync() {
   const lenis = useLenis();
 
@@ -29,10 +29,10 @@ function GsapScrollSync() {
     gsap.ticker.add(onTick);
     gsap.ticker.lagSmoothing(0);
 
-    // Seções com pin (ex.: "Como funciona") inserem um pin-spacer que
-    // aumenta a altura do documento. Sempre que o ScrollTrigger recalcular,
-    // avisa o Lenis para remedir (senão o Lenis trava o scroll antes do fim
-    // real da página).
+    // Pinned sections (e.g. "How it works") insert a pin-spacer that
+    // increases the document height. Whenever ScrollTrigger recomputes,
+    // tells Lenis to re-measure (otherwise Lenis stops the scroll before the
+    // page's real end).
     function onRefresh() {
       instance.resize();
     }
@@ -51,27 +51,27 @@ function GsapScrollSync() {
 }
 
 export function LenisProvider({ children }: { children: ReactNode }) {
-  // Decisão deliberada do usuário: as animações do site sempre tocam,
-  // mesmo com prefers-reduced-motion ativo no SO/navegador — não
-  // desligamos mais o Lenis/GSAP nesse caso (ver CLAUDE.md).
+  // A deliberate user decision: the site's animations always play,
+  // even with prefers-reduced-motion enabled in the OS/browser — we
+  // no longer turn Lenis/GSAP off in that case (see CLAUDE.md).
   //
-  // 🔴 Lenis (scroll suave) + a sincronização com ScrollTrigger só existem
-  // por causa da sequência pinned "Como funciona" e do parallax do Hero —
-  // as duas únicas coisas do site que usam ScrollTrigger/useLenis, e as
-  // duas só existem na Home. Em todas as outras rotas, montar Lenis só
-  // trocava scroll nativo (que sempre funciona) por scroll interceptado,
-  // sem nenhum benefício — e foi a causa de um bug real reportado pelo
-  // usuário: rolagem via roda do mouse parava antes do fim em telas como
-  // /negociar e /ativos (o teclado/scrollbar continuavam funcionando até
-  // o fim, porque não passam pelo listener de wheel do Lenis). Causa
-  // raiz: Lenis mede o teto de scroll (`limit`) uma vez ao montar; nessas
-  // telas o conteúdo real (leituras on-chain das ofertas, imagens) chega
-  // depois, então a página cresce mas o teto do Lenis não acompanha —
-  // scroll por wheel trava no teto antigo, mais curto que o conteúdo
-  // real. Na Home isso nunca aparecia porque o conteúdo é estático,
-  // renderizado por completo antes do Lenis montar. Restringir o
-  // provider à Home elimina a classe inteira de bug nas demais rotas sem
-  // tocar na animação da Home.
+  // 🔴 Lenis (smooth scroll) + the ScrollTrigger sync only exist
+  // because of the pinned "How it works" sequence and the Hero parallax —
+  // the only two things on the site that use ScrollTrigger/useLenis, and
+  // both exist only on the Home page. On every other route, mounting Lenis only
+  // swapped native scroll (which always works) for intercepted scroll,
+  // with no benefit at all — and it was the cause of a real bug reported by the
+  // user: mouse-wheel scrolling stopped before the end on screens like
+  // /negociar and /ativos (keyboard/scrollbar kept working to
+  // the end, because they don't go through Lenis's wheel listener). Root
+  // cause: Lenis measures the scroll ceiling (`limit`) once on mount; on those
+  // screens the real content (on-chain reads of the offerings, images) arrives
+  // later, so the page grows but Lenis's ceiling doesn't follow —
+  // wheel scrolling gets stuck at the old ceiling, shorter than the real
+  // content. On the Home page this never showed up because the content is static,
+  // fully rendered before Lenis mounts. Restricting the
+  // provider to the Home page eliminates the whole class of bug on the other routes without
+  // touching the Home animation.
   const pathname = usePathname();
   const isHome = pathname === "/";
 

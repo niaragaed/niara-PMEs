@@ -1,7 +1,7 @@
-// ABI de MockBRL (niara-contracts-PMEs/src/mocks/MockBRL.sol) — ERC-20 padrão de 18 casas +
-// mint público e irrestrito (mock de teste, sem lastro — ver CLAUDE.md, "Backend (Supabase)" ->
-// nota: este mock é da integração on-chain, não do backend Supabase). Extraída diretamente de
-// niara-contracts-PMEs/out/MockBRL.sol/MockBRL.json (forge build), não escrita à mão.
+// MockBRL ABI (niara-contracts-PMEs/src/mocks/MockBRL.sol) — a standard 18-decimal ERC-20 +
+// public, unrestricted mint (a test mock with no backing — see CLAUDE.md, "Backend (Supabase)" ->
+// note: this mock belongs to the on-chain integration, not to the Supabase backend). Extracted
+// straight from niara-contracts-PMEs/out/MockBRL.sol/MockBRL.json (forge build), not hand-written.
 export const mockBrlAbi = [
   { type: "constructor", inputs: [], stateMutability: "nonpayable" },
   {

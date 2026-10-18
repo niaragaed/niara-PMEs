@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { DocumentacaoPage } from "@/components/documentacao/DocumentacaoPage";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { DocsPage } from "@/components/documentacao/DocsPage";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: `${ptBr.documentacao.meta.title} · Niara PMEs`,
-  description: ptBr.documentacao.meta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+  title: `${dict.docs.meta.title} · Niara PMEs`,
+  description: dict.docs.meta.description,
 };
+}
 
 export default function Page() {
-  return <DocumentacaoPage />;
+  return <DocsPage />;
 }

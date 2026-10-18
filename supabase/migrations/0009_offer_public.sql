@@ -1,10 +1,10 @@
 -- ============================================================================
 -- Niara-PMEs -- 0009_offer_public
--- Controle de publicacao + categoria da oferta.
--- publish_cnpj: opt-in explicito. Default FALSE => por padrao o CNPJ NAO aparece
---   na oferta publica; so aparece (mascarado) se a empresa marcar.
--- category: tipo de token da oferta. Todas selecionaveis no ambiente de
---   demonstracao (com avisos na UI); enquadramento real varia por categoria.
+-- Publication control + offering category.
+-- publish_cnpj: explicit opt-in. Default FALSE => by default the CNPJ does NOT appear
+--   on the public offering; it only appears (masked) if the company checks it.
+-- category: the offering's token type. All selectable in the demo environment
+--   (with notices in the UI); the real regulatory framework varies by category.
 -- ============================================================================
 
 begin;

@@ -1,21 +1,20 @@
-// Preenche o cache incremental de eventos on-chain (onchain_events_cache/onchain_sync_state,
-// ver supabase/migrations/0012_onchain_events_cache.sql e src/lib/web3/events.ts) de uma vez só,
-// escaneando desde o bloco de deploy — a leitura "cara" que antes acontecia na primeira visita a
-// /socios depois de qualquer redeploy, e que sozinha já estourava o timeout de 60s da função
-// serverless da Vercel. Rodar este script localmente (sem esse teto) evita que esse custo caia
-// em cima de uma requisição HTTP de verdade. Chamadas seguintes de getEventosOnChain() só
-// escaneiam o que for novo desde o último bloco salvo aqui.
+// Fills the incremental on-chain event cache (onchain_events_cache/onchain_sync_state,
+// see supabase/migrations/0012_onchain_events_cache.sql and src/lib/web3/events.ts) in one go,
+// scanning from the deploy block — the "expensive" read that used to happen on the first visit to
+// /socios after any redeploy, and that alone already blew the Vercel serverless function's 60s
+// timeout. Running this script locally (without that cap) keeps that cost from landing on a real
+// HTTP request. Subsequent getEventsOnChain() calls only scan what's new since the last block
+// saved here.
 //
-// Não reaproveita src/lib/web3/events.ts nem src/lib/supabase/admin.ts diretamente — os dois
-// importam "server-only", que sob Node puro (fora do bundler do Next, como aqui via tsx) lança
-// incondicionalmente (mesmo gotcha já documentado em scripts/seed-demo.ts). Em vez disso, usa
-// src/lib/web3/eventsCore.ts (núcleo puro, sem "server-only", extraído justamente para ser
-// reaproveitado por este script) e monta o client admin do Supabase manualmente, como
-// seed-demo.ts já faz.
+// Doesn't reuse src/lib/web3/events.ts nor src/lib/supabase/admin.ts directly — both import
+// "server-only", which under plain Node (outside Next's bundler, as here via tsx) throws
+// unconditionally (the same gotcha already documented in scripts/seed-demo.ts). Instead, it uses
+// src/lib/web3/eventsCore.ts (the pure core, without "server-only", extracted precisely to be
+// reused by this script) and builds the Supabase admin client by hand, as seed-demo.ts already does.
 //
-// Uso: npm run backfill:onchain (lê .env.local; precisa de NEXT_PUBLIC_SUPABASE_URL,
-// SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_MOCKBRL_ADDRESS e NEXT_PUBLIC_OFERTAS_ONCHAIN
-// apontando pro projeto/contratos certos — os mesmos já usados pelo app).
+// Usage: npm run backfill:onchain (reads .env.local; needs NEXT_PUBLIC_SUPABASE_URL,
+// SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_MOCKBRL_ADDRESS and NEXT_PUBLIC_OFERTAS_ONCHAIN
+// pointing at the right project/contracts — the same ones already used by the app).
 
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -23,10 +22,10 @@ config({ path: ".env.local" });
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getOnChainAddresses } from "@/lib/web3/addresses";
 import {
-  encontrarBlocoDeploy,
+  findDeployBlock,
   publicClient,
-  fetchEventosOnChainRange,
-  type EventoOnChain,
+  fetchOnChainEventsRange,
+  type OnChainEvent,
 } from "@/lib/web3/eventsCore";
 
 function createAdminClient() {
@@ -35,15 +34,15 @@ function createAdminClient() {
   });
 }
 
-function eventoParaRow(evento: EventoOnChain) {
+function eventToRow(evento: OnChainEvent) {
   return {
-    tipo: evento.tipo,
-    oferta_address: evento.ofertaAddress,
-    oferta_index: evento.ofertaIndex,
-    investidor: evento.investidor,
-    valor_wei: evento.valorWei !== null ? evento.valorWei.toString() : null,
-    cotas: evento.cotas !== null ? evento.cotas.toString() : null,
-    taxa_wei: evento.taxaWei !== null ? evento.taxaWei.toString() : null,
+    tipo: evento.type,
+    oferta_address: evento.offeringAddress,
+    oferta_index: evento.offeringIndex,
+    investidor: evento.investor,
+    valor_wei: evento.amountWei !== null ? evento.amountWei.toString() : null,
+    cotas: evento.shares !== null ? evento.shares.toString() : null,
+    taxa_wei: evento.feeWei !== null ? evento.feeWei.toString() : null,
     tx_hash: evento.txHash,
     block_number: evento.blockNumber.toString(),
     block_timestamp: evento.timestamp,
@@ -53,7 +52,7 @@ function eventoParaRow(evento: EventoOnChain) {
 async function main() {
   const addresses = getOnChainAddresses();
   if (!addresses) {
-    console.error("NEXT_PUBLIC_MOCKBRL_ADDRESS / NEXT_PUBLIC_OFERTAS_ONCHAIN ausentes ou inválidos — nada a fazer.");
+    console.error("NEXT_PUBLIC_MOCKBRL_ADDRESS / NEXT_PUBLIC_OFERTAS_ONCHAIN missing or invalid — nothing to do.");
     process.exit(1);
   }
 
@@ -67,14 +66,14 @@ async function main() {
     .maybeSingle();
   if (syncError) throw syncError;
 
-  const redeployDetectado = syncState !== null && syncState.mock_brl_address !== addresses.mockBrl.toLowerCase();
+  const redeployDetected = syncState !== null && syncState.mock_brl_address !== addresses.mockBrl.toLowerCase();
 
   let fromBlock: bigint;
-  if (!syncState || redeployDetectado) {
-    fromBlock = await encontrarBlocoDeploy(client, addresses.mockBrl);
-    if (redeployDetectado) {
+  if (!syncState || redeployDetected) {
+    fromBlock = await findDeployBlock(client, addresses.mockBrl);
+    if (redeployDetected) {
       console.log(
-        `Endereço de MockBRL mudou (era ${syncState?.mock_brl_address}, agora ${addresses.mockBrl}) — recalculando bloco de deploy: ${fromBlock}.`,
+        `MockBRL address changed (was ${syncState?.mock_brl_address}, now ${addresses.mockBrl}) — recomputing the deploy block: ${fromBlock}.`,
       );
     }
   } else {
@@ -84,20 +83,20 @@ async function main() {
   const toBlock = await client.getBlockNumber();
 
   if (fromBlock > toBlock) {
-    console.log(`Já sincronizado até o bloco ${toBlock} — nada a fazer.`);
+    console.log(`Already synced up to block ${toBlock} — nothing to do.`);
     return;
   }
 
-  console.log(`Escaneando ${addresses.ofertas.length} oferta(s) de ${fromBlock} até ${toBlock} (${toBlock - fromBlock + BigInt(1)} blocos)...`);
-  console.log("Pode demorar alguns minutos na primeira vez — sem pressa, este script não tem limite de 60s.");
+  console.log(`Scanning ${addresses.offerings.length} offering(s) from ${fromBlock} to ${toBlock} (${toBlock - fromBlock + BigInt(1)} blocks)...`);
+  console.log("It may take a few minutes the first time — no rush, this script has no 60s limit.");
 
-  const eventos = await fetchEventosOnChainRange(client, addresses.ofertas, fromBlock, toBlock);
-  console.log(`${eventos.length} evento(s) encontrado(s).`);
+  const events = await fetchOnChainEventsRange(client, addresses.offerings, fromBlock, toBlock);
+  console.log(`${events.length} evento(s) encontrado(s).`);
 
-  if (eventos.length > 0) {
+  if (events.length > 0) {
     const { error: insertError } = await admin
       .from("onchain_events_cache")
-      .upsert(eventos.map(eventoParaRow), { onConflict: "tx_hash,oferta_address,tipo" });
+      .upsert(events.map(eventToRow), { onConflict: "tx_hash,oferta_address,tipo" });
     if (insertError) throw insertError;
   }
 
@@ -106,7 +105,7 @@ async function main() {
     .upsert({ id: 1, last_synced_block: toBlock.toString(), mock_brl_address: addresses.mockBrl.toLowerCase() });
   if (upsertSyncError) throw upsertSyncError;
 
-  console.log(`Cache atualizado até o bloco ${toBlock}. Pronto.`);
+  console.log(`Cache updated up to block ${toBlock}. Done.`);
 }
 
 main().catch((error) => {

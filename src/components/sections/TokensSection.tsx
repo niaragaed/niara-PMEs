@@ -2,30 +2,32 @@ import { Building2, Car, Home, Tractor, type LucideIcon } from "lucide-react";
 import { Reveal } from "@/components/motion/Reveal";
 import { RevealGroup, RevealItem } from "@/components/motion/RevealGroup";
 import { SectionCard } from "./SectionCard";
-import { ptBr } from "@/lib/i18n/pt-br";
+import { getDictionary } from "@/lib/i18n/server";
 
+// Keyed by the card's route (stable across languages), never by its translated title.
 const ICONS: Record<string, LucideIcon> = {
-  "Token PMEs": Building2,
-  "Token Auto": Car,
-  "Token Agro": Tractor,
-  "Token Imobiliário": Home,
+  "/negociar/token-pmes": Building2,
+  "/negociar/token-auto": Car,
+  "/negociar/token-agro": Tractor,
+  "/negociar/token-imobiliario": Home,
 };
 
-// 3.3 — Conheça os Tokens. Fundo pêssego CHEIO, título em on-salmon; cada
-// card linka para a rota-stub do token correspondente.
-export function TokensSection() {
+// 3.3 — Meet the Tokens. SOLID peach background, title in on-salmon; each
+// card links to the matching token's route.
+export async function TokensSection() {
+  const dict = await getDictionary();
   return (
     <section id="tokens" className="bg-salmon px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-on-salmon sm:text-4xl">
-            {ptBr.sections.tokens.title}
+            {dict.sections.tokens.title}
           </h2>
         </Reveal>
 
         <RevealGroup className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {ptBr.sections.tokens.items.map((item) => {
-            const Icon = ICONS[item.title];
+          {dict.sections.tokens.items.map((item) => {
+            const Icon = ICONS[item.href];
             return (
               <RevealItem key={item.title}>
                 <SectionCard

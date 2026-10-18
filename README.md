@@ -1,35 +1,41 @@
 # Niara PMEs
 
-Site/produto da plataforma Niara para pequenas e médias empresas: captação de
-investimento e divisão de capital via tokenização.
+Site and product of the Niara platform for small and medium-sized enterprises
+(SMEs, *PMEs* in Portuguese): fundraising and splitting company capital through
+tokenization.
 
-Estágio atual: site institucional com **backend real (Supabase)** para o
-ciclo de captação (cadastro, login, oferta, investimento) e investimento
-**real na testnet Sepolia** (`/investir/onchain`, transações assinadas de
-verdade via MetaMask contra contratos implantados em
-`niara-contracts-PMEs`) — inclusive dentro da vitrine `/negociar`, onde as
-10 ofertas reais da categoria Token PMEs aparecem com a identidade de
-empresas fictícias de demonstração (nome, foto, logo): a transação é real,
-a empresa por trás não é. As demais categorias de `/negociar` seguem com
-boleta de negociação simulada, e o dashboard de portfólio (`/ativos`)
-continua 100% mock. Há também um painel interno restrito a sócios
-(`/socios`, allowlist de e-mail) que cruza dado real on-chain com dado
-demo do Supabase, sempre em seções separadas. Ver [`CLAUDE.md`](./CLAUDE.md)
-para stack, arquitetura, design system e regras completas do projeto.
+Current stage: an institutional site with a **real backend (Supabase)** for the
+fundraising cycle (sign-up, sign-in, offering, investment) and **real investment
+on the Sepolia testnet and on Solana Devnet** (`/investir/onchain`, transactions
+actually signed with MetaMask or Phantom against the contracts deployed from
+`niara-contracts-PMEs` and the `niara-pmes-solana` program). This includes the
+`/negociar` showcase, where the 10 real offerings in the SME Token category appear
+with the identity of fictitious demo companies (name, photo, logo): the
+transaction is real, the company behind it is not. The other `/negociar`
+categories keep a simulated order ticket, and the portfolio dashboard
+(`/ativos`) is still 100% mock. There is also an internal dashboard restricted to
+the partners (`/socios`, email allowlist) that combines real on-chain data
+with Supabase demo data, always in separate sections.
 
-## Desenvolvimento
+The interface is available in **Portuguese and English** (language switcher in
+the header). See [`CLAUDE.md`](./CLAUDE.md) for the stack, architecture, design
+system and the project's full rules.
+
+## Development
+
+Requires Node 24 (npm 11), pinned in `.nvmrc` and `package.json` (`nvm use` picks it up).
 
 ```bash
-npm install
-cp .env.example .env.local   # preencha com suas credenciais — ver .env.example
+npm ci
+cp .env.example .env.local   # fill in your credentials (see .env.example)
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm run lint      # ESLint
-npx tsc --noEmit  # checagem de tipos
-npm run build     # build de produção
-npm run seed:demo # conta emissor + oferta ativa + conta investidor prontas para demo
+npx tsc --noEmit  # type check
+npm run build     # production build
+npm run seed:demo # issuer account + active offering + investor account ready for a demo
 ```

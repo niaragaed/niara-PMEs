@@ -1,0 +1,94 @@
+"use client";
+
+import { ShieldAlert, TrendingUp } from "lucide-react";
+import { ProfileProvider, useProfile } from "./ProfileContext";
+import { ProfileNav } from "./ProfileNav";
+import { PersonalDataSection } from "./PersonalDataSection";
+import { MyOffersSection } from "./MyOffersSection";
+import { InvestorProfileSection } from "./InvestorProfileSection";
+import { WalletSection } from "./WalletSection";
+import { SolanaWalletSection } from "./SolanaWalletSection";
+import { SectionGlow } from "@/components/ui/SectionGlow";
+import type { LoadedProfile, OfferingSummary } from "@/app/perfil/actions";
+import { useDictionary } from "@/lib/i18n/client";
+
+type ProfilePageProps = {
+  profile: LoadedProfile;
+  offerings: OfferingSummary[];
+  aviso?: "apenas-empresa" | "apenas-investidor";
+  openInvestorQuiz?: boolean;
+};
+
+export function ProfilePage({ profile, offerings, aviso, openInvestorQuiz }: ProfilePageProps) {
+  const dict = useDictionary();
+  return (
+    <ProfileProvider>
+      <main className="isolate flex flex-1 flex-col bg-military">
+        <SectionGlow />
+        <div className="border-b border-panel-border bg-panel px-4 py-2 text-center text-xs text-on-military-muted sm:text-sm">
+          <span className="font-semibold text-salmon">{dict.profile.demoBanner.label}</span> —{" "}
+          {dict.profile.demoBanner.text}
+        </div>
+
+        <div className="border-b border-panel-border bg-panel/60 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 text-xs text-on-military-muted sm:text-sm">
+            <ShieldAlert className="h-4 w-4 shrink-0 text-salmon" aria-hidden="true" />
+            <span>
+              <span className="font-semibold text-on-military">{dict.profile.kyc.notVerified}</span>{" "}
+              {dict.profile.kyc.notice}
+            </span>
+          </div>
+        </div>
+
+        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-on-military">{dict.profile.title}</h1>
+            <p className="mt-1 text-on-military-muted">{dict.profile.subtitle}</p>
+          </div>
+
+          {aviso === "apenas-empresa" && (
+            <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
+              {dict.account.companyOnlyNotice}
+            </p>
+          )}
+          {aviso === "apenas-investidor" && (
+            <p className="mt-4 rounded-md border border-salmon/40 bg-salmon/10 px-4 py-3 text-sm text-on-military">
+              {dict.account.investorOnlyNotice}
+            </p>
+          )}
+
+          <ProfileBadges />
+
+          <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+            <ProfileNav showMyOfferings={profile.role === "issuer"} />
+            <div className="flex min-w-0 flex-1 flex-col gap-10">
+              <PersonalDataSection profile={profile} />
+              {profile.role === "issuer" && <MyOffersSection offerings={offerings} />}
+              <InvestorProfileSection openAutomatically={openInvestorQuiz} />
+              <WalletSection walletAddress={profile.walletAddress} />
+              <SolanaWalletSection solanaWalletAddress={profile.solanaWalletAddress} />
+            </div>
+          </div>
+        </div>
+      </main>
+    </ProfileProvider>
+  );
+}
+
+function ProfileBadges() {
+  const dict = useDictionary();
+  const { investorProfile } = useProfile();
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-salmon/40 bg-salmon/10 px-2.5 py-1 text-xs font-medium text-on-military">
+        <ShieldAlert className="h-3.5 w-3.5 text-salmon" aria-hidden="true" />
+        {dict.profile.kyc.notVerified}
+      </span>
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-panel-border bg-military-600/40 px-2.5 py-1 text-xs font-medium text-on-military">
+        <TrendingUp className="h-3.5 w-3.5 text-salmon" aria-hidden="true" />
+        {dict.profile.badges.profilePrefix}: {dict.profile.investor.categories[investorProfile.category]}
+      </span>
+    </div>
+  );
+}

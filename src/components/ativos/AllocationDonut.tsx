@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/ativos/derive";
+import { computeAllocation, type AllocationSlice, type AllocationView } from "@/lib/assets/derive";
 import { formatBRL, formatPercent } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
-import { MOCK_POSITIONS } from "@/lib/mock/ativos";
+import { MOCK_POSITIONS } from "@/lib/mock/assets";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
 
-const VIEWS: { key: AllocationView; label: string }[] = [
-  { key: "classe", label: ptBr.ativos.alocacao.viewClasse },
-  { key: "ativo", label: ptBr.ativos.alocacao.viewAtivo },
-  { key: "setor", label: ptBr.ativos.alocacao.viewSetor },
+const VIEWS: { key: AllocationView; labelKey: "viewClass" | "viewAsset" | "viewSector" }[] = [
+  { key: "class", labelKey: "viewClass" },
+  { key: "asset", labelKey: "viewAsset" },
+  { key: "sector", labelKey: "viewSector" },
 ];
 
 type DonutTooltipProps = {
@@ -33,14 +33,16 @@ function DonutTooltip({ active, payload }: DonutTooltipProps) {
 }
 
 export function AllocationDonut() {
-  const [view, setView] = useState<AllocationView>("classe");
-  const slices = computeAllocation(MOCK_POSITIONS, view, ptBr.ativos.categorias, ptBr.ativos.regioes);
+  const dict = useDictionary();
+  const locale = useLocale();
+  const [view, setView] = useState<AllocationView>("class");
+  const slices = computeAllocation(MOCK_POSITIONS, view, dict.assets.categories, dict.assets.regions, locale);
 
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{ptBr.ativos.alocacao.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{dict.assets.allocation.title}</h3>
 
-      <div role="tablist" aria-label={ptBr.ativos.alocacao.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
+      <div role="tablist" aria-label={dict.assets.allocation.title} className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-military-600/40 p-1">
         {VIEWS.map((v) => (
           <button
             key={v.key}
@@ -52,7 +54,7 @@ export function AllocationDonut() {
               view === v.key ? "bg-salmon text-on-salmon" : "text-on-military-muted hover:text-on-military"
             }`}
           >
-            {v.label}
+            {dict.assets.allocation[v.labelKey]}
           </button>
         ))}
       </div>

@@ -1,18 +1,18 @@
-// Espelha 1:1 as constantes fixas de script/DemoNiaraPMEsOnChain.s.sol (repo irmão
-// niara-contracts-PMEs) — as 10 ofertas reais em Sepolia são todas criadas com esses mesmos
-// parâmetros (confirmado via `cast call` antes de escrever este arquivo, ver CLAUDE.md, "10
-// ofertas de reserva para o Startup Summit"). Fonte única de verdade: nunca duplicar estes
-// números em outro arquivo. Se o script mudar, atualizar aqui manualmente — não há sincronização
-// automática entre os dois repositórios.
+// Mirrors 1:1 the fixed constants of script/DemoNiaraPMEsOnChain.s.sol (sister repo
+// niara-contracts-PMEs) — the 10 real offerings on Sepolia are all created with these same
+// parameters (confirmed via `cast call` before writing this file, see CLAUDE.md, "10 backup
+// offerings for the Startup Summit"). Single source of truth: never duplicate these numbers in
+// another file. If the script changes, update them here by hand — there's no automatic sync
+// between the two repositories.
 //
-// Unidade é sempre mBRL (MockBRL) — moeda de teste sem lastro, nunca rotular como "R$" na UI
-// (ver src/lib/mock/ofertasOnChain.ts e PmesOnChainCard.tsx, que consomem estas constantes).
-export const ONCHAIN_PMES_META_MINIMA_MBRL = 100;
-export const ONCHAIN_PMES_META_MAXIMA_MBRL = 200;
-export const ONCHAIN_PMES_PRECO_POR_COTA_MBRL = 10;
-export const ONCHAIN_PMES_TETO_POR_INVESTIDOR_MBRL = 200;
-export const ONCHAIN_PMES_COTAS_AUTORIZADAS = 20;
-// Prazo exato de cada oferta é sempre lido on-chain (useOfertaOnChainTermos().prazo) — nunca
-// deste valor, que é só uma referência aproximada para textos estáticos que precisem citar "~180
-// dias" sem fazer uma leitura on-chain.
-export const ONCHAIN_PMES_PRAZO_DIAS = 180;
+// The unit is always mBRL (MockBRL) — a test currency with no backing, never label it "R$" in
+// the UI (see src/lib/mock/onChainOfferings.ts and SmesOnChainCard.tsx, which consume these constants).
+export const ONCHAIN_SMES_MIN_TARGET_MBRL = 100;
+export const ONCHAIN_SMES_MAX_TARGET_MBRL = 200;
+export const ONCHAIN_SMES_PRICE_PER_SHARE_MBRL = 10;
+export const ONCHAIN_SMES_CAP_PER_INVESTOR_MBRL = 200;
+export const ONCHAIN_SMES_AUTHORIZED_SHARES = 20;
+// Each offering's exact deadline is always read on-chain (useOnChainOfferingTerms().deadline) —
+// never from this value, which is only an approximate reference for static copy that needs to
+// mention "~180 days" without an on-chain read.
+export const ONCHAIN_SMES_DEADLINE_DAYS = 180;

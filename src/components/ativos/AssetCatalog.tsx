@@ -1,6 +1,8 @@
+"use client";
 import { Building2, Car, Home, Landmark, Wheat, type LucideIcon } from "lucide-react";
-import { ptBr } from "@/lib/i18n/pt-br";
-import { MOCK_CATALOG, type TokenCategory } from "@/lib/mock/ativos";
+import { MOCK_CATALOG, type TokenCategory } from "@/lib/mock/assets";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { localize } from "@/lib/i18n/locale";
 
 const CATEGORY_ICON: Record<TokenCategory, LucideIcon> = {
   pmes: Building2,
@@ -11,11 +13,13 @@ const CATEGORY_ICON: Record<TokenCategory, LucideIcon> = {
 };
 
 export function AssetCatalog() {
+  const dict = useDictionary();
+  const locale = useLocale();
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold text-on-military">{ptBr.ativos.catalogo.title}</h2>
-        <p className="mt-1 text-sm text-on-military-muted">{ptBr.ativos.catalogo.subtitle}</p>
+        <h2 className="text-lg font-semibold text-on-military">{dict.assets.catalog.title}</h2>
+        <p className="mt-1 text-sm text-on-military-muted">{dict.assets.catalog.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -31,22 +35,22 @@ export function AssetCatalog() {
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="text-xs font-medium uppercase tracking-wide text-on-military-muted">
-                  {ptBr.ativos.categorias[asset.category]}
+                  {dict.assets.categories[asset.category]}
                 </span>
               </div>
 
-              <h3 className="text-sm font-semibold text-on-military">{asset.name}</h3>
-              <p className="flex-1 text-sm text-on-military-muted">{asset.description}</p>
+              <h3 className="text-sm font-semibold text-on-military">{localize(asset.name, locale)}</h3>
+              <p className="flex-1 text-sm text-on-military-muted">{localize(asset.description, locale)}</p>
 
               <button
                 type="button"
                 disabled
                 aria-disabled="true"
-                title={ptBr.common.emBreve}
+                title={dict.common.comingSoon}
                 className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-salmon/90 px-4 py-2 text-sm font-medium text-on-salmon"
               >
-                {ptBr.ativos.catalogo.investir}
-                <span className="text-xs font-normal">({ptBr.common.emBreve})</span>
+                {dict.assets.catalog.invest}
+                <span className="text-xs font-normal">({dict.common.comingSoon})</span>
               </button>
             </div>
           );

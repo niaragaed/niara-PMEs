@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { usePerfil } from "./PerfilContext";
+import { useProfile } from "./ProfileContext";
 import { categorizeScore } from "@/lib/investor-profile";
-import { ptBr } from "@/lib/i18n/pt-br";
-
-const QUESTIONS = ptBr.perfil.investidor.quiz.questions;
+import { useDictionary } from "@/lib/i18n/client";
 
 export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
-  const { setInvestorProfile } = usePerfil();
+  const dict = useDictionary();
+  const t = dict.profile.investor.quiz;
+  const QUESTIONS = t.questions;
+  const { setInvestorProfile } = useProfile();
   const [step, setStep] = useState(0);
-  // respostas ficam só neste estado em memória — nunca são persistidas
-  // individualmente; só o resultado final vai para o contexto (também em
-  // memória, sem localStorage).
+  // answers only live in this in-memory state — they're never persisted
+  // individually; only the final result goes to the context (also in
+  // memory, no localStorage).
   const [answers, setAnswers] = useState<Array<number | null>>(() => QUESTIONS.map(() => null));
 
-  const t = ptBr.perfil.investidor.quiz;
   const question = QUESTIONS[step];
   const selected = answers[step];
   const isLast = step === QUESTIONS.length - 1;
@@ -100,7 +100,7 @@ export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
           className="inline-flex items-center gap-1.5 rounded-md border border-panel-border px-4 py-2 text-sm font-medium text-on-military-muted disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          {t.voltar}
+          {t.back}
         </button>
         <button
           type="button"
@@ -108,7 +108,7 @@ export function InvestorProfileQuiz({ onDone }: { onDone: () => void }) {
           disabled={selected === null}
           className="inline-flex items-center gap-1.5 rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isLast ? t.verResultado : t.proximo}
+          {isLast ? t.viewResult : t.next}
           {!isLast && <ChevronRight className="h-4 w-4" aria-hidden="true" />}
         </button>
       </div>

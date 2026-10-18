@@ -1,3 +1,3 @@
-# Migrations do Supabase são definitivas e testadas (invariantes +
-# concorrência via FOR UPDATE) — nunca reformatar.
+# Supabase migrations are final and tested (invariants +
+# concurrency via FOR UPDATE) — never reformat them.
 supabase/migrations/*.sql

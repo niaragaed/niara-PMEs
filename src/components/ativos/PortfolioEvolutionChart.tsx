@@ -2,17 +2,18 @@
 
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatBRL } from "@/lib/format";
-import { ptBr } from "@/lib/i18n/pt-br";
-import { MOCK_EVOLUTION } from "@/lib/mock/ativos";
+import { MOCK_EVOLUTION } from "@/lib/mock/assets";
+import { useDictionary, useLocale } from "@/lib/i18n/client";
+import { intlLocale } from "@/lib/i18n/locale";
 
 type TooltipEntry = {
   value?: unknown;
   name?: string | number;
 };
 
-// Tipo próprio em vez dos genéricos do Recharts (`TooltipProps<...>`) —
-// evita conflitos de variância entre o tipo esperado por `content` e o
-// componente customizado.
+// Own type instead of Recharts' generics (`TooltipProps<...>`) —
+// avoids variance conflicts between the type expected by `content` and the
+// custom component.
 type ChartTooltipProps = {
   active?: boolean;
   label?: string | number;
@@ -35,13 +36,17 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
 }
 
 export function PortfolioEvolutionChart() {
+  const dict = useDictionary();
+  const locale = useLocale();
+  const monthName = new Intl.DateTimeFormat(intlLocale(locale), { month: "short", timeZone: "UTC" });
+  const data = MOCK_EVOLUTION.map((point) => ({ ...point, month: monthName.format(new Date(Date.UTC(2026, point.month, 1))) }));
   return (
     <div className="rounded-lg border border-panel-border bg-panel p-5">
-      <h3 className="text-sm font-semibold text-on-military">{ptBr.ativos.evolucao.title}</h3>
+      <h3 className="text-sm font-semibold text-on-military">{dict.assets.evolution.title}</h3>
 
       <div className="mt-4 h-72" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={[...MOCK_EVOLUTION]} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-panel-border)" vertical={false} />
             <XAxis
               dataKey="month"
@@ -59,14 +64,14 @@ export function PortfolioEvolutionChart() {
             <Tooltip content={(props) => <ChartTooltip {...props} />} cursor={{ fill: "var(--color-panel-border)" }} />
             <Legend formatter={(value: string) => <span className="text-on-military-muted">{value}</span>} />
             <Bar
-              dataKey="investido"
-              name={ptBr.ativos.evolucao.seriesInvestido}
+              dataKey="invested"
+              name={dict.assets.evolution.investedSeries}
               stackId="portfolio"
               fill="var(--color-chart-pmes)"
             />
             <Bar
-              dataKey="ganho"
-              name={ptBr.ativos.evolucao.seriesGanho}
+              dataKey="gain"
+              name={dict.assets.evolution.gainSeries}
               stackId="portfolio"
               fill="var(--color-value-positive)"
               radius={[4, 4, 0, 0]}
@@ -75,7 +80,7 @@ export function PortfolioEvolutionChart() {
         </ResponsiveContainer>
       </div>
 
-      <p className="mt-3 text-xs text-on-military-muted">{ptBr.ativos.evolucao.description}</p>
+      <p className="mt-3 text-xs text-on-military-muted">{dict.assets.evolution.description}</p>
     </div>
   );
 }

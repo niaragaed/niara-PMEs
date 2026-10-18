@@ -4,17 +4,17 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Camadas decorativas em parallax (velocidades diferentes ao rolar),
-// inspiradas nas layer1..4 do hero da MetaMask. Puramente visual —
-// aria-hidden e sem qualquer conteúdo textual. Inclui o motivo do
-// planeta anelado (mesmo traço do <Logo />) como elemento central sutil,
-// no lugar que era ocupado pelo astronauta.
-// Hero tem fundo military CHEIO (verde escuro): glow e corpo do planeta
-// usam tons claros (bg/salmon) em baixa opacidade — tons military ficariam
-// "sujos" (mesma família de cor do fundo) e traços em --color-military
-// desapareceriam de vez sobre o próprio military. O anel salmão é exceção
-// proposital: opacidade alta (0.9), para saltar sobre o verde em vez de se
-// misturar a ele.
+// Decorative parallax layers (different speeds when scrolling),
+// inspired by layer1..4 of MetaMask's hero. Purely visual —
+// aria-hidden and without any text content. Includes the ringed-planet
+// motif (the same stroke as <Logo />) as a subtle central element,
+// in the spot the astronaut used to occupy.
+// The hero has a SOLID military background (dark green): the glow and the planet body
+// use light tones (bg/salmon) at low opacity — military tones would look
+// "dirty" (same color family as the background) and strokes in --color-military
+// would disappear entirely on top of military itself. The salmon ring is a deliberate
+// exception: high opacity (0.9), so it pops over the green instead of blending
+// into it.
 export function HeroParallaxLayers() {
   const layer1Ref = useRef<HTMLDivElement>(null);
   const layer2Ref = useRef<HTMLDivElement>(null);
@@ -66,16 +66,16 @@ export function HeroParallaxLayers() {
         ref={orbitRef}
         className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 sm:h-[560px] sm:w-[560px]"
       >
-        {/* Corpo do planeta: traço sutil, opacidade própria (não mais
-            diluído junto com o anel — ver histórico no CLAUDE.md). */}
+        {/* Planet body: a subtle stroke, with its own opacity (no longer
+            diluted together with the ring — see the history in CLAUDE.md). */}
         <svg viewBox="0 0 200 200" className="h-full w-full" fill="none">
           <circle cx="100" cy="100" r="72" stroke="var(--color-bg)" strokeWidth="1.5" opacity="0.3" />
-          {/* Anel: opacidade alta para o salmão dominar sobre o military.
-              A inclinação estática (-18deg) vive na animação CSS
-              (hero-orbit-ring-spin, globals.css), não mais num atributo
-              "transform" solto — CSS transform substitui por completo o
-              atributo SVG no mesmo elemento, então os dois não podem
-              coexistir sem conflito. */}
+          {/* Ring: high opacity so the salmon dominates over the military.
+              The static tilt (-18deg) lives in the CSS animation
+              (hero-orbit-ring-spin, globals.css), no longer in a loose
+              "transform" attribute — a CSS transform fully replaces the
+              SVG attribute on the same element, so the two can't
+              coexist without conflict. */}
           <g className="hero-orbit-ring">
             <ellipse cx="100" cy="100" rx="98" ry="34" stroke="var(--color-salmon)" strokeWidth="1.5" opacity="0.9" />
           </g>

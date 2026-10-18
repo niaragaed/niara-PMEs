@@ -1,0 +1,53 @@
+import { getDictionary } from "@/lib/i18n/server";
+
+export async function DocsNav() {
+  const dict = await getDictionary();
+  const SECTIONS = [
+    { id: "what-is", label: dict.docs.nav.whatIs },
+    { id: "how-tokenization-works", label: dict.docs.nav.howItWorks },
+    { id: "framework", label: dict.docs.nav.framework },
+    { id: "revenue-model", label: dict.docs.nav.revenueModel },
+    { id: "technology", label: dict.docs.nav.technology },
+    { id: "faq", label: dict.docs.nav.faq },
+  ];
+  return (
+    <>
+      {/* Desktop: sidebar sticky */}
+      <nav
+        aria-label={dict.docs.nav.ariaLabel}
+        className="hidden shrink-0 lg:sticky lg:top-24 lg:block lg:w-56"
+      >
+        <ul className="flex flex-col gap-1">
+          {SECTIONS.map((section) => (
+            <li key={section.id}>
+              <a
+                href={`#${section.id}`}
+                className="block rounded-md border-l-2 border-panel-border px-3 py-1.5 text-sm text-on-military-muted transition-colors hover:border-salmon hover:text-on-military"
+              >
+                {section.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Mobile/tablet: horizontal scrollable tabs */}
+      <div
+        role="tablist"
+        aria-label={dict.docs.nav.ariaLabel}
+        className="-mx-4 flex gap-1 overflow-x-auto border-b border-panel-border px-4 pb-px sm:px-6 lg:hidden"
+      >
+        {SECTIONS.map((section) => (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            role="tab"
+            className="shrink-0 whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-xs font-medium text-on-military-muted transition-colors hover:border-salmon hover:text-on-military"
+          >
+            {section.label}
+          </a>
+        ))}
+      </div>
+    </>
+  );
+}

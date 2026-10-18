@@ -1,15 +1,15 @@
 -- ============================================================================
 -- Niara-PMEs -- 0012_onchain_events_cache
--- Cache incremental dos eventos on-chain (Sepolia) lidos pelo painel /socios
--- (ver src/lib/web3/events.ts). Antes desta migration, toda leitura reescaneava
--- getLogs desde um bloco fixo (15/08/2026) ate o bloco atual -- um intervalo
--- que so cresce a cada dia, ate estourar tanto o timeout da funcao serverless
--- (Vercel) quanto o limite de faixa de blocos por chamada de eth_getLogs de
--- RPCs mais restritivos (ex.: Alchemy Free permite so 10 blocos por chamada).
--- Com este cache, cada leitura so busca os blocos NOVOS desde a ultima
--- sincronizacao -- normalmente uma janela pequena -- em vez de reescanear tudo
--- toda vez. RLS default-deny, mesmo padrao das tabelas de dominio em
--- 0001_core.sql: acesso so via client admin (service role) no servidor.
+-- Incremental cache of the on-chain events (Sepolia) read by the /partners dashboard
+-- (see src/lib/web3/events.ts). Before this migration, every read rescanned
+-- getLogs from a fixed block (2026-08-15) up to the current block -- a range
+-- that only grows every day, until it exceeds both the serverless function
+-- timeout (Vercel) and the per-call block range limit of eth_getLogs on stricter
+-- RPCs (e.g. Alchemy Free only allows 10 blocks per call).
+-- With this cache, each read only fetches the NEW blocks since the last
+-- sync -- usually a small window -- instead of rescanning everything
+-- every time. RLS default-deny, same pattern as the domain tables in
+-- 0001_core.sql: access only via the admin client (service role) on the server.
 -- ============================================================================
 
 begin;
@@ -20,10 +20,10 @@ create table onchain_events_cache (
   oferta_address text not null,
   oferta_index integer not null,
   investidor text,
-  -- text, nao numeric/bigint: valores em wei (18 casas decimais) passam de
-  -- 2*10^20 nesta demo, acima do teto do bigint do Postgres (~9.2*10^18) e
-  -- do range seguro de inteiro do JSON/PostgREST (2^53) -- guardado como
-  -- string decimal, convertido com BigInt(...) na leitura, nunca Number(...).
+  -- text, not numeric/bigint: wei values (18 decimals) exceed 2*10^20 in this
+  -- demo, above Postgres's bigint ceiling (~9.2*10^18) and the safe integer range
+  -- of JSON/PostgREST (2^53) -- stored as a decimal string, converted with
+  -- BigInt(...) when read, never Number(...).
   valor_wei text,
   cotas text,
   tx_hash text not null,
@@ -37,9 +37,9 @@ create index onchain_events_cache_block_number_idx on onchain_events_cache (bloc
 
 alter table onchain_events_cache enable row level security;
 
--- Linha unica (id sempre 1) com o ultimo bloco ja sincronizado -- sem isso,
--- uma janela sem nenhum evento nao deixaria rastro nenhum e a proxima leitura
--- rescanearia o mesmo intervalo de novo, do zero.
+-- Single row (id always 1) with the last block already synced -- without it, a
+-- window with no events would leave no trace and the next read would rescan the
+-- same range again, from scratch.
 create table onchain_sync_state (
   id smallint primary key default 1,
   last_synced_block bigint not null,

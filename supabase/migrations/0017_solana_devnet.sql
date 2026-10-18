@@ -1,27 +1,27 @@
 -- ============================================================================
 -- Niara-PMEs -- 0017_solana_devnet
--- Publicacao self-service tambem na Solana Devnet (programa niara-pmes-solana,
--- niaragaed/niara-pmes-solana), alem da Sepolia.
+-- Self-service publication also on Solana Devnet (niara-pmes-solana program,
+-- niaragaed/niara-pmes-solana), besides Sepolia.
 --
--- 1. offerings.rede: em qual rede a publicacao on-chain vive ('sepolia' ou
---    'solana-devnet'). Toda linha existente e da Sepolia (default).
--- 2. Os CHECKs de formato de 0015/0016 (so hex 0x...) passam a valer POR REDE:
---    na Solana, endereco e base58 (32 bytes) e o "tx_hash" e a assinatura da
---    transacao em base58 (64 bytes).
---      contract_address       -> conta da oferta (PDA do programa)
---      token_address          -> mint SPL das cotas
---      onchain_emissor_wallet -> carteira do emissor que assinou criar_oferta
--- 3. chain_id continua obrigatorio na confirmacao da Sepolia e fica NULL na
---    Solana (nao existe chainId numerico la).
--- 4. Trigger de imutabilidade ganha `rede`: imutavel depois que ha endereco
---    gravado (mesma regra de contract_address/chain_id) e tambem durante uma
---    tentativa em andamento (tx_hash preenchido) -- o hash de uma rede nunca
---    pode passar a ser lido como se fosse da outra.
--- 5. issuers/investors.solana_wallet_address: carteira Solana vinculada a
---    conta, separada da wallet_address (EVM). Uma carteira so pode estar em
---    UMA conta (mesma regra de 0007).
+-- 1. offerings.rede: which network the on-chain publication lives on ('sepolia' or
+--    'solana-devnet'). Every existing row is Sepolia (default).
+-- 2. The format CHECKs from 0015/0016 (hex 0x... only) now apply PER NETWORK:
+--    on Solana, an address is base58 (32 bytes) and the "tx_hash" is the
+--    transaction signature in base58 (64 bytes).
+--      contract_address       -> the offering account (program PDA)
+--      token_address          -> SPL mint of the shares
+--      onchain_emissor_wallet -> the issuer wallet that signed criar_oferta
+-- 3. chain_id stays required on Sepolia confirmation and is NULL on
+--    Solana (there is no numeric chainId there).
+-- 4. The immutability trigger gains `rede`: immutable once there is an address
+--    written (same rule as contract_address/chain_id) and also during an
+--    attempt in progress (tx_hash filled in) -- one network's hash can never
+--    start being read as if it belonged to the other.
+-- 5. issuers/investors.solana_wallet_address: Solana wallet linked to the
+--    account, separate from wallet_address (EVM). A wallet can only be on
+--    ONE account (same rule as 0007).
 --
--- Idempotente nao: rodar UMA vez, depois de 0016. Nada aqui apaga dado.
+-- Not idempotent: run ONCE, after 0016. Nothing here deletes data.
 -- ============================================================================
 
 begin;
@@ -33,7 +33,7 @@ alter table offerings
 alter table offerings
   add constraint rede_valida check (rede in ('sepolia', 'solana-devnet'));
 
--- 2. formatos por rede ----------------------------------------------------------
+-- 2. formats per network ----------------------------------------------------------
 alter table offerings
   drop constraint contract_address_format,
   drop constraint token_address_format,
@@ -68,7 +68,7 @@ alter table offerings
     or (rede = 'solana-devnet' and tx_hash ~ '^[1-9A-HJ-NP-Za-km-z]{64,90}$')
   );
 
--- 3. chain_id: obrigatorio so na Sepolia ----------------------------------------
+-- 3. chain_id: required only on Sepolia ----------------------------------------
 alter table offerings
   drop constraint sync_status_confirmada_tem_enderecos;
 
@@ -84,7 +84,7 @@ alter table offerings
   ),
   add constraint chain_id_so_na_sepolia check (rede = 'sepolia' or chain_id is null);
 
--- 4. imutabilidade (substitui a funcao de 0015, mesmas regras + rede) ----------
+-- 4. immutability (replaces 0015's function, same rules + rede) ----------
 create or replace function enforce_onchain_publish_immutable() returns trigger language plpgsql as $fn$
 begin
   if old.contract_address is not null and new.contract_address is distinct from old.contract_address then
@@ -96,9 +96,9 @@ begin
   if old.onchain_emissor_wallet is not null and new.onchain_emissor_wallet is distinct from old.onchain_emissor_wallet then
     raise exception 'offerings.onchain_emissor_wallet e imutavel apos gravado' using errcode = '23514';
   end if;
-  -- chain_id passa a travar so com endereco gravado (antes: assim que preenchido). Uma
-  -- tentativa revertida na Sepolia deixava chain_id preenchido e impedia publicar depois
-  -- na Solana (onde chain_id e NULL). As reversoes agora limpam chain_id junto com tx_hash.
+  -- chain_id now locks only once an address is written (before: as soon as it was filled in). A
+  -- reverted attempt on Sepolia left chain_id filled in and prevented publishing later
+  -- on Solana (where chain_id is NULL). Reverts now clear chain_id together with tx_hash.
   if old.contract_address is not null and old.chain_id is not null and new.chain_id is distinct from old.chain_id then
     raise exception 'offerings.chain_id e imutavel apos gravado' using errcode = '23514';
   end if;
@@ -109,24 +109,24 @@ begin
   return new;
 end $fn$;
 
--- Linhas antigas revertidas na Sepolia ficaram com chain_id preenchido sem endereco: limpa,
--- para poderem tentar de novo em qualquer rede (a trigger acima ja permite).
+-- Old rows reverted on Sepolia kept chain_id filled in without an address: clear it,
+-- so they can try again on any network (the trigger above already allows it).
 update offerings set chain_id = null
 where sync_status = 'nao_onchain' and contract_address is null and chain_id is not null;
 
--- Uma transacao/conta on-chain so pode confirmar UMA oferta (por rede): impede que duas
--- linhas do Supabase apontem para o mesmo escrow.
+-- An on-chain transaction/account can confirm only ONE offering (per network): prevents two
+-- Supabase rows from pointing to the same escrow.
 create unique index offerings_rede_contract_address_unique
   on offerings (rede, contract_address) where contract_address is not null;
 create unique index offerings_rede_tx_hash_unique
   on offerings (rede, tx_hash) where tx_hash is not null;
 
--- Solana: ultima altura de bloco em que a transacao assinada ainda pode entrar na rede
--- (lastValidBlockHeight do blockhash usado). So serve para decidir, com certeza, que uma
--- tentativa que nao apareceu nunca mais vai aparecer.
+-- Solana: last block height at which the signed transaction can still land on the network
+-- (lastValidBlockHeight of the blockhash used). Only used to decide, with certainty, that an
+-- attempt that hasn't appeared will never appear.
 alter table offerings add column solana_ultimo_bloco_valido bigint;
 
--- 5. carteira Solana vinculada ----------------------------------------------------
+-- 5. linked Solana wallet ----------------------------------------------------
 alter table issuers   add column solana_wallet_address text;
 alter table investors add column solana_wallet_address text;
 

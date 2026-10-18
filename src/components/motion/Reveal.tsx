@@ -8,9 +8,9 @@ const variants: Variants = {
   visible: { opacity: 1, y: 0 },
 };
 
-// Revela o conteúdo com fade + slide ao entrar na viewport. Sempre anima —
-// decisão deliberada do usuário: não respeitamos mais prefers-reduced-motion
-// aqui (ver CLAUDE.md).
+// Reveals the content with a fade + slide when it enters the viewport. Always animates —
+// a deliberate user decision: we no longer respect prefers-reduced-motion
+// here (see CLAUDE.md).
 export function Reveal({
   children,
   className,

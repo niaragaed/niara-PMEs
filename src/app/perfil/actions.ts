@@ -1,13 +1,12 @@
 "use server";
 
-// Server Actions da tela /perfil — leitura e edição dos dados REAIS de
-// investors/issuers do usuário logado, e leitura (resumo, não-CRUD) das
-// ofertas reais do issuer logado. REGRA DE HONESTIDADE: isto LÊ e GRAVA no
-// banco de verdade (diferente do que resta simulado em /perfil — ver
-// InvestorProfileSection). user_id/accountId nunca vêm do cliente: sempre
-// resolveAccount() (sessão no servidor). zod só valida formato; quem valida
-// regra de negócio (teto SEP de R$40M) é o banco — a action tenta a operação
-// e traduz o erro do Postgres, nunca replica o CHECK em JS (mesmo padrão de
+// Server Actions for the /perfil screen — reading and editing the signed-in user's REAL
+// investors/issuers data, and reading (summary, not CRUD) the signed-in issuer's real offerings.
+// HONESTY RULE: this actually READS and WRITES the database (unlike what's still simulated in
+// /perfil — see InvestorProfileSection). user_id/accountId never come from the client: always
+// resolveAccount() (session on the server). zod only checks format; the business rule (the R$40M
+// SEP cap) is checked by the database — the action attempts the operation and translates the
+// Postgres error, it never replicates the CHECK in JS (same pattern as
 // src/app/cadastro/actions.ts).
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -16,8 +15,10 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { resolveAccount, type AccountRole } from "@/lib/auth/resolveInvestor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
-import { isValidCEP, isValidCNPJ, isValidCPF, isValidDataNascimento, isValidTelefone, onlyDigits } from "@/lib/masks";
-import { MONEY_FORMAT, centsToReais, reaisToCents } from "@/lib/money";
+import { centsToReais, reaisToCents } from "@/lib/money";
+import { getDictionary } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { firstFieldErrors, investorFields, issuerFields } from "@/lib/registration-schemas";
 import {
   getIssuerLogoVersion,
   ISSUER_LOGO_BUCKET,
@@ -40,14 +41,14 @@ type SharedFields = {
   taxId: string;
   phone: string;
   cep: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
   walletAddress: string | null;
-  /** Carteira Solana vinculada (migration 0017) — separada da EVM. */
+  /** Linked Solana wallet (migration 0017) — separate from the EVM one. */
   solanaWalletAddress: string | null;
 };
 
@@ -55,18 +56,18 @@ export type LoadedProfile =
   | (SharedFields & {
       role: "investor";
       fullName: string;
-      birthDate: string; // DD/MM/AAAA, "" se ainda não preenchido
+      birthDate: string; // DD/MM/YYYY, "" if not filled in yet
     })
   | (SharedFields & {
       role: "issuer";
       legalName: string;
       tradeName: string;
-      annualRevenueReais: string; // "5.000.000,00", "" se ainda não preenchido
-      sector: string; // dado PÚBLICO — aparece na página da oferta (0008)
-      businessSummary: string; // idem
-      publishCnpj: boolean; // opt-in — CNPJ (mascarado) na página pública da oferta (0009)
-      logoUrl: string | null; // dado PÚBLICO — aparece na página da oferta (0010)
-      bannerUrl: string | null; // dado PÚBLICO — capa da oferta (0011)
+      annualRevenueReais: string; // "5.000.000,00", "" if not filled in yet
+      sector: string; // PUBLIC data — shown on the offering page (0008)
+      businessSummary: string; // same
+      publishCnpj: boolean; // opt-in — (masked) CNPJ on the public offering page (0009)
+      logoUrl: string | null; // PUBLIC data — shown on the offering page (0010)
+      bannerUrl: string | null; // PUBLIC data — the offering cover (0011)
     });
 
 export type UpdateProfileState =
@@ -77,11 +78,6 @@ function isoToBrDate(value: string | null): string {
   if (!value) return "";
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
-}
-
-function brDateToIso(value: string): string {
-  const [day, month, year] = value.split("/");
-  return `${year}-${month}-${day}`;
 }
 
 export async function loadProfile(): Promise<LoadedProfile> {
@@ -111,7 +107,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
       .single();
 
     if (error || !data) {
-      console.error("loadProfile: falha ao ler investor", error);
+      console.error("loadProfile: failed to read investor", error);
       redirect("/entrar");
     }
 
@@ -123,14 +119,14 @@ export async function loadProfile(): Promise<LoadedProfile> {
       birthDate: isoToBrDate(data.birth_date),
       phone: data.phone ?? "",
       walletAddress: data.wallet_address,
-    solanaWalletAddress: data.solana_wallet_address ?? null,
+      solanaWalletAddress: data.solana_wallet_address ?? null,
       cep: data.addr_cep ?? "",
-      logradouro: data.addr_street ?? "",
-      numero: data.addr_number ?? "",
-      complemento: data.addr_complement ?? "",
-      bairro: data.addr_neighborhood ?? "",
-      cidade: data.addr_city ?? "",
-      estado: data.addr_state ?? "",
+      street: data.addr_street ?? "",
+      number: data.addr_number ?? "",
+      complement: data.addr_complement ?? "",
+      district: data.addr_neighborhood ?? "",
+      city: data.addr_city ?? "",
+      state: data.addr_state ?? "",
     };
   }
 
@@ -143,7 +139,7 @@ export async function loadProfile(): Promise<LoadedProfile> {
     .single();
 
   if (error || !data) {
-    console.error("loadProfile: falha ao ler issuer", error);
+    console.error("loadProfile: failed to read issuer", error);
     redirect("/entrar");
   }
 
@@ -171,12 +167,12 @@ export async function loadProfile(): Promise<LoadedProfile> {
     walletAddress: data.wallet_address,
     solanaWalletAddress: data.solana_wallet_address ?? null,
     cep: data.addr_cep ?? "",
-    logradouro: data.addr_street ?? "",
-    numero: data.addr_number ?? "",
-    complemento: data.addr_complement ?? "",
-    bairro: data.addr_neighborhood ?? "",
-    cidade: data.addr_city ?? "",
-    estado: data.addr_state ?? "",
+    street: data.addr_street ?? "",
+    number: data.addr_number ?? "",
+    complement: data.addr_complement ?? "",
+    district: data.addr_neighborhood ?? "",
+    city: data.addr_city ?? "",
+    state: data.addr_state ?? "",
   };
 }
 
@@ -189,11 +185,10 @@ export type OfferingSummary = {
   sync_status: "nao_onchain" | "pendente" | "confirmada" | "divergente";
 };
 
-// Resumo (não-CRUD) das ofertas REAIS do issuer logado, para a seção "Minhas
-// ofertas" de /perfil — o cadastro/ativação/fechamento continuam só em
-// /empresa/ofertas. accountId vem sempre de resolveAccount() (sessão no
-// servidor), nunca de um parâmetro vindo do cliente — cada empresa só pode
-// ver as próprias ofertas.
+// Summary (not CRUD) of the signed-in issuer's REAL offerings, for the "My offerings" section of
+// /perfil — creation/activation/closing remain only in /empresa/ofertas. accountId always comes
+// from resolveAccount() (session on the server), never from a parameter sent by the client — each
+// company can only see its own offerings.
 export async function loadMyOfferingsSummary(): Promise<OfferingSummary[]> {
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
@@ -208,80 +203,36 @@ export async function loadMyOfferingsSummary(): Promise<OfferingSummary[]> {
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    console.error("loadMyOfferingsSummary: falha ao ler offerings", error);
+    console.error("loadMyOfferingsSummary: failed to read offerings", error);
     return [];
   }
 
   return data;
 }
 
-const addressSchema = {
-  phone: z.string().refine((value) => isValidTelefone(value), "Telefone inválido.").transform(onlyDigits),
-  cep: z.string().refine((value) => isValidCEP(value), "CEP inválido.").transform(onlyDigits),
-  logradouro: z.string().trim().min(1, "Informe a rua."),
-  numero: z.string().trim().min(1, "Informe o número."),
-  complemento: z.string().trim(),
-  bairro: z.string().trim().min(1, "Informe o bairro."),
-  cidade: z.string().trim().min(1, "Informe a cidade."),
-  estado: z
-    .string()
-    .trim()
-    .regex(/^[A-Za-z]{2}$/, "Selecione o estado.")
-    .transform((value) => value.toUpperCase()),
-};
-
-const investorUpdateSchema = z.object({
-  fullName: z.string().trim().min(1, "Informe o nome completo."),
-  taxId: z.string().refine((value) => isValidCPF(value), "CPF inválido — informe os 11 dígitos.").transform(onlyDigits),
-  birthDate: z
-    .string()
-    .refine((value) => isValidDataNascimento(value), "Data de nascimento inválida.")
-    .transform(brDateToIso),
-  ...addressSchema,
-});
-
-const issuerUpdateSchema = z.object({
-  legalName: z.string().trim().min(1, "Informe a razão social."),
-  tradeName: z.string().trim(),
-  taxId: z.string().refine((value) => isValidCNPJ(value), "CNPJ inválido — informe os 14 dígitos.").transform(onlyDigits),
-  annualRevenueReais: z
-    .string()
-    .trim()
-    .min(1, "Informe a receita bruta anual.")
-    .regex(MONEY_FORMAT, "Use o formato 5.000.000,00 (só números, ponto de milhar e vírgula decimal)."),
-  sector: z.string().trim(),
-  businessSummary: z.string().trim(),
-  publishCnpj: z.boolean(),
-  ...addressSchema,
-});
-
-function firstFieldErrors(error: z.ZodError): Partial<Record<string, string>> {
-  const result: Partial<Record<string, string>> = {};
-  for (const issue of error.issues) {
-    const field = issue.path[0];
-    if (typeof field === "string" && !(field in result)) {
-      result[field] = issue.message;
-    }
-  }
-  return result;
+function issuerUpdateSchema(e: Dictionary["serverErrors"]) {
+  return z.object({
+    ...issuerFields(e),
+    sector: z.string().trim(),
+    businessSummary: z.string().trim(),
+    publishCnpj: z.boolean(),
+  });
 }
 
-function translateDbError(error: PostgrestError): UpdateProfileState {
+function translateDbError(error: PostgrestError, e: Dictionary["serverErrors"]): UpdateProfileState {
   if (error.code === "23514" && error.message.includes("issuer_is_sep")) {
     return {
       status: "error",
-      message: "Receita bruta acima do limite de R$40 milhões da SEP (Resolução CVM 88).",
-      fieldErrors: { annualRevenueReais: "Acima do limite de R$40 milhões." },
+      message: e.company.sepCap,
+      fieldErrors: { annualRevenueReais: e.company.sepCapField },
     };
   }
-  console.error("updateProfile: erro inesperado do banco", error);
-  return {
-    status: "error",
-    message: "Não foi possível salvar seus dados. Tente novamente em instantes.",
-  };
+  console.error("updateProfile: unexpected database error", error);
+  return { status: "error", message: e.profileSaveFailed };
 }
 
 export async function updateProfile(dataInput: unknown): Promise<UpdateProfileState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -298,13 +249,9 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
   const admin = createAdminClient();
 
   if (role === "investor") {
-    const parsed = investorUpdateSchema.safeParse(dataInput);
+    const parsed = z.object(investorFields(e)).safeParse(dataInput);
     if (!parsed.success) {
-      return {
-        status: "error",
-        message: "Corrija os campos destacados.",
-        fieldErrors: firstFieldErrors(parsed.error),
-      };
+      return { status: "error", message: e.fixFields, fieldErrors: firstFieldErrors(parsed.error) };
     }
 
     const { error } = await admin
@@ -315,35 +262,27 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
         birth_date: parsed.data.birthDate,
         phone: parsed.data.phone,
         addr_cep: parsed.data.cep,
-        addr_street: parsed.data.logradouro,
-        addr_number: parsed.data.numero,
-        addr_complement: parsed.data.complemento || null,
-        addr_neighborhood: parsed.data.bairro,
-        addr_city: parsed.data.cidade,
-        addr_state: parsed.data.estado,
+        addr_street: parsed.data.street,
+        addr_number: parsed.data.number,
+        addr_complement: parsed.data.complement || null,
+        addr_neighborhood: parsed.data.district,
+        addr_city: parsed.data.city,
+        addr_state: parsed.data.state,
       })
       .eq("id", accountId);
 
     if (error) {
-      return translateDbError(error);
+      return translateDbError(error, e);
     }
   } else {
-    const parsed = issuerUpdateSchema.safeParse(dataInput);
+    const parsed = issuerUpdateSchema(e).safeParse(dataInput);
     if (!parsed.success) {
-      return {
-        status: "error",
-        message: "Corrija os campos destacados.",
-        fieldErrors: firstFieldErrors(parsed.error),
-      };
+      return { status: "error", message: e.fixFields, fieldErrors: firstFieldErrors(parsed.error) };
     }
 
     const annualRevenueCents = reaisToCents(parsed.data.annualRevenueReais);
     if (annualRevenueCents === null) {
-      return {
-        status: "error",
-        message: "Corrija os campos destacados.",
-        fieldErrors: { annualRevenueReais: "Use o formato 5.000.000,00." },
-      };
+      return { status: "error", message: e.fixFields, fieldErrors: { annualRevenueReais: e.moneyFormat } };
     }
 
     const { error } = await admin
@@ -358,17 +297,17 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
         publish_cnpj: parsed.data.publishCnpj,
         phone: parsed.data.phone,
         addr_cep: parsed.data.cep,
-        addr_street: parsed.data.logradouro,
-        addr_number: parsed.data.numero,
-        addr_complement: parsed.data.complemento || null,
-        addr_neighborhood: parsed.data.bairro,
-        addr_city: parsed.data.cidade,
-        addr_state: parsed.data.estado,
+        addr_street: parsed.data.street,
+        addr_number: parsed.data.number,
+        addr_complement: parsed.data.complement || null,
+        addr_neighborhood: parsed.data.district,
+        addr_city: parsed.data.city,
+        addr_state: parsed.data.state,
       })
       .eq("id", accountId);
 
     if (error) {
-      return translateDbError(error);
+      return translateDbError(error, e);
     }
   }
 
@@ -376,32 +315,26 @@ export async function updateProfile(dataInput: unknown): Promise<UpdateProfileSt
   return { status: "success" };
 }
 
-// Vínculo de carteira (0006/0007) — só o FORMATO do endereço é validado aqui
-// (zod); a unicidade é responsabilidade do UNIQUE do banco (per-tabela,
-// nullable-safe), traduzido de volta em translateWalletDbError. A LINHA
-// gravada é sempre a resolvida por resolveAccount() (sessão no servidor);
-// o endereço em si vem do cliente (wagmi/MetaMask), mas nunca a conta-alvo.
+// Wallet link (0006/0007) — only the address FORMAT is checked here (zod); uniqueness is the
+// database UNIQUE's job (per table, nullable-safe), translated back in translateWalletDbError. The
+// ROW written is always the one resolved by resolveAccount() (session on the server); the address
+// itself comes from the client (wagmi/MetaMask), but never the target account.
 const walletAddressSchema = z
   .string()
   .trim()
-  .regex(/^0x[0-9a-fA-F]{40}$/, "Endereço de carteira inválido.")
+  .regex(/^0x[0-9a-fA-F]{40}$/)
   .transform((value) => value.toLowerCase());
 
-function translateWalletDbError(error: PostgrestError): UpdateProfileState {
+function translateWalletDbError(error: PostgrestError, e: Dictionary["serverErrors"]): UpdateProfileState {
   if (error.code === "23505") {
-    return {
-      status: "error",
-      message: "Esta carteira já está vinculada a outra conta.",
-    };
+    return { status: "error", message: e.wallet.alreadyLinked };
   }
-  console.error("saveWallet: erro inesperado do banco", error);
-  return {
-    status: "error",
-    message: "Não foi possível salvar a carteira. Tente novamente em instantes.",
-  };
+  console.error("saveWallet: unexpected database error", error);
+  return { status: "error", message: e.wallet.saveFailed };
 }
 
 export async function saveWallet(addressInput: unknown): Promise<UpdateProfileState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -417,7 +350,7 @@ export async function saveWallet(addressInput: unknown): Promise<UpdateProfileSt
 
   const parsed = walletAddressSchema.safeParse(addressInput);
   if (!parsed.success) {
-    return { status: "error", message: "Endereço de carteira inválido." };
+    return { status: "error", message: e.wallet.invalidAddress };
   }
 
   const admin = createAdminClient();
@@ -425,7 +358,7 @@ export async function saveWallet(addressInput: unknown): Promise<UpdateProfileSt
   const { error } = await admin.from(table).update({ wallet_address: parsed.data }).eq("id", accountId);
 
   if (error) {
-    return translateWalletDbError(error);
+    return translateWalletDbError(error, e);
   }
 
   revalidatePath("/perfil");
@@ -433,6 +366,7 @@ export async function saveWallet(addressInput: unknown): Promise<UpdateProfileSt
 }
 
 export async function unlinkWallet(): Promise<UpdateProfileState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -451,27 +385,24 @@ export async function unlinkWallet(): Promise<UpdateProfileState> {
   const { error } = await admin.from(table).update({ wallet_address: null }).eq("id", accountId);
 
   if (error) {
-    console.error("unlinkWallet: erro inesperado do banco", error);
-    return {
-      status: "error",
-      message: "Não foi possível desvincular a carteira. Tente novamente em instantes.",
-    };
+    console.error("unlinkWallet: unexpected database error", error);
+    return { status: "error", message: e.wallet.unlinkFailed };
   }
 
   revalidatePath("/perfil");
   return { status: "success" };
 }
 
-// Logo da empresa (0010 + escopo 4c) — diferente de tudo mais que resta
-// simulado em /perfil, isto sobe um arquivo de verdade para o bucket público
-// 'issuer-logos' e grava o caminho em issuers.logo_path. Só role='issuer'
-// pode chamar; accountId sempre de resolveAccount() (sessão no servidor),
-// nunca de um id vindo do cliente — cada empresa só escreve na própria
-// pasta (`${accountId}/logo.<ext>`). Tipo/tamanho são validados AQUI, não só
-// no input do navegador (LogoUpload.tsx) — essa validação é só cortesia de UX.
+// Company logo (0010 + scope 4c) — unlike everything else still simulated in /perfil, this uploads
+// a real file to the public 'issuer-logos' bucket and stores the path in issuers.logo_path. Only
+// role='issuer' can call it; accountId always from resolveAccount() (session on the server), never
+// from an id sent by the client — each company only writes to its own folder
+// (`${accountId}/logo.<ext>`). Type/size are validated HERE, not only in the browser input
+// (LogoUpload.tsx) — that check is just a UX courtesy.
 export type UploadLogoState = { status: "success"; logoUrl: string } | { status: "error"; message: string };
 
 export async function uploadIssuerLogo(formData: FormData): Promise<UploadLogoState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -482,18 +413,18 @@ export async function uploadIssuerLogo(formData: FormData): Promise<UploadLogoSt
 
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas podem enviar logo." };
+    return { status: "error", message: e.issuersOnly.uploadLogo };
   }
 
   const file = formData.get("file");
   if (!(file instanceof File)) {
-    return { status: "error", message: "Selecione um arquivo de imagem." };
+    return { status: "error", message: e.upload.selectImage };
   }
   if (!isIssuerLogoMimeType(file.type)) {
-    return { status: "error", message: "Formato inválido — envie um arquivo JPG, PNG ou WebP." };
+    return { status: "error", message: e.upload.invalidFormat };
   }
   if (file.size > ISSUER_LOGO_MAX_BYTES) {
-    return { status: "error", message: "A imagem deve ter até 2MB." };
+    return { status: "error", message: e.upload.maxSize(2) };
   }
 
   const admin = createAdminClient();
@@ -507,23 +438,23 @@ export async function uploadIssuerLogo(formData: FormData): Promise<UploadLogoSt
     contentType: file.type,
   });
   if (uploadError) {
-    console.error("uploadIssuerLogo: falha no upload", uploadError);
-    return { status: "error", message: "Não foi possível enviar a logo. Tente novamente em instantes." };
+    console.error("uploadIssuerLogo: upload failed", uploadError);
+    return { status: "error", message: e.upload.logoUploadFailed };
   }
 
   const { error: dbError } = await admin.from("issuers").update({ logo_path: path }).eq("id", accountId);
   if (dbError) {
-    console.error("uploadIssuerLogo: falha ao gravar logo_path", dbError);
-    return { status: "error", message: "Não foi possível salvar a logo. Tente novamente em instantes." };
+    console.error("uploadIssuerLogo: failed to store logo_path", dbError);
+    return { status: "error", message: e.upload.logoSaveFailed };
   }
 
-  // A extensão pode mudar entre uploads (ex.: png -> jpg): o upsert só
-  // sobrescreve quando o caminho é idêntico, então um caminho anterior
-  // diferente vira arquivo órfão no bucket se não for limpo aqui.
+  // The extension can change between uploads (e.g. png -> jpg): the upsert only overwrites when
+  // the path is identical, so a different previous path becomes an orphan file in the bucket if
+  // it isn't cleaned up here.
   if (previousPath && previousPath !== path) {
     const { error: removeOldError } = await admin.storage.from(ISSUER_LOGO_BUCKET).remove([previousPath]);
     if (removeOldError) {
-      console.error("uploadIssuerLogo: falha ao remover logo anterior", removeOldError);
+      console.error("uploadIssuerLogo: failed to remove the previous logo", removeOldError);
     }
   }
 
@@ -533,6 +464,7 @@ export async function uploadIssuerLogo(formData: FormData): Promise<UploadLogoSt
 }
 
 export async function removeIssuerLogo(): Promise<UpdateProfileState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -543,7 +475,7 @@ export async function removeIssuerLogo(): Promise<UpdateProfileState> {
 
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas podem remover a logo." };
+    return { status: "error", message: e.issuersOnly.removeLogo };
   }
 
   const admin = createAdminClient();
@@ -553,28 +485,28 @@ export async function removeIssuerLogo(): Promise<UpdateProfileState> {
   if (path) {
     const { error: removeError } = await admin.storage.from(ISSUER_LOGO_BUCKET).remove([path]);
     if (removeError) {
-      console.error("removeIssuerLogo: falha ao remover arquivo do bucket", removeError);
+      console.error("removeIssuerLogo: failed to remove the file from the bucket", removeError);
     }
   }
 
   const { error } = await admin.from("issuers").update({ logo_path: null }).eq("id", accountId);
   if (error) {
-    console.error("removeIssuerLogo: erro inesperado do banco", error);
-    return { status: "error", message: "Não foi possível remover a logo. Tente novamente em instantes." };
+    console.error("removeIssuerLogo: unexpected database error", error);
+    return { status: "error", message: e.upload.logoRemoveFailed };
   }
 
   revalidatePath("/perfil");
   return { status: "success" };
 }
 
-// Banner de capa da oferta (0011) — mesmo padrão de uploadIssuerLogo/
-// removeIssuerLogo acima, bucket público próprio ('issuer-banners'). Só
-// role='issuer' pode chamar; accountId sempre de resolveAccount() (sessão
-// no servidor). Tipo/tamanho validados AQUI, não só no input do navegador
-// (BannerUpload.tsx) — essa validação é só cortesia de UX.
+// Offering cover banner (0011) — same pattern as uploadIssuerLogo/removeIssuerLogo above, with its
+// own public bucket ('issuer-banners'). Only role='issuer' can call it; accountId always from
+// resolveAccount() (session on the server). Type/size validated HERE, not only in the browser
+// input (BannerUpload.tsx) — that check is just a UX courtesy.
 export type UploadBannerState = { status: "success"; bannerUrl: string } | { status: "error"; message: string };
 
 export async function uploadIssuerBanner(formData: FormData): Promise<UploadBannerState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -585,18 +517,18 @@ export async function uploadIssuerBanner(formData: FormData): Promise<UploadBann
 
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas podem enviar banner." };
+    return { status: "error", message: e.issuersOnly.uploadBanner };
   }
 
   const file = formData.get("file");
   if (!(file instanceof File)) {
-    return { status: "error", message: "Selecione um arquivo de imagem." };
+    return { status: "error", message: e.upload.selectImage };
   }
   if (!isIssuerBannerMimeType(file.type)) {
-    return { status: "error", message: "Formato inválido — envie um arquivo JPG, PNG ou WebP." };
+    return { status: "error", message: e.upload.invalidFormat };
   }
   if (file.size > ISSUER_BANNER_MAX_BYTES) {
-    return { status: "error", message: "A imagem deve ter até 3MB." };
+    return { status: "error", message: e.upload.maxSize(3) };
   }
 
   const admin = createAdminClient();
@@ -610,23 +542,23 @@ export async function uploadIssuerBanner(formData: FormData): Promise<UploadBann
     contentType: file.type,
   });
   if (uploadError) {
-    console.error("uploadIssuerBanner: falha no upload", uploadError);
-    return { status: "error", message: "Não foi possível enviar o banner. Tente novamente em instantes." };
+    console.error("uploadIssuerBanner: upload failed", uploadError);
+    return { status: "error", message: e.upload.bannerUploadFailed };
   }
 
   const { error: dbError } = await admin.from("issuers").update({ banner_path: path }).eq("id", accountId);
   if (dbError) {
-    console.error("uploadIssuerBanner: falha ao gravar banner_path", dbError);
-    return { status: "error", message: "Não foi possível salvar o banner. Tente novamente em instantes." };
+    console.error("uploadIssuerBanner: failed to store banner_path", dbError);
+    return { status: "error", message: e.upload.bannerSaveFailed };
   }
 
-  // Mesma pegadinha de uploadIssuerLogo: extensão pode mudar entre uploads
-  // (ex.: png -> jpg), e o upsert só sobrescreve quando o caminho é
-  // idêntico — sem esta limpeza o arquivo anterior fica órfão no bucket.
+  // Same gotcha as uploadIssuerLogo: the extension can change between uploads (e.g. png -> jpg),
+  // and the upsert only overwrites when the path is identical — without this cleanup the previous
+  // file is left orphaned in the bucket.
   if (previousPath && previousPath !== path) {
     const { error: removeOldError } = await admin.storage.from(ISSUER_BANNER_BUCKET).remove([previousPath]);
     if (removeOldError) {
-      console.error("uploadIssuerBanner: falha ao remover banner anterior", removeOldError);
+      console.error("uploadIssuerBanner: failed to remove the previous banner", removeOldError);
     }
   }
 
@@ -636,6 +568,7 @@ export async function uploadIssuerBanner(formData: FormData): Promise<UploadBann
 }
 
 export async function removeIssuerBanner(): Promise<UpdateProfileState> {
+  const e = (await getDictionary()).serverErrors;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -646,7 +579,7 @@ export async function removeIssuerBanner(): Promise<UpdateProfileState> {
 
   const { role, accountId } = await resolveAccount();
   if (role !== "issuer" || !accountId) {
-    return { status: "error", message: "Apenas empresas podem remover o banner." };
+    return { status: "error", message: e.issuersOnly.removeBanner };
   }
 
   const admin = createAdminClient();
@@ -656,14 +589,14 @@ export async function removeIssuerBanner(): Promise<UpdateProfileState> {
   if (path) {
     const { error: removeError } = await admin.storage.from(ISSUER_BANNER_BUCKET).remove([path]);
     if (removeError) {
-      console.error("removeIssuerBanner: falha ao remover arquivo do bucket", removeError);
+      console.error("removeIssuerBanner: failed to remove the file from the bucket", removeError);
     }
   }
 
   const { error } = await admin.from("issuers").update({ banner_path: null }).eq("id", accountId);
   if (error) {
-    console.error("removeIssuerBanner: erro inesperado do banco", error);
-    return { status: "error", message: "Não foi possível remover o banner. Tente novamente em instantes." };
+    console.error("removeIssuerBanner: unexpected database error", error);
+    return { status: "error", message: e.upload.bannerRemoveFailed };
   }
 
   revalidatePath("/perfil");

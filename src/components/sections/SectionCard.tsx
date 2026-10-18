@@ -8,8 +8,8 @@ type SectionCardProps = {
   href?: string;
 };
 
-// Card branco com um chip (número ou ícone) atrás/acima do título, usado
-// nas seções de conteúdo aprovado (Benefícios, Quando usar, Tokens).
+// A white card with a chip (number or icon) behind/above the title, used
+// in the approved content sections (Benefits, When to use, Tokens).
 export function SectionCard({ chip, title, description, href }: SectionCardProps) {
   const content = (
     <>

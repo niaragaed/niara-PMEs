@@ -1,19 +1,19 @@
 -- ============================================================================
 -- Niara-PMEs -- 0008_offer_details
--- Dados descritivos da empresa (aparecem na pagina da oferta) + valor por cota.
--- Localizacao NAO ganha coluna: reaproveita addr_city + addr_state (0006).
--- Numero de cotas NAO e coluna: deriva de base_cap_cents / share_price_cents.
+-- Descriptive company data (shown on the offering page) + value per share.
+-- Location does NOT get a column: it reuses addr_city + addr_state (0006).
+-- Share count is NOT a column: it derives from base_cap_cents / share_price_cents.
 -- ============================================================================
 
 begin;
 
--- Dados publicos da empresa (nivel empresa: preenche 1x, vale p/ todas as ofertas)
+-- Public company data (company level: filled in once, valid for every offering)
 alter table issuers
-  add column sector           text,   -- setor de atuacao (ex.: "Saude")
-  add column business_summary text;    -- resumo do negocio
+  add column sector           text,   -- business sector (e.g. "Health")
+  add column business_summary text;    -- business summary
 
--- Valor por cota na oferta. Nullable (ofertas antigas nao tem). Quando presente:
--- > 0 e precisa dividir o valor da oferta (base_cap) em cotas inteiras.
+-- Value per share of the offering. Nullable (old offerings don't have it). When present:
+-- > 0 and it must split the offering amount (base_cap) into whole shares.
 alter table offerings
   add column share_price_cents bigint
     check (

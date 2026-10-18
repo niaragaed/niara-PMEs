@@ -1,5 +1,5 @@
-// Client Supabase para uso no navegador (Client Components). Usa a chave
-// pública (anon/publishable) — segura para expor ao cliente, respeita RLS.
+// Supabase client for use in the browser (Client Components). Uses the
+// public key (anon/publishable) — safe to expose to the client, respects RLS.
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {

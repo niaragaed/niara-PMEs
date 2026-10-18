@@ -1,7 +1,7 @@
-// Proxy (Next.js 16 — renomeado de "middleware") com o padrão oficial do
-// @supabase/ssr: refresca o token de auth a cada navegação para que Server
-// Components/rotas protegidas enxerguem a sessão atual via cookie. Não
-// conter lógica de negócio aqui — só o refresh de sessão.
+// Proxy (Next.js 16 — renamed from "middleware") with @supabase/ssr's official
+// pattern: refreshes the auth token on every navigation so Server
+// Components/protected routes see the current session via cookie. No
+// business logic here — only the session refresh.
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -27,9 +27,9 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // Não inserir lógica entre createServerClient e getUser(): getUser()
-  // revalida o token direto no servidor do Supabase (ao contrário de
-  // getSession(), que só lê o cookie) — é o que de fato refresca a sessão.
+  // Don't add logic between createServerClient and getUser(): getUser()
+  // revalidates the token directly against the Supabase server (unlike
+  // getSession(), which only reads the cookie) — it's what actually refreshes the session.
   await supabase.auth.getUser();
 
   return supabaseResponse;

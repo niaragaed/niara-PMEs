@@ -1,11 +1,11 @@
 -- ============================================================================
 -- Niara-PMEs -- 0011_issuer_banner
--- Caminho do banner de capa da oferta no Supabase Storage (bucket
--- 'issuer-banners', publico, criado manualmente no painel -- nao da para
--- criar bucket via migration). Mesmo padrao de 0010_issuer_logo: o ARQUIVO
--- mora no bucket, aqui guardamos so o path. Nullable (empresa pode nao ter
--- banner ainda). Publico por natureza (aparece no card da oferta em
--- /negociar, junto com a logo).
+-- Path of the offering's cover banner in Supabase Storage (bucket
+-- 'issuer-banners', public, created manually in the dashboard -- a bucket can't
+-- be created through a migration). Same pattern as 0010_issuer_logo: the FILE
+-- lives in the bucket, here we only store the path. Nullable (a company may not
+-- have a banner yet). Public by nature (it appears on the offering card in
+-- /trade, together with the logo).
 -- ============================================================================
 
 begin;
