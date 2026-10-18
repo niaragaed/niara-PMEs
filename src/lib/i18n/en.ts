@@ -817,6 +817,12 @@ export const en = {
       badge: "Real — Sepolia",
       solanaBadge: "Real — Solana Devnet",
       fictitiousCompany: "Fictitious demo company",
+      solanaState: {
+        Aberta: "Open",
+        Pausada: "Paused",
+        EncerradaSucesso: "Closed — target reached",
+        EncerradaFalha: "Closed — target not reached",
+      },
       fundraisingTarget: "Fundraising target",
       pricePerShare: "Price per share",
       shares: "Shares",
@@ -887,11 +893,18 @@ export const en = {
       yourOfferingNote:
         "An offering registered by your company. Only visible to you, the offering owner, with no reservation option.",
       showcaseTitle: "Examples (demo)",
-      showcaseTitleSmesOnChain: "SME offerings (real Sepolia, fictitious companies)",
+      showcaseTitleSmesOnChain: "SME offerings (real Ethereum Sepolia and Solana Devnet)",
+      showcaseNoteSmesOnChain:
+        "Real testnet investment on both networks (MockBRL has no backing). Fictitious demo companies, except the ones marked as data provided by the issuer itself.",
       publishOfferingButton: "Publish offering",
       sectorFilter: {
         ariaLabel: "Filter by sector",
-        all: "All",
+        all: "All sectors",
+      },
+      networkFilter: {
+        ariaLabel: "Filter by network",
+        all: "All networks",
+        empty: "No offering matches these filters.",
       },
       footnote:
         "Fictitious examples with simulated values. This is not a public offering of securities. Offerings depend on the applicable CVM authorizations.",
@@ -906,6 +919,10 @@ export const en = {
         "Data provided by the issuer itself (demo), but the blockchain investment below is real, on the Sepolia testnet.",
       selfServiceNotice:
         "This company's data was provided by the issuer itself (demo), and the investment below is real: transactions actually signed and confirmed on the Sepolia testnet, not a product simulation.",
+      demoBannerSolanaProgram:
+        "Fictitious demo company, but the blockchain investment below is real, on Solana Devnet.",
+      solanaProgramNotice:
+        "This company is fictitious (a demo offering created by the program's administration), but the investment below is real: transactions actually signed and confirmed on Solana Devnet, by the niara-pmes-solana program, not a product simulation.",
       demoBannerSelfServiceSolana:
         "Data provided by the issuer itself (demo), but the blockchain investment below is real, on Solana Devnet.",
       selfServiceSolanaNotice:
@@ -1332,7 +1349,13 @@ export const en = {
       valuePerShare: "Value per share (R$)",
       category: "Token category",
       categoryPlaceholder: "Select",
+      network: "Publication network",
+      networkPlaceholder: "Select the network",
+      networkSepolia: "Ethereum Sepolia (MetaMask)",
+      networkSolana: "Solana Devnet (Phantom)",
     },
+    networkNotice:
+      "The offering is published on-chain on the chosen network, with the company wallet linked for that network in Profile → Wallet. Until it's published, you can still switch networks on the publish screen; once published, it doesn't change.",
     categoryNotice:
       "All categories are available in this demo. The real regulatory framework varies by category (Real Estate Token, Agro and Debt Securities have their own CVM rules) — fundraising under CVM Resolution 88 (SMEs) is the only thing this backend models today.",
     sharesPreview: (shares: string) => `Results in ${shares} shares.`,
@@ -1344,6 +1367,7 @@ export const en = {
       invalidValuePerShare: "Use the format 5.000.000,00.",
       valuePerShareDoesNotDivide: "The offering value must be a multiple of the value per share.",
       invalidCategory: "Select a category.",
+      invalidNetwork: "Select the publication network.",
     },
     createButton: "Create offering (draft)",
     creatingButton: "Creating…",
@@ -1380,6 +1404,7 @@ export const en = {
       ref: "Reference (simulated)",
     },
     publishLink: "Publish on-chain →",
+    publishLinkNetwork: (network: string) => `Publish on ${network} →`,
     onchainStatus: {
       pendente: {
         title: "Publication in progress",
@@ -2046,6 +2071,7 @@ export const en = {
       minTargetRequired: "Enter the minimum target.",
       valuePerShareRequired: "Enter the value per share.",
       selectCategory: "Select a category.",
+      selectNetwork: "Select the publication network.",
       capAbove15m: "The offering value (with the additional lot) is above the R$15 million cap per offering.",
       lotAbove25: "The additional lot is above 25% of the original offering.",
       windowAbove180: "The offering's deadline is above 180 days.",
@@ -2216,15 +2242,50 @@ export const en = {
     loggedInAs: "Signed in as",
     origin: {
       real: "Real Sepolia",
+      realSolana: "Real Solana Devnet",
       mock: "Demo/mock",
+    },
+    solana: {
+      totalInvested: "Total invested — Solana Devnet",
+      uniqueWallets: "Unique wallets that invested — Solana",
+      offeringsLabel: "Offerings in the program — Solana",
+      offerings: (total: number, open: number) => `${total} (${open} open)`,
+      feeRevenue: "Platform revenue (fee) — Solana",
+      feeRevenueNote:
+        "Real sum of RecursosLiberados.taxa (the niara-pmes-solana program's 1%) — test mBRL, not real currency.",
+      note: "Real Solana Devnet (niara-pmes-solana program)",
+      unavailable: "Couldn't read Solana Devnet right now (RPC unavailable). The other sources are below.",
+      released: (toIssuer: string, fee: string) => `${toIssuer} to the issuer · fee ${fee}`,
+      maxTarget: (amount: string) => `Max target ${amount}`,
+      types: {
+        OfertaCriada: "Offering created",
+        Aporte: "Investment",
+        OfertaEncerrada: "Offering closed",
+        closedSuccess: "Offering closed — target reached",
+        closedFailure: "Offering closed — target not reached",
+        OfertaCancelada: "Offering cancelled",
+        CotasResgatadas: "Shares redeemed",
+        RecursosLiberados: "Funds released to the issuer",
+        Reembolso: "Refund",
+        OfertaPausadaAlterada: "Pause changed",
+        paused: "Offering paused",
+        resumed: "Offering resumed",
+        EmissorDefinido: "Issuer authorized",
+        issuerAuthorized: "Issuer authorized",
+        issuerDeauthorized: "Issuer deauthorized",
+        QualificacaoAlterada: "Qualification changed",
+        qualified: "Investor marked as qualified",
+        unqualified: "Qualification removed",
+        FaucetMbrl: "MockBRL faucet (test)",
+      },
     },
     realSummary: {
       title: "Summary — real Sepolia",
-      totalRaised: "Total raised (all offerings)",
-      uniqueWallets: "Unique wallets that invested",
-      configuredRate: "Configured fee rate",
+      totalRaised: "Total raised — Sepolia",
+      uniqueWallets: "Unique wallets that invested — Sepolia",
+      configuredRate: "Configured fee rate — Sepolia",
       zeroFeeNote: "taxaBps = 0 in every offering today, read directly from the contract — no fee is charged on them.",
-      feeRevenue: "Platform revenue (fee)",
+      feeRevenue: "Platform revenue (fee) — Sepolia",
       feeRevenueNote:
         "Real sum of RecursosLiberados.taxa already transferred to protocoloWallet via liberarParaEmissor() — testnet mBRL, not real currency. Never a projected value.",
       variableFee: "Varies by offering",
@@ -2275,7 +2336,7 @@ export const en = {
     transactions: {
       title: "All activity",
       subtitle:
-        "A single timeline with everything that happens on the site — real on-chain events (Sepolia) and off-chain activity (sign-ups, offerings, investments, payments), most recent first.",
+        "A single timeline with everything that happens on the site — real on-chain events (Ethereum Sepolia and Solana Devnet) and off-chain activity (sign-ups, offerings, investments, payments), most recent first.",
       summaryTitle: "Aggregate summary",
       loading: "Reading activity (on-chain + Supabase)... this may take a while without a dedicated RPC.",
       colOrigin: "Origin",
@@ -2292,7 +2353,6 @@ export const en = {
       issuerSignup: "Issuer sign-up",
       offeringCreated: "Offering created",
       selfServiceConfirmed: "Self-service offering confirmed",
-      selfServiceConfirmedSolana: "Self-service offering confirmed (Solana Devnet)",
       selfServiceTerms: (target: string, price: string, deadline: string) =>
         `Target: ${target} · Price/share: ${price} · Deadline: ${deadline}`,
       investment: (status: string) => `Investment — ${status}`,

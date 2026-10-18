@@ -37,6 +37,10 @@ function createOfferingSchema(e: Dictionary["serverErrors"]) {
     windowDays: z.coerce.number().int().min(1).max(180),
     sharePriceReais: z.string().trim().min(1, e.offerings.valuePerShareRequired).regex(MONEY_FORMAT, e.moneyFormat),
     category: z.enum(OFFERING_CATEGORIES, { message: e.offerings.selectCategory }),
+    // The network the offering will be published on (offerings.rede, migration 0017). Only the
+    // intent: until there is a publication attempt, the publish screen still lets the issuer switch,
+    // and the definitive network is written by registerAttempt/registerSolanaAttempt.
+    network: z.enum(["sepolia", "solana-devnet"], { message: e.offerings.selectNetwork }),
   });
 }
 
@@ -118,6 +122,7 @@ export async function createOffering(dataInput: unknown): Promise<OfferingAction
     hard_cap_cents: hardCapCents.toString(),
     share_price_cents: sharePriceCents.toString(),
     category: parsed.data.category,
+    rede: parsed.data.network,
     opens_at: opensAt.toISOString(),
     closes_at: closesAt.toISOString(),
     is_demo: process.env.NIARA_ENV === "demo",

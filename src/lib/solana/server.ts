@@ -35,7 +35,7 @@ export type PublicationTxRead =
   | { status: "ok"; events: OfferingCreatedEvent[]; blockTime: number | null };
 
 /** "Program data:" lines emitted by OUR program (the top of the invoke stack at the time of the log). */
-function programData(logs: string[]): string[] {
+export function programData(logs: string[]): string[] {
   const id = SMES_SOLANA_PROGRAM_ID.toBase58();
   const stack: string[] = [];
   const data: string[] = [];

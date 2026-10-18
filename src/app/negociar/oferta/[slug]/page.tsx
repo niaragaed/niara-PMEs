@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { OfferingDetailPage } from "@/components/negociar/OfferingDetailPage";
 import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfferingDetailPage";
+import { SolanaOfferingDetailPage } from "@/components/negociar/SolanaOfferingDetailPage";
 import { getOfferingBySlug } from "@/lib/mock/offerings";
 import { getOnChainIndexBySlug } from "@/lib/mock/onChainOfferings";
 import { getOfferingAssetPaths } from "@/lib/trade/offeringAssets";
-import { loadConfirmedOnChainOfferingById } from "@/lib/web3/confirmedOfferings";
+import { loadConfirmedOnChainOfferingById, loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
+import { BASE58_PUBKEY } from "@/lib/solana/config";
+import { readVerifiedOfferingAccount } from "@/lib/solana/server";
 import { resolvePartner } from "@/lib/auth/resolvePartner";
 import { requireLogin, resolveAccount } from "@/lib/auth/resolveInvestor";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
@@ -14,6 +17,22 @@ import { localize } from "@/lib/i18n/locale";
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
+
+/**
+ * An offering that exists only in the niara-pmes-solana program: the "slug" is the offering
+ * account's (base58) address. Base58 has no "-", so it never collides with a mock slug or a uuid.
+ * The account is read from the network and only counts if its owner is the program
+ * (readVerifiedOfferingAccount). Never throws: an RPC outage = not found.
+ */
+async function solanaProgramOffering(slug: string) {
+  if (!BASE58_PUBKEY.test(slug)) return null;
+  try {
+    return await readVerifiedOfferingAccount(slug);
+  } catch (error) {
+    console.error("negociar/oferta: failed to read the offering on Solana", error);
+    return null;
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const dict = await getDictionary();
@@ -34,6 +53,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const confirmedOffering = await loadConfirmedOnChainOfferingById(slug);
   if (confirmedOffering) {
     return { title: `${confirmedOffering.issuerTradeName ?? confirmedOffering.issuerLegalName} · Niara PMEs` };
+  }
+
+  const solanaOffering = await solanaProgramOffering(slug);
+  if (solanaOffering) {
+    return { title: `${solanaOffering.company} · Niara PMEs` };
   }
 
   return { title: `${dict.trade.offering.notFound.title} · Niara PMEs` };
@@ -67,9 +91,24 @@ export default async function Page({ params }: PageProps) {
     );
   }
 
-  // Not a mock (legacy) offering — tries to resolve it as a self-service offering (slug = the
-  // offerings.id uuid). loadConfirmedOnChainOfferingById() never throws: it returns null for an
-  // invalid uuid, a nonexistent offering, an unconfirmed one, or one without a category.
+  // Not a mock (legacy) offering. A base58 address = an offering of the Solana program.
+  if (BASE58_PUBKEY.test(slug)) {
+    // Published by the issuer on the site: the right page is the self-service one (with the
+    // company's data).
+    const selfService = (await loadConfirmedOnChainOfferings()).find(
+      (o) => o.rede === "solana-devnet" && o.contractAddress === slug,
+    );
+    if (selfService) redirect(`/negociar/oferta/${selfService.id}`);
+
+    const solanaOffering = await solanaProgramOffering(slug);
+    if (!solanaOffering) notFound();
+    const { authorized: isPartner } = await resolvePartner();
+    return <SolanaOfferingDetailPage address={solanaOffering.address} company={solanaOffering.company} isPartner={isPartner} />;
+  }
+
+  // Otherwise, a self-service offering (slug = the offerings.id uuid).
+  // loadConfirmedOnChainOfferingById() never throws: it returns null for an invalid uuid, a
+  // nonexistent offering, an unconfirmed one, or one without a category.
   const confirmedOffering = await loadConfirmedOnChainOfferingById(slug);
   if (!confirmedOffering || !confirmedOffering.category) {
     notFound();

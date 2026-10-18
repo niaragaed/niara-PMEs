@@ -1,7 +1,8 @@
 import "server-only";
 
 // A single timeline of "all the activity on the site" for the internal /socios dashboard — it
-// combines real on-chain events (src/lib/web3/events.ts) with the off-chain activity in Supabase:
+// combines real on-chain events (Sepolia: src/lib/web3/events.ts; Solana Devnet:
+// src/lib/solana/events.ts) with the off-chain activity in Supabase:
 // investor sign-up, issuer sign-up, offering created, investment (investments, in any status —
 // reserved/paid/settled/refunded/cancelled) and each event of the payment trail (payment_events:
 // payment confirmed, tokens issued). Explicit request from the user: a single table, not split
@@ -16,24 +17,30 @@ import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
 import { getEventsOnChain, getSummaryOnChain, type OnChainEvent, type OnChainSummary } from "@/lib/web3/events";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
-import { solanaExplorerAccountLink } from "@/lib/solana/config";
+import { linkExplorerSolanaTx, SOLANA_MBRL_DECIMALS, solanaExplorerAccountLink } from "@/lib/solana/config";
+import { readSolanaEvents, type SolanaEvent, type SolanaSummary } from "@/lib/solana/events";
 import { getDictionary } from "@/lib/i18n/server";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 export type TransactionOrigin = "onchain" | "offchain";
+/** Network of an on-chain row (null on off-chain rows); decides the badge in the Origin column. */
+export type TransactionNetwork = "sepolia" | "solana-devnet" | null;
 
 export type Transaction = {
   id: string;
   timestamp: number; // epoch seconds, to sort and format the same way on both sides
   origin: TransactionOrigin;
+  network: TransactionNetwork;
   type: string; // already translated, ready to display
   actor: string | null; // name (off-chain) or truncated address (on-chain)
   value: string | null; // already formatted (BRL or token), ready to display
-  link: string | null; // external link (Sepolia Etherscan), when there is one
+  link: string | null; // external link (Sepolia Etherscan / Solana Explorer), when there is one
 };
 
 export type TransactionsSummary = {
   onChain: OnChainSummary | null;
+  /** null = Solana Devnet couldn't be read right now (RPC down); the rest of the dashboard carries on. */
+  solana: SolanaSummary | null;
   totalMockInvestmentsCents: number; // status paid/settled, same rule as the old computeResumoMock
   uniqueMockInvestors: number;
 };
@@ -62,10 +69,57 @@ function onChainEventToTransaction(event: OnChainEvent, summary: OnChainSummary 
     id: `onchain-${event.txHash}-${event.type}`,
     timestamp: event.timestamp ?? 0,
     origin: "onchain",
+    network: "sepolia",
     type: t.types[event.type],
     actor: event.investor ? `${event.investor.slice(0, 6)}…${event.investor.slice(-4)}` : null,
     value,
     link: `https://sepolia.etherscan.io/tx/${event.txHash}`,
+  };
+}
+
+function shortAddress(address: string): string {
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
+}
+
+function formatSolanaMbrl(units: bigint): string {
+  return `${Number(formatUnits(units, SOLANA_MBRL_DECIMALS)).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mBRL`;
+}
+
+/**
+ * niara-pmes-solana program event → timeline row. Actor: the offering's company (name recorded
+ * on-chain) and, when the event has a wallet, its short address.
+ */
+function solanaEventToTransaction(event: SolanaEvent, companies: Map<string, string>, dict: Dictionary): Transaction {
+  const t = dict.partners.solana.types;
+  const company = event.offering ? (companies.get(event.offering) ?? shortAddress(event.offering)) : null;
+  const actor = [company, event.wallet ? shortAddress(event.wallet) : null].filter(Boolean).join(" — ") || null;
+
+  let type: string = t[event.type];
+  if (event.type === "OfertaEncerrada") type = event.flag ? t.closedSuccess : t.closedFailure;
+  if (event.type === "OfertaPausadaAlterada") type = event.flag ? t.paused : t.resumed;
+  if (event.type === "EmissorDefinido") type = event.flag ? t.issuerAuthorized : t.issuerDeauthorized;
+  if (event.type === "QualificacaoAlterada") type = event.flag ? t.qualified : t.unqualified;
+
+  let value: string | null = null;
+  if (event.type === "RecursosLiberados" && event.amount !== null) {
+    value = dict.partners.solana.released(formatSolanaMbrl(event.amount), formatSolanaMbrl(event.fee ?? BigInt(0)));
+  } else if (event.type === "OfertaCriada" && event.amount !== null) {
+    value = dict.partners.solana.maxTarget(formatSolanaMbrl(event.amount));
+  } else if (event.amount !== null) {
+    value = formatSolanaMbrl(event.amount);
+  } else if (event.shares !== null) {
+    value = dict.partners.activity.shares(event.shares.toLocaleString("pt-BR"));
+  }
+
+  return {
+    id: `solana-${event.signature}-${event.index}`,
+    timestamp: event.timestamp ?? 0,
+    origin: "onchain",
+    network: "solana-devnet",
+    type,
+    actor,
+    value,
+    link: linkExplorerSolanaTx(event.signature),
   };
 }
 
@@ -114,6 +168,7 @@ async function listInvestorRegistrations(dict: Dictionary): Promise<Transaction[
     id: `investor-signup-${row.id}`,
     timestamp: epoch(row.created_at),
     origin: "offchain" as const,
+    network: null,
     type: dict.partners.activity.investorSignup,
     actor: row.full_name,
     value: null,
@@ -133,6 +188,7 @@ async function listIssuerRegistrations(dict: Dictionary): Promise<Transaction[]>
     id: `issuer-signup-${row.id}`,
     timestamp: epoch(row.created_at),
     origin: "offchain" as const,
+    network: null,
     type: dict.partners.activity.issuerSignup,
     actor: row.legal_name,
     value: null,
@@ -152,6 +208,7 @@ async function listCreatedOfferings(dict: Dictionary): Promise<Transaction[]> {
     id: `offering-created-${row.id}`,
     timestamp: epoch(row.created_at),
     origin: "offchain" as const,
+    network: null,
     type: dict.partners.activity.offeringCreated,
     actor: first(row.issuers)?.legal_name ?? "—",
     value: null,
@@ -159,7 +216,8 @@ async function listCreatedOfferings(dict: Dictionary): Promise<Transaction[]> {
   }));
 }
 
-const deadlineFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+// Explicit time zone: the server (Vercel) runs in UTC.
+const deadlineFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
 
 // cents -> mBRL (a number, without a real currency symbol) — the same conversion as
 // checkConsistency() (UNIT_ON_CHAIN, src/lib/web3/gates.ts: "1 MockBRL unit = 1 real
@@ -188,7 +246,8 @@ async function listConfirmedSelfServiceOfferings(dict: Dictionary): Promise<Tran
     id: `self-service-offering-${offering.id}`,
     timestamp: offering.onchainConfirmedAt ? epoch(offering.onchainConfirmedAt) : 0,
     origin: "onchain" as const,
-    type: offering.rede === "sepolia" ? t.selfServiceConfirmed : t.selfServiceConfirmedSolana,
+    network: offering.rede,
+    type: t.selfServiceConfirmed,
     actor: offering.issuerTradeName ?? offering.issuerLegalName,
     value: t.selfServiceTerms(
       `${formatMbrl(offering.targetMinCents)}–${formatMbrl(offering.hardCapCents)}`,
@@ -220,6 +279,7 @@ function investmentToTransaction(row: InvestmentRow, dict: Dictionary): Transact
     id: `investment-${row.id}`,
     timestamp: epoch(row.created_at),
     origin: "offchain",
+    network: null,
     type: dict.partners.activity.investment(dict.partners.mockTable.status[row.status]),
     actor: `${investor} — ${issuer}`,
     value: centsToBRL(row.amount_cents),
@@ -247,6 +307,7 @@ async function listPaymentEvents(dict: Dictionary): Promise<Transaction[]> {
       id: `payment-event-${row.id}`,
       timestamp: epoch(row.created_at),
       origin: "offchain" as const,
+      network: null,
       type: paymentEventTypes[row.event_type] ?? row.event_type,
       actor,
       value: investment ? centsToBRL(investment.amount_cents) : null,
@@ -264,7 +325,7 @@ function computeMockSummary(investments: InvestmentRow[]): { totalCents: number;
 }
 
 /**
- * A single timeline with ALL the activity on the site — on-chain (real Sepolia) and off-chain
+ * A single timeline with ALL the activity on the site — on-chain (real Sepolia and Solana Devnet) and off-chain
  * (Supabase: sign-ups, offerings created, investments in any status, payment trail) — most recent
  * first, plus an aggregate summary (the same numbers the KPIs already showed before, now computed
  * together so the read isn't duplicated). Each source is fetched in parallel; an isolated failure
@@ -273,12 +334,13 @@ function computeMockSummary(investments: InvestmentRow[]): { totalCents: number;
  */
 export async function getTransactionsAndSummary(): Promise<{ transactions: Transaction[]; summary: TransactionsSummary }> {
   const dict = await getDictionary();
-  const [onChainResult, investmentsResult, ...offchainResults] = await Promise.allSettled([
+  const [onChainResult, solanaResult, investmentsResult, ...offchainResults] = await Promise.allSettled([
     (async () => {
       const onChainEvents = await getEventsOnChain();
       const onChainSummary = await getSummaryOnChain(onChainEvents);
       return { onChainEvents, resumoOnChain: onChainSummary };
     })(),
+    readSolanaEvents(),
     listInvestments(),
     listInvestorRegistrations(dict),
     listIssuerRegistrations(dict),
@@ -296,6 +358,15 @@ export async function getTransactionsAndSummary(): Promise<{ transactions: Trans
     transactions.push(...onChainEvents.map((event) => onChainEventToTransaction(event, summary, dict)));
   } else {
     console.error("[socios] failed to read on-chain events (the other sources carry on normally):", onChainResult.reason);
+  }
+
+  let solanaSummary: SolanaSummary | null = null;
+  if (solanaResult.status === "fulfilled") {
+    const { events, companies, summary } = solanaResult.value;
+    solanaSummary = summary;
+    transactions.push(...events.map((event) => solanaEventToTransaction(event, companies, dict)));
+  } else {
+    console.error("[socios] failed to read Solana Devnet (the other sources carry on normally):", solanaResult.reason);
   }
 
   let investments: InvestmentRow[] = [];
@@ -322,6 +393,7 @@ export async function getTransactionsAndSummary(): Promise<{ transactions: Trans
     transactions,
     summary: {
       onChain: onChainSummary,
+      solana: solanaSummary,
       totalMockInvestmentsCents: mockSummary.totalCents,
       uniqueMockInvestors: mockSummary.uniqueInvestors,
     },

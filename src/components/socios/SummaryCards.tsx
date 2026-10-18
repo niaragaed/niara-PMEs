@@ -2,6 +2,7 @@ import { formatUnits } from "viem";
 import { formatBRL } from "@/lib/format";
 import type { TransactionsSummary } from "@/lib/partners/transactions";
 import { KpiCard } from "./PartnersDashboard";
+import { SOLANA_MBRL_DECIMALS } from "@/lib/solana/config";
 import { getDictionary } from "@/lib/i18n/server";
 
 function formatToken(valueWei: bigint, decimals: number, symbol: string): string {
@@ -23,7 +24,7 @@ export async function SummaryCards({ summary }: { summary: TransactionsSummary }
   return (
     <section className="mt-8">
       <h2 className="text-lg font-semibold text-on-military">{t.transactions.summaryTitle}</h2>
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {onChain ? (
           <>
             <KpiCard
@@ -46,6 +47,30 @@ export async function SummaryCards({ summary }: { summary: TransactionsSummary }
         ) : (
           <div className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted sm:col-span-3">
             {t.realSummary.notConfigured}
+          </div>
+        )}
+        {summary.solana ? (
+          <>
+            <KpiCard
+              label={t.solana.totalInvested}
+              value={formatToken(summary.solana.totalInvested, SOLANA_MBRL_DECIMALS, "mBRL")}
+              note={t.solana.note}
+            />
+            <KpiCard label={t.solana.uniqueWallets} value={String(summary.solana.uniqueWallets)} note={t.solana.note} />
+            <KpiCard
+              label={t.solana.offeringsLabel}
+              value={t.solana.offerings(summary.solana.offerings, summary.solana.openOfferings)}
+              note={t.solana.note}
+            />
+            <KpiCard
+              label={t.solana.feeRevenue}
+              value={formatToken(summary.solana.feesCollected, SOLANA_MBRL_DECIMALS, "mBRL")}
+              note={t.solana.feeRevenueNote}
+            />
+          </>
+        ) : (
+          <div className="rounded-lg border border-panel-border bg-panel p-5 text-sm text-on-military-muted sm:col-span-2">
+            {t.solana.unavailable}
           </div>
         )}
         <KpiCard

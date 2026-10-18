@@ -3,7 +3,8 @@ import { getDictionary } from "@/lib/i18n/server";
 
 /**
  * Network selector for the publication — only shows up while the offering has no recorded
- * attempt (`sync_status='nao_onchain'`). It's simple navigation (`?rede=solana`), stateless: the
+ * attempt (`sync_status='nao_onchain'`). It's simple navigation (`?rede=solana|sepolia`; without
+ * the parameter, the network chosen when the offering was created applies), stateless: the
  * network only really takes effect when registerAttempt/registerAttemptSolana record the attempt,
  * and from then on the page follows the row's network (migration 0017).
  */
@@ -12,7 +13,7 @@ export async function PublicationNetworkChoice({ offeringId, current }: { offeri
   const t = dict.solana.publish.networkChoice;
   const base = `/empresa/ofertas/${offeringId}/publicar`;
   const options = [
-    { id: "sepolia" as const, href: base, label: t.sepolia },
+    { id: "sepolia" as const, href: `${base}?rede=sepolia`, label: t.sepolia },
     { id: "solana" as const, href: `${base}?rede=solana`, label: t.solana },
   ];
   return (

@@ -2185,6 +2185,20 @@ Fair).
 - `ConfirmedOnChainOffering` became a discriminated union by `rede`: code that uses
   viem/wagmi must check `rede === "sepolia"` before using `contractAddress` as
   `0x${string}`.
+- **`/negociar/token-pmes` showcase**: besides the legacy and self-service offerings, it lists the
+  offerings that exist only in the program (the admin script's demo ones — `origin: "solana"` in
+  `SmesSectorFilter`, card `SolanaSmesCard`), read from the network on the server on every request.
+  Filters by network + sector. Detail at `/negociar/oferta/<base58 address>`
+  (`SolanaOfferingDetailPage`; if the offering has a self-service row, it redirects to
+  `/negociar/oferta/<uuid>`).
+- **`/socios`**: the timeline includes the program's whole history (`src/lib/solana/events.ts`:
+  `getSignaturesForAddress` + Anchor events emitted by our program + the `faucet_mbrl`
+  instruction, in-memory cache per signature) and 4 Solana KPIs. Each on-chain row has a `network`
+  and the badge reads "Real Sepolia" or "Real Solana Devnet". Dates are formatted in
+  America/Sao_Paulo (Vercel runs in UTC).
+- **Network on offering creation**: "New offering" requires picking the network (`offerings.rede`
+  written by `createOffering`); the publish screen opens on that network and still lets the issuer
+  switch (`?rede=sepolia|solana`) while `sync_status='nao_onchain'`.
 - Admin (authorizing issuers, demo offerings, pausing/canceling) is done by the
   `scripts/admin.ts` script in the `niara-pmes-solana` repository, with the wallet
   that is the program's upgrade authority.

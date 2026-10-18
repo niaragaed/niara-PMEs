@@ -13,13 +13,19 @@ export function KpiCard({ label, value, note }: { label: string; value: string; 
   );
 }
 
-export async function OriginBadge({ real }: { real: boolean }) {
+export async function OriginBadge({
+  real,
+  network = "sepolia",
+}: {
+  real: boolean;
+  network?: "sepolia" | "solana-devnet" | null;
+}) {
   const dict = await getDictionary();
   const t = dict.partners.origin;
   return real ? (
-    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-salmon px-2.5 py-0.5 text-xs font-semibold text-on-salmon">
+    <span className="inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-full bg-salmon px-2.5 py-0.5 text-xs font-semibold text-on-salmon">
       <BadgeCheck className="h-3 w-3" aria-hidden="true" />
-      {t.real}
+      {network === "solana-devnet" ? t.realSolana : t.real}
     </span>
   ) : (
     <span className="inline-flex w-fit items-center rounded-full border border-panel-border px-2.5 py-0.5 text-xs font-medium text-on-military-muted">

@@ -814,6 +814,12 @@ export const pt = {
       badge: "Real — Sepolia",
       solanaBadge: "Real — Solana Devnet",
       fictitiousCompany: "Empresa fictícia de demonstração",
+      solanaState: {
+        Aberta: "Aberta",
+        Pausada: "Pausada",
+        EncerradaSucesso: "Encerrada — meta atingida",
+        EncerradaFalha: "Encerrada — meta não atingida",
+      },
       fundraisingTarget: "Meta de captação",
       pricePerShare: "Preço por cota",
       shares: "Cotas",
@@ -890,11 +896,18 @@ export const pt = {
       yourOfferingNote:
         "Oferta cadastrada pela sua empresa. Visível só para você, dono da oferta — sem opção de reserva.",
       showcaseTitle: "Exemplos (demonstração)",
-      showcaseTitleSmesOnChain: "Ofertas PMEs (Sepolia real, empresas fictícias)",
+      showcaseTitleSmesOnChain: "Ofertas PMEs (Ethereum Sepolia e Solana Devnet reais)",
+      showcaseNoteSmesOnChain:
+        "Investimento real em testnet nas duas redes (MockBRL sem lastro). Empresas fictícias de demonstração, exceto as marcadas como dados do próprio emissor.",
       publishOfferingButton: "Publicar oferta",
       sectorFilter: {
         ariaLabel: "Filtrar por setor",
-        all: "Todos",
+        all: "Todos os setores",
+      },
+      networkFilter: {
+        ariaLabel: "Filtrar por rede",
+        all: "Todas as redes",
+        empty: "Nenhuma oferta com esses filtros.",
       },
       footnote:
         "Exemplos fictícios com valores simulados. Não constitui oferta pública de valores mobiliários. Ofertas dependem das autorizações aplicáveis da CVM.",
@@ -909,6 +922,10 @@ export const pt = {
         "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na testnet Sepolia.",
       selfServiceNotice:
         "Os dados desta empresa foram informados pelo próprio emissor (demonstração) — e o investimento abaixo é real: transações assinadas e confirmadas de verdade na testnet Sepolia, não uma simulação de produto.",
+      demoBannerSolanaProgram:
+        "Empresa fictícia de demonstração — mas o investimento em blockchain abaixo é real, na Solana Devnet.",
+      solanaProgramNotice:
+        "Esta empresa é fictícia (oferta de demonstração criada pela administração do programa) — mas o investimento abaixo é real: transações assinadas e confirmadas de verdade na Solana Devnet, pelo programa niara-pmes-solana, não uma simulação de produto.",
       demoBannerSelfServiceSolana:
         "Dados informados pelo próprio emissor (demonstração) — mas o investimento em blockchain abaixo é real, na Solana Devnet.",
       selfServiceSolanaNotice:
@@ -1335,7 +1352,13 @@ export const pt = {
       valuePerShare: "Valor por cota (R$)",
       category: "Categoria do token",
       categoryPlaceholder: "Selecione",
+      network: "Rede de publicação",
+      networkPlaceholder: "Selecione a rede",
+      networkSepolia: "Ethereum Sepolia (MetaMask)",
+      networkSolana: "Solana Devnet (Phantom)",
     },
+    networkNotice:
+      "A oferta é publicada on-chain na rede escolhida, com a carteira da empresa vinculada a essa rede em Perfil → Carteira. Até a publicação, dá para trocar de rede na tela de publicar; depois de publicada, não muda mais.",
     categoryNotice:
       "Todas as categorias estão disponíveis nesta demonstração. O enquadramento regulatório real varia por categoria (Token Imobiliário, Agro e Títulos de dívida têm regras próprias na CVM) — só a captação sob a Resolução CVM 88 (PMEs) é o que este backend modela hoje.",
     sharesPreview: (shares: string) => `Resulta em ${shares} cotas.`,
@@ -1347,6 +1370,7 @@ export const pt = {
       invalidValuePerShare: "Use o formato 5.000.000,00.",
       valuePerShareDoesNotDivide: "O valor da oferta precisa ser múltiplo do valor por cota.",
       invalidCategory: "Selecione uma categoria.",
+      invalidNetwork: "Selecione a rede de publicação.",
     },
     createButton: "Criar oferta (rascunho)",
     creatingButton: "Criando…",
@@ -1383,6 +1407,7 @@ export const pt = {
       ref: "Referência (simulada)",
     },
     publishLink: "Publicar on-chain →",
+    publishLinkNetwork: (network: string) => `Publicar na ${network} →`,
     onchainStatus: {
       pendente: {
         title: "Publicação em andamento",
@@ -2049,6 +2074,7 @@ export const pt = {
       minTargetRequired: "Informe a meta mínima.",
       valuePerShareRequired: "Informe o valor por cota.",
       selectCategory: "Selecione uma categoria.",
+      selectNetwork: "Selecione a rede de publicação.",
       capAbove15m: "O valor da oferta (com o lote adicional) está acima do teto de R$15 milhões por oferta.",
       lotAbove25: "O lote adicional está acima de 25% da oferta original.",
       windowAbove180: "O prazo da oferta está acima de 180 dias.",
@@ -2221,15 +2247,50 @@ export const pt = {
     loggedInAs: "Logado como",
     origin: {
       real: "Sepolia real",
+      realSolana: "Solana Devnet real",
       mock: "Demo/mock",
+    },
+    solana: {
+      totalInvested: "Total aportado — Solana Devnet",
+      uniqueWallets: "Carteiras únicas que investiram — Solana",
+      offeringsLabel: "Ofertas no programa — Solana",
+      offerings: (total: number, open: number) => `${total} (${open} aberta${open === 1 ? "" : "s"})`,
+      feeRevenue: "Receita da plataforma (taxa) — Solana",
+      feeRevenueNote:
+        "Soma real de RecursosLiberados.taxa (1% do programa niara-pmes-solana) — mBRL de teste, não moeda real.",
+      note: "Solana Devnet real (programa niara-pmes-solana)",
+      unavailable: "Não foi possível ler a Solana Devnet agora (RPC indisponível). As demais fontes seguem abaixo.",
+      released: (toIssuer: string, fee: string) => `${toIssuer} ao emissor · taxa ${fee}`,
+      maxTarget: (amount: string) => `Meta máx. ${amount}`,
+      types: {
+        OfertaCriada: "Oferta criada",
+        Aporte: "Aporte",
+        OfertaEncerrada: "Oferta encerrada",
+        closedSuccess: "Oferta encerrada — meta atingida",
+        closedFailure: "Oferta encerrada — meta não atingida",
+        OfertaCancelada: "Oferta cancelada",
+        CotasResgatadas: "Cotas resgatadas",
+        RecursosLiberados: "Recursos liberados ao emissor",
+        Reembolso: "Reembolso",
+        OfertaPausadaAlterada: "Pausa alterada",
+        paused: "Oferta pausada",
+        resumed: "Oferta retomada",
+        EmissorDefinido: "Emissor autorizado",
+        issuerAuthorized: "Emissor autorizado",
+        issuerDeauthorized: "Emissor desautorizado",
+        QualificacaoAlterada: "Qualificação alterada",
+        qualified: "Investidor marcado como qualificado",
+        unqualified: "Qualificação removida",
+        FaucetMbrl: "Faucet de MockBRL (teste)",
+      },
     },
     realSummary: {
       title: "Resumo — Sepolia real",
-      totalRaised: "Total arrecadado (todas as ofertas)",
-      uniqueWallets: "Carteiras únicas que investiram",
-      configuredRate: "Alíquota de taxa configurada",
+      totalRaised: "Total arrecadado — Sepolia",
+      uniqueWallets: "Carteiras únicas que investiram — Sepolia",
+      configuredRate: "Alíquota de taxa configurada — Sepolia",
       zeroFeeNote: "taxaBps = 0 em todas as ofertas hoje, lido direto do contrato — nenhuma taxa é cobrada nelas.",
-      feeRevenue: "Receita da plataforma (taxa)",
+      feeRevenue: "Receita da plataforma (taxa) — Sepolia",
       feeRevenueNote:
         "Soma real de RecursosLiberados.taxa já transferida ao protocoloWallet via liberarParaEmissor() — mBRL de testnet, não moeda real. Nunca um valor projetado.",
       variableFee: "Varia por oferta",
@@ -2280,7 +2341,7 @@ export const pt = {
     transactions: {
       title: "Todas as movimentações",
       subtitle:
-        "Timeline única com tudo que acontece no site — eventos reais on-chain (Sepolia) e movimentações off-chain (cadastros, ofertas, aportes, pagamentos), mais recentes primeiro.",
+        "Timeline única com tudo que acontece no site — eventos reais on-chain (Ethereum Sepolia e Solana Devnet) e movimentações off-chain (cadastros, ofertas, aportes, pagamentos), mais recentes primeiro.",
       summaryTitle: "Resumo agregado",
       loading: "Lendo movimentações (on-chain + Supabase)... pode levar um pouco sem uma RPC dedicada.",
       colOrigin: "Origem",
@@ -2297,7 +2358,6 @@ export const pt = {
       issuerSignup: "Cadastro de emissor",
       offeringCreated: "Oferta criada",
       selfServiceConfirmed: "Oferta self-service confirmada",
-      selfServiceConfirmedSolana: "Oferta self-service confirmada (Solana Devnet)",
       selfServiceTerms: (target: string, price: string, deadline: string) =>
         `Meta: ${target} · Preço/cota: ${price} · Prazo: ${deadline}`,
       investment: (status: string) => `Aporte — ${status}`,

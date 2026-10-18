@@ -11,6 +11,9 @@ import { getOfferingAssetPaths } from "@/lib/trade/offeringAssets";
 import { resolveAccount } from "@/lib/auth/resolveInvestor";
 import { loadActiveOfferingsByCategory } from "@/lib/investments";
 import { loadConfirmedOnChainOfferings } from "@/lib/web3/confirmedOfferings";
+import { listSolanaOfferings, solanaConnection, type SolanaOffering } from "@/lib/solana/program";
+import { SOLANA_MBRL_DECIMALS } from "@/lib/solana/config";
+import { formatUnits } from "viem";
 import { SectionGlow } from "@/components/ui/SectionGlow";
 import { getDictionary } from "@/lib/i18n/server";
 
@@ -30,6 +33,23 @@ import { getDictionary } from "@/lib/i18n/server";
 // by issuer_id = accountId (loadActiveOfferingsByCategory) — never other
 // companies' offerings. The two lists (realOfferings/ownOfferings) never
 // have content at the same time, since role is either "investor" or "issuer".
+/**
+ * Offerings of the niara-pmes-solana program (devnet), read from the network on the server. Never
+ * breaks the page: an RPC outage = a showcase without them (the other sources still show up).
+ */
+async function solanaProgramOfferings(): Promise<SolanaOffering[]> {
+  try {
+    return await listSolanaOfferings(solanaConnection());
+  } catch (error) {
+    console.error("negociar: failed to list the Solana offerings", error);
+    return [];
+  }
+}
+
+function solanaMbrl(units: bigint): string {
+  return Number(formatUnits(units, SOLANA_MBRL_DECIMALS)).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
 export async function CategoryPage({ category }: { category: TokenCategory }) {
   const dict = await getDictionary();
   const t = dict.trade.categories[category];
@@ -65,9 +85,12 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
   // "Phase 4", showcase unification). loadConfirmedOnChainOfferings() doesn't filter by category
   // (it's reused by /investir/onchain, which lists all of them) — the filter is applied here, only
   // when this page is the SMEs one.
+  const [confirmed, solanaOfferings] =
+    category === "pmes" ? await Promise.all([loadConfirmedOnChainOfferings(), solanaProgramOfferings()]) : [[], []];
+
   const smesCardsSelfService: SmesCardData[] =
     category === "pmes"
-      ? (await loadConfirmedOnChainOfferings())
+      ? confirmed
           .filter((offering) => offering.category === "pmes")
           .map((offering) => ({
             origin: "selfService" as const,
@@ -83,7 +106,27 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
           }))
       : [];
 
-  const smesCards: SmesCardData[] = [...smesCardsLegacy, ...smesCardsSelfService];
+  // Offerings that exist only in the Solana program (no Supabase row): the demo ones created by the
+  // niara-pmes-solana admin script. The ones the issuer published on the site already come in above
+  // as self-service (with the company's data), so they're left out here to avoid duplicates. Open
+  // ones first, then the most recent.
+  const selfServiceSolanaAddresses = new Set(
+    confirmed.filter((o) => o.rede === "solana-devnet").map((o) => o.contractAddress),
+  );
+  const smesCardsSolana: SmesCardData[] = solanaOfferings
+    .filter((o) => !selfServiceSolanaAddresses.has(o.address))
+    .sort((a, b) => Number(b.state === "Aberta") - Number(a.state === "Aberta") || b.opening - a.opening)
+    .map((o) => ({
+      origin: "solana" as const,
+      address: o.address,
+      name: o.company,
+      maxTargetMbrl: solanaMbrl(o.maxTarget),
+      pricePerShareMbrl: solanaMbrl(o.pricePerShare),
+      shares: o.pricePerShare > BigInt(0) ? (o.maxTarget / o.pricePerShare).toLocaleString("pt-BR") : "—",
+      state: o.state === "Aberta" && o.paused ? ("Pausada" as const) : o.state,
+    }));
+
+  const smesCards: SmesCardData[] = [...smesCardsSelfService, ...smesCardsSolana, ...smesCardsLegacy];
 
   return (
     <main className="isolate flex flex-1 flex-col bg-military">
@@ -182,6 +225,7 @@ export async function CategoryPage({ category }: { category: TokenCategory }) {
               </Link>
             )}
           </div>
+          {category === "pmes" && <p className="mt-1 text-xs text-on-military-muted">{tt.showcaseNoteSmesOnChain}</p>}
           {category === "pmes" ? (
             <SmesSectorFilter items={smesCards} />
           ) : (

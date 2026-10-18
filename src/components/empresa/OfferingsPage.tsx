@@ -45,6 +45,8 @@ type FormState = {
   windowDays: string;
   sharePriceReais: string;
   category: string;
+  /** Publication network (offerings.rede). */
+  network: string;
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -56,7 +58,10 @@ const EMPTY_FORM: FormState = {
   windowDays: "",
   sharePriceReais: "",
   category: "",
+  network: "",
 };
+
+const NETWORKS: OfferingRow["rede"][] = ["sepolia", "solana-devnet"];
 
 const quotasFormatter = new Intl.NumberFormat("pt-BR");
 
@@ -110,6 +115,7 @@ function validate(data: FormState, dict: Dictionary): FormErrors {
   }
 
   if (!OFFERING_CATEGORIES.includes(data.category as TokenCategory)) errors.category = t.invalidCategory;
+  if (!NETWORKS.includes(data.network as OfferingRow["rede"])) errors.network = t.invalidNetwork;
 
   return errors;
 }
@@ -148,6 +154,7 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
         windowDays: draft.windowDays,
         sharePriceReais: draft.sharePriceReais,
         category: draft.category,
+        network: draft.network,
       });
       if (result.status === "error") {
         setCreateState(result);
@@ -250,12 +257,15 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
 
                   {offering.status === "draft" && offering.sync_status === "nao_onchain" && (
                     <div className="mt-4 flex flex-col gap-2">
+                      <NetworkBadge rede={offering.rede} />
                       <p className="text-xs text-on-military-muted">{t.activateNotice}</p>
                       <a
-                        href={`/empresa/ofertas/${offering.id}/publicar`}
+                        href={`/empresa/ofertas/${offering.id}/publicar?rede=${offering.rede === "solana-devnet" ? "solana" : "sepolia"}`}
                         className="self-start rounded-md bg-salmon px-4 py-2 text-sm font-semibold text-on-salmon hover:bg-salmon-600"
                       >
-                        {t.publishLink}
+                        {t.publishLinkNetwork(
+                          offering.rede === "solana-devnet" ? dict.solana.networkName : dict.solana.sepoliaNetwork,
+                        )}
                       </a>
                     </div>
                   )}
@@ -443,8 +453,20 @@ export function OfferingsPage({ offerings }: { offerings: OfferingRow[] }) {
                   </option>
                 ))}
               </SelectField>
+              <SelectField
+                id="offering-network"
+                label={t.fields.network}
+                value={draft.network}
+                onChange={handleFieldChange("network")}
+                error={errors.network}
+                placeholder={t.fields.networkPlaceholder}
+              >
+                <option value="sepolia">{t.fields.networkSepolia}</option>
+                <option value="solana-devnet">{t.fields.networkSolana}</option>
+              </SelectField>
             </div>
 
+            <p className="text-xs text-on-military-muted">{t.networkNotice}</p>
             <p className="text-xs text-on-military-muted">{t.categoryNotice}</p>
 
             {quotasPreview && (

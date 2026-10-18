@@ -166,7 +166,12 @@ export default async function Page({
   // row's and no longer changes. With none ('nao_onchain'), the issuer chooses — `?rede=solana`
   // opens Solana.
   const hasPublication = offering.sync_status !== "nao_onchain";
-  const onSolana = hasPublication ? offering.rede === "solana-devnet" : chosenNetwork === "solana";
+  const onSolana = hasPublication
+    ? offering.rede === "solana-devnet"
+    : chosenNetwork === "solana" || chosenNetwork === "sepolia"
+      ? chosenNetwork === "solana"
+      : // No ?rede=: the network chosen when the offering was created (offerings.rede).
+        offering.rede === "solana-devnet";
 
   const commonProps = {
     offeringId: offering.id as string,

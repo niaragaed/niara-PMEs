@@ -3,7 +3,12 @@ import type { Transaction } from "@/lib/partners/transactions";
 import { OriginBadge } from "./PartnersDashboard";
 import { getDictionary } from "@/lib/i18n/server";
 
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
+// Explicit time zone: the server (Vercel) runs in UTC; without it the time would show 3h ahead.
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short",
+  timeZone: "America/Sao_Paulo",
+});
 
 function formatEpoch(timestamp: number): string {
   if (!timestamp) return "—";
@@ -44,7 +49,7 @@ export async function TransactionsTable({ transactions }: { transactions: Transa
               transactions.map((mov) => (
                 <tr key={mov.id} className="border-b border-panel-border last:border-0">
                   <td className="px-4 py-3">
-                    <OriginBadge real={mov.origin === "onchain"} />
+                    <OriginBadge real={mov.origin === "onchain"} network={mov.network} />
                   </td>
                   <td className="px-4 py-3 text-on-military">{mov.type}</td>
                   <td className="px-4 py-3 text-on-military-muted">{mov.actor ?? "—"}</td>
