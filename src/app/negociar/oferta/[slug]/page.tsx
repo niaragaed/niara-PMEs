@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { canonicalMetadata } from "@/lib/site";
 import { notFound, redirect } from "next/navigation";
 import { OfferingDetailPage } from "@/components/negociar/OfferingDetailPage";
 import { SelfServiceOfferingDetailPage } from "@/components/negociar/SelfServiceOfferingDetailPage";
@@ -42,6 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (offering) {
     return {
+      ...canonicalMetadata(`/negociar/oferta/${slug}`),
       title: `${localize(offering.name, locale)} · Niara PMEs`,
       description: localize(offering.company.summary, locale),
     };

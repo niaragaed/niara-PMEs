@@ -17,3 +17,12 @@ export function getSiteOrigin(): string {
 export function absoluteUrl(path: string): string {
   return new URL(path, getSiteOrigin()).toString();
 }
+
+/**
+ * Canonical URL for a page's metadata. Spread it into the page's own
+ * generateMetadata return value. It must be set per page: a canonical in the
+ * root layout would be inherited by every route and point them all at the home.
+ */
+export function canonicalMetadata(path: string): { alternates: { canonical: string } } {
+  return { alternates: { canonical: absoluteUrl(path) } };
+}
