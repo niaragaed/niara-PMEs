@@ -7,7 +7,7 @@ import { Logo } from "@/components/ui/Logo";
 import { NavDropdown } from "@/components/nav/NavDropdown";
 import { AccountMenu } from "@/components/nav/AccountMenu";
 import { LanguageSwitcher } from "@/components/nav/LanguageSwitcher";
-import { getNavItems } from "@/lib/nav-items";
+import { getNavItems, getProductLinks } from "@/lib/nav-items";
 import type { HeaderAccount } from "@/lib/nav/headerAccount";
 import { useDictionary } from "@/lib/i18n/client";
 
@@ -18,6 +18,7 @@ import { useDictionary } from "@/lib/i18n/client";
 export function HeaderClient({ account }: { account: HeaderAccount | null }) {
   const dict = useDictionary();
   const navItems = getNavItems(dict);
+  const productLinks = getProductLinks(dict);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileAccordionOpen, setMobileAccordionOpen] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Logo />
 
-        <nav aria-label={dict.nav.mainAriaLabel} className="hidden md:block">
+        <nav aria-label={dict.nav.mainAriaLabel} className="hidden lg:block">
           <ul className="flex items-center gap-8">
             {navItems.map((item) =>
               item.children ? (
@@ -63,10 +64,20 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
                 </li>
               ),
             )}
+            {productLinks.map((link) => (
+              <li key={link.key}>
+                <a
+                  href={link.href}
+                  className="whitespace-nowrap text-sm text-ink-muted transition-colors hover:text-ink"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 lg:flex">
           <LanguageSwitcher />
           {account ? (
             <AccountMenu account={account} />
@@ -85,7 +96,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
           aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((current) => !current)}
-          className="text-ink md:hidden"
+          className="text-ink lg:hidden"
         >
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -94,7 +105,7 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
       {mobileOpen && (
         <nav
           aria-label={dict.nav.mobileAriaLabel}
-          className="border-t border-border bg-surface px-6 py-4 md:hidden"
+          className="border-t border-border bg-surface px-6 py-4 lg:hidden"
         >
           <ul className="flex flex-col gap-4">
             <li>
@@ -155,6 +166,13 @@ export function HeaderClient({ account }: { account: HeaderAccount | null }) {
                 </li>
               );
             })}
+            {productLinks.map((link) => (
+              <li key={link.key}>
+                <a href={link.href} className="text-sm text-ink-muted hover:text-ink">
+                  {link.label}
+                </a>
+              </li>
+            ))}
             <li>
               {account ? (
                 <AccountMenu account={account} />

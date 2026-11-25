@@ -215,6 +215,11 @@ export const en = {
     assets: "Assets",
     profile: "Profile",
     about: "About",
+    // Product names, not translated: same label in both languages.
+    products: {
+      exchange: "Exchange",
+      register: "Register",
+    },
     tradeChildren: {
       assetsAndTokens: {
         label: "Assets and tokens",

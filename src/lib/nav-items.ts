@@ -28,6 +28,23 @@ export type NavItem = {
   children?: NavChild[];
 };
 
+/**
+ * Links to the sibling Niara products, shown in the Header only. Plain links,
+ * opened in the same tab, as decided for this site.
+ */
+export type ProductLink = {
+  key: "exchange" | "register";
+  label: string;
+  href: string;
+};
+
+export function getProductLinks(dict: Dictionary): ProductLink[] {
+  return [
+    { key: "exchange", label: dict.nav.products.exchange, href: "https://niaraglobal.com" },
+    { key: "register", label: dict.nav.products.register, href: "https://register.niaraglobal.com" },
+  ];
+}
+
 /** The main navigation (Header and Footer), in the visitor's language. */
 export function getNavItems(dict: Dictionary): NavItem[] {
   return [
