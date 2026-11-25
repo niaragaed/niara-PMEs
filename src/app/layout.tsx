@@ -11,6 +11,7 @@ import "./globals.css";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/client";
 import { htmlLang } from "@/lib/i18n/locale";
+import { getSiteOrigin } from "@/lib/site";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -24,7 +25,12 @@ const inter = Inter({
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getDictionary();
-  return { title: dict.meta.title, description: dict.meta.description };
+  return {
+    // Base for every relative URL in the metadata (canonical, og:url, ...).
+    metadataBase: new URL(getSiteOrigin()),
+    title: dict.meta.title,
+    description: dict.meta.description,
+  };
 }
 
 export default async function RootLayout({
