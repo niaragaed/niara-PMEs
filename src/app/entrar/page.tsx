@@ -6,6 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const dict = await getDictionary();
   return {
   title: `${dict.signIn.meta.title} · Niara PMEs`,
+  robots: { index: false, follow: false },
 };
 }
 

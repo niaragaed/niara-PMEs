@@ -3,7 +3,10 @@ import { getDictionary } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getDictionary();
-  return { title: `${dict.styleguide.title} · Niara PMEs` };
+  return {
+    title: `${dict.styleguide.title} · Niara PMEs`,
+    robots: { index: false, follow: false },
+  };
 }
 
 type Swatch = { label: string; hex: string; className: string };
